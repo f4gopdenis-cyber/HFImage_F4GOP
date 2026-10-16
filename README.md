@@ -44,6 +44,8 @@ Programme Windows de F4GOP (Denis, IN98QR) pour envoyer et recevoir des photos p
 | Carte des stations | Carte QSL personnalisable |
 | ![Thèmes](docs/images/themes.png) | ![Netteté](docs/images/nettete_datac1x.png) |
 | Thèmes de couleurs | DATAC1 60 s (avant) / DATAC1X 1 min 30 / DATAC1X 2 min |
+| ![Poste radio](docs/images/poste_radio.png) | ![Stations et Rx Ok](docs/images/stations_rxok.png) |
+| Réglages du poste (comme WSJT-X) | Stations en ligne et Rx Ok |
 
 ## Démarrage rapide (Kenwood TS-890 / TS-990)
 
