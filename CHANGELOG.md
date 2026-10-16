@@ -1,5 +1,11 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 0.32 — Site web / Digi-Sites : réglage plus simple
+
+- « Dossier sur le serveur » vide = **racine du site**, comme EasyPal (ex. qsl.net : dossier vide, lien https://www.qsl.net/indicatif).
+- Si une adresse web est collée par erreur dans « Dossier sur le serveur », elle est déplacée dans « Lien public » et le dossier remis à la racine, avec un message pour vérifier.
+- « Envoyer la page maintenant » demande le lien public s'il manque.
+
 ## Version 0.31 — reports plafonnés là où la mesure sature
 
 - Sur un signal fort, l'estimation de SNR des modes étroits (DATAC3, et DATAC0 des BSR / ACK) sature : quelques dixièmes de dB d'écart donnaient des reports exagérés (jusqu'à +25 dB en mode hybride, dont l'annonce passe en DATAC3, alors que le même lien donnait +12 dB en DATAC1).

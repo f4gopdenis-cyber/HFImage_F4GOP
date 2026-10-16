@@ -45,7 +45,7 @@ import random
 import wave
 
 APP = "HFImage F4GOP"
-VERSION = "0.31"
+VERSION = "0.32"
 CONF_PATH = os.path.join(os.path.expanduser("~"), ".hfimage.json")
 DEFAULT_OUT = os.path.join(os.path.expanduser("~"), "Documents", "HFImage")
 DEFAULTS = {
@@ -3371,7 +3371,7 @@ class App(tk.Tk):
     # ------------------------------------------------------------- site web / Digi-Sites
     def _web_cfg(self):
         c = self._hyb_cfg()                        # même serveur FTP que le mode hybride
-        c.update(dir=self.conf.get("web_dir", "dsstv"), url=self.conf.get("web_url", ""),
+        c.update(dir=self.conf.get("web_dir", "dsstv") or "", url=self.conf.get("web_url", ""),
                  count=int(self.conf.get("web_count", 20)),
                  call=self.v_call.get().strip().upper() or "NOCALL")
         return c
@@ -3436,12 +3436,27 @@ class App(tk.Tk):
         lb = ttk.Label(f, text="", foreground="#1c6f1c", wraplength=520, justify="left")
         lb.grid(row=8, column=0, columnspan=2, sticky="w", pady=(8, 0))
         ttk.Label(f, text="Serveur FTP, identifiant et mot de passe : ceux du mode hybride (Réglages).\n"
+                          "Dossier vide = racine du site (comme EasyPal).\n"
+                          "Ex. qsl.net : dossier vide, lien https://www.qsl.net/f4gop\n"
                           "Ex. : dossier « dsstv », lien http://monsite.free.fr/dsstv",
                   foreground="#555", justify="left").grid(row=9, column=0, columnspan=2, sticky="w", pady=(6, 0))
 
         def store():
+            d = v_dir.get().strip()
+            if "://" in d or d.lower().startswith("www."):
+                # une adresse web collée dans « Dossier » : c'est le lien public, le dossier est la racine
+                if not v_url.get().strip():
+                    u = d if "://" in d else "https://" + d
+                    if u.rsplit("/", 1)[-1].lower().startswith(("image", "tx", "hfimage")):
+                        u = u.rsplit("/", 1)[0]
+                    v_url.set(u)
+                d = ""
+                v_dir.set("")
+                messagebox.showinfo(APP, "« Dossier sur le serveur » est le dossier FTP (ex. dsstv), pas une adresse "
+                                         "web. L'adresse a été placée dans « Lien public » et le dossier mis à la "
+                                         "racine du site : vérifiez avant d'envoyer.", parent=w)
             self.conf.update(web_on=bool(v_on.get()), web_tx=bool(v_tx.get()),
-                             web_dir=v_dir.get().strip().strip("/") or "dsstv", web_url=v_url.get().strip(),
+                             web_dir=d.strip("/"), web_url=v_url.get().strip(),
                              web_count=int(v_n.get() or 20), web_block=v_block.get().strip())
             self._save_conf_file()
             u = websync.page_url(self._web_cfg())
@@ -3449,6 +3464,10 @@ class App(tk.Tk):
 
         def send_page():
             store()
+            if not v_url.get().strip():
+                messagebox.showerror(APP, "Renseignez le lien public du dossier (adresse web où l'on voit les images).",
+                                     parent=w)
+                return
             if not self._hyb_cfg()["host"]:
                 messagebox.showerror(APP, "Réglez d'abord le serveur FTP (Réglages → Mode hybride).", parent=w)
                 return
