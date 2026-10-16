@@ -44,12 +44,12 @@ import random
 import wave
 
 APP = "HFImage F4GOP"
-VERSION = "0.21"
+VERSION = "0.22"
 CONF_PATH = os.path.join(os.path.expanduser("~"), ".hfimage.json")
 DEFAULT_OUT = os.path.join(os.path.expanduser("~"), "Documents", "HFImage")
 DEFAULTS = {
-    "callsign": "F4GOP", "mode": "DATAC1X", "width": "auto", "seconds": 120, "fmt": "avif",
-    "overhead": 10, "out_dev": "", "in_dev": "", "level": 50,
+    "callsign": "F4GOP", "mode": "Auto", "width": "auto", "seconds": 120, "fmt": "avif",
+    "overhead": 40, "out_dev": "", "in_dev": "", "level": 50,
     "ptt": "VOX", "cat_port": "", "cat_baud": 115200, "cat_cmd": "TX1;",
     "folder": DEFAULT_OUT,
     "hyb_on": False, "hyb_host": "", "hyb_port": 21, "hyb_user": "", "hyb_pass": "",
@@ -62,7 +62,15 @@ DEFAULTS = {
     "cwid": False, "cat_freq": True, "lang": "",
     "wav_volume": 5, "wft_font": "Arial", "wft_neg": False, "wft_text": "",
 }
-TX_MODES = ["DATAC1X", "DATAC1", "DATAC3", "DATAC4"]
+TX_MODES = ["Auto", "DATAC1X", "DATAC1", "DATAC3", "DATAC4"]
+# mode « Auto » : choisi d'après le report le plus faible des stations (dB, SNR sur 3 kHz).
+# Mesuré au simulateur avec QSB moyen : DATAC1X perd peu de trames dès ~10 dB,
+# DATAC1 dès ~5 dB, DATAC3 tient jusque vers 0 dB.
+AUTO_STEPS = [(10, "DATAC1X"), (5, "DATAC1"), (None, "DATAC3")]
+AUTO_DEFAULT = "DATAC1"          # aucun report récent
+AUTO_MAX_AGE = 45 * 60           # reports pris en compte (s)
+# robustesse = redondance du code fontaine (trames en plus, pour les trames perdues dans le QSB)
+ROBUST = [("Faible (15 %)", 15), ("Normale (40 %)", 40), ("Forte (70 %)", 70), ("Très forte (100 %)", 100)]
 DATA_ACTIONS = {"ask": "Demander", "switch": "Passer en USB-DATA automatiquement",
                 "send": "Émettre sans rien dire"}
 HEARD_KEEP_S = 2 * 3600     # stations entendues gardées 2 h dans la liste
@@ -121,6 +129,12 @@ def load_conf():
                 c["mode"], c["seconds"] = "DATAC1X", 120
             if c.get("fmt") == "jpeg":
                 c["fmt"] = "jpg"
+        if saved.get("conf_v", 0) < 22:
+            # v0.22 : redondance 10 % trop juste dans le QSB -> « Normale (40 %) »
+            if int(saved.get("overhead", 10)) <= 10:
+                c["overhead"] = 40
+            if c.get("mode") == "DATAC1X":
+                c["mode"] = "Auto"                   # DATAC1X choisi seul quand les reports le permettent
         if c.get("fmt") not in FORMATS_TX:
             c["fmt"] = {"jpeg": "jpg"}.get(c.get("fmt"), "avif")
     except Exception:
@@ -635,7 +649,9 @@ class App(tk.Tk):
         self.v_width = tk.StringVar(value=str(self.conf.get("width", "auto")))
         self.v_sec = tk.IntVar(value=int(self.conf.get("seconds", 60)))
         self.v_fmt = tk.StringVar(value=self.conf["fmt"])
-        self.v_over = tk.IntVar(value=self.conf["overhead"])
+        pct = int(self.conf.get("overhead", 40))
+        near = min(ROBUST, key=lambda r: abs(r[1] - pct))
+        self.v_over = tk.StringVar(value=tr(near[0]))
         r1 = ttk.Frame(tb)
         r1.pack(fill="x")
         ttk.Button(r1, text="Ouvrir une image…", command=self.open_image).pack(side="left", padx=(0, 10))
@@ -644,13 +660,16 @@ class App(tk.Tk):
             ("Durée max (s)", ttk.Spinbox(r1, textvariable=self.v_sec, from_=15, to=3600, increment=30, width=6)),
             ("Largeur", ttk.Combobox(r1, textvariable=self.v_width, values=WIDTHS, width=8)),
             ("Format", ttk.Combobox(r1, textvariable=self.v_fmt, values=FORMATS_TX, width=8, state="readonly")),
-            ("Redondance %", ttk.Spinbox(r1, textvariable=self.v_over, from_=0, to=200, increment=10, width=4)),
+            ("Robustesse", ttk.Combobox(r1, textvariable=self.v_over, values=[tr(r[0]) for r in ROBUST], width=17,
+                                        state="readonly")),
         ]
         for lab, w in widgets:
             ttk.Label(r1, text=lab).pack(side="left", padx=(6, 2))
             w.pack(side="left")
         ttk.Button(r1, text="Recalculer", command=self.prepare).pack(side="left", padx=(10, 0))
         self._radio_widgets = [w for lab, w in widgets if lab != "Format"]
+        for lab, w in widgets:
+            w._ro = lab in ("Mode", "Robustesse")
         widgets[0][1].bind("<<ComboboxSelected>>", self._mode_changed)
         for _, w in widgets[1:]:
             w.bind("<<ComboboxSelected>>", lambda e: self.prepare())
@@ -1864,7 +1883,7 @@ class App(tk.Tk):
             self.conf.update(
                 callsign=self.v_call.get().strip().upper(), mode=self.v_mode.get(),
                 width=self.v_width.get(), seconds=int(self.v_sec.get()),
-                fmt=self.v_fmt.get(), overhead=int(self.v_over.get()), conf_v=10,
+                fmt=self.v_fmt.get(), overhead=self._robust_pct(), conf_v=22,
                 out_dev=self.v_out.get(), in_dev=self.v_in.get(), level=int(self.v_lvl.get()),
                 radio=self.radio_cfg,
                 folder=self.v_folder.get(),
@@ -1966,8 +1985,50 @@ class App(tk.Tk):
         return {"jpg": "jpeg"}.get(f, f)
 
     def _mode_changed(self, _e=None):
-        self.v_sec.set(MODE_SEC[self.v_mode.get()])
+        self.v_sec.set(MODE_SEC.get(self.v_mode.get(), 120))
         self.prepare()
+
+    def _robust_pct(self):
+        v = self.v_over.get()
+        for lab, p in ROBUST:
+            if v in (lab, tr(lab)):
+                return p
+        try:
+            return int("".join(ch for ch in v if ch.isdigit()) or 40)
+        except ValueError:
+            return 40
+
+    def _link_snr(self):
+        """Report le plus faible des stations ces 45 dernières minutes.
+        -> (dB ou None, nombre de stations, origine)."""
+        now, reps = time.time(), {}
+        for iid, d in self.rxok_by_id.items():
+            if iid in self.my_ids:                       # reports sur NOS images
+                for call, (rep, t) in d.items():
+                    if rep is not None and now - t < AUTO_MAX_AGE:
+                        reps[call] = min(rep, reps.get(call, rep))
+        if reps:
+            return min(reps.values()), len(reps), "reports"
+        # sinon : ce que nous avons mesuré en les entendant (le chemin retour ressemble à l'aller)
+        snrs = {c: h["snr"] for c, h in self.heard.items()
+                if h.get("snr") is not None and now - h.get("t", 0) < AUTO_MAX_AGE}
+        if snrs:
+            return min(snrs.values()), len(snrs), "écoute"
+        return None, 0, ""
+
+    def _tx_mode(self, explain=False):
+        """Mode d'émission effectif (« Auto » : choisi d'après les reports)."""
+        m = self.v_mode.get()
+        if m != "Auto":
+            return (m, "") if explain else m
+        snr, n, src = self._link_snr()
+        if snr is None:
+            mode, why = AUTO_DEFAULT, "aucun report récent"
+        else:
+            mode = next(md for th, md in AUTO_STEPS if th is None or snr >= th)
+            why = (f"report le plus faible {snr:+.0f} dB ({n} station{'s' if n > 1 else ''})"
+                   if src == "reports" else f"stations entendues, la plus faible à {snr:+.0f} dB")
+        return (mode, why) if explain else mode
 
     def prepare(self):
         """Fait tenir l'image dans la durée demandée : calcule le budget en octets
@@ -1975,15 +2036,15 @@ class App(tk.Tk):
         hyb = bool(self.v_hyb.get())
         for w in getattr(self, "_radio_widgets", []):     # sans objet en hybride
             w.configure(state="disabled" if hyb else
-                        ("readonly" if isinstance(w, ttk.Combobox) and w is self._radio_widgets[0] else "normal"))
+                        ("readonly" if getattr(w, "_ro", False) else "normal"))
         if self.src_img is None or self.tx_busy:
             return
         if hyb:
             return self._prepare_hybrid()
         try:
-            mode, width, fmt = self.v_mode.get(), self.v_width.get(), self._fmt()
+            (mode, auto_why), width, fmt = self._tx_mode(explain=True), self.v_width.get(), self._fmt()
             seconds = int(float(self.v_sec.get()))
-            over = int(self.v_over.get()) / 100
+            over = self._robust_pct() / 100
         except (tk.TclError, ValueError):
             return
         if fmt == "original" and (self.src_raw is None or self.src_kind not in ORIGINAL_KINDS):
@@ -2048,7 +2109,8 @@ class App(tk.Tk):
         self._set_text(self.lb_cmp_info, f"{size[0]}×{size[1]} — {len(data)} octets ({desc})"
                                    + (" + texte" if text else ""))
         est = self.tx.estimate_s()
-        lines = [f"Mode {mode} (~{MODE_BPS[mode]} bit/s)",
+        lines = [(f"Mode Auto → {mode} ({auto_why})" if self.v_mode.get() == "Auto" else f"Mode {mode}")
+                 + f" (~{MODE_BPS[mode]} bit/s), robustesse {self._robust_pct()} %",
                  f"{self.tx.sender.K} symboles de {self.tx.sender.T} octets",
                  f"Durée d'émission : {_fmt_s(est)}"]
         if preview:
@@ -2198,6 +2260,16 @@ class App(tk.Tk):
             if not tx and not quiet:
                 messagebox.showinfo(APP, "Ouvrez d'abord une image.")
             return False
+        if (self.v_mode.get() == "Auto" and not complement and tx is self.tx
+                and not isinstance(tx, HybridJob)
+                and tx.mode != self._tx_mode()):
+            # les reports ont changé depuis la préparation : image refaite pour le nouveau mode
+            old = tx.mode
+            self.prepare()
+            if self.tx is None:
+                return False
+            tx = self.tx
+            self.log(f"Mode Auto : {old} → {tx.mode} ({self._tx_mode(explain=True)[1]})")
         job = {"kind": "image", "tx": tx, "complement": complement, "extra": extra}
         if isinstance(tx, HybridJob):
             job["kind"] = "hybrid"
@@ -2225,7 +2297,7 @@ class App(tk.Tk):
             messagebox.showinfo(APP, "Écrivez d'abord le texte à envoyer.")
             return
         call = self.v_call.get().strip().upper() or "NOCALL"
-        mode = self.v_mode.get()
+        mode = self._tx_mode()
         tx = engine.Transmission(protocol.pack_text(text), "hft", call, mode, 0.25)
         self.sent_images[tx.image_id] = tx
         self.log(f"Texte : {len(text)} caractères, {mode}, ~{_fmt_s(tx.estimate_s())}")

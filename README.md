@@ -17,6 +17,7 @@ Programme Windows de F4GOP (Denis, IN98QR) pour envoyer et recevoir des photos p
 
 ### Images
 - Envoi de **photos nettes en 800×600 en environ 2 minutes** grâce au mode rapide **DATAC1X** (1 420 bit/s utiles, 2,2 kHz de large). Pour les conditions difficiles : DATAC1, DATAC3, DATAC4.
+- **Mode Auto** : DATAC1X, DATAC1 ou DATAC3 choisi d'après les reports des stations ; **robustesse** réglable contre le QSB.
 - L'image reçue est **identique bit à bit** à l'image envoyée, ou rien : pas d'image « abîmée ».
 - Formats AVIF (le plus compact), WebP, JPG, ou le fichier **original** tel quel ; SVG vectoriel en quelques centaines d'octets.
 - **Aperçu rapide** : une petite image arrive en ~20 s, puis l'image complète la remplace.

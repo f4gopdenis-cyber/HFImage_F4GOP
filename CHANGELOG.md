@@ -1,5 +1,17 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 0.22 — meilleure tenue au bruit et au QSB
+
+Mesures au simulateur (évanouissement « moyen ») : DATAC1X a besoin d'environ 9-10 dB, DATAC1 de 5 dB, DATAC3 tient vers 0 dB. Avec seulement 10 % de redondance, une image ne passait pas en une fois dès que le QSB faisait perdre plus d'une trame sur dix.
+
+- **Mode « Auto »** (nouveau réglage par défaut) : le mode est choisi d'après le **report le plus faible** des stations qui ont reçu vos images ces 45 dernières minutes (Rx Ok) :
+  - 10 dB et plus : DATAC1X (rapide) ;
+  - de 5 à 10 dB : DATAC1 ;
+  - moins de 5 dB : DATAC3.
+  Sans report, HFImage prend le SNR des stations entendues, sinon DATAC1. Le choix et sa raison sont affichés sous l'image (« Mode Auto → DATAC1 (report le plus faible +7 dB) »). Si les reports changent avant l'émission, l'image est refaite pour le bon mode.
+- **Robustesse** (remplace « Redondance % ») : Faible 15 %, **Normale 40 %** (défaut), Forte 70 %, Très forte 100 %. Plus de trames de secours : l'image passe en un seul coup malgré le QSB, un peu moins détaillée pour la même durée.
+- Les anciens réglages DATAC1X et 10 % passent automatiquement en Auto et Normale (40 %). On peut toujours choisir un mode fixe.
+
 ## Version 0.21 — poste radio comme WSJT-X
 
 Nouvelle fenêtre **Réglages → Poste radio…** (aussi dans le menu Réglages), sur le modèle de l'onglet Radio de WSJT-X :

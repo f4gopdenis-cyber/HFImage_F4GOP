@@ -1038,6 +1038,19 @@ T = [
     ("Retirer de la galerie", "Remove from gallery", "Aus der Galerie entfernen", "Quitar de la galería", "Rimuovi dalla galleria"),
     ("Galerie des dernières images", "Gallery of last images", "Galerie der letzten Bilder", "Galería de las últimas imágenes", "Galleria delle ultime immagini"),
     ("Mise à jour : vérification sur GitHub impossible ({0})", "Update: cannot check GitHub ({0})", "Update: GitHub-Prüfung nicht möglich ({0})", "Actualización: no se puede consultar GitHub ({0})", "Aggiornamento: impossibile verificare GitHub ({0})"),
+    # ------------------------------------------------------------ v0.22 : Auto, robustesse
+    ("Robustesse", "Robustness", "Robustheit", "Robustez", "Robustezza"),
+    ("Faible (15 %)", "Low (15 %)", "Gering (15 %)", "Baja (15 %)", "Bassa (15 %)"),
+    ("Normale (40 %)", "Normal (40 %)", "Normal (40 %)", "Normal (40 %)", "Normale (40 %)"),
+    ("Forte (70 %)", "Strong (70 %)", "Stark (70 %)", "Fuerte (70 %)", "Forte (70 %)"),
+    ("Très forte (100 %)", "Very strong (100 %)", "Sehr stark (100 %)", "Muy fuerte (100 %)", "Molto forte (100 %)"),
+    ("Mode {0} (~{1} bit/s), robustesse {2} %", "Mode {0} (~{1} bit/s), robustness {2} %", "Modus {0} (~{1} bit/s), Robustheit {2} %", "Modo {0} (~{1} bit/s), robustez {2} %", "Modo {0} (~{1} bit/s), robustezza {2} %"),
+    ("Mode Auto → {0} ({1}) (~{2} bit/s), robustesse {3} %", "Auto mode → {0} ({1}) (~{2} bit/s), robustness {3} %", "Auto-Modus → {0} ({1}) (~{2} bit/s), Robustheit {3} %", "Modo Auto → {0} ({1}) (~{2} bit/s), robustez {3} %", "Modo Auto → {0} ({1}) (~{2} bit/s), robustezza {3} %"),
+    ("aucun report récent", "no recent report", "kein aktueller Rapport", "ningún report reciente", "nessun rapporto recente"),
+    ("report le plus faible {0} dB ({1} station)", "weakest report {0} dB ({1} station)", "schwächster Rapport {0} dB ({1} Station)", "report más débil {0} dB ({1} estación)", "rapporto più debole {0} dB ({1} stazione)"),
+    ("report le plus faible {0} dB ({1} stations)", "weakest report {0} dB ({1} stations)", "schwächster Rapport {0} dB ({1} Stationen)", "report más débil {0} dB ({1} estaciones)", "rapporto più debole {0} dB ({1} stazioni)"),
+    ("stations entendues, la plus faible à {0} dB", "stations heard, weakest at {0} dB", "gehörte Stationen, schwächste bei {0} dB", "estaciones oídas, la más débil a {0} dB", "stazioni ascoltate, la più debole a {0} dB"),
+    ("Mode Auto : {0} → {1} ({2})", "Auto mode: {0} → {1} ({2})", "Auto-Modus: {0} → {1} ({2})", "Modo Auto: {0} → {1} ({2})", "Modo Auto: {0} → {1} ({2})"),
 ]
 
 _lang = "fr"
