@@ -65,6 +65,8 @@ Programme Windows de F4GOP (Denis, IN98QR) pour envoyer et recevoir des photos p
 3. **Vérifier le poste**, **Tester la sortie (1 kHz)**, puis **Tester le PTT**.
 4. Onglet **TX** → *Ouvrir une image…* → **Émettre**. Réglez le niveau pour que l'ALC ne bouge pas.
 
+📘 **[Mode d'emploi (PDF)](docs/HFImage_mode_emploi.pdf)** — aussi dans le programme : Infos → Mode d'emploi.
+
 Détails (réglages du poste, mode hybride, protocole, débits) : **[docs/TECHNIQUE.md](docs/TECHNIQUE.md)**.
 
 ## Important

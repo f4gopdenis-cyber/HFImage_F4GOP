@@ -1123,6 +1123,8 @@ T = [
     ("Le lien a de la marge (SNR {0} dB) : {1} passerait aussi, pour des images plus nettes.", "The link has margin (SNR {0} dB): {1} would also work, for sharper images.", "Die Verbindung hat Reserve (SNR {0} dB): {1} ginge auch, für schärfere Bilder.", "El enlace tiene margen (SNR {0} dB): {1} también pasaría, para imágenes más nítidas.", "Il collegamento ha margine (SNR {0} dB): {1} passerebbe anche, per immagini più nitide."),
     ("{0} est bien adapté à ce lien (SNR médian {1} dB, {2} % de pertes).", "{0} suits this link well (median SNR {1} dB, {2} % lost).", "{0} passt gut zu dieser Verbindung (SNR-Median {1} dB, {2} % Verlust).", "{0} se adapta bien a este enlace (SNR mediano {1} dB, {2} % de pérdidas).", "{0} è adatto a questo collegamento (SNR mediano {1} dB, {2} % di perdite)."),
     ("Analyse de {0} terminée.", "Analysis of {0} finished.", "Analyse von {0} beendet.", "Análisis de {0} terminado.", "Analisi di {0} terminata."),
+    ("Mode d'emploi (PDF)", "User manual (PDF, French)", "Bedienungsanleitung (PDF, Französisch)", "Manual de uso (PDF, francés)", "Manuale d'uso (PDF, francese)"),
+    ("Mode d'emploi introuvable.", "User manual not found.", "Bedienungsanleitung nicht gefunden.", "Manual no encontrado.", "Manuale non trovato."),
 ]
 
 _lang = "fr"

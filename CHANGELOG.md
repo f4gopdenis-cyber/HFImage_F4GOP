@@ -1,5 +1,11 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 0.29 — mode d'emploi PDF
+
+- Menu **Infos → Mode d'emploi (PDF)** : un guide de 13 pages, en français, avec captures d'écran :
+  installation et mises à jour, premier réglage (station, audio, poste radio), réception, envoi d'images, mode Auto et robustesse, tableau des modes, stations en ligne et carte, mode hybride et Digi-Sites, bruit / QSB / QRM et analyseur, problèmes fréquents.
+- Le PDF est aussi sur GitHub : `docs/HFImage_mode_emploi.pdf`.
+
 ## Version 0.28 — analyseur de réception, mode Auto mieux calé
 
 - **Fichiers → Analyser un enregistrement WAV…** : on relit un enregistrement (bouton WAVE) et HFImage dit ce qui s'est passé :
