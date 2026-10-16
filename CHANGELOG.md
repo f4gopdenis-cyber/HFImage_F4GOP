@@ -1,5 +1,9 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 0.33 — mode d'emploi à jour
+
+- Mode d'emploi (Infos → Mode d'emploi) mis à jour : reports en vrais dB et plafonds (+15 dB DATAC3 / DATAC0, +21 dB DATAC1X / DATAC1), réglage Site web / Digi-Sites (dossier vide = racine, exemple qsl.net).
+
 ## Version 0.32 — Site web / Digi-Sites : réglage plus simple
 
 - « Dossier sur le serveur » vide = **racine du site**, comme EasyPal (ex. qsl.net : dossier vide, lien https://www.qsl.net/indicatif).

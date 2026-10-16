@@ -270,7 +270,8 @@ s.append(P("La <b>robustesse</b> est la part de trames de secours (code fontaine
            "en une fois."))
 s += tip("les reports et le SNR affichés sont le <b>SNR réel sur 3 kHz</b> (étalonné depuis la version 0.30), "
          "comparable d'un mode à l'autre. Les stations encore en version 0.29 ou plus ancienne envoient des reports "
-         "plus bas (estimation brute du modem). Pour une image plus nette, le plus efficace est d'allonger la durée "
+         "plus bas (estimation brute du modem). Sur un signal très fort, la mesure sature : les reports sont plafonnés "
+         "à +15 dB en DATAC3 / DATAC0 (annonce hybride, BSR, ACK) et +21 dB en DATAC1X / DATAC1. Pour une image plus nette, le plus efficace est d'allonger la durée "
          "(3 min en DATAC1X ≈ 50 % d'octets en plus).")
 s.append(P("Les modes", "h2"))
 s.append(table([["Mode", "Largeur", "Débit utile", "En 2 min", "Usage"],
@@ -314,6 +315,11 @@ s.append(P("Menu <b>Images → Site web / Digi-Sites…</b> : comme EasyPal, cha
            "sous le nom <b>image1.jpg</b> (les précédentes glissent : image2, image3…), avec indicatif, date, mode "
            "et bande. Vos images émises vont dans TX1.jpg … TX5.jpg. Une page <b>hfimage.html</b> les présente "
            "(rafraîchie toutes les 5 minutes). Dans Digi-Sites : Setup → Edit site, et donnez l'adresse de la page."))
+s += B(["<b>Dossier sur le serveur</b> : le dossier FTP, pas une adresse web. <b>Vide = racine du site</b>, comme EasyPal.",
+        "<b>Lien public</b> : l'adresse web de ce dossier.",
+        "Exemple qsl.net : serveur <b>ftp.qsl.net</b>, identifiant = votre indicatif (Réglages → Mode hybride), "
+        "dossier <b>vide</b>, lien <b>https://www.qsl.net/f4gop</b> → page à donner à Digi-Sites : "
+        "<b>https://www.qsl.net/f4gop/hfimage.html</b>."])
 s.append(img("webdlg.png", 110, "Réglages de la mise en ligne (serveur FTP du mode hybride)."))
 
 # ------------------------------------------------------------------ 8
