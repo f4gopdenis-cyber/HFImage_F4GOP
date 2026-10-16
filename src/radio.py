@@ -1,0 +1,759 @@
+"""Commande du poste (CAT) et PTT, façon WSJT-X.
+
+Pilotes :
+- « kenwood »   : Kenwood en direct (TS-990S, TS-890S, TS-590S/SG, TS-2000, TS-480…), sans rien installer
+- « hamlib »    : tous les postes connus de Hamlib (Icom, Yaesu, Elecraft, Xiegu, Flex…). HFImage lance
+                  rigctld (Hamlib) en arrière-plan ; Hamlib est téléchargé une fois depuis GitHub si besoin
+- « netrigctl » : un serveur Hamlib rigctld déjà lancé (hôte:port)
+- « flrig »     : FLRig (XML-RPC, hôte:port)
+- « omnirig »   : OmniRig (Rig 1 / Rig 2), s'il est installé sur le PC
+- « none »      : pas de CAT (PTT par VOX, ou RTS / DTR d'une interface)
+
+PTT : VOX, CAT, DTR ou RTS — DTR / RTS sur le port CAT ou sur un autre port (interface à côté).
+"""
+import hashlib
+import os
+import socket
+import subprocess
+import sys
+import threading
+import time
+import zipfile
+
+import audio
+from riglist import HAMLIB_VERSION, RIGS
+
+# ------------------------------------------------------------------ liste des postes
+# clé enregistrée dans la configuration -> libellé (en français, traduit à l'affichage)
+SPECIAL = [("none", "Aucun (pas de CAT)"), ("kenwood", "Kenwood (détection automatique)"),
+           ("omnirig1", "OmniRig Rig 1"), ("omnirig2", "OmniRig Rig 2"),
+           ("flrig", "FLRig"), ("netrigctl", "Hamlib NET rigctl")]
+# Kenwood pilotés en direct (commandes ASCII éprouvées) ; les autres passent par Hamlib
+KENWOOD_NATIVE = {"TS-990S", "TS-890S", "TS-590S", "TS-590SG", "TS-2000", "TS-480"}
+_BY_ID = {num: (mfg, mod) for num, mfg, mod, _ in RIGS}
+
+
+def rig_keys():
+    """Toutes les clés : entrées spéciales puis les postes Hamlib (« hamlib:2039 »)."""
+    return [k for k, _ in SPECIAL] + [f"hamlib:{num}" for num, *_ in RIGS]
+
+
+def rig_label(key):
+    for k, n in SPECIAL:
+        if k == key:
+            return n
+    if key.startswith("hamlib:"):
+        try:
+            mfg, mod = _BY_ID[int(key[7:])]
+            return f"{mfg} {mod}"
+        except (KeyError, ValueError):
+            pass
+    return key
+
+
+def rig_entry(key):
+    """Clé -> {kind, model_id, label}."""
+    label = rig_label(key)
+    if key.startswith("omnirig"):
+        return {"kind": "omnirig", "rig_no": 2 if key.endswith("2") else 1, "model_id": None, "label": label}
+    if key in ("none", "kenwood", "flrig", "netrigctl"):
+        return {"kind": key, "model_id": None, "label": label}
+    if key.startswith("hamlib:"):
+        try:
+            num = int(key[7:])
+            mfg, mod = _BY_ID[num]
+        except (KeyError, ValueError):
+            return {"kind": "none", "model_id": None, "label": label}
+        kind = "kenwood" if mfg == "Kenwood" and mod in KENWOOD_NATIVE else "hamlib"
+        return {"kind": kind, "model_id": num, "label": label, "model": mod}
+    return {"kind": "none", "model_id": None, "label": label}
+
+
+DEFAULTS = {"rig": "none", "port": "", "baud": 115200, "data_bits": "default", "stop_bits": "default",
+            "handshake": "default", "dtr": "", "rts": "", "ptt": "VOX", "ptt_port": "",
+            "tx_audio": "rear", "set_mode": "none", "host": "", "poll": 1}
+
+
+def from_conf(conf):
+    """Réglages du poste depuis la configuration (avec reprise des réglages des anciennes versions)."""
+    r = dict(DEFAULTS)
+    r.update(conf.get("radio") or {})
+    if "radio" not in conf:                               # versions ≤ 0.20 : Kenwood seulement
+        r["port"] = conf.get("cat_port", "") or ""
+        r["baud"] = int(conf.get("cat_baud", 115200) or 115200)
+        r["ptt"] = conf.get("ptt", "VOX")
+        r["tx_audio"] = "front" if str(conf.get("cat_cmd", "TX1;")).startswith("TX0") else "rear"
+        if r["port"] and (r["ptt"] == "CAT" or conf.get("cat_freq", True)):
+            r["rig"] = "kenwood"
+        if r["ptt"] in ("RTS", "DTR") and r["rig"] == "kenwood":
+            r["ptt_port"] = r["port"]
+    if r["ptt"] not in ("VOX", "CAT", "DTR", "RTS"):
+        r["ptt"] = "VOX"
+    return r
+
+
+def cat_signature(cfg):
+    """Ce qui oblige à rouvrir la liaison CAT quand ça change."""
+    keys = ("rig", "port", "baud", "data_bits", "stop_bits", "handshake", "dtr", "rts", "host")
+    sig = tuple(str(cfg.get(k)) for k in keys)
+    if rig_entry(cfg["rig"])["kind"] == "hamlib":       # PTT DTR/RTS du port CAT confié à rigctld
+        sig += (cfg.get("ptt"), cfg.get("ptt_port"))
+    return sig
+
+
+def describe(cfg):
+    """Résumé d'une ligne (Réglages)."""
+    e = rig_entry(cfg["rig"])
+    parts = [e["label"]]
+    if e["kind"] in ("kenwood", "hamlib") and cfg.get("port"):
+        parts.append(f"{cfg['port']} {cfg['baud']} bauds")
+    if e["kind"] in ("netrigctl", "flrig"):
+        parts.append(cfg.get("host") or ("127.0.0.1:4532" if e["kind"] == "netrigctl" else "127.0.0.1:12345"))
+    p = cfg["ptt"]
+    if p in ("DTR", "RTS"):
+        p += f" {cfg.get('ptt_port') or cfg.get('port') or '?'}"
+    elif p == "CAT":
+        p += " (" + ("arrière / data" if cfg["tx_audio"] == "rear" else "avant / micro") + ")"
+    parts.append("PTT " + p)
+    return " — ".join(parts)
+
+
+# ------------------------------------------------------------------ port série
+def open_port(cfg, port=None):
+    """Ouvre un port série avec tous les paramètres choisis (comme WSJT-X)."""
+    import serial
+    port = port or cfg.get("port")
+    ser = audio.open_serial(port, int(cfg.get("baud") or 9600))
+    try:
+        db = cfg.get("data_bits")
+        if str(db) in ("7", "8"):
+            ser.bytesize = serial.SEVENBITS if str(db) == "7" else serial.EIGHTBITS
+        sb = cfg.get("stop_bits")
+        if str(sb) in ("1", "2"):
+            ser.stopbits = serial.STOPBITS_ONE if str(sb) == "1" else serial.STOPBITS_TWO
+        hs = cfg.get("handshake")
+        if hs == "none":
+            ser.xonxoff = ser.rtscts = False
+        elif hs == "xonxoff":
+            ser.xonxoff, ser.rtscts = True, False
+        elif hs == "hardware":
+            ser.xonxoff, ser.rtscts = False, True
+        for line, attr in (("dtr", "dtr"), ("rts", "rts")):
+            v = cfg.get(line)
+            if v in ("high", "low") and not (line == "rts" and hs == "hardware"):
+                setattr(ser, attr, v == "high")
+    except Exception:
+        ser.close()
+        raise
+    return ser
+
+
+# ------------------------------------------------------------------ pilotes
+class RigBase:
+    kind = "none"
+    model = ""
+    port = None
+
+    def freq(self):
+        return None
+
+    def mode(self):
+        return None
+
+    def ptt(self, on, rear=True):
+        """rear : audio d'émission par l'arrière / data (sinon avant / micro)."""
+        raise RuntimeError("ce pilote ne commande pas le PTT")
+
+    def set_mode(self, which):
+        """which : « usb » ou « data ». -> (ok, texte)."""
+        return False, "changement de mode non pris en charge"
+
+    @staticmethod
+    def is_data(mode):
+        m = (mode or "").upper()
+        return "DATA" in m or m.startswith("PKT") or "DIG" in m or m.endswith("-D") or "-D1" in m
+
+    def close(self):
+        pass
+
+
+class KenwoodRig(RigBase):
+    """Kenwood en direct (et compatibles ASCII) : ID, FA, SF0 / OM0, TX0 / TX1 / RX."""
+    kind = "kenwood"
+
+    def __init__(self, cfg):
+        self.cfg = cfg
+        self.port, self.baud = cfg["port"], int(cfg["baud"])
+        self.ser = open_port(cfg)
+        self.lock = threading.Lock()
+        self.model = None
+        rid = self.query("ID;")
+        if rid.startswith("ID"):
+            self.model = audio.KENWOOD_IDS.get(rid[2:5], f"ID {rid[2:-1]}")
+        elif not rid:
+            self.close()
+            raise RuntimeError(f"pas de réponse du poste sur {self.port} à {self.baud} bauds "
+                               f"(vitesse ? menu « COM port » du poste)")
+
+    def query(self, cmd, timeout=0.6):
+        with self.lock:
+            return audio._query(self.ser, cmd, timeout)
+
+    def write(self, cmd):
+        with self.lock:
+            self.ser.write(cmd.encode())
+
+    def freq(self):
+        r = self.query("FA;")
+        if r.startswith("FA") and r.endswith(";") and r[2:-1].isdigit():
+            return int(r[2:-1])
+        return None
+
+    def mode(self):
+        return audio._mode_of(self.model, self.query)[0]
+
+    def ptt(self, on, rear=True):
+        if on:
+            self.write("TX1;" if rear else "TX0;")
+        else:
+            self.write("RX;")
+
+    def set_mode(self, which):
+        if self.model == "TS-990S":
+            cmds = ["OM0D;"] if which == "data" else ["OM02;"]
+        elif self.model == "TS-890S":
+            cmds = ["OM02;", "DA1;" if which == "data" else "DA0;"]
+        else:
+            cmds = ["MD2;", "DA1;" if which == "data" else "DA0;"]
+        for c in cmds:
+            self.write(c)
+            time.sleep(0.15)
+        time.sleep(0.3)
+        m = self.mode()
+        ok = bool(m) and (self.is_data(m) if which == "data" else m == "USB")
+        return ok, (f"{self.model} passé en {m} par CAT." if ok else
+                    f"{self.model} : le passage en {'USB-DATA' if which == 'data' else 'USB'} par CAT "
+                    f"n'a pas pris (mode lu : {m}).")
+
+    def set_line(self, which, on):
+        with self.lock:
+            setattr(self.ser, which, bool(on))
+
+    def close(self):
+        try:
+            self.ser.close()
+        except Exception:
+            pass
+
+
+class RigctlRig(RigBase):
+    """Client du protocole texte de Hamlib rigctld (f, m, T, M)."""
+    kind = "netrigctl"
+
+    def __init__(self, cfg, host="127.0.0.1", port=4532, label=None):
+        self.cfg = cfg
+        self.host, self.tport = host, int(port)
+        self.port = f"{host}:{port}"
+        self.model = label or "Hamlib rigctld"
+        self.lock = threading.Lock()
+        self.sock = None
+        self._connect()
+
+    def _connect(self, tries=1):
+        last = None
+        for _ in range(tries):
+            try:
+                self.sock = socket.create_connection((self.host, self.tport), timeout=3)
+                self.sock.settimeout(3)
+                self.buf = b""
+                return
+            except OSError as e:
+                last = e
+                time.sleep(0.5)
+        raise RuntimeError(f"serveur Hamlib injoignable ({self.host}:{self.tport}) : {last}")
+
+    def _readline(self):
+        while b"\n" not in self.buf:
+            b = self.sock.recv(4096)
+            if not b:
+                raise RuntimeError("liaison avec rigctld coupée")
+            self.buf += b
+        line, self.buf = self.buf.split(b"\n", 1)
+        return line.decode(errors="replace").strip()
+
+    def cmd(self, c, nlines=1):
+        with self.lock:
+            if self.sock is None:
+                self._connect()
+            try:
+                self.sock.sendall((c + "\n").encode())
+                out = []
+                for _ in range(nlines):
+                    line = self._readline()
+                    out.append(line)
+                    if line.startswith("RPRT"):
+                        break
+                return out
+            except OSError as e:
+                # réponse en retard ou liaison coupée : on repart d'une connexion propre
+                # (sinon les réponses suivantes seraient décalées)
+                try:
+                    self.sock.close()
+                except OSError:
+                    pass
+                self.sock = None
+                if isinstance(e, TimeoutError) or "timed out" in str(e):
+                    raise RuntimeError(f"le poste ne répond pas à la commande Hamlib « {c} »")
+                raise RuntimeError(f"liaison avec Hamlib perdue : {e}")
+
+    def _ok(self, c):
+        r = self.cmd(c)
+        return bool(r) and r[0] == "RPRT 0"
+
+    def freq(self):
+        r = self.cmd("f")
+        try:
+            return int(float(r[0]))
+        except (ValueError, IndexError):
+            return None
+
+    def mode(self):
+        r = self.cmd("m", 2)
+        return r[0] if r and not r[0].startswith("RPRT") else None
+
+    def ptt(self, on, rear=True):
+        if not on:
+            if not self._ok("T 0"):
+                raise RuntimeError("PTT : rigctld refuse T 0")
+            return
+        # Hamlib : 3 = émission audio arrière / data, 2 = micro ; repli sur 1 si refusé
+        first = "T 3" if rear else "T 2"
+        if not self._ok(first) and not self._ok("T 1"):
+            raise RuntimeError("PTT : le poste refuse la commande d'émission (Hamlib T)")
+
+    def set_mode(self, which):
+        modes = ["PKTUSB"] if which == "data" else ["USB"]
+        for m in modes:
+            if self._ok(f"M {m} -1"):
+                time.sleep(0.2)
+                got = self.mode()
+                return True, f"{self.model} passé en {got or m} par Hamlib."
+        return False, f"{self.model} : Hamlib n'a pas pu passer en {modes[0]}."
+
+    def close(self):
+        try:
+            if self.sock is not None:
+                self.sock.close()
+        except Exception:
+            pass
+
+
+class HamlibRig(RigctlRig):
+    """Tous les postes Hamlib : HFImage lance rigctld (caché) et lui parle en local."""
+    kind = "hamlib"
+
+    def __init__(self, cfg, model_id, label):
+        exe = find_rigctld()
+        if not exe:
+            raise HamlibMissing()
+        self.proc = None
+        tport = _free_port()
+        port = cfg.get("port") or ""
+        if not port:
+            raise RuntimeError("aucun port COM choisi pour le poste")
+        args = [exe, "-m", str(model_id), "-r", _hamlib_port(port), "-s", str(int(cfg.get("baud") or 9600)),
+                "-T", "127.0.0.1", "-t", str(tport)]
+        conf = []
+        if str(cfg.get("data_bits")) in ("7", "8"):
+            conf.append(f"data_bits={cfg['data_bits']}")
+        if str(cfg.get("stop_bits")) in ("1", "2"):
+            conf.append(f"stop_bits={cfg['stop_bits']}")
+        hs = {"none": "None", "xonxoff": "XONXOFF", "hardware": "Hardware"}.get(cfg.get("handshake"))
+        if hs:
+            conf.append(f"serial_handshake={hs}")
+        for line in ("dtr", "rts"):
+            v = {"high": "ON", "low": "OFF"}.get(cfg.get(line))
+            if v:
+                conf.append(f"{line}_state={v}")
+        if conf:
+            args += ["--set-conf=" + ",".join(conf)]
+        # PTT par DTR / RTS sur le port CAT : géré par Hamlib (le port lui appartient)
+        if cfg.get("ptt") in ("DTR", "RTS") and (cfg.get("ptt_port") or port) == port:
+            args += ["-P", cfg["ptt"], "-p", _hamlib_port(port)]
+        flags = 0x08000000 if sys.platform.startswith("win") else 0        # CREATE_NO_WINDOW
+        self.logpath = os.path.join(os.path.dirname(exe) if os.access(os.path.dirname(exe), os.W_OK)
+                                    else os.path.expanduser("~"), "rigctld_hfimage.log")
+        try:
+            self.logf = open(self.logpath, "wb")
+        except OSError:
+            self.logf = subprocess.DEVNULL
+        # sortie d'erreur dans un fichier (un tuyau non lu finirait par bloquer rigctld)
+        self.proc = subprocess.Popen(args, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
+                                     stderr=self.logf, creationflags=flags)
+        _kill_with_us(self.proc)
+        try:
+            t0 = time.time()
+            while True:
+                if self.proc.poll() is not None:
+                    raise RuntimeError("Hamlib (rigctld) s'est arrêté : " + (self._last_err() or
+                                                                          f"code {self.proc.returncode}"))
+                try:
+                    super().__init__(cfg, "127.0.0.1", tport, label)
+                    break
+                except RuntimeError:
+                    if time.time() - t0 > 8:
+                        raise
+                    time.sleep(0.4)
+            try:
+                f = self.freq()
+            except RuntimeError:
+                f = None
+            if f is None:
+                err = self._last_err()
+                raise RuntimeError(f"{label} : pas de réponse du poste sur {port} à {cfg.get('baud')} bauds"
+                                   + (f" (Hamlib : {err})" if err else "")
+                                   + " — vérifiez le port, la vitesse et le réglage CAT du poste")
+        except Exception:
+            self.close()
+            raise
+        self.port = port
+
+    def _last_err(self):
+        try:
+            with open(self.logpath, "rb") as f:
+                lines = [l.strip() for l in f.read()[-4000:].decode(errors="replace").splitlines() if l.strip()]
+            errs = [l for l in lines if "error" in l.lower() or "failed" in l.lower() or "timeout" in l.lower()]
+            return (errs or lines or [""])[-1][:160]
+        except OSError:
+            return ""
+
+    def close(self):
+        super().close()
+        if getattr(self, "proc", None) is not None:
+            try:
+                self.proc.terminate()
+                self.proc.wait(timeout=3)
+            except Exception:
+                try:
+                    self.proc.kill()
+                except Exception:
+                    pass
+            self.proc = None
+        lf = getattr(self, "logf", None)
+        if lf not in (None, subprocess.DEVNULL):
+            try:
+                lf.close()
+            except OSError:
+                pass
+            self.logf = None
+
+
+_JOB = None
+
+
+def _kill_with_us(proc):
+    """Windows : rigctld est arrêté avec HFImage, même si HFImage plante (« job » Windows)."""
+    global _JOB
+    if not sys.platform.startswith("win"):
+        return
+    try:
+        import ctypes
+        from ctypes import wintypes
+        k32 = ctypes.WinDLL("kernel32", use_last_error=True)
+        k32.CreateJobObjectW.restype = wintypes.HANDLE
+        k32.OpenProcess.restype = wintypes.HANDLE
+        if _JOB is None:
+            job = k32.CreateJobObjectW(None, None)
+
+            class BASIC(ctypes.Structure):
+                _fields_ = [("PerProcessUserTimeLimit", ctypes.c_int64), ("PerJobUserTimeLimit", ctypes.c_int64),
+                            ("LimitFlags", wintypes.DWORD), ("MinimumWorkingSetSize", ctypes.c_size_t),
+                            ("MaximumWorkingSetSize", ctypes.c_size_t), ("ActiveProcessLimit", wintypes.DWORD),
+                            ("Affinity", ctypes.c_size_t), ("PriorityClass", wintypes.DWORD),
+                            ("SchedulingClass", wintypes.DWORD)]
+
+            class IO(ctypes.Structure):
+                _fields_ = [(n, ctypes.c_uint64) for n in ("a", "b", "c", "d", "e", "f")]
+
+            class EXT(ctypes.Structure):
+                _fields_ = [("Basic", BASIC), ("Io", IO), ("ProcessMemoryLimit", ctypes.c_size_t),
+                            ("JobMemoryLimit", ctypes.c_size_t), ("PeakProcessMemoryUsed", ctypes.c_size_t),
+                            ("PeakJobMemoryUsed", ctypes.c_size_t)]
+            info = EXT()
+            info.Basic.LimitFlags = 0x2000                       # JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE
+            k32.SetInformationJobObject(wintypes.HANDLE(job), 9, ctypes.byref(info), ctypes.sizeof(info))
+            _JOB = job
+        h = k32.OpenProcess(0x0001 | 0x0100, False, proc.pid)    # TERMINATE | SET_QUOTA
+        if h:
+            k32.AssignProcessToJobObject(wintypes.HANDLE(_JOB), wintypes.HANDLE(h))
+            k32.CloseHandle(wintypes.HANDLE(h))
+    except Exception:
+        pass
+
+
+class FlrigRig(RigBase):
+    """FLRig (XML-RPC)."""
+    kind = "flrig"
+
+    def __init__(self, cfg):
+        import xmlrpc.client
+        host = cfg.get("host") or "127.0.0.1:12345"
+        if ":" not in host:
+            host += ":12345"
+        self.port = host
+        self.cfg = cfg
+        self.lock = threading.Lock()
+        self.srv = xmlrpc.client.ServerProxy(f"http://{host}/RPC2")
+        try:
+            self.model = f"FLRig ({self.srv.rig.get_xcvr()})"
+        except Exception as e:
+            raise RuntimeError(f"FLRig injoignable sur {host} : {e}")
+
+    def freq(self):
+        with self.lock:
+            try:
+                return int(float(self.srv.rig.get_vfo()))
+            except (ValueError, TypeError):
+                return None
+
+    def mode(self):
+        with self.lock:
+            return str(self.srv.rig.get_mode())
+
+    def ptt(self, on, rear=True):
+        with self.lock:
+            self.srv.rig.set_ptt(1 if on else 0)
+
+    def set_mode(self, which):
+        with self.lock:
+            modes = [str(m) for m in (self.srv.rig.get_modes() or [])]
+        wanted = (["USB-D", "USB-D1", "D-USB", "PKT-U", "PKTUSB", "DATA-U", "USB-DATA", "DIGU", "DIG"]
+                  if which == "data" else ["USB"])
+        for w in wanted:
+            for m in modes:
+                if m.upper() == w:
+                    with self.lock:
+                        self.srv.rig.set_mode(m)
+                    return True, f"FLRig : mode {m}."
+        return False, f"FLRig : aucun mode {'DATA' if which == 'data' else 'USB'} parmi {', '.join(modes)}."
+
+
+class OmniRigRig(RigBase):
+    """OmniRig (serveur COM Windows), Rig 1 ou Rig 2."""
+    kind = "omnirig"
+    PM_RX, PM_TX = 0x200000, 0x400000
+    PM_SSB_U, PM_DIG_U = 0x2000000, 0x8000000
+    MODES = {0x800000: "CW", 0x1000000: "CW-R", 0x2000000: "USB", 0x4000000: "LSB", 0x8000000: "DIG-U",
+             0x10000000: "DIG-L", 0x20000000: "AM", 0x40000000: "FM"}
+
+    def __init__(self, cfg, rig_no):
+        try:
+            import comtypes.client
+            comtypes.CoInitialize()
+            self.omni = comtypes.client.CreateObject("OmniRig.OmniRigX", dynamic=True)
+        except Exception as e:
+            raise RuntimeError(f"OmniRig n'est pas installé ou ne démarre pas : {e}")
+        self.rig = self.omni.Rig1 if rig_no == 1 else self.omni.Rig2
+        self.port = f"OmniRig {rig_no}"
+        self.lock = threading.Lock()
+        try:
+            self.model = f"OmniRig {rig_no} ({self.rig.RigType})"
+        except Exception:
+            self.model = f"OmniRig {rig_no}"
+        self._tid = threading.get_ident()
+
+    def _call(self, fn):
+        # OmniRig est un objet COM : chaque fil doit initialiser COM
+        if threading.get_ident() != self._tid:
+            import comtypes
+            try:
+                comtypes.CoInitialize()
+            except OSError:
+                pass
+        with self.lock:
+            return fn()
+
+    def freq(self):
+        f = self._call(lambda: int(self.rig.Freq))
+        return f or None
+
+    def mode(self):
+        m = self._call(lambda: int(self.rig.Mode))
+        return self.MODES.get(m, f"0x{m:x}")
+
+    def ptt(self, on, rear=True):
+        self._call(lambda: setattr(self.rig, "Tx", self.PM_TX if on else self.PM_RX))
+
+    def set_mode(self, which):
+        self._call(lambda: setattr(self.rig, "Mode", self.PM_DIG_U if which == "data" else self.PM_SSB_U))
+        time.sleep(0.3)
+        return True, f"OmniRig : mode {self.mode()}."
+
+
+class HamlibMissing(RuntimeError):
+    def __init__(self):
+        super().__init__("Hamlib n'est pas installé : Réglages du poste → « Installer Hamlib »")
+
+
+def make_rig(cfg):
+    """Ouvre la liaison CAT selon les réglages. -> RigBase ou None (pas de CAT)."""
+    e = rig_entry(cfg["rig"])
+    k = e["kind"]
+    if k == "none":
+        return None
+    if k == "kenwood":
+        return KenwoodRig(cfg)
+    if k == "hamlib":
+        return HamlibRig(cfg, e["model_id"], e["label"])
+    if k == "netrigctl":
+        host = cfg.get("host") or "127.0.0.1:4532"
+        h, _, p = host.partition(":")
+        return RigctlRig(cfg, h or "127.0.0.1", int(p or 4532), "Hamlib NET rigctl")
+    if k == "flrig":
+        return FlrigRig(cfg)
+    if k == "omnirig":
+        return OmniRigRig(cfg, e["rig_no"])
+    return None
+
+
+class Ptt:
+    """Commande d'émission selon les réglages : VOX, CAT (par le pilote), DTR / RTS
+    (sur le port CAT ou sur le port d'une interface à côté)."""
+
+    def __init__(self, cfg, rig):
+        self.cfg, self.rig = cfg, rig
+        self.method = cfg.get("ptt", "VOX")
+        self.ser = None
+        self.line = None
+        e = rig_entry(cfg["rig"])
+        if self.method == "CAT":
+            if rig is None:
+                raise RuntimeError("PTT par CAT : choisissez d'abord le poste (liaison CAT)")
+        elif self.method in ("DTR", "RTS"):
+            self.line = self.method.lower()
+            port = cfg.get("ptt_port") or cfg.get("port")
+            if not port:
+                raise RuntimeError(f"PTT {self.method} : aucun port COM choisi")
+            if rig is not None and rig.port == port and e["kind"] == "kenwood":
+                pass                                     # même port que le CAT Kenwood : ses lignes
+            elif rig is not None and rig.port == port and e["kind"] == "hamlib":
+                self.method = "CAT"                      # Hamlib tient le port et pilote la ligne
+            elif rig is not None and rig.port == port:
+                raise RuntimeError(f"PTT {self.method} : le port {port} est déjà utilisé par le CAT")
+            else:
+                import serial
+                try:
+                    self.ser = serial.Serial(port, 9600, timeout=0.2)
+                except serial.SerialException as ex:
+                    raise RuntimeError(f"PTT : impossible d'ouvrir {port} : {ex}")
+                self.ser.rts = False
+                self.ser.dtr = False
+
+    def _set(self, on):
+        if self.method == "VOX":
+            return
+        if self.method == "CAT":
+            self.rig.ptt(on, self.cfg.get("tx_audio", "rear") == "rear")
+        elif self.ser is not None:
+            setattr(self.ser, self.line, bool(on))
+        else:
+            self.rig.set_line(self.line, on)
+
+    def tx(self):
+        self._set(True)
+
+    def rx(self):
+        self._set(False)
+
+    def close(self):
+        try:
+            self.rx()
+        except Exception:
+            pass
+        if self.ser is not None:
+            try:
+                self.ser.close()
+            except Exception:
+                pass
+            self.ser = None
+
+
+# ------------------------------------------------------------------ Hamlib : installation
+HAMLIB_URL = (f"https://github.com/Hamlib/Hamlib/releases/download/{HAMLIB_VERSION}/"
+              f"hamlib-w64-{HAMLIB_VERSION}.zip")
+HAMLIB_SHA256 = "2a7bfae280ec8aef1d42558b73eaef7f5f0d1dfa9fd8463c15adde5fdec63851"
+HAMLIB_FILES = ("rigctld.exe", "libhamlib-4.dll", "libgcc_s_seh-1.dll", "libwinpthread-1.dll", "libusb-1.0.dll")
+
+
+def hamlib_dir():
+    base = os.environ.get("LOCALAPPDATA") or os.path.join(os.path.expanduser("~"), "AppData", "Local")
+    return os.path.join(base, "HFImage", f"hamlib-{HAMLIB_VERSION}")
+
+
+def find_rigctld():
+    """rigctld.exe : celui téléchargé par HFImage, sinon celui de WSJT-X / JTDX / Hamlib installé."""
+    cands = [os.path.join(hamlib_dir(), "rigctld.exe")]
+    pf = [os.environ.get(v) for v in ("ProgramFiles", "ProgramFiles(x86)", "LOCALAPPDATA")]
+    for root in [r"C:\WSJT\wsjtx\bin", r"C:\WSJT\wsjtx-improved\bin", r"C:\JTDX64\bin", r"C:\JTDX\bin"]:
+        cands += [os.path.join(root, "rigctld-wsjtx.exe"), os.path.join(root, "rigctld.exe")]
+    for p in pf:
+        if not p or not os.path.isdir(p):
+            continue
+        try:
+            for d in os.listdir(p):
+                if d.lower().startswith("hamlib"):
+                    cands.append(os.path.join(p, d, "bin", "rigctld.exe"))
+        except OSError:
+            pass
+    for c in cands:
+        if c and os.path.isfile(c):
+            return c
+    return None
+
+
+def install_hamlib(progress=lambda f: None):
+    """Télécharge Hamlib pour Windows depuis GitHub (empreinte SHA-256 vérifiée)
+    et n'en garde que rigctld et ses bibliothèques. -> dossier."""
+    import io
+    import urllib.request
+    req = urllib.request.Request(HAMLIB_URL, headers={"User-Agent": "HFImage-F4GOP"})
+    h, buf = hashlib.sha256(), io.BytesIO()
+    with urllib.request.urlopen(req, timeout=30) as r:
+        total = int(r.headers.get("Content-Length") or 0)
+        while True:
+            b = r.read(128 * 1024)
+            if not b:
+                break
+            buf.write(b)
+            h.update(b)
+            if total:
+                progress(min(1.0, buf.tell() / total))
+    if h.hexdigest() != HAMLIB_SHA256:
+        raise ValueError("Hamlib téléchargé : empreinte SHA-256 inattendue, installation refusée")
+    dest = hamlib_dir()
+    os.makedirs(dest, exist_ok=True)
+    with zipfile.ZipFile(buf) as z:
+        for n in z.namelist():
+            base = n.rsplit("/", 1)[-1]
+            if "/bin/" in n and base in HAMLIB_FILES:
+                with z.open(n) as src, open(os.path.join(dest, base), "wb") as out:
+                    out.write(src.read())
+    if not os.path.isfile(os.path.join(dest, "rigctld.exe")):
+        raise RuntimeError("rigctld.exe absent de l'archive Hamlib")
+    return dest
+
+
+def _hamlib_port(port):
+    """COM10 et plus : écriture Windows « \\\\.\\COM10 » pour Hamlib."""
+    p = port.strip()
+    if p.upper().startswith("COM") and p[3:].isdigit() and int(p[3:]) >= 10:
+        return "\\\\.\\" + p
+    return p
+
+
+def _free_port():
+    s = socket.socket()
+    s.bind(("127.0.0.1", 0))
+    p = s.getsockname()[1]
+    s.close()
+    return p

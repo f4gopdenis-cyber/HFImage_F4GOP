@@ -25,6 +25,9 @@ import hybrid
 import i18n
 import imgfmt
 import presence
+import radio
+import radiodlg
+import contextlib
 import stationmap
 import theme
 import updater
@@ -40,7 +43,7 @@ import random
 import wave
 
 APP = "HFImage F4GOP"
-VERSION = "0.20"
+VERSION = "0.21"
 CONF_PATH = os.path.join(os.path.expanduser("~"), ".hfimage.json")
 DEFAULT_OUT = os.path.join(os.path.expanduser("~"), "Documents", "HFImage")
 DEFAULTS = {
@@ -193,7 +196,10 @@ class App(tk.Tk):
         self.ctl_seen = {}
         self.rig = None
         self.rig_freq = self.rig_mode = None
-        self.cat_cfg = (False, "", 115200)
+        self.radio_cfg = radio.from_conf(self.conf)     # poste, CAT, PTT (fenêtre « Poste radio »)
+        self.rig_lock = threading.RLock()
+        self._rig_hold = 0                               # > 0 : liaison CAT prêtée (tests)
+        self._rig_kick = threading.Event()
         self._closing = False
         self.snr_by_call = {}       # dernier SNR mesuré par station (report QSL)
         self.snr_by_id = {}
@@ -416,6 +422,7 @@ class App(tk.Tk):
         r.add_command(label="Réglages…", command=self.show_settings)
         r.add_separator()
         r.add_command(label="Tester la sortie audio (1 kHz)", command=self.test_audio)
+        r.add_command(label="Poste radio…", command=self.radio_dialog)
         r.add_command(label="Vérifier le poste (CAT)", command=self.check_rig)
         r.add_command(label="Tester le PTT (1 s)", command=self.test_ptt)
         r.add_separator()
@@ -1391,33 +1398,17 @@ class App(tk.Tk):
                           "Réglez le niveau pour que l'ALC ne bouge pas.",
                   foreground="#555", justify="left").grid(row=4, column=0, columnspan=2, sticky="w", pady=(6, 0))
 
-        c = ttk.LabelFrame(colL, text="PTT", padding=8)
+        c = ttk.LabelFrame(colL, text="Poste radio (CAT / PTT)", padding=8)
         c.pack(fill="x", pady=10)
-        self.v_ptt = tk.StringVar(value=self.conf.get("ptt", "VOX"))
-        self.v_port = tk.StringVar(value=self.conf["cat_port"])
-        self.v_baud = tk.IntVar(value=self.conf["cat_baud"])
-        self.v_cmd = tk.StringVar(value=self.conf["cat_cmd"])
-        ttk.Label(c, text="Méthode").grid(row=0, column=0, sticky="w")
-        ttk.Combobox(c, textvariable=self.v_ptt, values=PTT_METHODS, width=8, state="readonly").grid(
-            row=0, column=1, sticky="w", padx=6, pady=3)
-        self.cb_port = ttk.Combobox(c, textvariable=self.v_port, width=12)
-        ttk.Label(c, text="Port COM").grid(row=1, column=0, sticky="w")
-        self.cb_port.grid(row=1, column=1, sticky="w", padx=6, pady=3)
-        ttk.Label(c, text="Vitesse").grid(row=2, column=0, sticky="w")
-        ttk.Combobox(c, textvariable=self.v_baud, values=[9600, 19200, 38400, 57600, 115200],
-                     width=10).grid(row=2, column=1, sticky="w", padx=6)
-        ttk.Label(c, text="Commande CAT").grid(row=3, column=0, sticky="w")
-        ttk.Combobox(c, textvariable=self.v_cmd, values=["TX1;", "TX0;", "TX;"], width=10).grid(
-            row=3, column=1, sticky="w", padx=6, pady=3)
+        self.lb_radio = ttk.Label(c, text="", wraplength=380, justify="left")
+        self.lb_radio.grid(row=0, column=0, columnspan=2, sticky="w")
         pb = ttk.Frame(c)
-        pb.grid(row=4, column=0, columnspan=2, sticky="w", pady=(4, 0))
-        ttk.Button(pb, text="Vérifier le poste", command=self.check_rig).pack(side="left")
-        ttk.Button(pb, text="Tester le PTT (1 s)", command=self.test_ptt).pack(side="left", padx=6)
-        self.v_catfreq = tk.BooleanVar(value=self.conf.get("cat_freq", True))
-        ttk.Checkbutton(c, text="Afficher la fréquence du poste (CAT)", variable=self.v_catfreq).grid(
-            row=6, column=0, columnspan=2, sticky="w", pady=(4, 0))
+        pb.grid(row=1, column=0, columnspan=2, sticky="w", pady=(6, 0))
+        ttk.Button(pb, text="Poste radio…", command=self.radio_dialog).pack(side="left")
+        ttk.Button(pb, text="Vérifier le poste", command=self.check_rig).pack(side="left", padx=6)
+        ttk.Button(pb, text="Tester le PTT (1 s)", command=self.test_ptt).pack(side="left")
         da = ttk.Frame(c)
-        da.grid(row=7, column=0, columnspan=2, sticky="w", pady=(4, 0))
+        da.grid(row=2, column=0, columnspan=2, sticky="w", pady=(6, 0))
         ttk.Label(da, text="Poste pas en DATA avant d'émettre :").pack(side="left")
         self._data_act_names = {tr(v): k for k, v in DATA_ACTIONS.items()}
         self.v_dataact = tk.StringVar(value=tr(DATA_ACTIONS.get(self.conf.get("data_action", "ask"), DATA_ACTIONS["ask"])))
@@ -1428,10 +1419,11 @@ class App(tk.Tk):
             self.conf["data_action"] = self._data_act_names.get(self.v_dataact.get(), "ask")
             self._save_conf_file()
         cbd.bind("<<ComboboxSelected>>", _act_changed)
-        ttk.Label(c, text="CAT : TX1; = DATA SEND (audio USB), poste en mode DATA (USB-D).\n"
-                          "Le port doit être libre : fermez ARCP/logger, ou prenez l'autre\n"
-                          "port COM virtuel du poste (Standard / Enhanced).",
-                  foreground="#555", justify="left").grid(row=5, column=0, columnspan=2, sticky="w", pady=(6, 0))
+        ttk.Label(c, text="Plus de 300 postes (Hamlib), Kenwood en direct, OmniRig, FLRig.\n"
+                          "Le port doit être libre : fermez les autres logiciels qui l'utilisent,\n"
+                          "ou passez par OmniRig / FLRig pour partager le poste.",
+                  foreground="#555", justify="left").grid(row=3, column=0, columnspan=2, sticky="w", pady=(6, 0))
+        self._radio_summary()
 
         h = ttk.LabelFrame(colR, text="Mode hybride (serveur web)", padding=8)
         h.pack(fill="x")
@@ -1608,32 +1600,88 @@ class App(tk.Tk):
             self.panel.set_cell("Segs OK", "TX", str(tx.sender.sent))
         self.panel.set_cell("Position", "TX", tr("émission"))
 
-    def _rig_for(self, port):
-        r = self.rig
-        return r if r is not None and r.port == port else None
+    # ------------------------------------------------------------- poste radio (CAT)
+    def _radio_summary(self):
+        if hasattr(self, "lb_radio"):
+            self._set_text(self.lb_radio, radio.describe(self.radio_cfg))
+
+    def radio_dialog(self):
+        w = getattr(self, "_radio_win", None)
+        if w is not None and w.winfo_exists():
+            w.lift()
+            return
+        self._radio_win = radiodlg.RadioDialog(self)
+
+    def set_radio(self, cfg):
+        """Nouveaux réglages du poste (fenêtre « Poste radio ») : enregistrés, liaison rouverte."""
+        old = self.radio_cfg
+        self.radio_cfg = dict(cfg)
+        self.conf["radio"] = self.radio_cfg
+        self._save_conf_file()
+        self._radio_summary()
+        self.log("Poste radio : " + radio.describe(self.radio_cfg))
+        if radio.cat_signature(old) != radio.cat_signature(cfg):
+            self._rig_close()
+            self._rig_kick.set()
+
+    def _rig_close(self):
+        with self.rig_lock:
+            r, self.rig = self.rig, None
+            self.rig_freq = self.rig_mode = None
+        if r is not None:
+            try:
+                r.close()
+            except Exception:
+                pass
+        self.ui(self._show_freq)
+
+    @contextlib.contextmanager
+    def rig_hold(self):
+        """Libère le port du poste le temps d'un test (fenêtre « Poste radio »)."""
+        with self.rig_lock:
+            self._rig_hold += 1
+        try:
+            self._rig_close()
+            yield
+        finally:
+            with self.rig_lock:
+                self._rig_hold -= 1
+            self._rig_kick.set()
+
+    def _rig_open(self):
+        """Liaison CAT ouverte selon les réglages (None : pas de CAT). Peut lever une erreur."""
+        with self.rig_lock:
+            cfg = self.radio_cfg
+            if self.rig is not None and self.rig._sig == radio.cat_signature(cfg):
+                return self.rig
+            if self.rig is not None:
+                self._rig_close()
+            if radio.rig_entry(cfg["rig"])["kind"] == "none":
+                return None
+            r = radio.make_rig(cfg)
+            r._sig = radio.cat_signature(cfg)
+            self.rig = r
+            self.ui(self.log, f"Liaison CAT : {r.model or 'poste'} ({r.port})")
+            return r
 
     def _rig_loop(self):
-        """Fil de fond : garde la liaison CAT ouverte et lit fréquence / mode chaque seconde."""
+        """Fil de fond : garde la liaison CAT ouverte et lit fréquence / mode régulièrement."""
         last_err, n, last_msg = 0.0, 0, ""
         while not self._closing:
-            on, port, baud = self.cat_cfg
-            r = self.rig
-            if r is not None and (not on or not port or (r.port, r.baud) != (port, baud)):
-                self.rig = None
-                r.close()
-                self.rig_freq = self.rig_mode = None
-                self.ui(self._show_freq)
+            self._rig_kick.clear()
+            cfg = self.radio_cfg
+            poll = max(1, int(cfg.get("poll") or 1))
+            if radio.rig_entry(cfg["rig"])["kind"] == "none" or self._rig_hold:
+                if self.rig is not None and not self._rig_hold:
+                    self._rig_close()
+                self._rig_kick.wait(1)
                 continue
-            if not on or not port:
-                time.sleep(1)
-                continue
-            if self.rig is None:
-                if self.tx_busy or time.time() - last_err < 10:
-                    time.sleep(1)
+            if self.rig is None or self.rig._sig != radio.cat_signature(cfg):
+                if time.time() - last_err < 10 and not self._rig_kick.is_set():
+                    self._rig_kick.wait(1)
                     continue
                 try:
-                    self.rig = audio.Rig(port, baud)
-                    self.ui(self.log, f"Liaison CAT : {self.rig.model or 'poste'} sur {port}")
+                    self._rig_open()
                     last_msg = ""
                 except Exception as e:
                     last_err = time.time()
@@ -1641,23 +1689,25 @@ class App(tk.Tk):
                         last_msg = str(e)
                         self.ui(self.log, f"Fréquence non lue : {e}")
                     continue
+            r = self.rig
+            if r is None:
+                continue
             try:
-                f = self.rig.freq()
-                if n % 5 == 0:
-                    self.rig_mode = self.rig.mode()
+                f = r.freq()
+                if n % max(1, 5 // poll) == 0:
+                    self.rig_mode = r.mode()
                 if f is None and self.rig_freq is None:
-                    raise RuntimeError("pas de réponse à FA;")
+                    raise RuntimeError("le poste ne donne pas sa fréquence")
                 if f is not None:
                     self.rig_freq = f
                 self.ui(self._show_freq)
             except Exception as e:
-                r, self.rig = self.rig, None
-                if r is not None:
-                    r.close()
-                last_err = time.time()
-                self.ui(self.log, f"Liaison CAT perdue : {e}")
+                if self.rig is r and not self._rig_hold:
+                    self._rig_close()
+                    last_err = time.time()
+                    self.ui(self.log, f"Liaison CAT perdue : {e}")
             n += 1
-            time.sleep(1)
+            self._rig_kick.wait(poll)
 
     def _show_freq(self):
         f = self.rig_freq
@@ -1693,10 +1743,6 @@ class App(tk.Tk):
     def _tick(self):
         """Toutes les 300 ms : panneau d'état, BSR/ACK automatiques, FIX automatique."""
         try:
-            try:
-                self.cat_cfg = (bool(self.v_catfreq.get()), self.v_port.get().strip(), int(self.v_baud.get()))
-            except (tk.TclError, ValueError):
-                pass
             self._update_panel()
             self._bsr_check()
             self._fix_due()
@@ -1779,7 +1825,6 @@ class App(tk.Tk):
                 ins.append(entry)
         self.cb_out["values"] = [e[2] for e in sorted(outs)]
         self.cb_in["values"] = [e[2] for e in sorted(ins)]
-        self.cb_port["values"] = [p for p, _ in audio.ports_list()]
 
     @staticmethod
     def _dev_index(s):
@@ -1815,8 +1860,7 @@ class App(tk.Tk):
                 width=self.v_width.get(), seconds=int(self.v_sec.get()),
                 fmt=self.v_fmt.get(), overhead=int(self.v_over.get()), conf_v=10,
                 out_dev=self.v_out.get(), in_dev=self.v_in.get(), level=int(self.v_lvl.get()),
-                ptt=self.v_ptt.get(), cat_port=self.v_port.get(),
-                cat_baud=int(self.v_baud.get()), cat_cmd=self.v_cmd.get(),
+                radio=self.radio_cfg,
                 folder=self.v_folder.get(),
                 hyb_on=bool(self.v_hyb.get()), hyb_host=self.v_hhost.get().strip(),
                 hyb_port=int(self.v_hport.get() or 21), hyb_user=self.v_huser.get().strip(),
@@ -1826,13 +1870,14 @@ class App(tk.Tk):
                 preview=bool(self.v_prev.get()), locator=self.v_loc.get().strip().upper(),
                 bsr_auto=bool(self.v_bsr_auto.get()), fix_auto=bool(self.v_fix_auto.get()),
                 ack_auto=bool(self.v_ack_auto.get()), listen_after=bool(self.v_listen_after.get()),
-                cwid=bool(self.v_cwid.get()), cat_freq=bool(self.v_catfreq.get()), lang=i18n.get_lang(),
+                cwid=bool(self.v_cwid.get()), lang=i18n.get_lang(),
                 wav_volume=int(self.v_wavvol.get()), wft_font=self.v_wftfont.get(),
                 wft_neg=bool(self.v_wftneg.get()), wft_text=self.txt_wft.get("1.0", "end").strip(),
                 hyb_kb=float(self.v_hkb.get()), gif_kb=float(self.v_gifkb.get()),
                 net_on=bool(self.v_net.get()), net_host=self.v_nethost.get().strip() or presence.DEFAULT_HOST,
                 net_port=int(self.v_netport.get() or presence.DEFAULT_PORT))
-            self.conf.pop("cat_on", None)
+            for k in ("cat_on", "ptt", "cat_port", "cat_baud", "cat_cmd", "cat_freq"):
+                self.conf.pop(k, None)              # anciens réglages : repris dans « radio »
             with open(CONF_PATH, "w", encoding="utf-8") as f:
                 json.dump(self.conf, f, indent=1)
             if not quiet:
@@ -2099,7 +2144,7 @@ class App(tk.Tk):
         self.log(f"WAV enregistré (48 kHz) : {p}")
 
     def _ptt_settings(self):
-        return (self.v_ptt.get(), self.v_port.get(), int(self.v_baud.get()), self.v_cmd.get())
+        return dict(self.radio_cfg)
 
     def _start_job(self, job, quiet=False):
         """Lance une émission (image, texte, hybride, BSR/ACK, accord, ID).
@@ -2111,11 +2156,15 @@ class App(tk.Tk):
                 messagebox.showinfo(APP, "Choisissez la sortie audio dans l'onglet Réglages.")
             return False
         ptt = self._ptt_settings()
-        if ptt[0] in ("RTS", "DTR", "CAT") and not ptt[1]:
+        if ptt["ptt"] in ("RTS", "DTR") and not (ptt["ptt_port"] or ptt["port"]):
             if not quiet:
-                messagebox.showerror(APP, "Choisissez le port COM pour le PTT (onglet Réglages).")
+                messagebox.showerror(APP, "Choisissez le port COM pour le PTT (Réglages → Poste radio).")
             return False
-        if ptt[0] == "CAT" and not quiet and not self._check_rig_before_tx(ptt):
+        if ptt["ptt"] == "CAT" and radio.rig_entry(ptt["rig"])["kind"] == "none":
+            if not quiet:
+                messagebox.showerror(APP, "PTT par CAT : choisissez d'abord le poste (Réglages → Poste radio).")
+            return False
+        if not quiet and not self._check_rig_before_tx(ptt):
             return False
         job.setdefault("volume", int(self.v_wavvol.get()))
         job.update(ptt=ptt, level=self.v_lvl.get() / 100.0, dev=self.v_out.get(),
@@ -2184,16 +2233,46 @@ class App(tk.Tk):
         self.log(f"Envoi {what}")
         return self._start_job({"kind": "control", "payload": payload, "what": what}, quiet=True)
 
-    def _check_rig_before_tx(self, ptt):
-        """Avant d'émettre en CAT : le port s'ouvre-t-il, le poste est-il en DATA ?"""
+    def _rig_status(self, r):
+        """-> (texte, en DATA ? True / False / None si inconnu)."""
+        f, m = r.freq(), r.mode()
+        txt = f"{r.model} : {audio.format_freq(f) + ' kHz' if f else 'fréquence ?'}, mode {m or '?'}"
+        if not m:
+            return txt, None
+        if r.is_data(m):
+            return txt + " (DATA : OK).", True
+        return txt + " — le poste n'est pas en mode DATA : l'audio USB / arrière risque de ne pas partir.", False
+
+    def _check_rig_before_tx(self, cfg):
+        """Avant d'émettre : liaison CAT, mode du poste (réglage « Mode », ou contrôle du mode DATA)."""
+        kind = radio.rig_entry(cfg["rig"])["kind"]
+        if kind == "none":
+            return True
         try:
-            txt, ok = audio.rig_check(ptt[1], ptt[2], rig=self._rig_for(ptt[1]))
+            r = self._rig_open()
+            if r is None:
+                return True
+            if cfg.get("set_mode") in ("usb", "data"):
+                m = r.mode() or ""
+                want_data = cfg["set_mode"] == "data"
+                if (r.is_data(m) if want_data else m.upper() == "USB"):
+                    return True
+                msg, ok = r.set_mode(cfg["set_mode"])
+                self.log(msg)
+                if not ok:
+                    return messagebox.askyesno(APP, msg + "\n\nÉmettre quand même ?")
+                return True
+            if cfg["ptt"] != "CAT" or cfg.get("tx_audio") != "rear":
+                return True
+            txt, ok = self._rig_status(r)
         except Exception as e:
-            self.log_exc("PTT CAT", e)
+            self.log_exc("Poste (CAT)", e)
+            if cfg["ptt"] != "CAT":
+                return True                          # PTT sans CAT : on émet quand même
             messagebox.showerror(APP, f"PTT par CAT impossible :\n{e}")
             return False
         self.log(txt)
-        if ok is False and ptt[3] == "TX1;":
+        if ok is False:
             act = self.conf.get("data_action", "ask")
             if act not in ("switch", "send"):
                 act, remember = self._ask_data_mode(txt)
@@ -2206,7 +2285,7 @@ class App(tk.Tk):
                 return False
             if act == "switch":
                 try:
-                    msg, ok2 = audio.rig_set_data(ptt[1], ptt[2], rig=self._rig_for(ptt[1]))
+                    msg, ok2 = r.set_mode("data")
                 except Exception as e:
                     msg, ok2 = f"Passage en DATA impossible : {e}", False
                 self.log(msg)
@@ -2226,7 +2305,7 @@ class App(tk.Tk):
         f.pack(fill="both", expand=True)
         ttk.Label(f, text=txt, wraplength=460, justify="left").pack(anchor="w")
         ttk.Label(f, text="Si votre poste est réglé pour émettre l'audio USB sans le mode DATA, choisissez "
-                          "la commande TX0; dans Réglages → PTT : ce message ne s'affichera plus.",
+                          "« Avant / Micro » comme source audio dans Réglages → Poste radio : ce message ne s'affichera plus.",
                   wraplength=460, justify="left", foreground="#555").pack(anchor="w", pady=(8, 0))
         remember = tk.BooleanVar(value=False)
         ttk.Checkbutton(f, text="Ne plus me demander (faire pareil les prochaines fois)",
@@ -2353,8 +2432,16 @@ class App(tk.Tk):
                 self.ui(self.wf.mark_mode, mode)
             self.ui(self.log, f"Émission {what} : {_fmt_s(dur)}")
             self.ui(self._panel_tx, job, mode)
-            if job["ptt"][0] != "VOX":
-                ptt = audio.PTT(*job["ptt"], rig=self._rig_for(job["ptt"][1]))
+            cfg = job["ptt"]
+            if cfg["ptt"] != "VOX":
+                rig = None
+                if cfg["ptt"] == "CAT" or radio.rig_entry(cfg["rig"])["kind"] != "none":
+                    try:
+                        rig = self._rig_open()
+                    except Exception:
+                        if cfg["ptt"] == "CAT":
+                            raise
+                ptt = radio.Ptt(cfg, rig)
                 ptt.tx()
                 time.sleep(0.2)
             rows, shown = [], [0]
@@ -2450,27 +2537,37 @@ class App(tk.Tk):
         threading.Thread(target=run, daemon=True).start()
 
     def test_ptt(self):
-        m, port, baud, cmd = self._ptt_settings()
-        if m == "VOX":
+        cfg = self._ptt_settings()
+        if cfg["ptt"] == "VOX":
             messagebox.showinfo(APP, "PTT en VOX : rien à tester ici, utilisez « Tester la sortie ».")
             return
+        if self.tx_busy:
+            return
         try:
-            p = audio.PTT(m, port, baud, cmd, rig=self._rig_for(port))
+            rig = self._rig_open() if radio.rig_entry(cfg["rig"])["kind"] != "none" else None
+            p = radio.Ptt(cfg, rig)
             p.tx()
             self.after(1000, p.close)
-            self.log(f"PTT {m} sur {port} : émission 1 s.")
+            self.log(f"PTT {cfg['ptt']} : émission 1 s.")
         except Exception as e:
             self.log_exc("PTT", e)
             messagebox.showerror(APP, f"PTT impossible :\n{e}")
 
     def check_rig(self):
-        m, port, baud, _ = self._ptt_settings()
+        cfg = self._ptt_settings()
+        if radio.rig_entry(cfg["rig"])["kind"] == "none":
+            messagebox.showinfo(APP, "Aucun poste choisi (pas de CAT) : Réglages → Poste radio.")
+            return
         try:
-            txt, ok = audio.rig_check(port, baud, rig=self._rig_for(port))
+            r = self._rig_open()
+            txt, ok = self._rig_status(r)
         except Exception as e:
             self.log_exc("Vérification du poste", e)
             messagebox.showerror(APP, str(e))
             return
+        if ok is False and not (cfg["ptt"] == "CAT" and cfg.get("tx_audio") == "rear"):
+            ok = None                                # DATA pas indispensable avec ces réglages
+            txt = txt.split(" — ")[0] + "."
         self.log(txt)
         (messagebox.showwarning if ok is False else messagebox.showinfo)(APP, txt)
 
@@ -3242,9 +3339,11 @@ class App(tk.Tk):
         self._closing = True
         self._save_layout()
         self.net_stop()
-        if self.rig is not None:
-            self.rig.close()
         self.stop_tx.set()
+        try:
+            self._rig_close()
+        except Exception:
+            pass
         if self.rx_stream:
             self.toggle_listen()
         self.destroy()
@@ -3332,6 +3431,16 @@ def selftest(report_path, hyb_test=None):
     except Exception as e:
         lines.append(f"Audio : ERREUR {e!r}")
     lines.append("Ports COM : " + (", ".join(f"{p} ({d})" for p, d in audio.ports_list()) or "aucun"))
+    try:
+        lines.append(f"Poste radio : {len(radio.rig_keys())} entrées (Hamlib {radio.HAMLIB_VERSION}), "
+                     f"rigctld : {radio.find_rigctld() or 'non installé'}")
+        try:
+            import comtypes.client  # noqa: F401  (OmniRig)
+            lines.append("OmniRig : module COM présent")
+        except Exception as e:
+            lines.append(f"OmniRig : module COM absent ({e})")
+    except Exception as e:
+        lines.append(f"Poste radio : ERREUR {e}")
     if hyb_test:
         try:
             u = urllib.parse.urlparse(hyb_test[0])

@@ -3,8 +3,8 @@
 ## Réglage des Kenwood TS-890 / TS-990
 
 Côté poste :
-1. Mode **USB-DATA** (touche DATA, « USB-D ») : avec le PTT CAT `TX1;` (DATA SEND),
-   l'audio USB n'est émis qu'en mode DATA.
+1. Mode **USB-DATA** (touche DATA, « USB-D ») : avec le PTT CAT en audio « Arrière / Data »
+   (commande `TX1;`, DATA SEND), l'audio USB n'est émis qu'en mode DATA.
 2. Source audio de DATA SEND = **USB Audio** (réglage par défaut en DATA 1/2/3).
    TS-990 : appui long sur DATA pour l'écran des sources audio.
 3. Niveau d'entrée USB : menu **7-05** (TS-990, défaut 50). Ajustez pour que l'ALC ne bouge pas.
@@ -13,13 +13,31 @@ Côté poste :
 Côté Windows / HFImage (onglet Réglages) :
 - Sortie : « Haut-parleurs (USB Audio CODEC) [MME] » ; entrée : « Microphone (USB Audio CODEC) [MME] ».
 - Le volume Windows de ces deux périphériques ne doit pas être coupé.
-- PTT : **CAT** sur le port COM virtuel du poste, 115200 bauds (menu 7-01 / 7-02), commande `TX1;`.
+- **Poste radio…** : poste « Kenwood TS-890S » / « TS-990S » (ou « Kenwood (détection automatique) »),
+  port COM virtuel du poste, 115200 bauds (menu 7-01 / 7-02), PTT **CAT**, source audio **Arrière / Data** (`TX1;`).
   Le port doit être libre : fermez ARCP / logger / WSJT-X, ou utilisez l'**autre** port COM
-  virtuel (les TS-890/990 en créent deux : Standard et Enhanced).
-  Autres méthodes : RTS, DTR (interface externe) ou VOX.
+  virtuel (les TS-890/990 en créent deux : Standard et Enhanced), ou passez par OmniRig / FLRig.
 - **Vérifier le poste** : lit le modèle et le mode par CAT, et prévient si le poste n'est pas en DATA.
   Le même contrôle est fait automatiquement avant chaque émission en CAT.
 - **Tester la sortie (1 kHz)** puis **Tester le PTT**.
+
+## Autres postes (fenêtre « Poste radio »)
+
+La fenêtre reprend les réglages de l'onglet Radio de WSJT-X.
+
+| Choix | Fonctionnement |
+|---|---|
+| Kenwood TS-990S, TS-890S, TS-590S/SG, TS-2000, TS-480 | CAT Kenwood en direct (`ID;`, `FA;`, `OM0;`/`SF0;`, `TX1;`/`TX0;`, `RX;`) |
+| Tous les autres modèles de la liste | Hamlib : HFImage lance `rigctld` caché sur 127.0.0.1 et lui envoie `f`, `m`, `M PKTUSB`, `T 3`/`T 2`/`T 0`. Hamlib 4.6.5 est téléchargé une fois (bouton « Installer Hamlib », dans `%LOCALAPPDATA%\HFImage\hamlib-4.6.5`) ; celui de WSJT-X / JTDX est utilisé s'il est présent |
+| OmniRig Rig 1 / Rig 2 | OmniRig doit être installé et réglé ; permet de partager le poste avec d'autres logiciels |
+| FLRig | XML-RPC, `127.0.0.1:12345` par défaut |
+| Hamlib NET rigctl | un `rigctld` déjà lancé, `127.0.0.1:4532` par défaut |
+| Aucun | pas de CAT : PTT par VOX, ou DTR / RTS d'une interface |
+
+- **PTT DTR / RTS** : sur le port du CAT, ou sur un **autre port** (interface PTT à côté du poste).
+- **Source audio** : « Arrière / Data » = audio USB / ACC (Kenwood `TX1;`, Hamlib `T 3`), « Avant / Micro » = `TX0;` / `T 2`.
+- **Mode** : Aucun (on ne touche pas au poste), USB ou Data / Pkt, mis par CAT avant chaque émission.
+- **Tester le CAT** lit la fréquence et le mode ; **Tester le PTT** émet 1,5 s.
 
 ### Robustesse audio (nouveau en 0.4)
 - Lecture en mode « callback » : l'écriture bloquante de PortAudio ne joue **rien** en

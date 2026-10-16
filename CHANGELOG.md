@@ -1,5 +1,25 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 0.21 — poste radio comme WSJT-X
+
+Nouvelle fenêtre **Réglages → Poste radio…** (aussi dans le menu Réglages), sur le modèle de l'onglet Radio de WSJT-X :
+
+- **Liste de tous les postes connus** : plus de 300 modèles (Icom, Yaesu, Kenwood, Elecraft, Xiegu, FlexRadio, Ten-Tec…), avec une case de recherche.
+- Liaisons possibles :
+  - **Kenwood en direct** (TS-990S, TS-890S, TS-590, TS-2000, TS-480 : rien à installer) ;
+  - **Hamlib** pour tous les autres postes. HFImage lance Hamlib (`rigctld`) en arrière-plan. Hamlib 4.6.5 est téléchargé une seule fois depuis GitHub (3 Mo, empreinte SHA-256 vérifiée) avec le bouton « Installer Hamlib ». Celui de WSJT-X ou de JTDX est utilisé s'il est déjà là ;
+  - **OmniRig** (Rig 1 / Rig 2), pour partager le poste avec d'autres logiciels ;
+  - **FLRig** ;
+  - **Hamlib NET rigctl** (serveur rigctld déjà lancé) ;
+  - **Aucun** (pas de CAT).
+- **Port série complet** : vitesse, bits de données, bits de stop, contrôle de flux (aucun, XON/XOFF, matériel), DTR / RTS forcés.
+- **PTT** : VOX, CAT, DTR ou RTS. DTR / RTS peuvent être sur un **autre port COM** (interface à côté du poste).
+- **Source audio en émission** : arrière / data (audio USB, ACC) ou avant / micro. Pour les Kenwood, cela remplace la commande `TX1;` / `TX0;`.
+- **Mode** mis par CAT avant chaque émission : Aucun, USB ou Data / Pkt.
+- **Intervalle d'interrogation** du poste (fréquence et mode).
+- Boutons **Tester le CAT** et **Tester le PTT** : vert si ça marche, rouge sinon, avec le message d'erreur.
+- Les réglages des versions précédentes (Kenwood, PTT CAT / RTS / DTR) sont repris automatiquement.
+
 ## Version 0.20 — mise à jour automatique
 
 - Au démarrage, HFImage regarde sur GitHub (page « Releases » du projet) s'il existe une version plus récente.

@@ -32,8 +32,9 @@ Programme Windows de F4GOP (Denis, IN98QR) pour envoyer et recevoir des photos p
 - **Carte QSL** : photo de fond, indicatif, locator, report rempli automatiquement, police et couleurs au choix.
 
 ### Station
-- **Kenwood TS-890 / TS-990** : codec audio USB, PTT par CAT (`TX1;`), fréquence affichée et notée.
-- Autres postes : PTT par RTS / DTR ou VOX.
+- **Plus de 300 postes** reconnus (Icom, Yaesu, Kenwood, Elecraft, Xiegu, Flex…), réglés comme dans WSJT-X : Kenwood en direct, **Hamlib**, **OmniRig**, **FLRig**.
+- PTT par CAT, DTR, RTS (y compris sur une interface à côté du poste, sur un autre port COM) ou VOX. Fréquence du poste affichée et notée.
+- **Kenwood TS-890 / TS-990** : codec audio USB, PTT par CAT (audio arrière / data).
 - 5 langues (français, English, Deutsch, Español, Italiano).
 - Couleurs (dont un thème **Nuit**), police et zones de la fenêtre réglables.
 
@@ -50,7 +51,8 @@ Programme Windows de F4GOP (Denis, IN98QR) pour envoyer et recevoir des photos p
 2. Lancez `HFImage_F4GOP.exe`, ouvrez **Réglages** :
    - indicatif et locator ;
    - sortie « Haut-parleurs (USB Audio CODEC) [MME] », entrée « Microphone (USB Audio CODEC) [MME] » ;
-   - PTT **CAT** sur le port COM virtuel du poste, 115200 bauds, commande `TX1;` (DATA SEND, poste en USB-DATA), ou `TX0;` si votre poste est réglé pour émettre l'audio USB sans le mode DATA.
+   - **Poste radio…** : poste « Kenwood TS-890S » ou « TS-990S », port COM virtuel du poste, 115200 bauds, PTT **CAT**, source audio **Arrière / Data** (DATA SEND, poste en USB-DATA), ou **Avant / Micro** si votre poste est réglé pour émettre l'audio USB sans le mode DATA ;
+   - autres postes : choisissez-les dans la liste (Hamlib, OmniRig ou FLRig), puis **Tester le CAT**.
 3. **Vérifier le poste**, **Tester la sortie (1 kHz)**, puis **Tester le PTT**.
 4. Onglet **TX** → *Ouvrir une image…* → **Émettre**. Réglez le niveau pour que l'ALC ne bouge pas.
 
