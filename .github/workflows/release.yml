@@ -1,0 +1,88 @@
+# Publication automatique : à chaque envoi sur main, si le numéro de version de
+# src/app.py (VERSION = "0.xx") n'a pas encore de release, GitHub fabrique
+# HFImage_F4GOP.exe sous Windows et crée la release vX.YY avec les nouveautés
+# tirées de CHANGELOG.md. Les programmes HFImage ouverts (0.20 et plus) proposent
+# alors la mise à jour par le bandeau.
+name: Release
+
+on:
+  push:
+    branches: [main]
+    paths: ["src/**", "CHANGELOG.md", ".github/workflows/release.yml", "requirements-build.txt"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Numéro de version
+        id: ver
+        shell: bash
+        run: |
+          v=$(grep -m1 -oP '^VERSION = "\K[0-9.]+' src/app.py)
+          echo "version=$v" >> "$GITHUB_OUTPUT"
+          echo "tag=v$v" >> "$GITHUB_OUTPUT"
+          if gh release view "v$v" >/dev/null 2>&1; then
+            echo "exists=yes" >> "$GITHUB_OUTPUT"
+            echo "La release v$v existe déjà : rien à faire."
+          else
+            echo "exists=no" >> "$GITHUB_OUTPUT"
+          fi
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+      - uses: actions/setup-python@v5
+        if: steps.ver.outputs.exists == 'no'
+        with:
+          python-version: "3.12"
+
+      - name: Dépendances
+        if: steps.ver.outputs.exists == 'no'
+        run: python -m pip install -r requirements-build.txt
+
+      - name: Fabrication de l'exe
+        if: steps.ver.outputs.exists == 'no'
+        working-directory: src
+        run: pyinstaller --noconfirm HFImage.spec
+
+      - name: Autotest
+        if: steps.ver.outputs.exists == 'no'
+        working-directory: src
+        shell: pwsh
+        run: |
+          $p = Start-Process -FilePath dist\HFImage_F4GOP.exe -ArgumentList "--selftest", "$env:RUNNER_TEMP\selftest.txt" -PassThru
+          if (-not $p.WaitForExit(600000)) { $p.Kill(); throw "autotest trop long" }
+          Get-Content "$env:RUNNER_TEMP\selftest.txt"
+          if (-not (Select-String -Path "$env:RUNNER_TEMP\selftest.txt" -Pattern "DATAC1X: .* -> OK" -Quiet)) { throw "modems en échec" }
+
+      - name: Nouveautés (CHANGELOG.md)
+        if: steps.ver.outputs.exists == 'no'
+        shell: bash
+        run: |
+          v="${{ steps.ver.outputs.version }}"
+          awk -v v="$v" '
+            $0 ~ "^## Version " v "( |$)" {on=1; title=$0; sub(/^## /, "", title); print title > "title.txt"; next}
+            on && /^## / {exit}
+            on {print}
+          ' CHANGELOG.md > notes.md
+          [ -s title.txt ] || echo "Version $v" > title.txt
+          [ -s notes.md ] || echo "HFImage F4GOP $v" > notes.md
+          cat title.txt notes.md
+
+      - name: Création de la release
+        if: steps.ver.outputs.exists == 'no'
+        shell: bash
+        run: |
+          gh release create "${{ steps.ver.outputs.tag }}" src/dist/HFImage_F4GOP.exe \
+            --target "$GITHUB_SHA" --title "$(cat title.txt)" --notes-file notes.md --latest
+        env:
+          GH_TOKEN: ${{ github.token }}
