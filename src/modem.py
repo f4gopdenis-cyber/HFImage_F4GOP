@@ -40,6 +40,9 @@ SNR_CAL = {
                (21, 8.20), (24, 8.48)],
 }
 SNR_MAX = 25.0
+# au-delà, l'estimation du mode sature (une petite variation donnerait des écarts énormes) :
+# on plafonne au dernier point fiable (affiché « +15 dB » = 15 dB ou plus)
+SNR_CAP = {"DATAC1X": 21.0, "DATAC1": 21.0, "DATAC3": 15.0, "DATAC4": 21.0, "DATAC0": 15.0}
 
 
 def true_snr(mode, est):
@@ -47,14 +50,16 @@ def true_snr(mode, est):
     pts = SNR_CAL.get(mode)
     if not pts or est is None:
         return est
+    est = float(est)
     t = np.array([p[0] for p in pts], float)
     e = np.maximum.accumulate(np.array([p[1] for p in pts], float))
     e = e + np.arange(len(e)) * 1e-3                      # strictement croissant
     if est <= e[0]:
         return float(t[0] - (e[0] - est))                 # en dessous : pente 1
+    cap = SNR_CAP.get(mode, SNR_MAX)
     if est >= e[-1]:
-        return SNR_MAX
-    return float(min(SNR_MAX, np.interp(est, e, t)))
+        return cap
+    return float(min(cap, np.interp(est, e, t)))
 
 
 def _load_lib():

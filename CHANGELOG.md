@@ -1,5 +1,10 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 0.31 — reports plafonnés là où la mesure sature
+
+- Sur un signal fort, l'estimation de SNR des modes étroits (DATAC3, et DATAC0 des BSR / ACK) sature : quelques dixièmes de dB d'écart donnaient des reports exagérés (jusqu'à +25 dB en mode hybride, dont l'annonce passe en DATAC3, alors que le même lien donnait +12 dB en DATAC1).
+- Les reports sont maintenant plafonnés au dernier point fiable de chaque mode : **+15 dB** en DATAC3 / DATAC0 (= 15 dB ou plus), +21 dB en DATAC1X / DATAC1 / DATAC4.
+
 ## Version 0.30 — reports en vrais dB
 
 L'estimation de SNR du modem codec2 est comprimée : un signal à 12 dB réels était affiché vers 8,5 dB en DATAC1X et vers 6 dB en DATAC3, et elle sature sur les bons signaux. Les reports n'étaient donc pas comparables d'un mode à l'autre et sous-estimaient les bonnes liaisons.
