@@ -1,5 +1,11 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 0.27 — couleur du texte
+
+- Réglages → Apparence → **Couleur du texte** : « Choisir… » pour prendre n'importe quelle couleur, « Couleur du thème » pour revenir à l'origine.
+- La couleur s'applique aux textes de toutes les fenêtres (panneau, boutons, listes, journal, onglets, réglages) et se combine avec tous les thèmes, y compris Nuit. Les textes colorés exprès (alertes en rouge, textes blancs sur les bandeaux) gardent leur couleur.
+- Après une mise à jour, l'explorateur Windows est prévenu : la nouvelle icône s'affiche sans redémarrer.
+
 ## Version 0.26 — nouvelle icône
 
 - Nouvelle icône : une photo avec des ondes radio sur fond vert, et l'indicatif **F4GOP** sur les grandes tailles (bureau, explorateur). Les petites tailles (barre des tâches, barre de titre) gardent seulement le dessin, pour rester lisibles.

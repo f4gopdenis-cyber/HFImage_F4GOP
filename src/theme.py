@@ -30,6 +30,21 @@ MONO = {"consolas", "courier new", "courier", "tkfixedfont", "lucida console", "
 COLOR_OPTS = ("background", "foreground", "activebackground", "activeforeground", "selectbackground",
               "selectforeground", "highlightbackground", "highlightcolor", "insertbackground",
               "disabledforeground", "troughcolor", "readonlybackground")
+# styles ttk dont on change la couleur du texte
+TTK_TEXT = (".", "TLabel", "TCheckbutton", "TRadiobutton", "TLabelframe.Label", "TButton", "TNotebook.Tab",
+            "TEntry", "TCombobox", "TSpinbox", "Treeview", "Treeview.Heading")
+
+
+def is_text_color(c):
+    """Couleur d'origine d'un texte « normal » (noir, gris foncé, vert très foncé),
+    pas d'un texte coloré exprès (rouge d'alerte, blanc sur bandeau…)."""
+    try:
+        h, l, s = _hls(c)
+    except (ValueError, IndexError):
+        return False
+    return (s < 0.25 and l < 0.5) or l < 0.2
+
+
 BG_OPTS = {"background", "activebackground", "highlightbackground", "troughcolor", "readonlybackground",
            "selectbackground"}
 
@@ -93,6 +108,7 @@ class Appearance:
         self.root = root
         self.orig = {}                  # widget -> {option: valeur d'origine}
         self.theme, self.custom, self.family, self.scale = "Vert EasyPal", None, None, 1.0
+        self.text = None                # couleur du texte choisie (None : celle du thème)
         self.map = make_mapper(self.theme)
         self.named = {}
         for n in ("TkDefaultFont", "TkTextFont", "TkFixedFont", "TkMenuFont", "TkHeadingFont",
@@ -104,8 +120,9 @@ class Appearance:
                 pass
         self.style = ttk.Style(root)
         self.ttk_theme0 = self.style.theme_use()
+        self.ttk_fg0 = {st: self.style.lookup(st, "foreground") for st in TTK_TEXT}
 
-    def set(self, theme=None, custom=None, family=None, scale=None):
+    def set(self, theme=None, custom=None, family=None, scale=None, text=None):
         if theme is not None:
             self.theme = theme
         if custom is not None:
@@ -114,7 +131,16 @@ class Appearance:
             self.family = None if family in ("", "(par défaut)") else family
         if scale is not None:
             self.scale = float(scale)
-        self.map = make_mapper(self.theme, self.custom)
+        if text is not None:
+            self.text = text or None             # "" : couleur du thème
+        base = make_mapper(self.theme, self.custom)
+        txt = self.text
+
+        def mapper(c, opt):
+            if txt and opt in ("foreground", "insertbackground") and is_text_color(c):
+                return txt
+            return base(c, opt)
+        self.map = mapper
         self._named_fonts()
         self._ttk()
         self.apply(self.root)
@@ -247,6 +273,15 @@ class Appearance:
         else:
             if s.theme_use() != self.ttk_theme0:
                 s.theme_use(self.ttk_theme0)               # thème natif (Windows) d'origine
+        # couleur du texte choisie (ou celle d'origine)
+        for st in TTK_TEXT:
+            try:
+                if self.text:
+                    s.configure(st, foreground=self.text)
+                elif self.theme != "Nuit":
+                    s.configure(st, foreground=self.ttk_fg0.get(st) or "")
+            except tk.TclError:
+                pass
         # barre de progression aux couleurs du thème
         acc = self.map("#2f9e2f", "background")
         try:

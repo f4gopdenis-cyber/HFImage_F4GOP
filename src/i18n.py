@@ -1085,6 +1085,11 @@ T = [
     ("envoi impossible ({0})", "upload failed ({0})", "Hochladen fehlgeschlagen ({0})", "subida imposible ({0})", "caricamento non riuscito ({0})"),
     ("serveur FTP non réglé (Réglages → Mode hybride).", "FTP server not set (Settings → Hybrid mode).", "FTP-Server nicht eingestellt (Einstellungen → Hybridmodus).", "servidor FTP no configurado (Ajustes → Modo híbrido).", "server FTP non impostato (Impostazioni → Modo ibrido)."),
     ("réglages enregistrés.", "settings saved.", "Einstellungen gespeichert.", "ajustes guardados.", "impostazioni salvate."),
+    # ------------------------------------------------------------ v0.27 : couleur du texte
+    ("Couleur du texte", "Text colour", "Textfarbe", "Color del texto", "Colore del testo"),
+    ("Choisir…", "Choose…", "Wählen…", "Elegir…", "Scegli…"),
+    ("Couleur du thème", "Theme colour", "Farbe des Themas", "Color del tema", "Colore del tema"),
+    ("thème", "theme", "Thema", "tema", "tema"),
 ]
 
 _lang = "fr"

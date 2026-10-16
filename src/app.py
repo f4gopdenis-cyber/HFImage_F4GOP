@@ -45,7 +45,7 @@ import random
 import wave
 
 APP = "HFImage F4GOP"
-VERSION = "0.26"
+VERSION = "0.27"
 CONF_PATH = os.path.join(os.path.expanduser("~"), ".hfimage.json")
 DEFAULT_OUT = os.path.join(os.path.expanduser("~"), "Documents", "HFImage")
 DEFAULTS = {
@@ -344,7 +344,7 @@ class App(tk.Tk):
             else self.conf.get("font_size", "Normale")
         self.look.set(theme=th if th in theme.THEMES or th == "Personnalisée" else "Vert EasyPal",
                       custom=self.conf.get("theme_color"), family=fam,
-                      scale=theme.FONT_SIZES.get(size, 1.0))
+                      scale=theme.FONT_SIZES.get(size, 1.0), text=self.conf.get("text_color") or "")
         self.conf.update(theme=th, font_family=fam, font_size=size)
         try:
             self.wf.configure(bg="#000")
@@ -375,6 +375,25 @@ class App(tk.Tk):
             self.conf["theme_color"] = c[1]
             self.v_theme.set(tr("Personnalisée"))
             self._apply_look()
+
+    def _pick_text_color(self):
+        from tkinter import colorchooser
+        c = colorchooser.askcolor(color=self.conf.get("text_color") or "#000000", parent=self.win_conf,
+                                  title=tr("Couleur du texte"))
+        if c and c[1]:
+            self.conf["text_color"] = c[1]
+            self._text_swatch()
+            self._apply_look()
+
+    def _reset_text_color(self):
+        self.conf["text_color"] = ""
+        self._text_swatch()
+        self._apply_look()
+
+    def _text_swatch(self):
+        if hasattr(self, "sw_text"):
+            c = self.conf.get("text_color") or ""
+            self.sw_text.configure(bg=c or "#d9d9d9", text="" if c else tr("thème"))
 
     def _c(self, color):
         """Couleur de texte d'origine adaptée au thème (éléments de listes)."""
@@ -1544,6 +1563,15 @@ class App(tk.Tk):
         cb_s.grid(row=1, column=3, sticky="w", padx=4, pady=(4, 0))
         for cb in (cb_t, cb_f, cb_s):
             cb.bind("<<ComboboxSelected>>", lambda e: self._apply_look())
+        ttk.Label(af, text="Couleur du texte").grid(row=2, column=0, sticky="w", pady=(4, 0))
+        tcf = ttk.Frame(af)
+        tcf.grid(row=2, column=1, columnspan=3, sticky="w", padx=4, pady=(4, 0))
+        self.sw_text = tk.Label(tcf, width=6, relief="solid", bd=1, font=("TkDefaultFont", 7))
+        self.sw_text._no_theme = True
+        self.sw_text.pack(side="left")
+        ttk.Button(tcf, text="Choisir…", command=self._pick_text_color).pack(side="left", padx=4)
+        ttk.Button(tcf, text="Couleur du thème", command=self._reset_text_color).pack(side="left")
+        self._text_swatch()
 
         nf = ttk.LabelFrame(colR, text="Internet : stations en ligne (comme EasyPal)", padding=8)
         nf.pack(fill="x", pady=(10, 0))
