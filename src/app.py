@@ -44,7 +44,7 @@ import random
 import wave
 
 APP = "HFImage F4GOP"
-VERSION = "0.22"
+VERSION = "0.23"
 CONF_PATH = os.path.join(os.path.expanduser("~"), ".hfimage.json")
 DEFAULT_OUT = os.path.join(os.path.expanduser("~"), "Documents", "HFImage")
 DEFAULTS = {
@@ -1422,6 +1422,17 @@ class App(tk.Tk):
                           "« Microphone (USB Audio CODEC) », de préférence en [MME].\n"
                           "Réglez le niveau pour que l'ALC ne bouge pas.",
                   foreground="#555", justify="left").grid(row=4, column=0, columnspan=2, sticky="w", pady=(6, 0))
+        self.v_qrm = tk.BooleanVar(value=bool(self.conf.get("qrm_filter", True)))
+
+        def _qrm_changed():
+            self.conf["qrm_filter"] = bool(self.v_qrm.get())
+            if self.rx_engine is not None:
+                self.rx_engine.qrm = self.conf["qrm_filter"]
+            self._save_conf_file()
+            self.log("Coupe-QRM à la réception : " + ("marche" if self.conf["qrm_filter"] else "arrêt"))
+        ttk.Checkbutton(g, text="Coupe-QRM à la réception (porteuses, CW, RTTY, signaux voisins)",
+                        variable=self.v_qrm, command=_qrm_changed).grid(row=5, column=0, columnspan=2,
+                                                                        sticky="w", pady=(6, 0))
 
         c = ttk.LabelFrame(colL, text="Poste radio (CAT / PTT)", padding=8)
         c.pack(fill="x", pady=10)
@@ -2661,6 +2672,7 @@ class App(tk.Tk):
                               on_status=lambda st: self.ui(self._rx_status, st),
                               on_ident=lambda *a: self.ui(self._got_ident, *a))
         eng.on_hybrid = lambda h, m: self.ui(self._hybrid_announce, eng, h, m)
+        eng.qrm = bool(self.conf.get("qrm_filter", True))
         eng.on_control = lambda *a: self.ui(self._on_control, *a)
         return eng
 

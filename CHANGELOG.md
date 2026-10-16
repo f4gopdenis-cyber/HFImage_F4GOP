@@ -1,5 +1,15 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 0.23 — coupe-QRM à la réception
+
+Constat au simulateur : une simple porteuse (CW, « birdie ») aussi forte que le signal, du RTTY dans la bande, ou une BLU forte juste à côté faisaient perdre **toutes** les trames, quel que soit le mode.
+
+- Nouveau **coupe-QRM** devant chaque démodulateur (Réglages → Audio, activé par défaut) :
+  - tout ce qui est hors de la bande du mode est effacé (BLU voisine, signaux forts à côté) ;
+  - dans la bande, les raies qui dépassent le signal OFDM de plus de 10 dB sont effacées (porteuses, CW, RTTY). Les porteuses touchées deviennent des « trous » que le code correcteur répare.
+- Mesures (SNR 12 dB, 24 trames) : porteuse +15 dB 0 % → 88-100 % ; BLU voisine +20 dB 0 % → 88-96 % ; CW +10 dB 0 % → 70-90 % ; RTTY +6 dB 0 % → 60-70 %. Sans QRM, quasiment aucune perte.
+- Fonctionne avec toutes les versions de l'émetteur (rien ne change à l'émission). Peu gourmand (~2 % d'un processeur).
+
 ## Version 0.22 — meilleure tenue au bruit et au QSB
 
 Mesures au simulateur (évanouissement « moyen ») : DATAC1X a besoin d'environ 9-10 dB, DATAC1 de 5 dB, DATAC3 tient vers 0 dB. Avec seulement 10 % de redondance, une image ne passait pas en une fois dès que le QSB faisait perdre plus d'une trame sur dix.

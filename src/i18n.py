@@ -1051,6 +1051,11 @@ T = [
     ("report le plus faible {0} dB ({1} stations)", "weakest report {0} dB ({1} stations)", "schwächster Rapport {0} dB ({1} Stationen)", "report más débil {0} dB ({1} estaciones)", "rapporto più debole {0} dB ({1} stazioni)"),
     ("stations entendues, la plus faible à {0} dB", "stations heard, weakest at {0} dB", "gehörte Stationen, schwächste bei {0} dB", "estaciones oídas, la más débil a {0} dB", "stazioni ascoltate, la più debole a {0} dB"),
     ("Mode Auto : {0} → {1} ({2})", "Auto mode: {0} → {1} ({2})", "Auto-Modus: {0} → {1} ({2})", "Modo Auto: {0} → {1} ({2})", "Modo Auto: {0} → {1} ({2})"),
+    # ------------------------------------------------------------ v0.23 : coupe-QRM
+    ("Coupe-QRM à la réception (porteuses, CW, RTTY, signaux voisins)", "QRM cutter on receive (carriers, CW, RTTY, adjacent signals)", "QRM-Filter beim Empfang (Träger, CW, RTTY, Nachbarsignale)", "Filtro anti-QRM en recepción (portadoras, CW, RTTY, señales vecinas)", "Filtro anti-QRM in ricezione (portanti, CW, RTTY, segnali vicini)"),
+    ("Coupe-QRM à la réception : {0}", "QRM cutter on receive: {0}", "QRM-Filter beim Empfang: {0}", "Filtro anti-QRM en recepción: {0}", "Filtro anti-QRM in ricezione: {0}"),
+    ("marche", "on", "ein", "activado", "attivo"),
+    ("arrêt", "off", "aus", "desactivado", "disattivato"),
 ]
 
 _lang = "fr"

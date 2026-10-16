@@ -15,6 +15,7 @@ from PIL import Image
 import audio
 import imgfmt
 from modem import MODE_FPB, Modem
+import qrmfilter
 from protocol import (T_ACK, T_HDR, T_NACK, T_QRV, Receiver, Sender, detect_format, hybrid_frame,
                       parse_control, parse_hybrid, unpack_text)
 
@@ -292,6 +293,9 @@ class RxEngine:
     def __init__(self, callsign, outdir, on_image=None, on_status=None, on_ident=None,
                  on_hybrid=None, on_control=None):
         self.modems = {m: Modem(m, MODE_FPB[m]) for m in RX_MODES}
+        # coupe-QRM devant chaque démodulateur (porteuses, CW, RTTY, signaux voisins)
+        self.qrm = True
+        self.filters = {m: qrmfilter.QrmFilter(m) for m in RX_MODES}
         self.rcv = Receiver(callsign)
         self.outdir = outdir
         self.on_image = on_image or (lambda *a: None)
@@ -308,7 +312,8 @@ class RxEngine:
 
     def process(self, samples8k: np.ndarray):
         for mode, modem in self.modems.items():
-            for payload, snr in modem.demodulate(samples8k):
+            x = self.filters[mode].process(samples8k) if self.qrm else samples8k
+            for payload, snr in modem.demodulate(x):
                 self.last.update(snr=snr, mode=mode, frames=self.last["frames"] + 1)
                 iid = int.from_bytes(payload[1:3], "big")
                 typ = payload[0] >> 4
