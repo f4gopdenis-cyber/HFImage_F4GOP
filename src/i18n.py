@@ -1037,6 +1037,7 @@ T = [
     ("Ouvrir le dossier", "Open folder", "Ordner öffnen", "Abrir la carpeta", "Apri la cartella"),
     ("Retirer de la galerie", "Remove from gallery", "Aus der Galerie entfernen", "Quitar de la galería", "Rimuovi dalla galleria"),
     ("Galerie des dernières images", "Gallery of last images", "Galerie der letzten Bilder", "Galería de las últimas imágenes", "Galleria delle ultime immagini"),
+    ("Mise à jour : vérification sur GitHub impossible ({0})", "Update: cannot check GitHub ({0})", "Update: GitHub-Prüfung nicht möglich ({0})", "Actualización: no se puede consultar GitHub ({0})", "Aggiornamento: impossibile verificare GitHub ({0})"),
 ]
 
 _lang = "fr"

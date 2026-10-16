@@ -3292,12 +3292,23 @@ class App(tk.Tk):
 
     def update_check(self, quiet=False):
         """Cherche une version plus récente sur GitHub (en tâche de fond)."""
+        if quiet and self.conf.get("update_check", True):
+            # nouvelle vérification dans 3 h (programme laissé ouvert toute la journée)
+            if getattr(self, "_upd_job", None):
+                try:
+                    self.after_cancel(self._upd_job)
+                except tk.TclError:
+                    pass
+            self._upd_job = self.after(3 * 3600 * 1000, lambda: self.update_check(quiet=True))
+
         def run():
             try:
                 info = updater.check()
             except Exception as e:
                 if not quiet:
                     self.ui(messagebox.showinfo, APP, f"Impossible de vérifier les mises à jour :\n{e}")
+                else:
+                    self.ui(self.log, f"Mise à jour : vérification sur GitHub impossible ({e})")
                 return
             self.ui(self._update_found, info, quiet)
         threading.Thread(target=run, daemon=True).start()

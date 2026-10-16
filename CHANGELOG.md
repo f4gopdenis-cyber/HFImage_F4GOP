@@ -26,6 +26,8 @@ Nouvel onglet **Galerie** (comme « 30 dernières Rx / TX » d'EZPix) :
 - clic : l'image s'affiche dans l'onglet RX ; double-clic : plein format ; clic droit : renvoyer l'image (onglet TX), voir la station sur la carte, ouvrir le dossier, retirer de la galerie ;
 - les images reçues avant cette version sont reprises automatiquement ; les images envoyées sont gardées dans le sous-dossier `envoyees`.
 
+Mise à jour automatique : HFImage revérifie GitHub toutes les 3 heures quand il reste ouvert, et note dans le journal si la vérification échoue (pare-feu, antivirus, pas d'Internet).
+
 ## Version 0.20 — mise à jour automatique
 
 - Au démarrage, HFImage regarde sur GitHub (page « Releases » du projet) s'il existe une version plus récente.
