@@ -260,17 +260,18 @@ s.append(P("En mode <b>Auto</b>, HFImage choisit le mode d'après le <b>report l
            "qui ont reçu vos images ces 45 dernières minutes (liste Rx Ok). Sans report, il prend le SNR des "
            "stations entendues, sinon DATAC1X. La raison du choix est affichée sous l'image."))
 s.append(table([["SNR affiché (report)", "Mode choisi", "Images"],
-                ["6,5 dB et plus", "DATAC1X", "les plus nettes"],
-                ["de 3,5 à 6,5 dB", "DATAC1", "moyennes"],
-                ["moins de 3,5 dB", "DATAC3", "petites mais très robustes"]], [55, 45, 70]))
+                ["9 dB et plus", "DATAC1X", "les plus nettes"],
+                ["de 5 à 9 dB", "DATAC1", "moyennes"],
+                ["moins de 5 dB", "DATAC3", "petites mais très robustes"]], [55, 45, 70]))
 s.append(Spacer(1, 6))
 s.append(P("La <b>robustesse</b> est la part de trames de secours (code fontaine) : elles remplacent les trames "
            "perdues dans le QSB. En « Auto » : 15 % si le lien a de la marge, 25 % s'il est juste, 40 % s'il est "
            "à la limite. Plus de robustesse = image un peu moins détaillée pour la même durée, mais qui passe "
            "en une fois."))
-s += tip("le SNR affiché par le modem sous-estime les bons signaux (12 dB réels ≈ 8,5 dB affichés). Les seuils "
-         "ci-dessus sont dans cette même échelle. Pour une image plus nette, le plus efficace est d'allonger "
-         "la durée (3 min en DATAC1X ≈ 50 % d'octets en plus).")
+s += tip("les reports et le SNR affichés sont le <b>SNR réel sur 3 kHz</b> (étalonné depuis la version 0.30), "
+         "comparable d'un mode à l'autre. Les stations encore en version 0.29 ou plus ancienne envoient des reports "
+         "plus bas (estimation brute du modem). Pour une image plus nette, le plus efficace est d'allonger la durée "
+         "(3 min en DATAC1X ≈ 50 % d'octets en plus).")
 s.append(P("Les modes", "h2"))
 s.append(table([["Mode", "Largeur", "Débit utile", "En 2 min", "Usage"],
                 ["DATAC1X", "2,2 kHz", "~1 500 bit/s", "~13-16 ko", "Bonnes conditions : images nettes (HFImage uniquement)"],

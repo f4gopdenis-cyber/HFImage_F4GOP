@@ -45,7 +45,7 @@ import random
 import wave
 
 APP = "HFImage F4GOP"
-VERSION = "0.29"
+VERSION = "0.30"
 CONF_PATH = os.path.join(os.path.expanduser("~"), ".hfimage.json")
 DEFAULT_OUT = os.path.join(os.path.expanduser("~"), "Documents", "HFImage")
 DEFAULTS = {
@@ -71,10 +71,10 @@ TX_MODES = ["Auto", "DATAC1X", "DATAC1", "DATAC3", "DATAC4"]
 # cette estimation est comprimée (SNR réel 12 dB -> ~8,5 dB affichés avec QSB). Mesuré au
 # simulateur, QSB moyen : DATAC1X perd < 12 % des trames dès ~6,5 dB affichés (9 dB réels),
 # DATAC1 < 25 % dès ~3,5 dB affichés (5 dB réels).
-AUTO_STEPS = [(6.5, "DATAC1X"), (3.5, "DATAC1"), (None, "DATAC3")]
+AUTO_STEPS = [(9, "DATAC1X"), (5, "DATAC1"), (None, "DATAC3")]
 AUTO_DEFAULT = "DATAC1X"         # aucun report récent : image nette (comme avant la 0.22)
 # seuil de chaque mode (dB) : la robustesse « Auto » dépend de la marge au-dessus
-MODE_THR = {"DATAC1X": 6.5, "DATAC1": 3.5, "DATAC3": 0.5, "DATAC4": -3}
+MODE_THR = {"DATAC1X": 9, "DATAC1": 5, "DATAC3": 0, "DATAC4": -4}
 AUTO_MAX_AGE = 45 * 60           # reports pris en compte (s)
 # robustesse = redondance du code fontaine (trames en plus, pour les trames perdues dans le QSB)
 ROBUST = [("Auto (selon les reports)", None), ("Faible (15 %)", 15), ("Normale (40 %)", 40), ("Forte (70 %)", 70), ("Très forte (100 %)", 100)]
@@ -2071,7 +2071,7 @@ class App(tk.Tk):
         if snr is None:
             return 15
         margin = snr - MODE_THR.get(mode or self._tx_mode(), 10)
-        return 15 if margin >= 3 else (25 if margin >= 1.5 else 40)
+        return 15 if margin >= 4 else (25 if margin >= 2 else 40)
 
     def _link_snr(self):
         """Report le plus faible des stations ces 45 dernières minutes.

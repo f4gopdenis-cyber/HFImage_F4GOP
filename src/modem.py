@@ -23,6 +23,40 @@ MODE_BPS = {"DATAC0": 290, "DATAC1": 980, "DATAC3": 320, "DATAC4": 85, "DATAC1X"
 MODE_BW = {"DATAC0": 0.6, "DATAC1": 1.7, "DATAC3": 0.6, "DATAC4": 0.25, "DATAC1X": 2.2}
 
 
+# Étalonnage du SNR : l'estimation de codec2 est comprimée (12 dB réels -> ~8,5 dB
+# estimés en DATAC1X, ~6 dB en DATAC3) et sature vers le haut. Mesuré au simulateur
+# (canaux sans évanouissement, CCIR bon et moyen, moyenne) : (SNR réel, SNR estimé).
+# On affiche et on échange le SNR réel sur 3 kHz, comparable d'un mode à l'autre.
+# (Près du seuil de décodage, seules les trames réussies sont mesurées : estimation trop
+# optimiste ; les premiers points sont donc pris avec une pente proche de 1.)
+SNR_CAL = {
+    "DATAC1X": [(6, 4.99), (9, 6.78), (12, 8.76), (15, 10.33), (18, 11.48), (21, 12.24), (24, 12.54)],
+    "DATAC1": [(3, 2.80), (6, 4.32), (9, 6.42), (12, 8.26), (15, 9.70), (18, 10.63), (21, 11.14), (24, 11.42)],
+    "DATAC3": [(-4, -3.00), (0, -0.49), (3, 1.28), (6, 3.28), (9, 4.64), (12, 6.02), (15, 6.97),
+               (18, 7.46), (21, 7.72), (24, 7.79)],
+    "DATAC4": [(-6, -5.35), (-3, -3.57), (0, -0.69), (3, 2.35), (6, 5.34), (9, 7.99), (12, 10.25),
+               (15, 12.43), (18, 13.77), (21, 14.77), (24, 15.54)],
+    "DATAC0": [(-3, -2.48), (0, -0.85), (3, 1.10), (6, 3.00), (9, 4.69), (12, 6.39), (15, 7.44), (18, 8.06),
+               (21, 8.20), (24, 8.48)],
+}
+SNR_MAX = 25.0
+
+
+def true_snr(mode, est):
+    """SNR estimé par codec2 -> SNR réel (dB sur 3 kHz) d'après l'étalonnage du mode."""
+    pts = SNR_CAL.get(mode)
+    if not pts or est is None:
+        return est
+    t = np.array([p[0] for p in pts], float)
+    e = np.maximum.accumulate(np.array([p[1] for p in pts], float))
+    e = e + np.arange(len(e)) * 1e-3                      # strictement croissant
+    if est <= e[0]:
+        return float(t[0] - (e[0] - est))                 # en dessous : pente 1
+    if est >= e[-1]:
+        return SNR_MAX
+    return float(min(SNR_MAX, np.interp(est, e, t)))
+
+
 def _load_lib():
     import sys
     here = getattr(sys, "_MEIPASS", os.path.dirname(os.path.abspath(__file__)))
@@ -185,7 +219,7 @@ class Modem:
                     lib.freedv_get_modem_stats(self.f, ctypes.byref(sync), ctypes.byref(snr))
                     self.ok += 1
                     self.last_ok = time.time()
-                    yield payload, snr.value
+                    yield payload, true_snr(self.mode, snr.value)
                 else:
                     self.crc_fail += 1
                     self.last_fail = time.time()

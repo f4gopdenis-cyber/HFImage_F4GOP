@@ -1125,6 +1125,7 @@ T = [
     ("Analyse de {0} terminée.", "Analysis of {0} finished.", "Analyse von {0} beendet.", "Análisis de {0} terminado.", "Analisi di {0} terminata."),
     ("Mode d'emploi (PDF)", "User manual (PDF, French)", "Bedienungsanleitung (PDF, Französisch)", "Manual de uso (PDF, francés)", "Manuale d'uso (PDF, francese)"),
     ("Mode d'emploi introuvable.", "User manual not found.", "Bedienungsanleitung nicht gefunden.", "Manual no encontrado.", "Manuale non trovato."),
+    ("SNR de chaque trame (rond : juste, croix : perdue)", "SNR of each frame (dot: good, cross: lost)", "SNR jedes Rahmens (Punkt: gut, Kreuz: verloren)", "SNR de cada trama (punto: correcta, cruz: perdida)", "SNR di ogni trama (punto: corretta, croce: persa)"),
 ]
 
 _lang = "fr"

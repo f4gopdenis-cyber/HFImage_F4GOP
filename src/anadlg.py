@@ -100,11 +100,11 @@ class AnalyzerWindow(tk.Toplevel):
         X = lambda t: L + (W - L - R) * t / dur
         Y = lambda s: T + (H - T - B) * (hi - s) / (hi - lo)
         cv.create_text(L, 10, anchor="w", font=("TkDefaultFont", 9, "bold"),
-                       text=self.tr("SNR estimé de chaque trame (rond : juste, croix : perdue)"))
+                       text=self.tr("SNR de chaque trame (rond : juste, croix : perdue)"))
         for s in range(int(lo) // 2 * 2, int(hi) + 1, 2):
             cv.create_line(L, Y(s), W - R, Y(s), fill="#eeeeee")
             cv.create_text(L - 6, Y(s), anchor="e", text=f"{s:+d}", font=("TkDefaultFont", 8), fill="#555")
-        for m, th in (("DATAC1X", 6.5), ("DATAC1", 3.5)):
+        for m, th in (("DATAC1X", 9), ("DATAC1", 5)):
             cv.create_line(L, Y(th), W - R, Y(th), fill=COLORS[m], dash=(4, 3))
             cv.create_text(W - R - 2, Y(th) - 7, anchor="e", text=self.tr(f"seuil {m}"), fill=COLORS[m],
                            font=("TkDefaultFont", 8))

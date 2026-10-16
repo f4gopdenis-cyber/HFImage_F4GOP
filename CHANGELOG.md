@@ -1,5 +1,15 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 0.30 — reports en vrais dB
+
+L'estimation de SNR du modem codec2 est comprimée : un signal à 12 dB réels était affiché vers 8,5 dB en DATAC1X et vers 6 dB en DATAC3, et elle sature sur les bons signaux. Les reports n'étaient donc pas comparables d'un mode à l'autre et sous-estimaient les bonnes liaisons.
+
+- Chaque mode est maintenant **étalonné** (mesures au simulateur : sans évanouissement, CCIR bon et moyen). Le panneau, les reports (ACK, Rx Ok, Internet), la carte QSL, l'historique des stations et l'analyseur donnent le **SNR réel sur 3 kHz**.
+- Exemples : DATAC1X 8,5 dB estimés → 11,6 dB ; DATAC1 4 dB → 5,4 dB ; DATAC3 6 dB → 11,9 dB.
+- Le mode Auto reprend des seuils en vrais dB : **DATAC1X dès 9 dB, DATAC1 dès 5 dB**, DATAC3 en dessous ; robustesse 15 % avec 4 dB de marge, 25 % avec 2 dB, sinon 40 %.
+- Les stations encore en 0.29 ou avant envoient des reports plus bas (estimation brute) : le mode Auto reste prudent avec elles, le temps qu'elles se mettent à jour.
+- Mode d'emploi mis à jour.
+
 ## Version 0.29 — mode d'emploi PDF
 
 - Menu **Infos → Mode d'emploi (PDF)** : un guide de 13 pages, en français, avec captures d'écran :

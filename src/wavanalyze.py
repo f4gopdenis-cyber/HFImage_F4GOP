@@ -20,7 +20,7 @@ import modem as M
 import qrmfilter
 
 MODES = ("DATAC1X", "DATAC1", "DATAC3", "DATAC4", "DATAC0")
-THR = {"DATAC1X": 6.5, "DATAC1": 3.5, "DATAC3": 0.5, "DATAC4": -3, "DATAC0": 0}   # SNR estimé (comme le mode Auto)
+THR = {"DATAC1X": 9, "DATAC1": 5, "DATAC3": 0, "DATAC4": -4, "DATAC0": 0}   # SNR réel (comme le mode Auto)
 
 
 class _Stats(ctypes.Structure):
@@ -63,7 +63,7 @@ def _frames(x, mode, use_filter, progress=None):
                     ok = M.crc16(frame[:-2]) == ((frame[-2] << 8) | frame[-1])
                     M.lib.freedv_get_modem_extended_stats(m.f, ctypes.byref(st))
                     t = (pos_out + pos - len(m._rxbuf) - delay) / 8000
-                    ev.append((max(0.0, t), ok, float(st.snr_est), float(st.foff)))
+                    ev.append((max(0.0, t), ok, float(M.true_snr(mode, st.snr_est)), float(st.foff)))
             pos_out += len(y)
             m._rxbuf = buf[pos:]
             if progress and i % (step * 10) == 0:
@@ -248,7 +248,7 @@ def diagnose(rep):
     if snr is not None:
         if loss > 0.35 and i < len(order) - 1:
             out.append(("info", f"Trop de pertes en {best} : essayez {order[i + 1]} (plus lent mais plus robuste)."))
-        elif i > 0 and snr >= THR[order[i - 1]] + 1.5 and loss < 0.1:
+        elif i > 0 and snr >= THR[order[i - 1]] + 2 and loss < 0.1:
             out.append(("info", f"Le lien a de la marge (SNR {snr:+.1f} dB) : {order[i - 1]} passerait aussi, "
                                 f"pour des images plus nettes."))
         else:
