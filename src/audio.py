@@ -420,6 +420,43 @@ def rig_check(port, baud, rig=None):
             ser.close()
 
 
+def rig_set_data(port, baud, rig=None):
+    """Passe le poste en USB-DATA (DATA1) par CAT, puis relit le mode pour vérifier.
+    -> (texte, ok). TS-990 : mode USB-D1 direct ; TS-890 et autres : USB puis DATA."""
+    import time as _t
+    own = rig is None
+    if own:
+        ser = open_serial(port, baud)
+        q = lambda c: _query(ser, c)
+        w = lambda c: ser.write(c.encode())
+    else:
+        q, w = rig.query, rig.write
+    try:
+        rid = q("ID;")
+        if not rid.startswith("ID"):
+            return f"Pas de réponse du poste sur {port}.", False
+        model = KENWOOD_IDS.get(rid[2:5], f"ID {rid[2:-1]}")
+        if model == "TS-990S":
+            cmds = ["OM0D;"]                         # USB-DATA1 en une commande
+        elif model == "TS-890S":
+            cmds = ["OM02;", "DA1;"]                 # USB, puis DATA1
+        else:
+            cmds = ["MD2;", "DA1;"]                  # TS-590 / TS-480… : USB, puis DATA
+        for c in cmds:
+            w(c)
+            _t.sleep(0.15)
+        _t.sleep(0.3)
+        mode, r = _mode_of(model, q)
+        ok = bool(mode) and "DATA" in mode
+        if ok:
+            return f"{model} passé en {mode} par CAT.", True
+        return (f"{model} : le passage en USB-DATA par CAT n'a pas pris (mode lu : {mode or r!r}). "
+                f"Appuyez sur DATA sur le poste."), False
+    finally:
+        if own:
+            ser.close()
+
+
 class PTT:
     """Commande d'émission : CAT Kenwood (« TX1; » = DATA SEND, audio USB/arrière ;
     « RX; » au retour), ou ligne RTS / DTR du port série, ou rien (VOX)."""

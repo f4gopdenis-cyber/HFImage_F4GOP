@@ -39,7 +39,7 @@ import random
 import wave
 
 APP = "HFImage F4GOP"
-VERSION = "0.18"
+VERSION = "0.19"
 CONF_PATH = os.path.join(os.path.expanduser("~"), ".hfimage.json")
 DEFAULT_OUT = os.path.join(os.path.expanduser("~"), "Documents", "HFImage")
 DEFAULTS = {
@@ -57,6 +57,8 @@ DEFAULTS = {
     "wav_volume": 5, "wft_font": "Arial", "wft_neg": False, "wft_text": "",
 }
 TX_MODES = ["DATAC1X", "DATAC1", "DATAC3", "DATAC4"]
+DATA_ACTIONS = {"ask": "Demander", "switch": "Passer en USB-DATA automatiquement",
+                "send": "Émettre sans rien dire"}
 HEARD_KEEP_S = 2 * 3600     # stations entendues gardées 2 h dans la liste
 RING_S = 15 * 60          # Relire RX : 15 dernières minutes gardées en mémoire
 PTT_METHODS = ["VOX", "CAT", "RTS", "DTR"]
@@ -1389,6 +1391,18 @@ class App(tk.Tk):
         self.v_catfreq = tk.BooleanVar(value=self.conf.get("cat_freq", True))
         ttk.Checkbutton(c, text="Afficher la fréquence du poste (CAT)", variable=self.v_catfreq).grid(
             row=6, column=0, columnspan=2, sticky="w", pady=(4, 0))
+        da = ttk.Frame(c)
+        da.grid(row=7, column=0, columnspan=2, sticky="w", pady=(4, 0))
+        ttk.Label(da, text="Poste pas en DATA avant d'émettre :").pack(side="left")
+        self._data_act_names = {tr(v): k for k, v in DATA_ACTIONS.items()}
+        self.v_dataact = tk.StringVar(value=tr(DATA_ACTIONS.get(self.conf.get("data_action", "ask"), DATA_ACTIONS["ask"])))
+        cbd = ttk.Combobox(da, textvariable=self.v_dataact, values=list(self._data_act_names), state="readonly", width=30)
+        cbd.pack(side="left", padx=4)
+
+        def _act_changed(_e=None):
+            self.conf["data_action"] = self._data_act_names.get(self.v_dataact.get(), "ask")
+            self._save_conf_file()
+        cbd.bind("<<ComboboxSelected>>", _act_changed)
         ttk.Label(c, text="CAT : TX1; = DATA SEND (audio USB), poste en mode DATA (USB-D).\n"
                           "Le port doit être libre : fermez ARCP/logger, ou prenez l'autre\n"
                           "port COM virtuel du poste (Standard / Enhanced).",
@@ -2148,8 +2162,71 @@ class App(tk.Tk):
             return False
         self.log(txt)
         if ok is False and ptt[3] == "TX1;":
-            return messagebox.askyesno(APP, txt + "\n\nÉmettre quand même ?")
+            act = self.conf.get("data_action", "ask")
+            if act not in ("switch", "send"):
+                act, remember = self._ask_data_mode(txt)
+                if remember and act in ("switch", "send"):
+                    self.conf["data_action"] = act
+                    if hasattr(self, "v_dataact"):
+                        self.v_dataact.set(tr(DATA_ACTIONS[act]))
+                    self._save_conf_file()
+            if act == "cancel":
+                return False
+            if act == "switch":
+                try:
+                    msg, ok2 = audio.rig_set_data(ptt[1], ptt[2], rig=self._rig_for(ptt[1]))
+                except Exception as e:
+                    msg, ok2 = f"Passage en DATA impossible : {e}", False
+                self.log(msg)
+                if not ok2:
+                    return messagebox.askyesno(APP, msg + "\n\nÉmettre quand même ?")
         return True
+
+    def _ask_data_mode(self, txt):
+        """Poste pas en DATA : passer en USB-DATA, émettre quand même ou annuler,
+        avec « Ne plus me demander ». -> (choix, mémoriser)."""
+        win = tk.Toplevel(self)
+        win.title(APP)
+        win.transient(self)
+        win.resizable(False, False)
+        res = {"act": "cancel"}
+        f = ttk.Frame(win, padding=14)
+        f.pack(fill="both", expand=True)
+        ttk.Label(f, text=txt, wraplength=460, justify="left").pack(anchor="w")
+        ttk.Label(f, text="Si votre poste est réglé pour émettre l'audio USB sans le mode DATA, choisissez "
+                          "la commande TX0; dans Réglages → PTT : ce message ne s'affichera plus.",
+                  wraplength=460, justify="left", foreground="#555").pack(anchor="w", pady=(8, 0))
+        remember = tk.BooleanVar(value=False)
+        ttk.Checkbutton(f, text="Ne plus me demander (faire pareil les prochaines fois)",
+                        variable=remember).pack(anchor="w", pady=(10, 0))
+        b = ttk.Frame(f)
+        b.pack(fill="x", pady=(12, 0))
+
+        def done(act):
+            res["act"] = act
+            win.destroy()
+
+        first = ttk.Button(b, text="Passer en USB-DATA et émettre", command=lambda: done("switch"))
+        first.pack(side="left")
+        ttk.Button(b, text="Émettre quand même", command=lambda: done("send")).pack(side="left", padx=6)
+        ttk.Button(b, text="Annuler", command=lambda: done("cancel")).pack(side="right")
+        win.protocol("WM_DELETE_WINDOW", lambda: done("cancel"))
+        self._translate_ui(win)
+        win.update_idletasks()
+        x = self.winfo_rootx() + (self.winfo_width() - win.winfo_width()) // 2
+        y = self.winfo_rooty() + (self.winfo_height() - win.winfo_height()) // 3
+        win.geometry(f"+{max(0, x)}+{max(0, y)}")
+        first.focus_set()
+        win.grab_set()
+        self.wait_window(win)
+        return res["act"], bool(remember.get())
+
+    def _save_conf_file(self):
+        try:
+            with open(CONF_PATH, "w", encoding="utf-8") as f:
+                json.dump(self.conf, f, indent=1)
+        except Exception:
+            pass
 
     def _job_audio(self, job):
         """-> (fabrique de morceaux 8 kHz, durée s, mode, description)."""

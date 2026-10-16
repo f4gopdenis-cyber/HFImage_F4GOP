@@ -1,5 +1,17 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 0.19 — message « poste pas en mode DATA »
+
+Avec la commande PTT **TX1;** (DATA SEND), un Kenwood n'émet l'audio USB qu'en mode DATA : HFImage vérifie le mode avant d'émettre. Le message ne revient plus à chaque émission :
+
+- **Trois choix** :
+  - **Passer en USB-DATA et émettre** : le programme met le poste en USB-DATA1 par CAT et relit le mode pour vérifier (TS-990 : `OM0D;` ; TS-890 : `OM02;` + `DA1;` ; autres Kenwood : `MD2;` + `DA1;`) ;
+  - **Émettre quand même** ;
+  - **Annuler**.
+- Case **« Ne plus me demander »** : le choix est retenu.
+- Réglages → PTT → « Poste pas en DATA avant d'émettre » (Demander / Passer en USB-DATA automatiquement / Émettre sans rien dire) pour changer ce choix.
+- Poste réglé pour émettre l'audio USB **sans** le mode DATA : choisissez la commande **TX0;**. La vérification n'est alors plus faite.
+
 ## Version 0.18 — style de la carte QSL
 
 Dans la fenêtre **Carte QSL** (bouton IMG/QSL), nouvelle partie « Style de la carte », avec un **aperçu en direct** à droite :

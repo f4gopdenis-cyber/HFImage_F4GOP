@@ -49,7 +49,7 @@ Programme Windows de F4GOP (Denis, IN98QR) pour envoyer et recevoir des photos p
 2. Lancez `HFImage_F4GOP.exe`, ouvrez **Réglages** :
    - indicatif et locator ;
    - sortie « Haut-parleurs (USB Audio CODEC) [MME] », entrée « Microphone (USB Audio CODEC) [MME] » ;
-   - PTT **CAT** sur le port COM virtuel du poste, 115200 bauds.
+   - PTT **CAT** sur le port COM virtuel du poste, 115200 bauds, commande `TX1;` (DATA SEND, poste en USB-DATA), ou `TX0;` si votre poste est réglé pour émettre l'audio USB sans le mode DATA.
 3. **Vérifier le poste**, **Tester la sortie (1 kHz)**, puis **Tester le PTT**.
 4. Onglet **TX** → *Ouvrir une image…* → **Émettre**. Réglez le niveau pour que l'ALC ne bouge pas.
 
