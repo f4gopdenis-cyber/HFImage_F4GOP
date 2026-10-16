@@ -45,7 +45,7 @@ import random
 import wave
 
 APP = "HFImage F4GOP"
-VERSION = "0.27"
+VERSION = "0.28"
 CONF_PATH = os.path.join(os.path.expanduser("~"), ".hfimage.json")
 DEFAULT_OUT = os.path.join(os.path.expanduser("~"), "Documents", "HFImage")
 DEFAULTS = {
@@ -67,10 +67,14 @@ TX_MODES = ["Auto", "DATAC1X", "DATAC1", "DATAC3", "DATAC4"]
 # mode « Auto » : choisi d'après le report le plus faible des stations (dB, SNR sur 3 kHz).
 # Mesuré au simulateur avec QSB moyen : DATAC1X perd peu de trames dès ~10 dB,
 # DATAC1 dès ~5 dB, DATAC3 tient jusque vers 0 dB.
-AUTO_STEPS = [(10, "DATAC1X"), (5, "DATAC1"), (None, "DATAC3")]
+# Les seuils sont exprimés en SNR *estimé par codec2* (celui des reports et du panneau) :
+# cette estimation est comprimée (SNR réel 12 dB -> ~8,5 dB affichés avec QSB). Mesuré au
+# simulateur, QSB moyen : DATAC1X perd < 12 % des trames dès ~6,5 dB affichés (9 dB réels),
+# DATAC1 < 25 % dès ~3,5 dB affichés (5 dB réels).
+AUTO_STEPS = [(6.5, "DATAC1X"), (3.5, "DATAC1"), (None, "DATAC3")]
 AUTO_DEFAULT = "DATAC1X"         # aucun report récent : image nette (comme avant la 0.22)
 # seuil de chaque mode (dB) : la robustesse « Auto » dépend de la marge au-dessus
-MODE_THR = {"DATAC1X": 10, "DATAC1": 5, "DATAC3": 0, "DATAC4": -4}
+MODE_THR = {"DATAC1X": 6.5, "DATAC1": 3.5, "DATAC3": 0.5, "DATAC4": -3}
 AUTO_MAX_AGE = 45 * 60           # reports pris en compte (s)
 # robustesse = redondance du code fontaine (trames en plus, pour les trames perdues dans le QSB)
 ROBUST = [("Auto (selon les reports)", None), ("Faible (15 %)", 15), ("Normale (40 %)", 40), ("Forte (70 %)", 70), ("Très forte (100 %)", 100)]
@@ -512,6 +516,7 @@ class App(tk.Tk):
         f = tk.Menu(m, tearoff=0)
         f.add_command(label="Enregistrer l'émission en WAV…", command=self.save_wav)
         f.add_command(label="Décoder un fichier WAV…", command=self.decode_wav)
+        f.add_command(label="Analyser un enregistrement WAV…", command=self.analyze_wav)
         f.add_command(label="Relire RX (15 dernières min)", command=self.replay_rx)
         f.add_command(label="Fichiers WAV (begin / end)…", command=self.show_wav)
         f.add_command(label="Enregistrement WAVE marche / arrêt", command=self.toggle_record)
@@ -2065,7 +2070,7 @@ class App(tk.Tk):
         if snr is None:
             return 15
         margin = snr - MODE_THR.get(mode or self._tx_mode(), 10)
-        return 15 if margin >= 4 else (25 if margin >= 2 else 40)
+        return 15 if margin >= 3 else (25 if margin >= 1.5 else 40)
 
     def _link_snr(self):
         """Report le plus faible des stations ces 45 dernières minutes.
@@ -2958,6 +2963,17 @@ class App(tk.Tk):
         self.v_state.set("RÉCEPTION")
         if not quiet:
             self.log("Écoute démarrée (DATAC1X / DATAC1 / DATAC3 / DATAC4 + BSR/ACK en DATAC0).")
+
+    def analyze_wav(self, path=None):
+        """Diagnostic d'une réception enregistrée (niveau, QRM, trames, SNR, mode conseillé)."""
+        if path is None:
+            last = getattr(self, "rec_path", None)
+            path = filedialog.askopenfilename(
+                filetypes=[("WAV", "*.wav"), ("Tous", "*.*")],
+                initialdir=os.path.dirname(last) if last else self.v_folder.get())
+        if path:
+            import anadlg
+            anadlg.AnalyzerWindow(self, path)
 
     def decode_wav(self):
         p = filedialog.askopenfilename(filetypes=[("WAV", "*.wav"), ("Tous", "*.*")])

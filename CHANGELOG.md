@@ -1,5 +1,17 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 0.28 — analyseur de réception, mode Auto mieux calé
+
+- **Fichiers → Analyser un enregistrement WAV…** : on relit un enregistrement (bouton WAVE) et HFImage dit ce qui s'est passé :
+  - niveau d'entrée (écrêtage, trop faible) ;
+  - brouillage étroit (porteuse, CW, RTTY) : fréquence et part du temps ;
+  - pour chaque mode : trames justes / perdues, SNR médian, mini / maxi, décalage de fréquence entre les postes ;
+  - pertes groupées (QSB) ou isolées ;
+  - ce que le coupe-QRM a sauvé (comparaison avec / sans) ;
+  - le mode conseillé pour ce lien.
+  Graphique du SNR de chaque trame (juste / perdue) avec les seuils des modes. « Copier le rapport » pour l'envoyer par message.
+- **Mode Auto recalé** : le SNR affiché par le modem (reports, panneau) est une estimation qui sous-estime nettement les bons signaux (12 dB réels → environ 8,5 dB affichés). Les seuils du mode Auto sont maintenant exprimés dans cette même échelle : DATAC1X dès 6,5 dB affichés (au lieu de 10), DATAC1 dès 3,5 dB (au lieu de 5). Résultat : DATAC1X, donc des images plus nettes, est choisi beaucoup plus souvent quand le lien le permet.
+
 ## Version 0.27 — couleur du texte
 
 - Réglages → Apparence → **Couleur du texte** : « Choisir… » pour prendre n'importe quelle couleur, « Couleur du thème » pour revenir à l'origine.
