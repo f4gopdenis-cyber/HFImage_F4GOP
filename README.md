@@ -11,6 +11,7 @@ Programme Windows de F4GOP (Denis, IN98QR) pour envoyer et recevoir des photos p
 
 - Un seul fichier, rien à installer (Windows 10 / 11, 64 bits).
 - Au premier lancement, Windows SmartScreen peut afficher un avertissement : cliquez sur « Informations complémentaires », puis « Exécuter quand même ».
+- Ensuite, le programme se met à jour tout seul : un bandeau apparaît quand une nouvelle version est publiée, un clic suffit.
 
 ## Ce que fait le programme
 

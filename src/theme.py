@@ -166,10 +166,14 @@ class Appearance:
         stack = [top]
         while stack:
             w = stack.pop()
+            if getattr(w, "_no_theme", False):
+                continue
             try:
                 stack.extend(w.winfo_children())
             except tk.TclError:
                 continue
+            if getattr(w, "_no_theme", False):
+                continue                                   # ex. bandeau de mise à jour : couleurs fixes
             if isinstance(w, ttk.Widget):
                 continue                                   # réglés par le style ttk
             try:

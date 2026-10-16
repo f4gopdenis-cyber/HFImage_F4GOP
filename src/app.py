@@ -27,6 +27,7 @@ import imgfmt
 import presence
 import stationmap
 import theme
+import updater
 from i18n import tr
 import protocol
 import qsl
@@ -39,7 +40,7 @@ import random
 import wave
 
 APP = "HFImage F4GOP"
-VERSION = "0.19"
+VERSION = "0.20"
 CONF_PATH = os.path.join(os.path.expanduser("~"), ".hfimage.json")
 DEFAULT_OUT = os.path.join(os.path.expanduser("~"), "Documents", "HFImage")
 DEFAULTS = {
@@ -51,6 +52,7 @@ DEFAULTS = {
     "hyb_dir": "hfimage", "hyb_tls": False, "hyb_url": "", "hyb_auto": True,
     "hyb_width": 640, "hyb_kb": 60, "gif_kb": 2000,
     "net_on": True, "net_host": presence.DEFAULT_HOST, "net_port": presence.DEFAULT_PORT,
+    "update_check": True,
     "theme": "Vert EasyPal", "theme_color": "#3a8ee6", "font_family": "(par défaut)", "font_size": "Normale",
     "locator": "", "bsr_auto": True, "fix_auto": True, "ack_auto": True, "listen_after": True,
     "cwid": False, "cat_freq": True, "lang": "",
@@ -210,6 +212,10 @@ class App(tk.Tk):
         self.after(1500, lambda: self.toggle_listen(quiet=True)
                    if self.v_in.get() and self.rx_stream is None else None)
         self.after(1200, self.net_start)
+        for ms in (100, 20000):                       # ancien exe laissé par une mise à jour (l'ancien
+            self.after(ms, self._update_cleanup)      # programme met parfois quelques s à se fermer)
+        if self.conf.get("update_check", True):
+            self.after(5000, lambda: self.update_check(quiet=True))
         self.after(400, self._restore_layout)
         self.after(1500, self._restore_layout)     # une 2e fois, une fois tout affiché
         self.protocol("WM_DELETE_WINDOW", self._quit)
@@ -228,11 +234,26 @@ class App(tk.Tk):
         self.v_call.trace_add("write", lambda *a: self._set_title())
         self._set_title()
 
+        # bandeau de mise à jour (caché tant qu'aucune nouvelle version n'est annoncée)
+        self.upd_bar = tk.Frame(self, bg="#ff9f1a", cursor="hand2")
+        self.upd_bar._no_theme = True
+        self.upd_lbl = tk.Label(self.upd_bar, text="", bg="#ff9f1a", fg="#1a1a1a", cursor="hand2",
+                                font=("TkDefaultFont", 10, "bold"), anchor="w")
+        self.upd_lbl.pack(side="left", fill="x", expand=True, padx=8, pady=3)
+        self.upd_close = tk.Label(self.upd_bar, text="✕", bg="#ff9f1a", fg="#1a1a1a", cursor="hand2",
+                                  font=("TkDefaultFont", 10, "bold"))
+        self.upd_close.pack(side="right", padx=8)
+        for w in (self.upd_bar, self.upd_lbl):
+            w.bind("<Button-1>", lambda e: self._update_click())
+        self.upd_close.bind("<Button-1>", lambda e: self.upd_bar.pack_forget())
+        self.upd_info = None
+        self.upd_busy = False
         # séparateurs réglables à la souris (positions gardées d'une session à l'autre)
         pw = dict(bg=GREEN_DARK, sashwidth=6, sashrelief="raised", bd=0, opaqueresize=True)
         self.panes = {}
         main = tk.PanedWindow(self, orient="horizontal", **pw)
         main.pack(fill="both", expand=True, padx=2, pady=2)
+        self._main_pane = main
         self.panes["main"] = main
         # ---------------- colonne de gauche : état, boutons, spectre + waterfall, stations
         left = tk.Frame(main, bg=GREEN, width=268)
@@ -450,6 +471,10 @@ class App(tk.Tk):
         e.add_command(label="Journal à l'écran", command=lambda: self._clear_text(self.logbox))
         m.add_cascade(label="Effacer", menu=e)
         n = tk.Menu(m, tearoff=0)
+        n.add_command(label="Rechercher une mise à jour", command=lambda: self.update_check(quiet=False))
+        n.add_command(label="Page du programme sur GitHub",
+                      command=lambda: __import__("webbrowser").open(f"https://github.com/{updater.REPO}"))
+        n.add_separator()
         n.add_command(label="À propos…", command=self._about)
         m.add_cascade(label="Infos", menu=n)
         self.config(menu=m)
@@ -1484,6 +1509,13 @@ class App(tk.Tk):
         self.v_netport = tk.IntVar(value=int(self.conf.get("net_port", presence.DEFAULT_PORT)))
         ttk.Checkbutton(nf, text="Me signaler et voir les stations qui ont HFImage ouvert",
                         variable=self.v_net, command=self.net_start).grid(row=0, column=0, columnspan=4, sticky="w")
+        self.v_updchk = tk.BooleanVar(value=bool(self.conf.get("update_check", True)))
+
+        def _upd_changed():
+            self.conf["update_check"] = bool(self.v_updchk.get())
+            self._save_conf_file()
+        ttk.Checkbutton(nf, text="Vérifier les mises à jour au démarrage (GitHub)", variable=self.v_updchk,
+                        command=_upd_changed).grid(row=4, column=0, columnspan=5, sticky="w", pady=(6, 0))
         ttk.Label(nf, text="Serveur").grid(row=1, column=0, sticky="w", pady=(4, 0))
         ttk.Entry(nf, textvariable=self.v_nethost, width=24).grid(row=1, column=1, sticky="w", padx=4, pady=(4, 0))
         ttk.Label(nf, text="Port").grid(row=1, column=2, sticky="w", pady=(4, 0))
@@ -3050,6 +3082,94 @@ class App(tk.Tk):
             self.ui(self.v_sim.set, f"{tx.mode}, SNR {snr:+.0f} dB, canal {fading}\n{txt}")
 
         threading.Thread(target=run, daemon=True).start()
+
+    # ------------------------------------------------------------ mise à jour automatique
+    def _update_cleanup(self):
+        try:
+            updater.cleanup()
+        except Exception:
+            pass
+
+    def update_check(self, quiet=False):
+        """Cherche une version plus récente sur GitHub (en tâche de fond)."""
+        def run():
+            try:
+                info = updater.check()
+            except Exception as e:
+                if not quiet:
+                    self.ui(messagebox.showinfo, APP, f"Impossible de vérifier les mises à jour :\n{e}")
+                return
+            self.ui(self._update_found, info, quiet)
+        threading.Thread(target=run, daemon=True).start()
+
+    def _update_found(self, info, quiet):
+        if updater.newer(info["version"], VERSION):
+            self.upd_info = info
+            self._update_banner(tr(f"Nouvelle version {info['version']} disponible — cliquez ici pour mettre à jour "
+                                   f"(version actuelle : {VERSION})"))
+            self.log(f"Nouvelle version {info['version']} disponible sur GitHub.")
+        elif not quiet:
+            messagebox.showinfo(APP, f"Vous avez la dernière version ({VERSION}).")
+
+    def _update_banner(self, text, color="#ff9f1a"):
+        for w in (self.upd_bar, self.upd_lbl, self.upd_close):
+            w.configure(bg=color)
+        self.upd_lbl.configure(text=text)
+        if not self.upd_bar.winfo_ismapped():
+            self.upd_bar.pack(side="top", fill="x", before=self._main_pane)
+
+    def _update_click(self):
+        info = self.upd_info
+        if info is None or self.upd_busy:
+            return
+        notes = info.get("notes") or ""
+        if len(notes) > 900:
+            notes = notes[:900] + "…"
+        if not updater.frozen() or not info.get("url"):
+            # lancé depuis les sources (ou pas d'exe joint) : on ouvre la page de la version
+            import webbrowser
+            webbrowser.open(info.get("page") or updater.PAGE_URL)
+            return
+        if self.tx_busy:
+            messagebox.showinfo(APP, "Attendez la fin de l'émission pour mettre à jour.")
+            return
+        size = f" ({info['size'] / 1e6:.0f} Mo)" if info.get("size") else ""
+        if not messagebox.askyesno(APP, f"Mettre à jour HFImage {VERSION} → {info['version']}{size} ?\n\n"
+                                        f"{notes}\n\nLe programme redémarrera tout seul."):
+            return
+        self.upd_busy = True
+        self._update_banner(tr("Téléchargement de la mise à jour… 0 %"), "#ffd166")
+
+        def prog(f):
+            self.ui(self.upd_lbl.configure, {"text": tr(f"Téléchargement de la mise à jour… {int(f * 100)} %")})
+
+        def run():
+            try:
+                path = updater.download(info, prog)
+            except Exception as e:
+                self.ui(self._update_failed, e)
+                return
+            self.ui(self._update_install, path)
+        threading.Thread(target=run, daemon=True).start()
+
+    def _update_failed(self, e):
+        self.upd_busy = False
+        self.log_exc("Mise à jour", e)
+        self._update_banner(tr(f"Mise à jour impossible : {e} — cliquez pour réessayer"), "#ff6b6b")
+
+    def _update_install(self, path):
+        self._update_banner(tr("Mise à jour téléchargée et vérifiée — redémarrage…"), "#7ed957")
+        self.update_idletasks()
+        try:
+            started = updater.install(path)
+        except Exception as e:
+            self._update_failed(e)
+            return
+        if started:
+            self.log("Mise à jour installée, redémarrage.")
+            self.after(500, self._quit)
+        else:
+            self.upd_busy = False
 
     def _zoom_main(self):
         try:

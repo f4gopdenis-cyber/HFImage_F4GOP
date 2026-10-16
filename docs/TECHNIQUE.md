@@ -91,6 +91,7 @@ Une trame par rafale dans tous les modes. Code fontaine GF(256) systématique.
 | `app.py` | Interface Tkinter, autotests (`--selftest`, `--audiotest`) |
 | `panel.py` | Panneau d'état |
 | `qsl.py` | Cartes QSL |
+| `updater.py` | Mise à jour automatique depuis les Releases GitHub |
 | `theme.py` | Apparence : thèmes de couleurs et police |
 | `presence.py` | Présence des stations par Internet (MQTT) et Rx Ok par Internet |
 | `stationmap.py`, `carte.bin` | Carte des stations (fond Natural Earth) |

@@ -2,7 +2,7 @@
 a = Analysis(['app.py'], pathex=['.'],
              binaries=[('libcodec2.dll', '.')],
              datas=[('carte.bin', '.')],
-             hiddenimports=["loopback", "channel", "waterfall", "hybrid", "panel", "qsl", "i18n", "wavtext", "imgfmt", "stationmap", "presence", "theme", "tkinter.colorchooser", "paho.mqtt.client", "resvg_py", "tkinter.simpledialog",
+             hiddenimports=["loopback", "channel", "waterfall", "hybrid", "panel", "qsl", "i18n", "wavtext", "imgfmt", "stationmap", "presence", "theme", "updater", "tkinter.colorchooser", "paho.mqtt.client", "resvg_py", "tkinter.simpledialog",
                             "serial.tools.list_ports", "secrets", "hmac"],
              excludes=['scipy', 'skimage', 'matplotlib', 'pandas', 'IPython', 'pytest',
                        'PIL.ImageCms', 'numpy.f2py', 'numpy.testing', 'setuptools', 'pkg_resources'])

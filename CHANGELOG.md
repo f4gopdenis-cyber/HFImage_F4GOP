@@ -1,5 +1,19 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 0.20 — mise à jour automatique
+
+- Au démarrage, HFImage regarde sur GitHub (page « Releases » du projet) s'il existe une version plus récente.
+- Si oui, un **bandeau orange** apparaît en haut de la fenêtre : « Nouvelle version … disponible — cliquez ici pour mettre à jour ».
+- Au clic :
+  - affichage des nouveautés et confirmation ;
+  - téléchargement avec progression dans le bandeau ;
+  - **vérification de la taille et de l'empreinte SHA-256** (un fichier abîmé est refusé, l'exe en place n'est pas touché) ;
+  - remplacement de l'exe et **redémarrage automatique**. L'ancien exe est effacé au démarrage suivant.
+- Le ✕ ferme le bandeau pour la session. Menu Infos → « Rechercher une mise à jour » et « Page du programme sur GitHub ».
+- Réglages → Internet : case « Vérifier les mises à jour au démarrage (GitHub) ».
+- Seuls les fichiers publiés dans les Releases de `f4gopdenis-cyber/HFImage_F4GOP` sont acceptés.
+- Lancé depuis les sources Python, le bandeau ouvre simplement la page de la nouvelle version.
+
 ## Version 0.19 — message « poste pas en mode DATA »
 
 Avec la commande PTT **TX1;** (DATA SEND), un Kenwood n'émet l'audio USB qu'en mode DATA : HFImage vérifie le mode avant d'émettre. Le message ne revient plus à chaque émission :
