@@ -1018,6 +1018,25 @@ T = [
     ("{0} — le poste n'est pas en mode DATA : l'audio USB / arrière risque de ne pas partir.", '{0} — the radio is not in DATA mode: USB / rear audio may not be transmitted.', '{0} — das Gerät ist nicht im DATA-Modus: USB- / rückseitiges Audio wird evtl. nicht gesendet.', '{0} — el equipo no está en modo DATA: el audio USB / trasero puede no transmitirse.', "{0} — la radio non è in modo DATA: l'audio USB / posteriore potrebbe non essere trasmesso."),
     ('{0} (DATA : OK).', '{0} (DATA: OK).', '{0} (DATA: OK).', '{0} (DATA: OK).', '{0} (DATA: OK).'),
     ('{0} : {1}, mode {2}', '{0}: {1}, mode {2}', '{0}: {1}, Modus {2}', '{0}: {1}, modo {2}', '{0}: {1}, modo {2}'),
+    # ------------------------------------------------------------ galerie (v0.21)
+    ("Galerie", "Gallery", "Galerie", "Galería", "Galleria"),
+    ("Dernières reçues", "Last received", "Zuletzt empfangen", "Últimas recibidas", "Ultime ricevute"),
+    ("Dernières envoyées", "Last sent", "Zuletzt gesendet", "Últimas enviadas", "Ultime inviate"),
+    ("Clic : afficher — double-clic : plein format — clic droit : options", "Click: show — double-click: full size — right-click: options", "Klick: anzeigen — Doppelklick: volle Größe — Rechtsklick: Optionen", "Clic: mostrar — doble clic: tamaño completo — clic derecho: opciones", "Clic: mostra — doppio clic: piena grandezza — clic destro: opzioni"),
+    ("Aucune image reçue pour l'instant.", "No image received yet.", "Noch kein Bild empfangen.", "Aún no se ha recibido ninguna imagen.", "Nessuna immagine ricevuta per ora."),
+    ("Aucune image envoyée pour l'instant.", "No image sent yet.", "Noch kein Bild gesendet.", "Aún no se ha enviado ninguna imagen.", "Nessuna immagine inviata per ora."),
+    ("{0} images", "{0} images", "{0} Bilder", "{0} imágenes", "{0} immagini"),
+    ("1 image", "1 image", "1 Bild", "1 imagen", "1 immagine"),
+    ("de {0}", "from {0}", "von {0}", "de {0}", "da {0}"),
+    ("de", "from", "von", "de", "da"),
+    ("envoyée", "sent", "gesendet", "enviada", "inviata"),
+    ("Afficher dans l'onglet RX", "Show in RX tab", "Im RX-Reiter anzeigen", "Mostrar en la pestaña RX", "Mostra nella scheda RX"),
+    ("Ouvrir en plein format", "Open full size", "In voller Größe öffnen", "Abrir a tamaño completo", "Apri a piena grandezza"),
+    ("Renvoyer cette image (onglet TX)", "Send this image again (TX tab)", "Dieses Bild erneut senden (TX-Reiter)", "Reenviar esta imagen (pestaña TX)", "Reinvia questa immagine (scheda TX)"),
+    ("Voir {0} sur la carte", "Show {0} on the map", "{0} auf der Karte zeigen", "Ver {0} en el mapa", "Mostra {0} sulla mappa"),
+    ("Ouvrir le dossier", "Open folder", "Ordner öffnen", "Abrir la carpeta", "Apri la cartella"),
+    ("Retirer de la galerie", "Remove from gallery", "Aus der Galerie entfernen", "Quitar de la galería", "Rimuovi dalla galleria"),
+    ("Galerie des dernières images", "Gallery of last images", "Galerie der letzten Bilder", "Galería de las últimas imágenes", "Galleria delle ultime immagini"),
 ]
 
 _lang = "fr"

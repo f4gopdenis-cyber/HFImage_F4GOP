@@ -25,6 +25,7 @@ import hybrid
 import i18n
 import imgfmt
 import presence
+import gallery
 import radio
 import radiodlg
 import contextlib
@@ -209,6 +210,8 @@ class App(tk.Tk):
         self.look = theme.Appearance(self)
         self._build()
         self._apply_look(save=False)
+        self.gal_store = None
+        self._gallery_open()
         self.after(100, self._poll)
         self.after(500, self._tick)
         self.after(1000, self._clock)
@@ -288,6 +291,8 @@ class App(tk.Tk):
         self._tab_tx(nb)
         self._tab_stations(nb)
         self._tab_sim(nb)
+        self.gal = gallery.GalleryView(nb, self, tr)
+        nb.add(self.gal, text="  Galerie  ")
         self.logbox = tk.Text(rpw, height=4, state="disabled", wrap="word", bg="#f4fff4")
         rpw.add(self.logbox, minsize=40, stretch="never", height=70)
         bar = tk.Frame(right, bg=GREEN_DARK)
@@ -459,6 +464,7 @@ class App(tk.Tk):
         i.add_separator()
         i.add_command(label="Image reçue en plein format", command=self._open_full)
         i.add_command(label="Dossier des images reçues", command=self.open_folder)
+        i.add_command(label="Galerie des dernières images", command=lambda: self.nb.select(self.gal))
         m.add_cascade(label="Images", menu=i)
         f = tk.Menu(m, tearoff=0)
         f.add_command(label="Enregistrer l'émission en WAV…", command=self.save_wav)
@@ -1882,6 +1888,8 @@ class App(tk.Tk):
                 json.dump(self.conf, f, indent=1)
             if not quiet:
                 self.log("Réglages enregistrés.")
+            if getattr(self, "gal_store", None) is not None:
+                self._gallery_open()
         except Exception as e:
             self.log(f"Impossible d'enregistrer les réglages : {e}")
 
@@ -2464,6 +2472,8 @@ class App(tk.Tk):
 
             if not self._play_fallback(player, job["dev"]):
                 self.ui(self.log, "Émission interrompue.")
+            elif job["kind"] in ("image", "hybrid") and not job.get("complement"):
+                self.ui(self._gallery_sent, job, mode)
         except Exception as e:
             self.ui(self.log_exc, "Émission", e)
             if job["kind"] != "control":
@@ -2876,6 +2886,8 @@ class App(tk.Tk):
                                            f"{im.width}×{im.height}   —   {hdr['size'] / 1000:.1f} K" + anim)
             if not self.tx_busy:
                 self.nb.select(0)
+            if not hdr.get("preview") and os.sep + "relecture" + os.sep not in path:
+                self._gallery_add("rx", hdr.get("call"), mode, path, png, hdr.get("size"))
         self.hist.insert(0, (hdr, path, png, mode))
         self.lst.insert(0, f"{time.strftime('%H:%M')}  {hdr['call']:8s} {mode}  {hdr['size']} o")
 
@@ -2915,6 +2927,9 @@ class App(tk.Tk):
             self.msgbox.configure(state="disabled")
         for i, (h, p, pg, mode) in enumerate(self.hist):
             if h["id"] == info["id"]:
+                if self.gal_store is not None and p:
+                    self.gal_store.update_file(p, path, png, info.get("call"))
+                    self.gal.refresh()
                 self.hist[i] = (info, path, png, mode)
                 self.lst.delete(i)
                 self.lst.insert(i, f"{time.strftime('%H:%M')}  {info['call']:8s} {mode}  {info['size']} o")
@@ -3146,6 +3161,94 @@ class App(tk.Tk):
             os.startfile(target)
         else:
             subprocess.Popen(["xdg-open", target])
+
+    # ------------------------------------------------------------- galerie
+    def _gallery_open(self):
+        """(Ré)ouvre la galerie du dossier des images reçues."""
+        folder = self.v_folder.get() or DEFAULT_OUT
+        if self.gal_store is not None and self.gal_store.folder == folder:
+            return
+        try:
+            self.gal_store = gallery.GalleryStore(folder)
+            self.gal.set_store(self.gal_store)
+        except Exception as e:
+            self.log_exc("Galerie", e)
+
+    def _gallery_add(self, direction, call, mode, path, png, size):
+        if self.gal_store is None:
+            return
+        self.gal_store.add({"t": time.time(), "dir": direction, "call": call or "?", "mode": mode,
+                            "file": path, "png": png, "size": size or 0})
+        self.gal.refresh()
+
+    def _gallery_sent(self, job, mode):
+        """Image émise : une copie va dans « envoyees » pour la galerie « Dernières envoyées »."""
+        try:
+            tx = job["tx"]
+            data = tx.data
+            if job["kind"] == "image":
+                _text, img = protocol.unpack_text(data)
+                if not img:
+                    return                                     # message texte seul
+                data = img
+            fmt = protocol.detect_format(data)
+            if fmt in ("hft", "txt"):
+                return
+            d = os.path.join(self.gal_store.folder, gallery.SENT_DIR)
+            os.makedirs(d, exist_ok=True)
+            call = self.v_call.get().strip().upper().replace("/", "-") or "NOCALL"
+            mode_n = (mode or "") + ("-HYB" if job["kind"] == "hybrid" and "HYB" not in (mode or "") else "")
+            base = os.path.join(d, f"{time.strftime('%Y%m%d_%H%M%S')}_{mode_n}_{call}")
+            path, png = imgfmt.save_received(base, fmt, data)
+            self._gallery_add("tx", call, mode_n, path, png, len(data))
+        except Exception as e:
+            self.log_exc("Galerie (image envoyée)", e)
+
+    def _gallery_src(self, e):
+        p, png = e.get("file"), e.get("png")
+        return png if png and os.path.exists(png) else p
+
+    def gallery_show(self, e):
+        src = self._gallery_src(e)
+        if not src or not os.path.exists(src):
+            return
+        try:
+            im, anim = self._show_rx(e.get("file"), src)
+        except Exception as ex:
+            self.log_exc("Galerie", ex)
+            return
+        who = e.get("call") if e.get("dir") == "rx" else tr("envoyée")
+        self._set_text(self.lb_rx_info, f"{os.path.basename(e.get('file') or '')}   —   {who}   —   "
+                                       f"{e.get('mode', '')}   —   {im.width}×{im.height}" + anim)
+        self.nb.select(0)
+
+    def gallery_full(self, e):
+        p = e.get("file")
+        if not (p and os.path.exists(p) and (p.lower().endswith(".gif") or p.lower().endswith(".jpg"))):
+            p = self._gallery_src(e)
+        if p and os.path.exists(p):
+            self._open_path(p)
+
+    def gallery_to_tx(self, e):
+        p = e.get("file")
+        if p and p.lower().endswith((".avif", ".webp")) and e.get("png") and os.path.exists(e["png"]):
+            p = e["png"]
+        if p and os.path.exists(p):
+            self.load_image(p)
+            self.nb.select(1)
+
+    def gallery_folder(self, e):
+        p = e.get("file")
+        if not p:
+            return
+        if sys.platform.startswith("win"):
+            subprocess.Popen(["explorer", "/select,", os.path.normpath(p)])
+        else:
+            self._open_path(os.path.dirname(p))
+
+    def open_path(self, p):
+        os.makedirs(p, exist_ok=True)
+        self._open_path(p)
 
     def open_folder(self):
         folder = self.v_folder.get()

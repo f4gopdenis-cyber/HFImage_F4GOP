@@ -20,6 +20,12 @@ Nouvelle fenêtre **Réglages → Poste radio…** (aussi dans le menu Réglages
 - Boutons **Tester le CAT** et **Tester le PTT** : vert si ça marche, rouge sinon, avec le message d'erreur.
 - Les réglages des versions précédentes (Kenwood, PTT CAT / RTS / DTR) sont repris automatiquement.
 
+Nouvel onglet **Galerie** (comme « 30 dernières Rx / TX » d'EZPix) :
+
+- mosaïque des **dernières images reçues** (« de F4EMK ») et des **dernières images envoyées** (30, 60 ou 100) ;
+- clic : l'image s'affiche dans l'onglet RX ; double-clic : plein format ; clic droit : renvoyer l'image (onglet TX), voir la station sur la carte, ouvrir le dossier, retirer de la galerie ;
+- les images reçues avant cette version sont reprises automatiquement ; les images envoyées sont gardées dans le sous-dossier `envoyees`.
+
 ## Version 0.20 — mise à jour automatique
 
 - Au démarrage, HFImage regarde sur GitHub (page « Releases » du projet) s'il existe une version plus récente.
