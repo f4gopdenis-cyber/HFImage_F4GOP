@@ -123,6 +123,19 @@ def install(new_exe):
     return True
 
 
+def refresh_icon(path):
+    """Prévient l'explorateur Windows que le fichier a changé (nouvelle icône)."""
+    if not sys.platform.startswith("win"):
+        return
+    try:
+        import ctypes
+        SHCNE_UPDATEITEM, SHCNE_ASSOCCHANGED, SHCNF_PATHW, SHCNF_IDLIST = 0x2000, 0x08000000, 0x0005, 0
+        ctypes.windll.shell32.SHChangeNotify(SHCNE_UPDATEITEM, SHCNF_PATHW, ctypes.c_wchar_p(path), None)
+        ctypes.windll.shell32.SHChangeNotify(SHCNE_ASSOCCHANGED, SHCNF_IDLIST, None, None)
+    except Exception:
+        pass
+
+
 def cleanup():
     """Au démarrage : efface l'ancien exe laissé par une mise à jour."""
     if not frozen():
@@ -132,6 +145,7 @@ def cleanup():
     try:
         if os.path.exists(exe + ".old"):
             os.remove(exe + ".old")
+            refresh_icon(exe)                 # l'explorateur affiche la nouvelle icône
     except OSError:
         pass
     for n in os.listdir(folder):
