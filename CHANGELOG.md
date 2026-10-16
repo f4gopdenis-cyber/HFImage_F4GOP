@@ -1,5 +1,19 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 0.25 — images en ligne sur votre site (Digi-Sites)
+
+Comme EasyPal, HFImage peut mettre vos images en ligne sur votre site web, pour qu'elles apparaissent dans **Digi-Sites** et sur votre page.
+
+- Menu **Images → Site web / Digi-Sites…** (ou bouton dans Réglages → Mode hybride).
+- Chaque image reçue est envoyée par FTP sous le nom **image1.jpg** ; les précédentes glissent d'un cran (image2, image3… jusqu'au nombre choisi : 10, 20, 30 ou 50).
+- Vos images émises vont dans **TX1.jpg … TX5.jpg** (option).
+- Chaque image porte une étiquette : indicatif, date et heure UTC, mode, bande.
+- Une page **hfimage.html** (rafraîchie toutes les 5 minutes) présente les images reçues et émises, et **list.txt** donne les 10 dernières stations.
+- Liste d'indicatifs à ne pas mettre en ligne. Vos propres images entendues en retour ne sont pas publiées.
+- Utilise le serveur FTP déjà réglé pour le mode hybride, dans un dossier à part (par défaut `dsstv`).
+- Dans Digi-Sites : Setup → Edit site, et donnez l'adresse de la page (affichée dans la fenêtre).
+- Envoi en tâche de fond : la réception n'est jamais ralentie ; en cas de coupure Internet, l'erreur est notée dans le journal.
+
 ## Version 0.24 — images à nouveau nettes en mode Auto
 
 En 0.22/0.23, sans report, le mode Auto prenait DATAC1 avec 40 % de redondance : l'image était deux fois plus petite qu'avant (environ 8 ko au lieu de 16 ko en 2 minutes), donc nettement moins nette.

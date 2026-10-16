@@ -26,6 +26,7 @@ import i18n
 import imgfmt
 import presence
 import gallery
+import websync
 import radio
 import radiodlg
 import contextlib
@@ -44,7 +45,7 @@ import random
 import wave
 
 APP = "HFImage F4GOP"
-VERSION = "0.24"
+VERSION = "0.25"
 CONF_PATH = os.path.join(os.path.expanduser("~"), ".hfimage.json")
 DEFAULT_OUT = os.path.join(os.path.expanduser("~"), "Documents", "HFImage")
 DEFAULTS = {
@@ -231,6 +232,8 @@ class App(tk.Tk):
         self._apply_look(save=False)
         self.gal_store = None
         self._gallery_open()
+        self.web = websync.WebSync(os.path.join(os.path.expanduser("~"), ".hfimage_web.json"),
+                                   log=lambda m: self.ui(self.log, m))
         self.after(100, self._poll)
         self.after(500, self._tick)
         self.after(1000, self._clock)
@@ -484,6 +487,7 @@ class App(tk.Tk):
         i.add_command(label="Image reçue en plein format", command=self._open_full)
         i.add_command(label="Dossier des images reçues", command=self.open_folder)
         i.add_command(label="Galerie des dernières images", command=lambda: self.nb.select(self.gal))
+        i.add_command(label="Site web / Digi-Sites…", command=self.web_dialog)
         m.add_cascade(label="Images", menu=i)
         f = tk.Menu(m, tearoff=0)
         f.add_command(label="Enregistrer l'émission en WAV…", command=self.save_wav)
@@ -1506,8 +1510,10 @@ class App(tk.Tk):
         ttk.Spinbox(gf, textvariable=self.v_gifkb, from_=50, to=8000, increment=250, width=7).pack(side="left", padx=6)
         ttk.Checkbutton(h, text="Télécharger automatiquement les images hybrides reçues",
                         variable=self.v_hauto).grid(row=12, column=0, columnspan=2, sticky="w", pady=(6, 0))
-        ttk.Button(h, text="Tester le serveur", command=self.test_hybrid).grid(
-            row=10, column=0, sticky="w", pady=(6, 0))
+        hb = ttk.Frame(h)
+        hb.grid(row=10, column=0, columnspan=2, sticky="w", pady=(6, 0))
+        ttk.Button(hb, text="Tester le serveur", command=self.test_hybrid).pack(side="left")
+        ttk.Button(hb, text="Site web / Digi-Sites…", command=self.web_dialog).pack(side="left", padx=6)
         ttk.Label(h, text="Ex. : serveur ftpperso.free.fr, lien http://monsite.free.fr/hfimage/\n"
                           "Le lien public doit pointer vers le dossier ci-dessus.\n"
                           "Seul ce lien passe par radio, jamais le mot de passe.",
@@ -2998,6 +3004,7 @@ class App(tk.Tk):
                 self.nb.select(0)
             if not hdr.get("preview") and os.sep + "relecture" + os.sep not in path:
                 self._gallery_add("rx", hdr.get("call"), mode, path, png, hdr.get("size"))
+                self._web_queue("rx", png, hdr.get("call"), mode, hdr.get("id"))
         self.hist.insert(0, (hdr, path, png, mode))
         self.lst.insert(0, f"{time.strftime('%H:%M')}  {hdr['call']:8s} {mode}  {hdr['size']} o")
 
@@ -3311,8 +3318,105 @@ class App(tk.Tk):
             base = os.path.join(d, f"{time.strftime('%Y%m%d_%H%M%S')}_{mode_n}_{call}")
             path, png = imgfmt.save_received(base, fmt, data)
             self._gallery_add("tx", call, mode_n, path, png, len(data))
+            self._web_queue("tx", png or path, call, mode_n)
         except Exception as e:
             self.log_exc("Galerie (image envoyée)", e)
+
+    # ------------------------------------------------------------- site web / Digi-Sites
+    def _web_cfg(self):
+        c = self._hyb_cfg()                        # même serveur FTP que le mode hybride
+        c.update(dir=self.conf.get("web_dir", "dsstv"), url=self.conf.get("web_url", ""),
+                 count=int(self.conf.get("web_count", 20)),
+                 call=self.v_call.get().strip().upper() or "NOCALL")
+        return c
+
+    def _web_caption(self, call, mode):
+        band = audio.band_of(self.rig_freq) if self.rig_freq else ""
+        parts = [call or "?", time.strftime("%Y-%m-%d %H:%M UTC", time.gmtime()), (mode or "").split()[0]]
+        if band:
+            parts.append(band)
+        return "  ".join(parts)
+
+    def _web_queue(self, kind, path, call, mode, iid=None):
+        if not self.conf.get("web_on") or not path or not os.path.exists(path):
+            return
+        if kind == "tx" and not self.conf.get("web_tx", True):
+            return
+        if kind == "rx" and iid is not None and iid in self.my_ids:
+            return                                  # notre propre image, entendue en retour
+        skip = {c.strip().upper() for c in str(self.conf.get("web_block", "")).replace(";", ",").split(",")}
+        if kind == "rx" and (call or "").upper() in skip:
+            return
+        if not self._hyb_cfg()["host"]:
+            self.log("Site web : serveur FTP non réglé (Réglages → Mode hybride).")
+            return
+        self.web.add(self._web_cfg(), kind, path, self._web_caption(call if kind == "rx" else
+                                                                     tr("émise par") + " " + call, mode))
+
+    def web_dialog(self):
+        w = getattr(self, "_web_win", None)
+        if w is not None and w.winfo_exists():
+            w.lift()
+            return
+        w = self._web_win = tk.Toplevel(self)
+        w.title("Site web / Digi-Sites")
+        w.transient(self)
+        w.resizable(False, False)
+        f = ttk.Frame(w, padding=12)
+        f.pack(fill="both", expand=True)
+        v_on = tk.BooleanVar(value=bool(self.conf.get("web_on")))
+        v_tx = tk.BooleanVar(value=bool(self.conf.get("web_tx", True)))
+        v_dir = tk.StringVar(value=self.conf.get("web_dir", "dsstv"))
+        v_url = tk.StringVar(value=self.conf.get("web_url", ""))
+        v_n = tk.StringVar(value=str(self.conf.get("web_count", 20)))
+        v_block = tk.StringVar(value=self.conf.get("web_block", ""))
+        ttk.Label(f, text="Comme EasyPal : chaque image reçue est mise en ligne sur votre site sous le nom\n"
+                          "image1.jpg (les précédentes glissent : image2, image3…), avec indicatif, date,\n"
+                          "mode et bande. Vos images émises vont dans TX1.jpg … TX5.jpg.\n"
+                          "Ajoutez ensuite l'adresse de la page dans Digi-Sites (Setup → Edit site).",
+                  justify="left").grid(row=0, column=0, columnspan=2, sticky="w")
+        ttk.Checkbutton(f, text="Mettre en ligne les images reçues", variable=v_on).grid(
+            row=1, column=0, columnspan=2, sticky="w", pady=(10, 0))
+        ttk.Checkbutton(f, text="Mettre aussi en ligne mes images émises (TX1 … TX5)", variable=v_tx).grid(
+            row=2, column=0, columnspan=2, sticky="w")
+        rows = [("Dossier sur le serveur", ttk.Entry(f, textvariable=v_dir, width=30)),
+                ("Lien public de ce dossier", ttk.Entry(f, textvariable=v_url, width=40)),
+                ("Nombre d'images reçues gardées", ttk.Combobox(f, textvariable=v_n, values=["10", "20", "30", "50"],
+                                                                width=5, state="readonly")),
+                ("Ne pas mettre en ligne (indicatifs)", ttk.Entry(f, textvariable=v_block, width=30))]
+        for i, (lab, wd) in enumerate(rows):
+            ttk.Label(f, text=lab).grid(row=3 + i, column=0, sticky="w", pady=2)
+            wd.grid(row=3 + i, column=1, sticky="w", padx=6, pady=2)
+        lb = ttk.Label(f, text="", foreground="#1c6f1c", wraplength=520, justify="left")
+        lb.grid(row=8, column=0, columnspan=2, sticky="w", pady=(8, 0))
+        ttk.Label(f, text="Serveur FTP, identifiant et mot de passe : ceux du mode hybride (Réglages).\n"
+                          "Ex. : dossier « dsstv », lien http://monsite.free.fr/dsstv",
+                  foreground="#555", justify="left").grid(row=9, column=0, columnspan=2, sticky="w", pady=(6, 0))
+
+        def store():
+            self.conf.update(web_on=bool(v_on.get()), web_tx=bool(v_tx.get()),
+                             web_dir=v_dir.get().strip().strip("/") or "dsstv", web_url=v_url.get().strip(),
+                             web_count=int(v_n.get() or 20), web_block=v_block.get().strip())
+            self._save_conf_file()
+            u = websync.page_url(self._web_cfg())
+            lb.configure(text=(tr("Page à donner à Digi-Sites :") + f" {u}") if u else "")
+
+        def send_page():
+            store()
+            if not self._hyb_cfg()["host"]:
+                messagebox.showerror(APP, "Réglez d'abord le serveur FTP (Réglages → Mode hybride).", parent=w)
+                return
+            self.web.page(self._web_cfg())
+            lb.configure(text=tr("Envoi de la page en cours… (résultat dans le journal)"))
+
+        b = ttk.Frame(f)
+        b.grid(row=10, column=0, columnspan=2, sticky="e", pady=(10, 0))
+        ttk.Button(b, text="Envoyer la page maintenant", command=send_page).pack(side="left")
+        ttk.Button(b, text="Enregistrer", command=lambda: (store(), self.log("Site web : réglages enregistrés."))
+                   ).pack(side="left", padx=6)
+        ttk.Button(b, text="Fermer", command=lambda: (store(), w.destroy())).pack(side="left")
+        store()
+        self._translate_ui(w)
 
     def _gallery_src(self, e):
         p, png = e.get("file"), e.get("png")

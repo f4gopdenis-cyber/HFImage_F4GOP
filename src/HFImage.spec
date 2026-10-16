@@ -3,7 +3,7 @@ a = Analysis(['app.py'], pathex=['.'],
              binaries=[('libcodec2.dll', '.')],
              datas=[('carte.bin', '.')],
              hiddenimports=["loopback", "channel", "waterfall", "hybrid", "panel", "qsl", "i18n", "wavtext", "imgfmt", "stationmap", "presence", "theme", "updater", "tkinter.colorchooser", "paho.mqtt.client", "resvg_py", "tkinter.simpledialog",
-                            "serial.tools.list_ports", "secrets", "hmac", "radio", "radiodlg", "gallery", "qrmfilter", "riglist", "contextlib",
+                            "serial.tools.list_ports", "secrets", "hmac", "radio", "radiodlg", "gallery", "qrmfilter", "websync", "riglist", "contextlib",
                             "xmlrpc.client", "comtypes", "comtypes.client", "comtypes.automation"],
              excludes=['scipy', 'skimage', 'matplotlib', 'pandas', 'IPython', 'pytest',
                        'PIL.ImageCms', 'numpy.f2py', 'numpy.testing', 'setuptools', 'pkg_resources', 'comtypes.test'])
