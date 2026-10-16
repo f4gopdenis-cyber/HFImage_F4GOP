@@ -1,0 +1,12 @@
+diff --git a/src/CMakeLists.txt b/src/CMakeLists.txt
+index fb10d28..93e400f 100644
+--- a/src/CMakeLists.txt
++++ b/src/CMakeLists.txt
+@@ -171,6 +171,7 @@ set(CODEC2_SRCS
+     newamp1.c
+     ofdm.c
+     ofdm_mode.c
++    hfi_modes.c
+     phase.c
+     quantise.c
+     pack.c

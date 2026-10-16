@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Dessin de test HFImage : carte F4GOP -->
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="500" viewBox="0 0 800 500">
+  <metadata>Inkscape blabla</metadata>
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#1d3557"/>
+      <stop offset="1" stop-color="#457b9d"/>
+    </linearGradient>
+  </defs>
+  <rect width="800" height="500" fill="url(#g)"/>
+  <circle cx="650" cy="120" r="70" fill="#ffd166"/>
+  <path d="M0 420 L160 300 L300 400 L450 260 L620 410 L800 330 L800 500 L0 500 Z" fill="#2a9d8f"/>
+  <g stroke="#e63946" stroke-width="8" fill="none">
+    <path d="M120 280 L120 120 M80 160 L120 120 L160 160"/>
+    <path d="M60 120 Q120 60 180 120" />
+  </g>
+  <text x="230" y="140" font-family="DejaVu Sans, Arial, sans-serif" font-size="72" font-weight="bold" fill="white">F4GOP</text>
+  <text x="232" y="190" font-family="DejaVu Sans, Arial, sans-serif" font-size="32" fill="#ffd166">IN98QR — 73 !</text>
+</svg>
