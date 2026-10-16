@@ -1,5 +1,17 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 0.24 — images à nouveau nettes en mode Auto
+
+En 0.22/0.23, sans report, le mode Auto prenait DATAC1 avec 40 % de redondance : l'image était deux fois plus petite qu'avant (environ 8 ko au lieu de 16 ko en 2 minutes), donc nettement moins nette.
+
+- Sans report, le mode Auto reprend **DATAC1X**, le mode rapide des images nettes. Il ne descend en DATAC1 ou DATAC3 que si les reports des stations sont faibles.
+- Nouvelle robustesse **« Auto (selon les reports) »**, par défaut : la redondance s'adapte à la marge entre le report le plus faible et le seuil du mode :
+  - lien confortable (4 dB de marge ou plus) ou pas de report : 15 % ;
+  - lien juste (2 à 4 dB de marge) : 25 % ;
+  - lien à la limite : 40 %.
+- Exemple en 2 minutes (photo 800×600, aperçu rapide compris) : sans report ou à +16 dB, 12,9 ko (q38) au lieu de 8,4 ko en 0.23 ; à +11 dB, 10,1 ko avec 40 % de redondance.
+- Les réglages fixes (Faible, Normale, Forte, Très forte) restent disponibles.
+
 ## Version 0.23 — coupe-QRM à la réception
 
 Constat au simulateur : une simple porteuse (CW, « birdie ») aussi forte que le signal, du RTTY dans la bande, ou une BLU forte juste à côté faisaient perdre **toutes** les trames, quel que soit le mode.

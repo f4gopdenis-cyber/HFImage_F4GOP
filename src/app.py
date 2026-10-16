@@ -44,12 +44,12 @@ import random
 import wave
 
 APP = "HFImage F4GOP"
-VERSION = "0.23"
+VERSION = "0.24"
 CONF_PATH = os.path.join(os.path.expanduser("~"), ".hfimage.json")
 DEFAULT_OUT = os.path.join(os.path.expanduser("~"), "Documents", "HFImage")
 DEFAULTS = {
     "callsign": "F4GOP", "mode": "Auto", "width": "auto", "seconds": 120, "fmt": "avif",
-    "overhead": 40, "out_dev": "", "in_dev": "", "level": 50,
+    "overhead": "auto", "out_dev": "", "in_dev": "", "level": 50,
     "ptt": "VOX", "cat_port": "", "cat_baud": 115200, "cat_cmd": "TX1;",
     "folder": DEFAULT_OUT,
     "hyb_on": False, "hyb_host": "", "hyb_port": 21, "hyb_user": "", "hyb_pass": "",
@@ -67,10 +67,12 @@ TX_MODES = ["Auto", "DATAC1X", "DATAC1", "DATAC3", "DATAC4"]
 # Mesuré au simulateur avec QSB moyen : DATAC1X perd peu de trames dès ~10 dB,
 # DATAC1 dès ~5 dB, DATAC3 tient jusque vers 0 dB.
 AUTO_STEPS = [(10, "DATAC1X"), (5, "DATAC1"), (None, "DATAC3")]
-AUTO_DEFAULT = "DATAC1"          # aucun report récent
+AUTO_DEFAULT = "DATAC1X"         # aucun report récent : image nette (comme avant la 0.22)
+# seuil de chaque mode (dB) : la robustesse « Auto » dépend de la marge au-dessus
+MODE_THR = {"DATAC1X": 10, "DATAC1": 5, "DATAC3": 0, "DATAC4": -4}
 AUTO_MAX_AGE = 45 * 60           # reports pris en compte (s)
 # robustesse = redondance du code fontaine (trames en plus, pour les trames perdues dans le QSB)
-ROBUST = [("Faible (15 %)", 15), ("Normale (40 %)", 40), ("Forte (70 %)", 70), ("Très forte (100 %)", 100)]
+ROBUST = [("Auto (selon les reports)", None), ("Faible (15 %)", 15), ("Normale (40 %)", 40), ("Forte (70 %)", 70), ("Très forte (100 %)", 100)]
 DATA_ACTIONS = {"ask": "Demander", "switch": "Passer en USB-DATA automatiquement",
                 "send": "Émettre sans rien dire"}
 HEARD_KEEP_S = 2 * 3600     # stations entendues gardées 2 h dans la liste
@@ -131,10 +133,13 @@ def load_conf():
                 c["fmt"] = "jpg"
         if saved.get("conf_v", 0) < 22:
             # v0.22 : redondance 10 % trop juste dans le QSB -> « Normale (40 %) »
-            if int(saved.get("overhead", 10)) <= 10:
+            if str(saved.get("overhead", 10)).isdigit() and int(saved.get("overhead", 10)) <= 10:
                 c["overhead"] = 40
             if c.get("mode") == "DATAC1X":
                 c["mode"] = "Auto"                   # DATAC1X choisi seul quand les reports le permettent
+        if saved.get("conf_v", 0) < 24 and str(c.get("overhead")) in ("10", "40"):
+            # v0.24 : robustesse « Auto » (15 % si le lien est bon, 40 % s'il est juste)
+            c["overhead"] = "auto"
         if c.get("fmt") not in FORMATS_TX:
             c["fmt"] = {"jpeg": "jpg"}.get(c.get("fmt"), "avif")
     except Exception:
@@ -649,8 +654,11 @@ class App(tk.Tk):
         self.v_width = tk.StringVar(value=str(self.conf.get("width", "auto")))
         self.v_sec = tk.IntVar(value=int(self.conf.get("seconds", 60)))
         self.v_fmt = tk.StringVar(value=self.conf["fmt"])
-        pct = int(self.conf.get("overhead", 40))
-        near = min(ROBUST, key=lambda r: abs(r[1] - pct))
+        ov = str(self.conf.get("overhead", "auto"))
+        if ov.isdigit():
+            near = min(ROBUST[1:], key=lambda r: abs(r[1] - int(ov)))
+        else:
+            near = ROBUST[0]
         self.v_over = tk.StringVar(value=tr(near[0]))
         r1 = ttk.Frame(tb)
         r1.pack(fill="x")
@@ -1894,7 +1902,7 @@ class App(tk.Tk):
             self.conf.update(
                 callsign=self.v_call.get().strip().upper(), mode=self.v_mode.get(),
                 width=self.v_width.get(), seconds=int(self.v_sec.get()),
-                fmt=self.v_fmt.get(), overhead=self._robust_pct(), conf_v=22,
+                fmt=self.v_fmt.get(), overhead=self._robust_conf(), conf_v=24,
                 out_dev=self.v_out.get(), in_dev=self.v_in.get(), level=int(self.v_lvl.get()),
                 radio=self.radio_cfg,
                 folder=self.v_folder.get(),
@@ -1999,15 +2007,30 @@ class App(tk.Tk):
         self.v_sec.set(MODE_SEC.get(self.v_mode.get(), 120))
         self.prepare()
 
-    def _robust_pct(self):
+    def _robust_choice(self):
+        """-> pourcentage choisi, ou None pour « Auto »."""
         v = self.v_over.get()
         for lab, p in ROBUST:
             if v in (lab, tr(lab)):
                 return p
-        try:
-            return int("".join(ch for ch in v if ch.isdigit()) or 40)
-        except ValueError:
-            return 40
+        digits = "".join(ch for ch in v if ch.isdigit())
+        return int(digits) if digits else None
+
+    def _robust_conf(self):
+        p = self._robust_choice()
+        return "auto" if p is None else p
+
+    def _robust_pct(self, mode=None):
+        """Redondance (%) effective. « Auto » : d'après la marge entre le report le plus
+        faible et le seuil du mode — lien confortable 15 %, juste 25 %, limite 40 %."""
+        p = self._robust_choice()
+        if p is not None:
+            return p
+        snr = self._link_snr()[0]
+        if snr is None:
+            return 15
+        margin = snr - MODE_THR.get(mode or self._tx_mode(), 10)
+        return 15 if margin >= 4 else (25 if margin >= 2 else 40)
 
     def _link_snr(self):
         """Report le plus faible des stations ces 45 dernières minutes.
@@ -2055,7 +2078,7 @@ class App(tk.Tk):
         try:
             (mode, auto_why), width, fmt = self._tx_mode(explain=True), self.v_width.get(), self._fmt()
             seconds = int(float(self.v_sec.get()))
-            over = self._robust_pct() / 100
+            over = self._robust_pct(mode) / 100
         except (tk.TclError, ValueError):
             return
         if fmt == "original" and (self.src_raw is None or self.src_kind not in ORIGINAL_KINDS):
@@ -2121,7 +2144,8 @@ class App(tk.Tk):
                                    + (" + texte" if text else ""))
         est = self.tx.estimate_s()
         lines = [(f"Mode Auto → {mode} ({auto_why})" if self.v_mode.get() == "Auto" else f"Mode {mode}")
-                 + f" (~{MODE_BPS[mode]} bit/s), robustesse {self._robust_pct()} %",
+                 + f" (~{MODE_BPS[mode]} bit/s), robustesse {self._robust_pct(mode)} %"
+                 + (" (auto)" if self._robust_choice() is None else ""),
                  f"{self.tx.sender.K} symboles de {self.tx.sender.T} octets",
                  f"Durée d'émission : {_fmt_s(est)}"]
         if preview:
@@ -2271,16 +2295,18 @@ class App(tk.Tk):
             if not tx and not quiet:
                 messagebox.showinfo(APP, "Ouvrez d'abord une image.")
             return False
-        if (self.v_mode.get() == "Auto" and not complement and tx is self.tx
-                and not isinstance(tx, HybridJob)
-                and tx.mode != self._tx_mode()):
+        if ((self.v_mode.get() == "Auto" or self._robust_choice() is None) and not complement
+                and tx is self.tx and not isinstance(tx, HybridJob)
+                and (tx.mode != self._tx_mode()
+                     or abs(tx.overhead - self._robust_pct(self._tx_mode()) / 100) > 1e-6)):
             # les reports ont changé depuis la préparation : image refaite pour le nouveau mode
             old = tx.mode
             self.prepare()
             if self.tx is None:
                 return False
             tx = self.tx
-            self.log(f"Mode Auto : {old} → {tx.mode} ({self._tx_mode(explain=True)[1]})")
+            self.log(f"Mode Auto : {old} → {tx.mode}, robustesse {round(tx.overhead * 100)} % "
+                     f"({self._tx_mode(explain=True)[1]})")
         job = {"kind": "image", "tx": tx, "complement": complement, "extra": extra}
         if isinstance(tx, HybridJob):
             job["kind"] = "hybrid"

@@ -1056,6 +1056,11 @@ T = [
     ("Coupe-QRM à la réception : {0}", "QRM cutter on receive: {0}", "QRM-Filter beim Empfang: {0}", "Filtro anti-QRM en recepción: {0}", "Filtro anti-QRM in ricezione: {0}"),
     ("marche", "on", "ein", "activado", "attivo"),
     ("arrêt", "off", "aus", "desactivado", "disattivato"),
+    # ------------------------------------------------------------ v0.24
+    ("Auto (selon les reports)", "Auto (from reports)", "Auto (nach Rapporten)", "Auto (según los reports)", "Auto (secondo i rapporti)"),
+    ("Mode {0} (~{1} bit/s), robustesse {2} % (auto)", "Mode {0} (~{1} bit/s), robustness {2} % (auto)", "Modus {0} (~{1} bit/s), Robustheit {2} % (auto)", "Modo {0} (~{1} bit/s), robustez {2} % (auto)", "Modo {0} (~{1} bit/s), robustezza {2} % (auto)"),
+    ("Mode Auto → {0} ({1}) (~{2} bit/s), robustesse {3} % (auto)", "Auto mode → {0} ({1}) (~{2} bit/s), robustness {3} % (auto)", "Auto-Modus → {0} ({1}) (~{2} bit/s), Robustheit {3} % (auto)", "Modo Auto → {0} ({1}) (~{2} bit/s), robustez {3} % (auto)", "Modo Auto → {0} ({1}) (~{2} bit/s), robustezza {3} % (auto)"),
+    ("Mode Auto : {0} → {1}, robustesse {2} % ({3})", "Auto mode: {0} → {1}, robustness {2} % ({3})", "Auto-Modus: {0} → {1}, Robustheit {2} % ({3})", "Modo Auto: {0} → {1}, robustez {2} % ({3})", "Modo Auto: {0} → {1}, robustezza {2} % ({3})"),
 ]
 
 _lang = "fr"
