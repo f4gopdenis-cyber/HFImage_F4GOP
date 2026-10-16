@@ -1,5 +1,10 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 0.26 — nouvelle icône
+
+- Nouvelle icône : une photo avec des ondes radio sur fond vert, et l'indicatif **F4GOP** sur les grandes tailles (bureau, explorateur). Les petites tailles (barre des tâches, barre de titre) gardent seulement le dessin, pour rester lisibles.
+- L'icône apparaît sur l'exe, dans la barre de titre, la barre des tâches et toutes les fenêtres du programme.
+
 ## Version 0.25 — images en ligne sur votre site (Digi-Sites)
 
 Comme EasyPal, HFImage peut mettre vos images en ligne sur votre site web, pour qu'elles apparaissent dans **Digi-Sites** et sur votre page.

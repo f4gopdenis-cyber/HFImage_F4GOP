@@ -1,4 +1,4 @@
-# HFImage F4GOP
+# <img src="docs/images/icone.png" width="64" align="center"> HFImage F4GOP
 
 **Transmission d'images numériques en HF, façon EasyPal — sans SSTV.**
 Programme Windows de F4GOP (Denis, IN98QR) pour envoyer et recevoir des photos par radio, avec un modem numérique moderne (codec2 OFDM), une correction d'erreurs par code fontaine et un mode hybride par Internet.

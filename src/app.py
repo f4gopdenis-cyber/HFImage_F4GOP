@@ -45,7 +45,7 @@ import random
 import wave
 
 APP = "HFImage F4GOP"
-VERSION = "0.25"
+VERSION = "0.26"
 CONF_PATH = os.path.join(os.path.expanduser("~"), ".hfimage.json")
 DEFAULT_OUT = os.path.join(os.path.expanduser("~"), "Documents", "HFImage")
 DEFAULTS = {
@@ -175,6 +175,7 @@ class App(tk.Tk):
     def __init__(self):
         super().__init__()
         self.title(f"{APP} {VERSION}")
+        self._set_icon()
         self.conf = load_conf()
         self.geometry(self.conf.get("win_geom") or "1320x880")
         self.minsize(900, 600)
@@ -3662,6 +3663,21 @@ class App(tk.Tk):
         self.after(150, self._restore_layout)
         self.after(400, lambda: self.panes["rxside"].sash_place(
             0, 0, self.panes["rxside"].winfo_height() // 2))
+
+    def _set_icon(self):
+        """Icône du programme (fenêtre, barre des tâches, toutes les fenêtres filles)."""
+        here = getattr(sys, "_MEIPASS", os.path.dirname(os.path.abspath(__file__)))
+        try:
+            ico = os.path.join(here, "hfimage.ico")
+            if sys.platform.startswith("win") and os.path.exists(ico):
+                self.iconbitmap(default=ico)
+            imgs = [tk.PhotoImage(file=os.path.join(here, n)) for n in ("icon64.png", "icon32.png", "icon256.png")
+                    if os.path.exists(os.path.join(here, n))]
+            if imgs:
+                self._icons = imgs                       # gardées en mémoire
+                self.iconphoto(True, *imgs)
+        except Exception:
+            pass
 
     def _quit(self):
         self._closing = True

@@ -1,7 +1,7 @@
 # Spécification PyInstaller : exécutable Windows unique, sans console
 a = Analysis(['app.py'], pathex=['.'],
              binaries=[('libcodec2.dll', '.')],
-             datas=[('carte.bin', '.')],
+             datas=[('carte.bin', '.'), ('hfimage.ico', '.'), ('icon64.png', '.'), ('icon32.png', '.'), ('icon256.png', '.')],
              hiddenimports=["loopback", "channel", "waterfall", "hybrid", "panel", "qsl", "i18n", "wavtext", "imgfmt", "stationmap", "presence", "theme", "updater", "tkinter.colorchooser", "paho.mqtt.client", "resvg_py", "tkinter.simpledialog",
                             "serial.tools.list_ports", "secrets", "hmac", "radio", "radiodlg", "gallery", "qrmfilter", "websync", "riglist", "contextlib",
                             "xmlrpc.client", "comtypes", "comtypes.client", "comtypes.automation"],
@@ -24,4 +24,4 @@ a.binaries = [b for b in a.binaries if _keep(b)]
 a.datas = [d for d in a.datas if _keep(d)]
 pyz = PYZ(a.pure)
 exe = EXE(pyz, a.scripts, a.binaries, a.datas, [],
-          name='HFImage_F4GOP', console=False, upx=False)
+          name='HFImage_F4GOP', console=False, upx=False, icon='hfimage.ico')
