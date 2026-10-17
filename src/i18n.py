@@ -1143,6 +1143,8 @@ T = [
     ("{0} : {1}\nMode {2}, robustesse {3} % : émission d'environ {4}.", "{0}: {1}\nMode {2}, robustness {3} %: about {4} of transmission.", "{0}: {1}\nModus {2}, Robustheit {3} %: etwa {4} Sendezeit.", "{0}: {1}\nModo {2}, robustez {3} %: unos {4} de transmisión.", "{0}: {1}\nModo {2}, robustezza {3} %: circa {4} di trasmissione."),
     ("C'est long : pensez au mode hybride (le fichier passe par Internet, seul le lien par radio).", "That's long: consider hybrid mode (the file goes over the Internet, only the link over the air).", "Das dauert: Hybridmodus erwägen (Datei über Internet, nur der Link über Funk).", "Es largo: piense en el modo híbrido (el archivo pasa por Internet, solo el enlace por radio).", "È lungo: considerate il modo ibrido (il file passa via Internet, solo il link via radio)."),
     ("Émettre ?", "Transmit?", "Senden?", "¿Transmitir?", "Trasmettere?"),
+    ("Texte ou image dans le waterfall", "Text or image in the waterfall", "Text oder Bild im Wasserfall", "Texto o imagen en la cascada", "Testo o immagine nel waterfall"),
+    ("Texte / image waterfall", "Waterfall text / image", "Wasserfall-Text / Bild", "Texto / imagen en cascada", "Testo / immagine waterfall"),
 ]
 
 _lang = "fr"

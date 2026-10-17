@@ -67,6 +67,34 @@ def render(text, font="Arial", negative=False, cols=COLS):
     return bm
 
 
+IMG_COLS = 96                     # image : ~23 Hz par colonne
+IMG_DB = 24.0                     # dynamique des gris sur le waterfall (dB)
+
+
+def render_image(img, cols=IMG_COLS, negative=False, max_rows=120):
+    """Image (photo, logo) -> tableau de gris 0..1 (lignes x colonnes) pour le waterfall.
+    Proportions gardées : une colonne = ~23 Hz, une ligne = ROW_S secondes, ce qui donne
+    une image à peu près à l'échelle sur les waterfalls courants (EasyPal, HFImage…)."""
+    from PIL import ImageOps
+    im = img.convert("L")
+    im = ImageOps.autocontrast(im, cutoff=1)
+    rows = max(8, min(max_rows, round(cols * im.height / im.width * 0.8)))
+    small = np.asarray(im.resize((cols, rows), Image.LANCZOS), dtype=np.float64) / 255.0
+    if negative:
+        small = 1.0 - small
+    return small
+
+
+def _levels(bitmap):
+    """Bitmap booléen ou gris 0..1 -> amplitudes par pixel (échelle en dB pour les gris)."""
+    if bitmap.dtype == bool:
+        return bitmap.astype(np.float64)
+    b = np.clip(bitmap, 0, 1)
+    a = 10 ** ((b - 1.0) * IMG_DB / 20.0)          # le waterfall affiche en dB
+    a[b < 0.06] = 0.0                              # noir = rien
+    return a
+
+
 def synth(bitmap, volume=5, fs=FS):
     """Bitmap -> audio int16 8 kHz. La dernière ligne est émise en premier, pour que
     le texte se lise à l'endroit sur un waterfall qui défile vers le bas.
@@ -75,7 +103,8 @@ def synth(bitmap, volume=5, fs=FS):
     - puissance par pixel constante (les lignes très remplies sont seulement limitées) ;
     - phases de Newman (faible facteur de crête) puis écrêtage doux tanh, ce qui donne
       beaucoup plus de puissance moyenne pour la même crête que le modem."""
-    rows, cols = bitmap.shape
+    amp = _levels(bitmap)
+    rows, cols = amp.shape
     freqs = np.linspace(F_LO, F_HI, cols)
     n = int(ROW_S * fs)
     t = np.arange(n) / fs
@@ -85,15 +114,15 @@ def synth(bitmap, volume=5, fs=FS):
     ramp[-r:] = ramp[:r][::-1]
     k = np.arange(cols)
     phase = np.pi * k * k / cols              # phases de Newman
-    counts = bitmap.sum(axis=1)
+    counts = (amp ** 2).sum(axis=1)
     ref = max(1.0, float(np.median(counts[counts > 0])) if counts.any() else 1.0)
     lead = np.zeros(int(0.3 * fs))
     out = [lead]
-    for row, cnt in zip(bitmap[::-1], counts[::-1]):
+    for row, cnt in zip(amp[::-1], counts[::-1]):
         on = np.nonzero(row)[0]
         blk = np.zeros(n)
         if len(on):
-            blk = np.sin(2 * np.pi * freqs[on, None] * t[None, :] + phase[on, None]).sum(axis=0)
+            blk = (row[on, None] * np.sin(2 * np.pi * freqs[on, None] * t[None, :] + phase[on, None])).sum(axis=0)
             blk *= ramp / np.sqrt(max(cnt, ref))
         out.append(blk)
     out.append(lead)
@@ -113,7 +142,10 @@ def synth(bitmap, volume=5, fs=FS):
 
 def preview(bitmap, scale=3):
     """Image de ce que verra le correspondant sur son waterfall."""
-    img = Image.fromarray(np.where(bitmap, 255, 20).astype(np.uint8))
+    if bitmap.dtype == bool:
+        img = Image.fromarray(np.where(bitmap, 255, 20).astype(np.uint8))
+    else:
+        img = Image.fromarray((20 + 235 * np.clip(bitmap, 0, 1)).astype(np.uint8))
     img = img.resize((bitmap.shape[1] * scale, bitmap.shape[0] * scale), Image.NEAREST)
     lut = np.zeros((256, 3), np.uint8)
     lut[:, 0] = np.linspace(0, 255, 256)

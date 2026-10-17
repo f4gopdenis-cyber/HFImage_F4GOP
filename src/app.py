@@ -45,7 +45,7 @@ import random
 import wave
 
 APP = "HFImage F4GOP"
-VERSION = "0.34"
+VERSION = "0.35"
 CONF_PATH = os.path.join(os.path.expanduser("~"), ".hfimage.json")
 DEFAULT_OUT = os.path.join(os.path.expanduser("~"), "Documents", "HFImage")
 DEFAULTS = {
@@ -896,11 +896,11 @@ class App(tk.Tk):
     # ------------------------------------------------------------ fenêtre « Texte Waterfall »
     def _build_wft_window(self):
         w = self.win_wft = tk.Toplevel(self)
-        w.title(f"{APP} — Texte waterfall")
+        w.title(f"{APP} — Texte / image waterfall")
         w.withdraw()
         w.transient(self)
         w.protocol("WM_DELETE_WINDOW", w.withdraw)
-        f = ttk.LabelFrame(w, text="Texte Waterfall", padding=8)
+        f = ttk.LabelFrame(w, text="Texte ou image dans le waterfall", padding=8)
         f.pack(fill="both", expand=True, padx=8, pady=8)
         self.txt_wft = tk.Text(f, height=4, width=34, wrap="none", bg="black", fg="#ffe066",
                                insertbackground="white", font=("TkDefaultFont", 12, "bold"))
@@ -926,11 +926,18 @@ class App(tk.Tk):
         self.v_wftneg = tk.BooleanVar(value=bool(self.conf.get("wft_neg")))
         ttk.Checkbutton(o2, text="Négatif", variable=self.v_wftneg,
                         command=self._wft_preview).pack(side="left", padx=6)
+        oi = ttk.Frame(f)
+        oi.pack(fill="x", pady=(4, 0))
+        ttk.Button(oi, text="Image…", command=self.wft_image).pack(side="left")
+        ttk.Button(oi, text="Texte", command=self.wft_text_mode).pack(side="left", padx=4)
+        self.lb_wftsrc = ttk.Label(oi, text="", foreground="#555")
+        self.lb_wftsrc.pack(side="left", padx=4)
+        self._wft_img = None
         b = ttk.Frame(f)
         b.pack(fill="x", pady=(8, 0))
         for i, (txt, cmd) in enumerate((("Émission", self.wft_send), ("Sauve", self.wft_save),
                                         ("Effacer texte", lambda: (self.txt_wft.delete("1.0", "end"),
-                                                                   self._wft_preview())),
+                                                                   self.wft_text_mode())),
                                         ("SORTIE", w.withdraw))):
             ttk.Button(b, text=txt, command=cmd).grid(row=i // 2, column=i % 2, sticky="ew", padx=2, pady=2)
         b.columnconfigure(0, weight=1)
@@ -943,7 +950,28 @@ class App(tk.Tk):
     def _wft_vol(self):
         self.lb_wavvol.configure(text=tr(f"Wav Volume {int(self.v_wavvol.get())}"))
 
+    def wft_image(self):
+        """Comme EasyPal : une image (photo, logo, QSL) dessinée dans le waterfall."""
+        p = filedialog.askopenfilename(parent=self.win_wft, filetypes=[
+            ("Images", "*.jpg *.jpeg *.png *.gif *.bmp *.webp *.avif *.svg"), ("Tous", "*.*")])
+        if not p:
+            return
+        try:
+            self._wft_img = imgfmt.load_source(p)[0]
+        except Exception as e:
+            messagebox.showerror(APP, f"Image illisible : {e}", parent=self.win_wft)
+            return
+        self.lb_wftsrc.configure(text=os.path.basename(p))
+        self._wft_preview()
+
+    def wft_text_mode(self):
+        self._wft_img = None
+        self.lb_wftsrc.configure(text="")
+        self._wft_preview()
+
     def _wft_bitmap(self):
+        if getattr(self, "_wft_img", None) is not None:
+            return wavtext.render_image(self._wft_img, negative=bool(self.v_wftneg.get()))
         txt = self.txt_wft.get("1.0", "end").strip()
         if not txt:
             return None
@@ -980,7 +1008,9 @@ class App(tk.Tk):
         if bm is None:
             messagebox.showinfo(APP, "Écrivez d'abord le texte à envoyer.")
             return
-        name = simpledialog.askstring(APP, tr("Nom du fichier :"), initialvalue="texte_waterfall.wav",
+        name = simpledialog.askstring(APP, tr("Nom du fichier :"),
+                                      initialvalue="image_waterfall.wav" if self._wft_img is not None
+                                      else "texte_waterfall.wav",
                                       parent=self.win_wft)
         if not name:
             return

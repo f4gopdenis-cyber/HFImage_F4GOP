@@ -294,7 +294,9 @@ s.append(P("Autres envois", "h2"))
 s += B(["<b>Texte inclus</b> : un message joint à l'image, affiché dans « Messages reçus ».",
         "<b>Envoi Texte</b> : message seul.",
         "<b>Accord</b> (10 s) : porteuse pour régler l'ampli / la boîte d'accord. <b>ID</b> : indicatif en morse.",
-        "<b>WAVE</b> / texte waterfall : fichiers begin.wav / end.wav, texte écrit dans le waterfall.",
+        "<b>WAVE</b> / texte waterfall : fichiers begin.wav / end.wav, <b>texte ou image</b> dessinés dans le "
+        "waterfall du correspondant (Action → Texte waterfall… → « Image… » pour une photo, un logo, votre QSL) ; "
+        "« Sauve » en fait un begin.wav joué avant chaque émission, comme EasyPal.",
         "<b>IMG/QSL</b> : carte QSL avec photo de fond, indicatif, locator et report remplis automatiquement, "
         "police et couleurs au choix."])
 

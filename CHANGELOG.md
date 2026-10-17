@@ -1,5 +1,11 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 0.35 — image dans le waterfall
+
+- Comme EasyPal, une **image** (photo, logo, carte QSL) peut être dessinée dans le waterfall du correspondant : Action → Texte waterfall… → bouton **Image…** (« Texte » pour revenir au texte).
+- Niveaux de gris rendus en dB (comme l'affichent les waterfalls), contraste automatique, option Négatif ; 96 colonnes sur 400–2600 Hz, environ 12 à 16 s pour une image.
+- « Émission » l'envoie tout de suite ; « Sauve » en fait un WAV, proposé comme **begin.wav** joué avant chaque émission.
+
 ## Version 0.34 — envoi de fichiers
 
 - Bouton **Envoyer un fichier…** (onglet TX, et menu Images) : n'importe quel fichier (texte, PDF, ZIP, journal ADIF…).
