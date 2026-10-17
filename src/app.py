@@ -22,6 +22,7 @@ from PIL import Image, ImageTk
 
 import audio
 import engine
+import hamdrm
 import hybrid
 import i18n
 import imgfmt
@@ -65,9 +66,18 @@ DEFAULTS = {
     "theme": "Vert EasyPal", "theme_color": "#3a8ee6", "font_family": "(par défaut)", "font_size": "9",
     "locator": "", "bsr_auto": True, "fix_auto": True, "ack_auto": True, "listen_after": True,
     "cwid": False, "cat_freq": True, "lang": "",
+    "drm_mode": "B", "drm_qam": "QAM16", "drm_bw": "2,5 kHz", "drm_prot": "Haute (HI)", "drm_rs": "Aucun",
     "wav_volume": 5, "wft_font": "Arial", "wft_neg": False, "wft_text": "",
 }
-TX_MODES = ["Auto", "DATAC1X", "DATAC1", "DATAC3", "DATAC4"]
+TX_MODES = ["Auto", "DATAC1X", "DATAC1", "DATAC3", "DATAC4"] + (["EasyPal"] if hamdrm.AVAILABLE else [])
+# mode EasyPal (HamDRM) : réglages proposés, comme dans EasyPal
+DRM_MODES = ["A", "B", "E"]
+DRM_QAMS = ["QAM4", "QAM16", "QAM64"]
+DRM_BWS = ["2,3 kHz", "2,5 kHz"]
+DRM_PROTS = ["Haute (HI)", "Normale (LO)"]
+DRM_RSS = ["Aucun", "RS1", "RS2", "RS3", "RS4"]
+# formats lisibles par EasyPal / QSSTV : JPEG 2000 et JPEG (pas d'AVIF ni de WebP)
+DRM_FORMATS = {"avif": "jp2", "webp": "jp2", "jpeg": "jpeg"}
 # mode « Auto » : choisi d'après le report le plus faible des stations (dB, SNR sur 3 kHz).
 # Mesuré au simulateur avec QSB moyen : DATAC1X perd peu de trames dès ~10 dB,
 # DATAC1 dès ~5 dB, DATAC3 tient jusque vers 0 dB.
@@ -89,7 +99,7 @@ RING_S = 15 * 60          # Relire RX : 15 dernières minutes gardées en mémoi
 PTT_METHODS = ["VOX", "CAT", "RTS", "DTR"]
 # taille d'image proposée quand on change de mode
 # durée d'émission proposée quand on change de mode (s)
-MODE_SEC = {"DATAC1X": 120, "DATAC1": 120, "DATAC3": 120, "DATAC4": 180}
+MODE_SEC = {"DATAC1X": 120, "DATAC1": 120, "DATAC3": 120, "DATAC4": 180, "EasyPal": 90}
 # « original » : le fichier ouvert part tel quel (JPG, PNG, GIF, AVIF, WEBP, SVG compressé)
 FORMATS_TX = ["avif", "webp", "jpg", "original"]
 ORIGINAL_KINDS = ("jpeg", "png", "gif", "avif", "webp", "svg")
@@ -738,7 +748,7 @@ class App(tk.Tk):
         nb.add(t, text="  TX  ")
         tb = ttk.Frame(t, padding=(6, 4))
         tb.pack(fill="x", side="top")
-        self.v_mode = tk.StringVar(value=self.conf["mode"])
+        self.v_mode = tk.StringVar(value=self.conf["mode"] if self.conf["mode"] in TX_MODES else "Auto")
         self.v_width = tk.StringVar(value=str(self.conf.get("width", "auto")))
         self.v_sec = tk.IntVar(value=int(self.conf.get("seconds", 60)))
         # format mémorisé séparément pour la radio et pour l'hybride (« original » en hybride
@@ -811,6 +821,23 @@ class App(tk.Tk):
         ttk.Checkbutton(r2, text="Image du correspondant", variable=self.v_pipon,
                         command=_pip_toggle).pack(side="left", padx=(12, 0))
         ttk.Button(r2, text="…", width=3, command=self.pip_dialog).pack(side="left", padx=(2, 0))
+
+        # réglages du mode EasyPal (HamDRM) : visibles seulement dans ce mode
+        self.drm_row = ttk.Frame(tb)
+        self.v_drm = {}
+        drm_widgets = [("drm_mode", "Mode EasyPal", DRM_MODES, 4), ("drm_qam", "QAM", DRM_QAMS, 7),
+                       ("drm_bw", "Largeur", DRM_BWS, 8), ("drm_prot", "Erreur", DRM_PROTS, 12),
+                       ("drm_rs", "Reed-Solomon", DRM_RSS, 7)]
+        for key, lab, vals, w in drm_widgets:
+            v = tk.StringVar(value=self.conf.get(key) if self.conf.get(key) in vals else DEFAULTS[key])
+            self.v_drm[key] = v
+            ttk.Label(self.drm_row, text=lab).pack(side="left", padx=(0 if key == "drm_mode" else 8, 2))
+            cb = ttk.Combobox(self.drm_row, textvariable=v, values=vals, width=w, state="readonly")
+            cb.pack(side="left")
+            cb.bind("<<ComboboxSelected>>", lambda e: self._drm_changed())
+        ttk.Label(self.drm_row, text="  (compatible EasyPal / QSSTV, JPEG 2000)", foreground="#555").pack(side="left")
+        self._robust_widget = widgets[4][1]
+        self.after_idle(self._drm_ui_update)
 
         bar = self._green_bar(t)
         self.v_txinfo = TrVar(value="")
@@ -2250,7 +2277,33 @@ class App(tk.Tk):
 
     def _mode_changed(self, _e=None):
         self.v_sec.set(MODE_SEC.get(self.v_mode.get(), 120))
+        self._drm_ui_update()
         self.prepare()
+
+    def _drm_ui_update(self):
+        """Mode EasyPal : affiche ses réglages, la robustesse (code fontaine) est sans objet."""
+        drm = self.v_mode.get() == engine.DRM_MODE
+        if drm and not self.drm_row.winfo_ismapped():
+            self.drm_row.pack(fill="x", pady=(4, 0))
+        elif not drm and self.drm_row.winfo_ismapped():
+            self.drm_row.pack_forget()
+        if not self.v_hyb.get():
+            self._robust_widget.configure(state="disabled" if drm else "readonly")
+
+    def _drm_changed(self):
+        for k, v in self.v_drm.items():
+            self.conf[k] = v.get()
+        self._save_conf_file()
+        self.prepare()
+
+    def _drm_params(self):
+        v = self.v_drm
+        return hamdrm.make_params(self.v_call.get().strip().upper() or "NOCALL",
+                                  mode=DRM_MODES.index(v["drm_mode"].get()),
+                                  bandwidth=DRM_BWS.index(v["drm_bw"].get()),
+                                  qam=DRM_QAMS.index(v["drm_qam"].get()),
+                                  protection=DRM_PROTS.index(v["drm_prot"].get()),
+                                  rs=DRM_RSS.index(v["drm_rs"].get()))
 
     def _tx_source(self):
         """Image à émettre : l'image ouverte, + l'image du correspondant (avec son report),
@@ -2656,6 +2709,8 @@ class App(tk.Tk):
         except (tk.TclError, ValueError):
             return
         src = self._tx_source()
+        if mode == engine.DRM_MODE:
+            return self._prepare_drm(src, width, fmt, seconds)
         if fmt == "original" and (self.src_raw is None or self.src_kind not in ORIGINAL_KINDS
                                   or src is not self.src_img):
             fmt = "jpeg"                      # carte QSL, BMP, TIFF, bandeau ajouté… : réencodé en JPEG
@@ -2738,6 +2793,52 @@ class App(tk.Tk):
         self.v_txinfo.set("\n".join(lines))
         self._update_comp()
 
+    def _prepare_drm(self, src, width, fmt, seconds):
+        """Mode EasyPal (HamDRM) : image en JPEG 2000 (ou JPEG) pour tenir dans la durée,
+        lisible par les stations EasyPal et QSSTV."""
+        params = self._drm_params()
+        if fmt == "original" and self.src_raw is not None and self.src_kind in ("jpeg", "png") \
+                and src is self.src_img:
+            data, fmt, q = self.src_raw, self.src_kind, None
+            size = (self.src_img.width, self.src_img.height)
+        else:
+            fmt = DRM_FORMATS.get(fmt, "jp2")
+            budget = engine.drm_budget(seconds, params)
+            self.config(cursor="watch")
+            self.update_idletasks()
+            try:
+                if width == "auto":
+                    data, q, size = engine.compress_auto(src, budget, fmt, widths=(800, 640, 480, 400, 320, 240, 160))
+                else:
+                    data, q, size = engine.compress(src, width, budget, fmt)
+            finally:
+                self.config(cursor="")
+            if len(data) > budget:
+                mini = seconds
+                while engine.drm_budget(mini, params) < len(data) and mini < 7200:
+                    mini += 15
+                self.tx = None
+                self._set_text(self.lb_cmp_info, "")
+                self.v_txinfo.set(f"{seconds} s, c'est trop court pour une image en mode EasyPal.\n"
+                                  f"Minimum : environ {_fmt_s(mini)}, ou un mode plus rapide (A, QAM64).")
+                return
+        call = self.v_call.get().strip().upper() or "NOCALL"
+        key = ("drm", data, fmt, call, tuple(getattr(params, f) for f, _ in params._fields_))
+        if self.tx is None or getattr(self.tx, "key", None) != key:
+            base = os.path.splitext(os.path.basename(getattr(self, "src_path", "") or "image"))[0]
+            self.tx = engine.DrmTransmission(data, fmt, call, params, f"{call}_{base}")
+            self.tx.key = key
+        self._show(self.lb_cmp, "cmp", self.src_img if q is None else Image.open(io.BytesIO(data)))
+        desc = f"{imgfmt.describe(fmt)} original" if q is None else engine.quality_label(fmt, q)
+        self._set_text(self.lb_cmp_info, f"{size[0]}×{size[1]} — {len(data)} octets ({desc})")
+        lines = [f"Mode EasyPal (HamDRM) : {hamdrm.describe(params)}",
+                 "Lisible par les stations EasyPal et QSSTV ; réparation par BSR / FIX",
+                 f"Durée d'émission : {_fmt_s(self.tx.estimate_s())}"]
+        if self.v_txtinc.get():
+            lines.append("« Texte inclus » n'existe pas en mode EasyPal : seule l'image part.")
+        self.v_txinfo.set("\n".join(lines))
+        self._update_comp()
+
     def _prepare_hybrid(self):
         """Mode hybride : l'image peut être bien plus grande, elle passe par Internet."""
         try:
@@ -2800,6 +2901,9 @@ class App(tk.Tk):
                 self._set_text(self.btn_comp, f"↻  Répéter l'annonce ({self.tx.announce.estimate_s():.0f} s)")
             else:
                 self._set_text(self.btn_comp, "↻  Répéter l'annonce")
+            return
+        if isinstance(self.tx, engine.DrmTransmission):
+            self._set_text(self.btn_comp, f"↻  Réémettre ({self.tx.estimate_s():.0f} s)")
             return
         if self.tx:
             n = self.tx.complement_size()
@@ -2882,7 +2986,7 @@ class App(tk.Tk):
                                     "(durée trop courte, format…).")
             return False
         if ((self.v_mode.get() == "Auto" or self._robust_choice() is None) and not complement
-                and tx is self.tx and not isinstance(tx, HybridJob)
+                and tx is self.tx and not isinstance(tx, (HybridJob, engine.DrmTransmission))
                 and (tx.mode != self._tx_mode()
                      or abs(tx.overhead - self._robust_pct(self._tx_mode()) / 100) > 1e-6)):
             # les reports ont changé depuis la préparation : image refaite pour le nouveau mode
@@ -2915,6 +3019,8 @@ class App(tk.Tk):
             if not isinstance(tx, HybridJob):
                 self.last_tx_id = tx.image_id     # pour la carte : qui a reçu NOTRE dernière image
         ok = self._start_job(job, quiet)
+        if ok and isinstance(tx, engine.DrmTransmission):
+            self.drm_last_tx = tx                 # pour répondre aux BSR des stations EasyPal
         if ok and not complement and not isinstance(tx, HybridJob) and getattr(tx, "msg_text", ""):
             self._msg_sent(tx.image_id, tx.msg_text, tx.mode, with_image=True)
         return ok
@@ -2926,6 +3032,10 @@ class App(tk.Tk):
             return
         call = self.v_call.get().strip().upper() or "NOCALL"
         mode = self._tx_mode()
+        if mode == engine.DRM_MODE:
+            messagebox.showinfo(APP, "L'envoi de texte n'existe pas en mode EasyPal : choisissez un mode "
+                                     "DATAC (ou Auto) pour l'envoyer.")
+            return
         tx = engine.Transmission(protocol.pack_text(text), "hft", call, mode, 0.25)
         self.sent_images[tx.image_id] = tx
         self.log(f"Texte : {len(text)} caractères, {mode}, ~{_fmt_s(tx.estimate_s())}")
@@ -2965,6 +3075,10 @@ class App(tk.Tk):
             self.log(f"Fichier {name} : {len(raw)} octets ({len(data)} compressés), mode hybride")
             return self.transmit(tx=job)
         mode = self._tx_mode()
+        if mode == engine.DRM_MODE:
+            messagebox.showinfo(APP, "En mode EasyPal, seules les images partent : choisissez un mode DATAC "
+                                     "(ou Auto) pour envoyer un fichier.")
+            return
         over = self._robust_pct(mode) / 100
         tx = engine.Transmission(data, "file", call, mode, over)
         est = tx.estimate_s()
@@ -3115,7 +3229,23 @@ class App(tk.Tk):
             ct = engine.ControlTransmission(job["payload"])
             fr = ct.frames()
             return (lambda: ct.modem.modulate_iter(fr)), ct.estimate_s(), "DATAC0", job["what"]
+        if kind == "drm_bsr":
+            a = engine.drm_bsr_audio8k(job["params"])
+            if a is None:
+                raise RuntimeError("aucune image EasyPal incomplète à demander")
+            return (lambda: iter([a])), len(a) / 8000, engine.DRM_MODE, job["what"]
         tx = job["tx"]
+        if isinstance(tx, engine.DrmTransmission):
+            bsr = job.get("drm_bsr")
+            a = tx.audio8k(bsr)
+            if a is None:
+                raise RuntimeError("le BSR reçu ne correspond plus à la dernière image émise")
+            dur, mode = len(a) / 8000, engine.DRM_MODE
+            what = (f"FIX EasyPal, {job.get('drm_need', '?')} segments" if bsr else
+                    f"EasyPal {hamdrm.describe(tx.params)}, {len(tx.data)} octets")
+            body = lambda: iter([a])
+        elif kind == "hybrid":
+            body = None
         if kind == "hybrid":
             if not job["complement"]:
                 cfg = job["cfg"]

@@ -1,7 +1,8 @@
 """Moteur émission / réception, indépendant de l'interface (testable seul).
 
 La réception démodule en parallèle DATAC1X, DATAC1, DATAC3 et DATAC4 : pas besoin de
-savoir à l'avance dans quel mode la station émet.
+savoir à l'avance dans quel mode la station émet. Le mode EasyPal (HamDRM, voir
+hamdrm.py) est démodulé en même temps, à partir du son à 48 kHz.
 """
 import io
 import os
@@ -13,6 +14,7 @@ import numpy as np
 from PIL import Image
 
 import audio
+import hamdrm
 import imgfmt
 from modem import MODE_FPB, Modem
 import qrmfilter
@@ -21,6 +23,7 @@ from protocol import (T_ACK, T_HDR, T_NACK, T_QRV, Receiver, Sender, detect_form
                       parse_control, parse_hybrid, unpack_text)
 
 RX_MODES = ("DATAC1X", "DATAC1", "DATAC3", "DATAC4", "DATAC0")   # DATAC0 : BSR / ACK
+DRM_MODE = "EasyPal"      # nom du mode HamDRM dans le programme (images d'EasyPal / QSSTV)
 
 
 def png_colors(q):
@@ -31,6 +34,8 @@ def png_colors(q):
 def quality_label(fmt, q):
     if fmt == "png":
         return f"PNG {png_colors(q)} couleurs"
+    if fmt == "jp2":
+        return f"JPEG 2000 q{q}"
     return f"{'JPG' if fmt == 'jpeg' else fmt.upper()} q{q}"
 
 
@@ -47,6 +52,11 @@ def _encode(img, fmt, q, speed):
     elif fmt == "jpeg":
         img.save(buf, "JPEG", quality=max(1, min(95, q)), optimize=True, progressive=True,
                  subsampling=2)
+    elif fmt == "jp2":
+        # JPEG 2000 (format habituel d'EasyPal) : « qualité » q1..q95 -> taux de
+        # compression de ~240:1 à ~1:1, pour garder la recherche par qualité
+        img.convert("RGB").save(buf, "JPEG2000", quality_mode="rates",
+                                quality_layers=[2 ** (8 - max(1, min(95, q)) / 12)], irreversible=True)
     else:
         img.save(buf, fmt.upper(), quality=q, method=6 if speed <= 6 else 4)
     return buf.getvalue()
@@ -250,6 +260,85 @@ class ControlTransmission:
         return self.modem.duration_s(len(self._frames))
 
 
+def drm_to_8k(sig48, peak=16000) -> np.ndarray:
+    """Signal HamDRM 48 kHz (float) -> int16 8 kHz pour la chaîne d'émission habituelle
+    (play_8k le remonte à 48 kHz). Le signal HamDRM (350 à 2 800 Hz) passe intact
+    par le filtre 3,6 kHz. Crête ramenée au niveau du modem codec2."""
+    if sig48 is None or len(sig48) == 0:
+        return None
+    ds = audio.Downsampler()
+    y = ds.process(np.concatenate([np.asarray(sig48, np.float32), np.zeros(240, np.float32)])).astype(np.float64)
+    m = float(np.abs(y).max()) or 1.0
+    return (y * (peak / m)).astype(np.int16)
+
+
+def drm_budget(seconds: float, params) -> int:
+    """Plus gros fichier qui tient dans `seconds` d'émission en HamDRM."""
+    lo, hi = 0, 400_000
+    while lo < hi:
+        mid = (lo + hi + 1) // 2
+        if hamdrm.estimate(mid, params) <= seconds:
+            lo = mid
+        else:
+            hi = mid - 1
+    return lo
+
+
+class DrmTransmission:
+    """Image émise en mode EasyPal (HamDRM), lisible par EasyPal et QSSTV.
+    Pas de code fontaine ici : la réparation passe par BSR / FIX (comme EasyPal)."""
+
+    mode = DRM_MODE
+    overhead = 0.0
+    preview = None
+    psender = None
+    preview_sent = True
+
+    def __init__(self, data: bytes, fmt: str, callsign: str, params, name: str):
+        self.data, self.fmt, self.params = data, fmt, params
+        self.call = callsign
+        # nom du fichier chez les autres stations (EasyPal l'affiche), sans extension
+        self.name = "".join(c if c.isalnum() or c in "-_" else "_" for c in name)[:40] or "image"
+        self.ext = imgfmt.ext_for(fmt)
+        self.image_id = zlib.crc32(data + b"hamdrm") & 0xFFFF
+        self.msg_text = ""
+        self._est = hamdrm.estimate(len(data), params)
+
+    def estimate_s(self, extra=None) -> float:
+        return self._est
+
+    def complement_size(self) -> int:
+        return 0
+
+    def audio8k(self, bsr: bytes = None):
+        """Émission complète, ou réponse (FIX) à un BSR : seulement les segments demandés."""
+        sig = hamdrm.tx_fix(bsr) if bsr else hamdrm.tx_file(self.data, self.name, self.ext, self.params)
+        return drm_to_8k(sig)
+
+
+def drm_bsr_audio8k(params):
+    """Demande des segments manquants (BSR) de la dernière image EasyPal incomplète."""
+    return drm_to_8k(hamdrm.tx_bsr(params))
+
+
+# Le modem HamDRM a une seule réception (dans hamdrm.dll) : pendant le décodage
+# d'un fichier WAV, la réception en direct lui laisse la place.
+_drm_owner = [None]
+
+
+def drm_claim(eng):
+    if hamdrm.AVAILABLE:
+        _drm_owner[0] = eng
+        hamdrm.Receiver().reset()
+
+
+def drm_release(eng):
+    if _drm_owner[0] is eng:
+        _drm_owner[0] = None
+        if hamdrm.AVAILABLE:
+            hamdrm.Receiver().reset()
+
+
 def cw_audio(text: str, wpm=20, freq=1500.0, fs=8000, amp=12000) -> np.ndarray:
     """Identification en morse (int16 8 kHz), dans la bande du modem."""
     code = {"A": ".-", "B": "-...", "C": "-.-.", "D": "-..", "E": ".", "F": "..-.", "G": "--.",
@@ -309,6 +398,13 @@ class RxEngine:
         self.activity = {}
         self.last = {"snr": None, "mode": None, "frames": 0}
         self.saved = {}      # id -> [chemin, png, base sans indicatif]
+        # mode EasyPal (HamDRM) : démodulé en parallèle à partir du son à 48 kHz
+        self.drm = hamdrm.Receiver() if hamdrm.AVAILABLE else None
+        self.on_drm_bsr = lambda *a: None
+        self.drm_status = {}
+        self.drm_t = 0.0             # dernière fois où un signal HamDRM était décodé
+        self.drm_done_t = 0.0        # dernière image HamDRM complète
+        self._drm_poll = 0.0
         os.makedirs(outdir, exist_ok=True)
 
     def process(self, samples8k: np.ndarray):
@@ -345,6 +441,64 @@ class RxEngine:
                     self._save(res, mode)
                 elif iid in self.saved and call != "?" and not self.saved[iid][3]:
                     self._rename(iid, call)
+
+    def process48(self, x48: np.ndarray):
+        """Son de la carte à 48 kHz (float -1..1) -> démodulateur HamDRM (EasyPal)."""
+        if self.drm is None or _drm_owner[0] not in (None, self):
+            return
+        self.drm.process(x48)
+        now = time.time()
+        if now - self._drm_poll < 0.25:
+            return
+        self._drm_poll = now
+        st = self.drm.status()
+        self.drm_status = st
+        if st["fac_valid"]:
+            self.drm_t = now
+            prog = (st["seg_received"], st["seg_total"]) if st["seg_total"] > 0 else None
+            self.on_status(dict(snr=st["snr"], mode=DRM_MODE, frames=self.last["frames"], id=None,
+                                progress=prog, call=st["callsign"] or None))
+        for f in self.drm.files():
+            self.drm_done_t = now
+            self._save_drm(f)
+        for b in self.drm.bsrs():
+            self.on_drm_bsr(b, st.get("callsign") or "?", st.get("snr"))
+
+    def drm_incomplete(self):
+        """Image EasyPal en cours mais incomplète, signal fini depuis 3 s :
+        (reçus, total, indicatif) ou None."""
+        st = self.drm_status
+        if not st or st.get("seg_total", 0) <= 0 or st["seg_received"] >= st["seg_total"]:
+            return None
+        if time.time() - self.drm_t < 3 or self.drm_done_t > self.drm_t:
+            return None
+        return st["seg_received"], st["seg_total"], st.get("callsign") or "?"
+
+    def _save_drm(self, f):
+        """Fichier complet reçu en HamDRM (EasyPal / QSSTV)."""
+        data, call = f["data"], f["callsign"] or "?"
+        fmt = protocol.detect_format(data)
+        iid = zlib.crc32(data + b"hamdrm") & 0xFFFF
+        info = {"id": iid, "call": call, "size": len(data), "fmt": fmt, "drm": f["mode"], "snr": f["snr"],
+                "name": f["name"]}
+        stamp = time.strftime("%Y%m%d_%H%M%S")
+        suffix = "" if call == "?" else "_" + call.replace("/", "-")
+        if fmt in ("bin", "hft", "file"):
+            name = f["name"] or "fichier.bin"
+            safe = "".join(c if (c.isalnum() or c in "._- ()") else "_" for c in name).strip(" .") or "fichier"
+            d = os.path.join(self.outdir, "fichiers")
+            os.makedirs(d, exist_ok=True)
+            base = os.path.join(d, f"{stamp}_{DRM_MODE}{suffix}")
+            path = base + "__" + safe
+            with open(path, "wb") as fh:
+                fh.write(data)
+            self.saved[iid] = [path, None, base, call != "?"]
+            self.on_image(dict(info, fmt="file", filename=name), path, None, DRM_MODE)
+            return
+        base = os.path.join(self.outdir, f"{stamp}_{DRM_MODE}{suffix}")
+        path, png = imgfmt.save_received(base, fmt, data)
+        self.saved[iid] = [path, png, base, call != "?"]
+        self.on_image(info, path, png, DRM_MODE)
 
     def save_hybrid(self, hyb, data, mode):
         """Enregistre une image hybride téléchargée et prévient l'interface."""
@@ -449,6 +603,25 @@ def read_wav_8k(path) -> np.ndarray:
     t48 = np.arange(int(len(x) * 48000 / fs)) * fs / 48000
     x48 = np.interp(t48, np.arange(len(x)), x.astype(np.float64)) / 32768.0
     return audio.Downsampler().process(x48.astype(np.float32))
+
+
+def read_wav_48k(path) -> np.ndarray:
+    """WAV mono/stéréo 16 bits, toute fréquence -> float32 48 kHz (-1..1)."""
+    with wave.open(path, "rb") as w:
+        fs, ch, sw = w.getframerate(), w.getnchannels(), w.getsampwidth()
+        raw = w.readframes(w.getnframes())
+    if sw != 2:
+        raise ValueError("seuls les WAV 16 bits sont pris en charge")
+    x = np.frombuffer(raw, dtype=np.int16)
+    if ch > 1:
+        x = x.reshape(-1, ch)[:, 0]
+    x = x.astype(np.float32) / 32768.0
+    if fs == 48000:
+        return x
+    if fs == 8000:
+        return audio.upsample((x * 32768).astype(np.int16))
+    t48 = np.arange(int(len(x) * 48000 / fs)) * fs / 48000
+    return np.interp(t48, np.arange(len(x)), x).astype(np.float32)
 
 
 def write_wav(path, samples, fs):

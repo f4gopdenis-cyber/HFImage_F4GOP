@@ -95,6 +95,8 @@ def detect_format(data: bytes) -> str:
         return "png"
     if data[:6] in (b"GIF87a", b"GIF89a"):
         return "gif"
+    if data[:12] == b"\x00\x00\x00\x0cjP  \r\n\x87\n" or data[:4] == b"\xff\x4f\xff\x51":
+        return "jp2"                                  # JPEG 2000 (images EasyPal / QSSTV)
     from imgfmt import is_svg
     if is_svg(data):
         return "svg"

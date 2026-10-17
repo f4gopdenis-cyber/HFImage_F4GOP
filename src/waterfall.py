@@ -18,7 +18,7 @@ WINDOW = np.hanning(NFFT)
 
 # bandes occupées mesurées sur le signal codec2 (Hz)
 MODE_BANDS = {"DATAC1X": (420, 2580, "#f06292"), "DATAC1": (670, 2330, "#4fc3f7"), "DATAC3": (1190, 1800, "#81c784"),
-              "DATAC4": (1340, 1600, "#ffb74d")}
+              "DATAC4": (1340, 1600, "#ffb74d"), "EasyPal": (350, 2800, "#ce93d8")}
 
 
 def _palette():

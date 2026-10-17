@@ -114,7 +114,7 @@ def original_payload(raw: bytes, kind: str, hybrid=False) -> bytes:
     return raw
 
 
-EXT = {"jpeg": "jpg", "svg": "svg", "png": "png", "gif": "gif", "avif": "avif", "webp": "webp"}
+EXT = {"jpeg": "jpg", "svg": "svg", "png": "png", "gif": "gif", "avif": "avif", "webp": "webp", "jp2": "jp2"}
 
 
 def ext_for(fmt: str) -> str:
@@ -146,7 +146,7 @@ def save_received(base: str, fmt: str, data: bytes):
 
 def describe(kind: str) -> str:
     return {"jpeg": "JPEG", "svg": "SVG", "png": "PNG", "gif": "GIF", "avif": "AVIF",
-            "webp": "WEBP"}.get(kind, kind.upper())
+            "webp": "WEBP", "jp2": "JPEG 2000", "jpeg2000": "JPEG 2000"}.get(kind, kind.upper())
 
 
 def file_kind_label(path):
