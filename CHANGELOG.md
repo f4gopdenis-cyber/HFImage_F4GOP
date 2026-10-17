@@ -1,5 +1,13 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 0.45 — passage hybride ↔ normal corrigé
+
+- Le format est maintenant mémorisé séparément pour la radio et pour l'hybride : « original » choisi en hybride (photo pleine qualité, GIF animé) ne reste plus en radio, où une grosse photo demandait des heures et laissait l'aperçu vide.
+- Le bouton « Répéter l'annonce » de l'hybride redevient « Compléter » en mode normal.
+- Cocher ou décocher « Mode hybride » pendant une émission est pris en compte à la fin de l'émission : l'émission suivante part bien dans le mode coché.
+- Une photo ouverte en radio après un SVG repasse en avif au lieu de rester en « original ».
+- Message plus clair quand l'image n'est pas prête à émettre.
+
 ## Version 0.44 — version pour Windows 7 et 8
 
 - Nouveau fichier **HFImage_F4GOP_Win7.exe** dans chaque version, pour **Windows 7 SP1 et Windows 8 (64 bits)**. La version normale (HFImage_F4GOP.exe, Windows 8.1 / 10 / 11) ne change pas.

@@ -49,7 +49,7 @@ import random
 import wave
 
 APP = "HFImage F4GOP"
-VERSION = "0.44"
+VERSION = "0.45"
 CONF_PATH = os.path.join(os.path.expanduser("~"), ".hfimage.json")
 DEFAULT_OUT = os.path.join(os.path.expanduser("~"), "Documents", "HFImage")
 DEFAULTS = {
@@ -633,7 +633,18 @@ class App(tk.Tk):
 
     def _toggle_hyb_ui(self):
         self._btn_on("hyb", self.v_hyb.get())
-        self.prepare()
+        side = "hyb" if self.v_hyb.get() else "radio"
+        if side != self._fmt_side:
+            self._fmt_mem[self._fmt_side] = self.v_fmt.get()
+            self._fmt_side = side
+            new = self._fmt_mem.get(side) or "avif"
+            if self.v_fmt.get() != new:
+                self.v_fmt.set(new)
+                self.log(f"Format {new} ({'hybride' if side == 'hyb' else 'radio'}).")
+        if not self.tx_busy:              # pendant une émission : recalcul à la fin (_tx_done)
+            self.tx = None                # l'émission prête de l'autre mode ne doit pas partir
+            self.prepare()
+            self._update_comp()
 
     def _set_fix_text(self, text):
         self._set_text(self.btn_fix, text)
@@ -702,7 +713,12 @@ class App(tk.Tk):
         self.v_mode = tk.StringVar(value=self.conf["mode"])
         self.v_width = tk.StringVar(value=str(self.conf.get("width", "auto")))
         self.v_sec = tk.IntVar(value=int(self.conf.get("seconds", 60)))
-        self.v_fmt = tk.StringVar(value=self.conf["fmt"])
+        # format mémorisé séparément pour la radio et pour l'hybride (« original » en hybride
+        # ne doit pas rester en radio : une grosse photo y demanderait des heures)
+        self._fmt_mem = {"radio": self.conf.get("fmt", "avif"),
+                         "hyb": self.conf.get("hyb_fmt", self.conf.get("fmt", "avif"))}
+        self._fmt_side = "hyb" if self.conf.get("hyb_on") else "radio"
+        self.v_fmt = tk.StringVar(value=self._fmt_mem[self._fmt_side])
         ov = str(self.conf.get("overhead", "auto"))
         if ov.isdigit():
             near = min(ROBUST[1:], key=lambda r: abs(r[1] - int(ov)))
@@ -2050,7 +2066,9 @@ class App(tk.Tk):
             self.conf.update(
                 callsign=self.v_call.get().strip().upper(), mode=self.v_mode.get(),
                 width=self.v_width.get(), seconds=int(self.v_sec.get()),
-                fmt=self.v_fmt.get(), overhead=self._robust_conf(), conf_v=24,
+                fmt=self._fmt_mem["radio"] if self._fmt_side == "hyb" else self.v_fmt.get(),
+                hyb_fmt=self.v_fmt.get() if self._fmt_side == "hyb" else self._fmt_mem["hyb"],
+                overhead=self._robust_conf(), conf_v=24,
                 out_dev=self.v_out.get(), in_dev=self.v_in.get(), level=int(self.v_lvl.get()),
                 radio=self.radio_cfg,
                 folder=self.v_folder.get(),
@@ -2139,6 +2157,12 @@ class App(tk.Tk):
             # un dessin vectoriel est bien plus petit envoyé tel quel (texte compressé)
             self.v_fmt.set("original")
             self.log(f"SVG : envoi du dessin tel quel (format « original », {len(imgfmt.svg_pack(self.src_raw))} octets compressés).")
+        elif (not self.v_hyb.get() and self.v_fmt.get() == "original" and self.src_kind != "svg"
+              and len(self.src_raw) > 30000):
+            # « original » resté d'un SVG : une photo de cette taille demanderait trop longtemps en radio
+            self.v_fmt.set("avif")
+            self.log(f"Photo de {len(self.src_raw) / 1000:.0f} K : format avif pour la radio "
+                     "(« original » reste possible en mode hybride).")
         self.prepare()
 
     def _payload(self, fmt, hybrid=False):
@@ -2707,6 +2731,8 @@ class App(tk.Tk):
         if self.tx:
             n = self.tx.complement_size()
             self._set_text(self.btn_comp, f"+  Compléter ({n} symboles, {self.tx.estimate_s(n):.0f} s)")
+        else:
+            self._set_text(self.btn_comp, "+  Compléter")
 
     def save_wav(self):
         if not self.tx:
@@ -2772,10 +2798,15 @@ class App(tk.Tk):
         return True
 
     def transmit(self, complement=False, extra=None, tx=None, quiet=False):
+        if tx is None and self.tx is not None and isinstance(self.tx, HybridJob) != bool(self.v_hyb.get()):
+            self.tx = None
+            self.prepare()                # l'image prête était pour l'autre mode
         tx = tx or self.tx
         if not tx or self.tx_busy:
             if not tx and not quiet:
-                messagebox.showinfo(APP, "Ouvrez d'abord une image.")
+                messagebox.showinfo(APP, "Ouvrez d'abord une image." if self.src_img is None else
+                                    "L'image n'est pas prête pour l'émission : voir le message sous l'image "
+                                    "(durée trop courte, format…).")
             return False
         if ((self.v_mode.get() == "Auto" or self._robust_choice() is None) and not complement
                 and tx is self.tx and not isinstance(tx, HybridJob)
@@ -3164,6 +3195,9 @@ class App(tk.Tk):
         self.v_state.set("Réception arrêtée")
         self.log("Fin d'émission.")
         self.panel.set_cell("Position", "TX", tr("terminé"))
+        if self.tx is None or isinstance(self.tx, HybridJob) != bool(self.v_hyb.get()):
+            self.tx = None                # « hybride » coché / décoché pendant l'émission
+            self.prepare()
         self._update_comp()
         if relisten and self.rx_stream is None and self.v_in.get():
             self.toggle_listen(quiet=True)

@@ -1211,6 +1211,8 @@ T = [
     ("Reçu par", "Received by", "Empfangen von", "Recibido por", "Ricevuto da"),
     ("[image] ", "[image] ", "[Bild] ", "[imagen] ", "[immagine] "),
     ("Message reçu par le correspondant", "Message received by the correspondent", "Nachricht von der Gegenstation empfangen", "Mensaje recibido por el corresponsal", "Messaggio ricevuto dal corrispondente"),
+    # ------------------------------------------------------------ v0.45
+    ("L'image n'est pas prête pour l'émission : voir le message sous l'image (durée trop courte, format…).", "The image is not ready to transmit: see the message under the image (duration too short, format…).", "Das Bild ist nicht sendebereit: siehe Meldung unter dem Bild (Dauer zu kurz, Format…).", "La imagen no está lista para transmitir: vea el mensaje bajo la imagen (duración demasiado corta, formato…).", "L'immagine non è pronta per la trasmissione: vedere il messaggio sotto l'immagine (durata troppo breve, formato…)."),
 ]
 
 _lang = "fr"
