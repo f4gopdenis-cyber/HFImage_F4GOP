@@ -1,5 +1,10 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 0.47 — fréquence devant le H dans le panneau Stations
+
+- La fréquence est maintenant toujours affichée devant le H (« F1BAL 14,230H »), sur la largeur d'origine de la liste.
+- Une station en ligne qui ne publie pas sa fréquence (CAT non branché chez elle) montre la fréquence où on l'a entendue par radio, au lieu de « — ».
+
 ## Version 0.46 — les stations voient qui est en mode hybride
 
 - La présence Internet indique maintenant si « Mode hybride » est coché ; c'est republié dès qu'on coche ou décoche.

@@ -49,7 +49,7 @@ import random
 import wave
 
 APP = "HFImage F4GOP"
-VERSION = "0.46"
+VERSION = "0.47"
 CONF_PATH = os.path.join(os.path.expanduser("~"), ".hfimage.json")
 DEFAULT_OUT = os.path.join(os.path.expanduser("~"), "Documents", "HFImage")
 DEFAULTS = {
@@ -1138,7 +1138,7 @@ class App(tk.Tk):
         body = tk.Frame(box, bg=GREEN)
         body.pack(fill="both", expand=True, padx=2, pady=(0, 2))
         mono = ("Consolas", 9) if sys.platform.startswith("win") else ("TkFixedFont", 9)
-        self.lst_heard = tk.Listbox(body, height=7, width=17, font=mono, activestyle="none",
+        self.lst_heard = tk.Listbox(body, height=7, width=15, font=mono, activestyle="none",
                                     bg="white", fg="#062e06", selectbackground="#2f9e2f")
         self.lst_heard.pack(side="left", fill="both", expand=True)
         sb = ttk.Scrollbar(body, orient="vertical", command=self.lst_heard.yview)
@@ -1415,16 +1415,18 @@ class App(tk.Tk):
         self.lst_heard.delete(0, "end")
         for c in self._heard_names:
             hyb = self._is_hyb(c, on)
-            tag = " H" if hyb else ""                                  # H = mode hybride
+            tag = "H" if hyb else ""                                   # H = mode hybride, après la fréquence
+            h = self.heard.get(c, {})
             if c in on:
                 d = on[c]
                 mark = "*" if d.get("state") == "TX" else " "        # * = en émission
-                self.lst_heard.insert("end", f"{c:<8}{mark}{self._mhz(d.get('freq'))}{tag}")
+                # fréquence publiée par la station ; sinon celle où on l'a entendue par radio
+                fq = d.get("freq") or h.get("freq")
+                self.lst_heard.insert("end", f"{c:<7}{mark}{self._mhz(fq):>6}{tag}")
                 self.lst_heard.itemconfigure("end", fg=self._c("#c01818" if d.get("state") == "TX" else
                                                                ("#1f4fbf" if hyb else "#062e06")))
             else:
-                h = self.heard[c]
-                self.lst_heard.insert("end", f"{c:<8} {self._mhz(h.get('freq'))}{tag}")
+                self.lst_heard.insert("end", f"{c:<7} {self._mhz(h.get('freq')):>6}{tag}")
                 # entendue par radio seulement (pas en ligne) : en gris-vert (bleu pâle si hybride)
                 self.lst_heard.itemconfigure("end", fg=self._c(("#5a78b8" if hyb else "#4a7a4a")
                                                                if now - h["t"] < 1800 else "#8a9a8a"))
