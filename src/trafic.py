@@ -77,3 +77,35 @@ def overlay(img, items, pos="bas", size="normale"):
         d.text(((im.width - w) / 2, y0 + fs // 4 + i * lh), l, font=font, fill=(255, 255, 255),
                stroke_width=max(1, fs // 14), stroke_fill=(0, 0, 0))
     return im
+
+
+PIP_SCALE = {"petite": 0.26, "moyenne": 0.34, "grande": 0.45}
+
+
+def pip(img, thumb, caption="", corner="haut-droite", size="moyenne"):
+    """Image du correspondant incrustée dans un coin (cadre blanc, légende « de F4EMK — +12 dB »)."""
+    im = img.convert("RGB").copy()
+    th = thumb.convert("RGB")
+    tw = max(60, int(im.width * PIP_SCALE.get(size, 0.34)))
+    th = th.resize((tw, max(1, round(th.height * tw / th.width))), Image.LANCZOS)
+    b = max(2, tw // 60)                                   # cadre
+    fs = max(11, tw // 13)
+    font = _font(fs)
+    cap_h = int(fs * 1.45) if caption else 0
+    W, H = th.width + 2 * b, th.height + 2 * b + cap_h
+    box = Image.new("RGB", (W, H), (255, 255, 255))
+    box.paste(th, (b, b))
+    if caption:
+        d = ImageDraw.Draw(box)
+        d.rectangle((0, th.height + 2 * b, W, H), fill=(20, 20, 20))
+        w = d.textlength(caption, font=font)
+        d.text(((W - w) / 2, th.height + 2 * b + (cap_h - fs) / 2 - 1), caption, font=font, fill=(255, 230, 90))
+    m = max(6, im.width // 60)                             # marge au bord
+    x = m if "gauche" in corner else im.width - W - m
+    y = m if "haut" in corner else im.height - H - m
+    # ombre
+    sh = Image.new("RGBA", (W, H), (0, 0, 0, 110))
+    base = im.convert("RGBA")
+    base.alpha_composite(sh, (min(im.width - W, x + b * 2), min(im.height - H, y + b * 2)))
+    base.paste(box, (x, y))
+    return base.convert("RGB")

@@ -46,7 +46,7 @@ import random
 import wave
 
 APP = "HFImage F4GOP"
-VERSION = "0.37"
+VERSION = "0.38"
 CONF_PATH = os.path.join(os.path.expanduser("~"), ".hfimage.json")
 DEFAULT_OUT = os.path.join(os.path.expanduser("~"), "Documents", "HFImage")
 DEFAULTS = {
@@ -514,6 +514,7 @@ class App(tk.Tk):
         i.add_command(label="Ouvrir une image…", command=self.open_image)
         i.add_command(label="Envoyer un fichier…", command=self.send_file)
         i.add_command(label="Mes conditions de trafic…", command=self.trafic_dialog)
+        i.add_command(label="Image du correspondant…", command=self.pip_dialog)
         i.add_command(label="Carte QSL…", command=self.qsl_dialog)
         i.add_separator()
         i.add_command(label="Image reçue en plein format", command=self._open_full)
@@ -744,6 +745,18 @@ class App(tk.Tk):
         ttk.Checkbutton(r2, text="Mes conditions de trafic", variable=self.v_tcon,
                         command=_tc_toggle).pack(side="left")
         ttk.Button(r2, text="…", width=3, command=self.trafic_dialog).pack(side="left", padx=(2, 0))
+        self.v_pipon = tk.BooleanVar(value=bool(self.conf.get("pip_on")))
+
+        def _pip_toggle():
+            self.conf["pip_on"] = bool(self.v_pipon.get())
+            self._save_conf_file()
+            if self.conf["pip_on"] and not getattr(self, "pip", None):
+                self.pip_dialog()
+            else:
+                self.prepare()
+        ttk.Checkbutton(r2, text="Image du correspondant", variable=self.v_pipon,
+                        command=_pip_toggle).pack(side="left", padx=(12, 0))
+        ttk.Button(r2, text="…", width=3, command=self.pip_dialog).pack(side="left", padx=(2, 0))
 
         bar = self._green_bar(t)
         self.v_txinfo = TrVar(value="")
@@ -2097,21 +2110,157 @@ class App(tk.Tk):
         self.prepare()
 
     def _tx_source(self):
-        """Image à émettre : l'image ouverte, avec « mes conditions de trafic » si la case est cochée."""
-        if self.src_img is None or not self.conf.get("tc_on"):
-            return self.src_img
+        """Image à émettre : l'image ouverte, + l'image du correspondant (avec son report),
+        + « mes conditions de trafic », selon les cases cochées."""
+        base = self._pip_source()
+        if base is None or not self.conf.get("tc_on"):
+            return base
         freq = audio.format_freq(self.rig_freq, True) if self.rig_freq else ""
         model = getattr(self.rig, "model", "") if self.rig is not None else ""
         items = trafic.parts(self.conf, self.v_call.get().strip().upper(), self.v_loc.get().strip().upper(),
                              model or "", freq)
-        key = (id(self.src_img), tuple(i for i in items if not i.endswith(" UTC")),
+        key = (id(base), tuple(i for i in items if not i.endswith(" UTC")),
                self.conf.get("tc_pos"), self.conf.get("tc_size"))
         c = getattr(self, "_tc_cache", None)
         if c and c[0] == key:
             return c[1]
-        im = trafic.overlay(self.src_img, items, self.conf.get("tc_pos", "bas"), self.conf.get("tc_size", "normale"))
+        im = trafic.overlay(base, items, self.conf.get("tc_pos", "bas"), self.conf.get("tc_size", "normale"))
         self._tc_cache = (key, im)
         return im
+
+    # ------------------------------------------------------------- image du correspondant
+    def _pip_caption(self, p):
+        rep = p.get("snr")
+        cap = tr("de") + f" {p.get('call') or '?'}"
+        if rep is not None and self.conf.get("pip_report", True):
+            cap += f"  —  {rep:+.0f} dB"
+        return cap
+
+    def _pip_source(self):
+        """Image ouverte, avec l'image du correspondant incrustée si la case est cochée."""
+        p = getattr(self, "pip", None)
+        if self.src_img is None or not self.conf.get("pip_on") or not p:
+            return self.src_img
+        key = (id(self.src_img), p.get("path"), self._pip_caption(p), self.conf.get("pip_corner"),
+               self.conf.get("pip_size"))
+        c = getattr(self, "_pip_cache", None)
+        if c and c[0] == key:
+            return c[1]
+        try:
+            thumb = Image.open(p["path"])
+            thumb.seek(0)
+            im = trafic.pip(self.src_img, thumb, self._pip_caption(p), self.conf.get("pip_corner", "haut-droite"),
+                            self.conf.get("pip_size", "moyenne"))
+        except Exception as e:
+            self.log(f"Image du correspondant illisible : {e}")
+            return self.src_img
+        self._pip_cache = (key, im)
+        return im
+
+    def _pip_candidates(self):
+        """Dernières images reçues : [(libellé, {path, call, snr})]."""
+        out = []
+        for e in (self.gal_store.latest("rx", 30) if self.gal_store else []):
+            src = e.get("png") or e.get("file")
+            if not src or not os.path.exists(src):
+                continue
+            call = e.get("call") or "?"
+            snr = e.get("snr")
+            if snr is None and call in self.heard:
+                snr = self.heard[call].get("snr")
+            lab = f"{call}  {time.strftime('%d/%m %H:%M', time.localtime(e.get('t', 0)))}  {e.get('mode', '')}"
+            out.append((lab, {"path": src, "call": call, "snr": snr}))
+        return out
+
+    def set_pip(self, entry):
+        """Galerie → « Répondre avec cette image » : l'image du correspondant passe dans l'image TX."""
+        src = entry.get("png") or entry.get("file")
+        call = entry.get("call") or "?"
+        snr = entry.get("snr")
+        if snr is None and call in self.heard:
+            snr = self.heard[call].get("snr")
+        self.pip = {"path": src, "call": call, "snr": snr}
+        self.conf["pip_on"] = True
+        if hasattr(self, "v_pipon"):
+            self.v_pipon.set(True)
+        self._save_conf_file()
+        self.nb.select(1)
+        if self.src_img is None:
+            messagebox.showinfo(APP, "Ouvrez maintenant votre image : celle du correspondant y sera incrustée.")
+        self.prepare()
+
+    def pip_dialog(self):
+        w = getattr(self, "_pip_win", None)
+        if w is not None and w.winfo_exists():
+            w.lift()
+            return
+        w = self._pip_win = tk.Toplevel(self)
+        w.title("Image du correspondant")
+        w.transient(self)
+        w.resizable(False, False)
+        f = ttk.Frame(w, padding=12)
+        f.pack(fill="both", expand=True)
+        cands = self._pip_candidates()
+        if not cands:
+            ttk.Label(f, text="Aucune image reçue pour l'instant.").pack()
+            self._translate_ui(w)
+            return
+        labels = [c[0] for c in cands]
+        cur = getattr(self, "pip", None)
+        v_img = tk.StringVar(value=next((l for l, p in cands if cur and p["path"] == cur.get("path")), labels[0]))
+        corners = {"haut-droite": tr("En haut à droite"), "haut-gauche": tr("En haut à gauche"),
+                   "bas-droite": tr("En bas à droite"), "bas-gauche": tr("En bas à gauche")}
+        sizes = {"petite": tr("Petite"), "moyenne": tr("Moyenne"), "grande": tr("Grande")}
+        v_c = tk.StringVar(value=corners.get(self.conf.get("pip_corner", "haut-droite")))
+        v_s = tk.StringVar(value=sizes.get(self.conf.get("pip_size", "moyenne")))
+        v_rep = tk.BooleanVar(value=bool(self.conf.get("pip_report", True)))
+        v_on = tk.BooleanVar(value=bool(self.conf.get("pip_on")))
+        ttk.Checkbutton(f, text="Incruster l'image du correspondant dans mon image", variable=v_on).grid(
+            row=0, column=0, columnspan=2, sticky="w")
+        ttk.Label(f, text="Image reçue").grid(row=1, column=0, sticky="w", pady=2)
+        ttk.Combobox(f, textvariable=v_img, values=labels, width=34, state="readonly").grid(
+            row=1, column=1, sticky="w", padx=6)
+        ttk.Label(f, text="Position").grid(row=2, column=0, sticky="w", pady=2)
+        ttk.Combobox(f, textvariable=v_c, values=list(corners.values()), width=20, state="readonly").grid(
+            row=2, column=1, sticky="w", padx=6)
+        ttk.Label(f, text="Taille").grid(row=3, column=0, sticky="w", pady=2)
+        ttk.Combobox(f, textvariable=v_s, values=list(sizes.values()), width=12, state="readonly").grid(
+            row=3, column=1, sticky="w", padx=6)
+        ttk.Checkbutton(f, text="Afficher le report (dB)", variable=v_rep).grid(row=4, column=1, sticky="w", padx=6)
+        lb = tk.Label(f, bg="black")
+        lb._no_theme = True
+        lb.grid(row=5, column=0, columnspan=2, pady=(10, 0))
+
+        def store():
+            self.pip = dict(cands[labels.index(v_img.get())][1])
+            self.conf.update(pip_on=bool(v_on.get()), pip_report=bool(v_rep.get()),
+                             pip_corner=next(k for k, n in corners.items() if n == v_c.get()),
+                             pip_size=next(k for k, n in sizes.items() if n == v_s.get()))
+            if hasattr(self, "v_pipon"):
+                self.v_pipon.set(bool(v_on.get()))
+            self._save_conf_file()
+
+        def preview(*_):
+            store()
+            on = self.conf.get("pip_on")
+            self.conf["pip_on"] = True
+            tmp = self.src_img is None
+            if tmp:
+                self.src_img = Image.new("RGB", (640, 480), (40, 90, 140))
+            im = self._pip_source().copy()
+            if tmp:
+                self.src_img = None
+            self.conf["pip_on"] = on
+            im.thumbnail((480, 360))
+            self._photos["pip"] = ImageTk.PhotoImage(im)
+            lb.configure(image=self._photos["pip"])
+
+        for var in (v_img, v_c, v_s, v_rep, v_on):
+            var.trace_add("write", lambda *a: self.after_idle(preview))
+        ttk.Button(f, text="OK", command=lambda: (store(), w.destroy(), self.prepare())).grid(
+            row=6, column=1, sticky="e", pady=(10, 0))
+        preview()
+        self._translate_ui(w)
 
     def trafic_dialog(self):
         """Fenêtre « Mes conditions de trafic » (bandeau incrusté sur l'image émise)."""
@@ -3252,7 +3401,7 @@ class App(tk.Tk):
             if not self.tx_busy:
                 self.nb.select(0)
             if not hdr.get("preview") and os.sep + "relecture" + os.sep not in path:
-                self._gallery_add("rx", hdr.get("call"), mode, path, png, hdr.get("size"))
+                self._gallery_add("rx", hdr.get("call"), mode, path, png, hdr.get("size"), snr)
                 self._web_queue("rx", png, hdr.get("call"), mode, hdr.get("id"))
         self.hist.insert(0, (hdr, path, png, mode))
         self.lst.insert(0, f"{time.strftime('%H:%M')}  {hdr['call']:8s} {mode}  {hdr['size']} o")
@@ -3540,11 +3689,14 @@ class App(tk.Tk):
         except Exception as e:
             self.log_exc("Galerie", e)
 
-    def _gallery_add(self, direction, call, mode, path, png, size):
+    def _gallery_add(self, direction, call, mode, path, png, size, snr=None):
         if self.gal_store is None:
             return
-        self.gal_store.add({"t": time.time(), "dir": direction, "call": call or "?", "mode": mode,
-                            "file": path, "png": png, "size": size or 0})
+        e = {"t": time.time(), "dir": direction, "call": call or "?", "mode": mode,
+             "file": path, "png": png, "size": size or 0}
+        if snr is not None:
+            e["snr"] = round(float(snr), 1)
+        self.gal_store.add(e)
         self.gal.refresh()
 
     def _gallery_sent(self, job, mode):

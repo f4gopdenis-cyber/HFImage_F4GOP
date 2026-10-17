@@ -279,6 +279,9 @@ class GalleryView(tk.Frame):
         m.add_command(label=self.tr("Afficher dans l'onglet RX"), command=lambda: self._click(e))
         m.add_command(label=self.tr("Ouvrir en plein format"), command=lambda: self._full(e))
         m.add_command(label=self.tr("Renvoyer cette image (onglet TX)"), command=lambda: self.app.gallery_to_tx(e))
+        if e.get("dir") == "rx":
+            m.add_command(label=self.tr("Répondre avec cette image (incrustée dans mon image TX)"),
+                          command=lambda: self.app.set_pip(e))
         if e.get("dir") == "rx" and e.get("call") not in (None, "", "?"):
             m.add_command(label=self.tr(f"Voir {e['call']} sur la carte"), command=lambda: self.app.show_map(e["call"]))
         m.add_separator()

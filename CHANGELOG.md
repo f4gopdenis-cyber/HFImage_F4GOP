@@ -1,5 +1,13 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 0.38 — image du correspondant dans l'image TX
+
+- Comme EasyPal, on peut répondre avec l'image reçue du correspondant incrustée dans la sienne, avec le report :
+  - Galerie → clic droit → **Répondre avec cette image** ;
+  - ou case **Image du correspondant** dans l'onglet TX, et bouton « … » pour choisir l'image reçue, le coin, la taille.
+- Cadre blanc, ombre, légende « de F4EMK — +12 dB » (le SNR mesuré en recevant sa station ; affichage du report au choix).
+- Se combine avec « Mes conditions de trafic ». Le report est maintenant aussi gardé dans la galerie.
+
 ## Version 0.37 — mes conditions de trafic sur l'image
 
 - Case **Mes conditions de trafic** dans l'onglet TX (et bouton « … », ou menu Images → Mes conditions de trafic…) : un bandeau est incrusté sur l'image émise.

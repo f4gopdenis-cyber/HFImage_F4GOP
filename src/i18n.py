@@ -1156,6 +1156,19 @@ T = [
     ("Taille du texte", "Text size", "Textgröße", "Tamaño del texto", "Dimensione del testo"),
     ("En bas", "Bottom", "Unten", "Abajo", "In basso"),
     ("En haut", "Top", "Oben", "Arriba", "In alto"),
+    # ------------------------------------------------------------ v0.38 : image du correspondant
+    ("Image du correspondant", "Correspondent's image", "Bild der Gegenstation", "Imagen del corresponsal", "Immagine del corrispondente"),
+    ("Image du correspondant…", "Correspondent's image…", "Bild der Gegenstation…", "Imagen del corresponsal…", "Immagine del corrispondente…"),
+    ("Incruster l'image du correspondant dans mon image", "Insert the correspondent's image into my image", "Bild der Gegenstation in mein Bild einfügen", "Insertar la imagen del corresponsal en mi imagen", "Inserire l'immagine del corrispondente nella mia immagine"),
+    ("Moyenne", "Medium", "Mittel", "Mediana", "Media"),
+    ("Afficher le report (dB)", "Show the report (dB)", "Rapport anzeigen (dB)", "Mostrar el report (dB)", "Mostrare il rapporto (dB)"),
+    ("En haut à droite", "Top right", "Oben rechts", "Arriba a la derecha", "In alto a destra"),
+    ("En haut à gauche", "Top left", "Oben links", "Arriba a la izquierda", "In alto a sinistra"),
+    ("En bas à droite", "Bottom right", "Unten rechts", "Abajo a la derecha", "In basso a destra"),
+    ("En bas à gauche", "Bottom left", "Unten links", "Abajo a la izquierda", "In basso a sinistra"),
+    ("Répondre avec cette image (incrustée dans mon image TX)", "Reply with this image (inserted into my TX image)", "Mit diesem Bild antworten (in mein TX-Bild eingefügt)", "Responder con esta imagen (insertada en mi imagen TX)", "Rispondere con questa immagine (inserita nella mia immagine TX)"),
+    ("Ouvrez maintenant votre image : celle du correspondant y sera incrustée.", "Now open your image: the correspondent's image will be inserted into it.", "Öffnen Sie jetzt Ihr Bild: das Bild der Gegenstation wird eingefügt.", "Abra ahora su imagen: la del corresponsal se insertará en ella.", "Aprite ora la vostra immagine: quella del corrispondente vi sarà inserita."),
+    ("Image du correspondant illisible : {0}", "Correspondent's image unreadable: {0}", "Bild der Gegenstation nicht lesbar: {0}", "Imagen del corresponsal ilegible: {0}", "Immagine del corrispondente illeggibile: {0}"),
 ]
 
 _lang = "fr"
