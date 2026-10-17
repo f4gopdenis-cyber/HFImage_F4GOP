@@ -76,7 +76,7 @@ figcaption{{font-size:12px;padding:3px 6px;color:#ddd}}
 </head><body>
 <h1>{title}</h1>
 <p>Images numériques reçues en HF avec HFImage F4GOP — page rafraîchie toutes les 5 minutes.
-Mise à jour : {time.strftime('%Y-%m-%d %H:%M', time.gmtime())} UTC</p>
+Mise à jour : {__import__('clocktz').fmt('%Y-%m-%d %H:%M')}</p>
 <h2>Images reçues</h2>
 <div class="g">
 {cells(rx, "image", n)}

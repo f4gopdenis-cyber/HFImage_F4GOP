@@ -6,6 +6,7 @@ Onglets : Émission, Réception, Simulation, Réglages.
 import io
 import json
 import os
+import re
 import queue
 import subprocess
 import sys
@@ -29,6 +30,7 @@ import gallery
 import websync
 import trafic
 import msgwin
+import clocktz
 import radio
 import radiodlg
 import contextlib
@@ -47,7 +49,7 @@ import random
 import wave
 
 APP = "HFImage F4GOP"
-VERSION = "0.41"
+VERSION = "0.42"
 CONF_PATH = os.path.join(os.path.expanduser("~"), ".hfimage.json")
 DEFAULT_OUT = os.path.join(os.path.expanduser("~"), "Documents", "HFImage")
 DEFAULTS = {
@@ -188,6 +190,7 @@ class App(tk.Tk):
         self.title(f"{APP} {VERSION}")
         self._set_icon()
         self.conf = load_conf()
+        clocktz.MODE = self.conf.get("clock", "local")
         self.geometry(self.conf.get("win_geom") or "1320x880")
         self.minsize(900, 600)
         if self.conf.get("win_zoomed"):
@@ -1083,7 +1086,7 @@ class App(tk.Tk):
                   foreground="#555").grid(row=4, column=0, sticky="w", pady=(4, 0))
         cols = ("heure", "call", "evt", "mode", "snr", "detail")
         self.tree = ttk.Treeview(t, columns=cols, show="headings", height=14)
-        for c, title, w in zip(cols, ("Heure UTC", "Indicatif", "Événement", "Mode", "SNR", "Détail"),
+        for c, title, w in zip(cols, (clocktz.label(tr("Heure")), "Indicatif", "Événement", "Mode", "SNR", "Détail"),
                                (80, 90, 170, 90, 60, 360)):
             self.tree.heading(c, text=title)
             self.tree.column(c, width=w, anchor="w")
@@ -1273,9 +1276,9 @@ class App(tk.Tk):
             if c in self.rxok:
                 rep, t = self.rxok[c]
                 info.append(tr("a reçu votre image") + ("" if rep is None else f" (report {rep:+d} dB)")
-                            + time.strftime(" %H:%M UTC", time.gmtime(t)))
+                            + " " + clocktz.fmt("%H:%M", t))
             elif h.get("t"):
-                info.append(tr("entendue à {0} UTC").replace("{0}", time.strftime("%H:%M", time.gmtime(h["t"]))))
+                info.append(tr("entendue à {0}").replace("{0}", clocktz.fmt("%H:%M", h["t"])))
             if h.get("snr") is not None:
                 info.append(f"SNR {h['snr']:+.0f} dB")
             if h.get("freq") and c not in on:
@@ -1418,7 +1421,7 @@ class App(tk.Tk):
         if loc:
             parts.append(loc)
         if h.get("t"):
-            parts.append(tr("entendue à {0} UTC").replace("{0}", time.strftime("%H:%M", time.gmtime(h["t"]))))
+            parts.append(tr("entendue à {0}").replace("{0}", clocktz.fmt("%H:%M", h["t"])))
         if h.get("freq"):
             parts.append(audio.format_freq(h["freq"], True))
         if h.get("snr") is not None:
@@ -1441,7 +1444,7 @@ class App(tk.Tk):
 
     def station_event(self, call, evt, mode="", snr=None, detail=""):
         """Ajoute une ligne au journal des stations (écran + stations.csv)."""
-        hh = time.strftime("%H:%M:%S", time.gmtime())
+        hh = clocktz.fmt("%H:%M:%S", suffix=False)
         snr_s = "" if snr is None else f"{snr:+.0f} dB"
         if call and call != "?" and snr is not None and mode != "DATAC0":
             self.snr_by_call[call] = snr
@@ -1886,7 +1889,13 @@ class App(tk.Tk):
         order = ["local", "both", "utc"]
         cur = self.conf.get("clock", "local")
         self.conf["clock"] = order[(order.index(cur) + 1) % 3 if cur in order else 0]
+        clocktz.MODE = self.conf["clock"]
         self._save_conf_file()
+        try:
+            self.tree.heading("heure", text=clocktz.label(tr("Heure")))
+        except (AttributeError, tk.TclError):
+            pass
+        self._tc_cache = None
         self.lb_clock.configure(text=self._clock_text())
         self.log({"local": "Horloge : heure de Windows", "both": "Horloge : heure de Windows et UTC",
                   "utc": "Horloge : UTC"}[self.conf["clock"]])
@@ -2147,7 +2156,7 @@ class App(tk.Tk):
         style = {k: self.conf[k] for k in ("tc_font", "tc_bold", "tc_italic", "tc_color", "tc_stroke", "tc_bg",
                                            "tc_alpha", "tc_callcolor", "tc_frame") if k in self.conf}
         call = self.v_call.get().strip().upper()
-        key = (id(base), tuple(i for i in items if not i.endswith(" UTC")),
+        key = (id(base), tuple(i for i in items if not re.match(r"\d{4}-\d\d-\d\d \d\d:\d\d", i)),
                self.conf.get("tc_pos"), self.conf.get("tc_size"), tuple(sorted(style.items())))
         c = getattr(self, "_tc_cache", None)
         if c and c[0] == key:
@@ -2323,7 +2332,7 @@ class App(tk.Tk):
         cf = ttk.Frame(f)
         cf.grid(row=7, column=0, columnspan=3, sticky="w", pady=(6, 0))
         for k, lab in (("tc_call", "Indicatif"), ("tc_loc", "Locator"), ("tc_freq", "Fréquence (CAT)"),
-                       ("tc_date", "Date et heure UTC")):
+                       ("tc_date", clocktz.label(tr("Date et heure")))):
             ttk.Checkbutton(cf, text=lab, variable=b[k]).pack(side="left", padx=(0, 10))
         pf = ttk.Frame(f)
         pf.grid(row=8, column=0, columnspan=3, sticky="w", pady=(6, 0))
@@ -3655,7 +3664,7 @@ class App(tk.Tk):
         win.title("Carte QSL")
         win.transient(self)
         fields = {}
-        now = time.strftime("%Y-%m-%d %H:%M", time.gmtime())
+        now = clocktz.fmt("%Y-%m-%d %H:%M", suffix=False)
         last = ""
         for iid in self.tree.get_children():          # dernière station identifiée
             c = self.tree.item(iid, "values")[1]
@@ -3669,7 +3678,7 @@ class App(tk.Tk):
             return f"SNR {snr:+.0f} dB" if snr is not None else ""
 
         for i, (key, lab, val) in enumerate((("to", "Indicatif du correspondant", last),
-                                             ("utc", "Date / heure UTC", now),
+                                             ("utc", clocktz.label(tr("Date / heure")), now),
                                              ("freq", "Fréquence", freq),
                                              ("report", "Report", report_for(last)),
                                              ("msg", "Message", "TNX QSO, 73 !"))):
@@ -3873,7 +3882,7 @@ class App(tk.Tk):
 
     def _web_caption(self, call, mode):
         band = audio.band_of(self.rig_freq) if self.rig_freq else ""
-        parts = [call or "?", time.strftime("%Y-%m-%d %H:%M UTC", time.gmtime()), (mode or "").split()[0]]
+        parts = [call or "?", clocktz.fmt("%Y-%m-%d %H:%M"), (mode or "").split()[0]]
         if band:
             parts.append(band)
         return "  ".join(parts)

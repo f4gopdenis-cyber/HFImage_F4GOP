@@ -83,7 +83,8 @@ def make_card(background, mycall, locator="", to_call="", freq="", report="", me
     else:
         card = _cover(background, W, H)
     d = ImageDraw.Draw(card, "RGBA")
-    utc = utc or time.strftime("%Y-%m-%d %H:%M", time.gmtime())
+    import clocktz
+    utc = utc or clocktz.fmt("%Y-%m-%d %H:%M", suffix=False)
 
     # en-tête : indicatif + locator
     head = max(120, int(120 * big))
@@ -101,7 +102,7 @@ def make_card(background, mycall, locator="", to_call="", freq="", report="", me
     y0 = H - 176
     if to_call:
         d.text((28, y0), tr(f"To : {to_call.upper()}"), font=_font(40, True), fill=acc_c)
-    rows = [(tr("Date UTC"), utc), (tr("Fréquence"), freq), (tr("Report"), report)]
+    rows = [(tr("Date UTC") if clocktz.utc() else tr("Date"), utc), (tr("Fréquence"), freq), (tr("Report"), report)]
     x = 28
     for lab, val in rows:
         if not val:

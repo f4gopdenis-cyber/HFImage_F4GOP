@@ -305,8 +305,9 @@ s.append(P("Quand un correspondant envoie un message (texte seul, ou texte joint
            "double-clic dans le cadre « Messages reçus »."))
 s.append(P("Horloge", "h2"))
 s.append(P("L'horloge en bas à droite affiche l'heure de Windows (heure d'été comprise). Un clic dessus passe à "
-           "« heure de Windows + UTC », puis « UTC seule », puis revient. Le journal des stations et les cartes QSL "
-           "restent en UTC, comme un carnet de trafic."))
+           "« heure de Windows + UTC », puis « UTC seule », puis revient. Ce choix vaut pour tout le programme : "
+           "journal des stations, messages, bandeau « Mes conditions de trafic », cartes QSL, Digi-Sites. En mode "
+           "« UTC seule », les heures sont suivies de « UTC »."))
 s.append(P("Envoyer un fichier", "h2"))
 s.append(P("Bouton <b>Envoyer un fichier…</b> (onglet TX) ou menu Images : n'importe quel fichier (texte, PDF, ZIP, "
            "journal ADIF…). Il est compressé s'il y gagne, protégé par le même code fontaine que les images (BSR / FIX "

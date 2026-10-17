@@ -141,7 +141,8 @@ def parts(conf, call="", loc="", rig_model="", freq_text=""):
     if c["tc_freq"] and freq_text:
         out.append(freq_text)
     if c["tc_date"]:
-        out.append(time.strftime("%Y-%m-%d %H:%M UTC", time.gmtime()))
+        import clocktz
+        out.append(clocktz.fmt("%Y-%m-%d %H:%M"))
     if c["tc_extra"]:
         out.append(c["tc_extra"])
     return out

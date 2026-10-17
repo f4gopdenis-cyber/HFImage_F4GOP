@@ -1,5 +1,11 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 0.42 — heure de Windows dans tout le programme
+
+- Toutes les heures affichées suivent maintenant l'heure de Windows (heure d'été comprise) : journal des stations, liste des stations entendues, messages, bandeau « Mes conditions de trafic », cartes QSL, Digi-Sites.
+- Un clic sur l'horloge permet toujours de passer en UTC ; le choix vaut alors pour tout le programme (heures suivies de « UTC »).
+- Le fichier stations.csv reste en UTC.
+
 ## Version 0.41 — horloge à l'heure de Windows
 
 - L'horloge du programme affiche maintenant l'heure de Windows (heure locale, heure d'été comprise).

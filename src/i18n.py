@@ -1197,6 +1197,12 @@ T = [
     ("Horloge : heure de Windows", "Clock: Windows time", "Uhr: Windows-Zeit", "Reloj: hora de Windows", "Orologio: ora di Windows"),
     ("Horloge : heure de Windows et UTC", "Clock: Windows time and UTC", "Uhr: Windows-Zeit und UTC", "Reloj: hora de Windows y UTC", "Orologio: ora di Windows e UTC"),
     ("Horloge : UTC", "Clock: UTC", "Uhr: UTC", "Reloj: UTC", "Orologio: UTC"),
+    # ------------------------------------------------------------ v0.42 : heure de Windows partout
+    ("Heure", "Time", "Zeit", "Hora", "Ora"),
+    ("entendue à {0}", "heard at {0}", "gehört um {0}", "oída a las {0}", "ascoltata alle {0}"),
+    ("Date et heure", "Date and time", "Datum und Uhrzeit", "Fecha y hora", "Data e ora"),
+    ("Date / heure", "Date / time", "Datum / Uhrzeit", "Fecha / hora", "Data / ora"),
+    ("Date", "Date", "Datum", "Fecha", "Data"),
 ]
 
 _lang = "fr"
