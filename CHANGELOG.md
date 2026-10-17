@@ -1,5 +1,10 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 0.52 — correction : blocage après une émission en mode EasyPal
+
+- Correction : après une émission en mode EasyPal (terminée ou arrêtée), le waterfall et les boutons restaient bloqués. C'est réparé.
+- Plus sûr pour tous les modes : une erreur dans une mise à jour de la fenêtre est maintenant notée dans le journal, sans plus jamais figer le programme.
+
 ## Version 0.51 — mode EasyPal (expérimental) : échange d'images avec EasyPal et QSSTV
 
 - Nouveau mode **EasyPal** dans la liste des modes d'émission : HFImage parle maintenant le mode image d'**EasyPal** et de **QSSTV** (HamDRM : 2,3 ou 2,5 kHz, modes A / B / E, QAM 4 / 16 / 64). On peut envoyer des images aux stations qui utilisent encore EasyPal, et recevoir les leurs.

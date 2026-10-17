@@ -50,7 +50,7 @@ import random
 import wave
 
 APP = "HFImage F4GOP"
-VERSION = "0.51"
+VERSION = "0.52"
 CONF_PATH = os.path.join(os.path.expanduser("~"), ".hfimage.json")
 DEFAULT_OUT = os.path.join(os.path.expanduser("~"), "Documents", "HFImage")
 DEFAULTS = {
@@ -1878,9 +1878,13 @@ class App(tk.Tk):
         self.panel.set_cell("Mode", "TX", mode or job["kind"])
         self.panel.set_cell("Bande kHz", "TX", f"{MODE_BW.get(mode, 0):.2f}" if mode else "—")
         self.panel.set_cell("Débit b/s", "TX", str(MODE_BPS.get(mode, "—")))
-        if tx is not None and not isinstance(tx, HybridJob):
-            self.panel.set_cell("Total", "TX", str(tx.sender.K))
-            self.panel.set_cell("Segs OK", "TX", str(tx.sender.sent))
+        sender = getattr(tx, "sender", None)       # (une émission EasyPal n'en a pas)
+        if sender is not None and not isinstance(tx, HybridJob):
+            self.panel.set_cell("Total", "TX", str(sender.K))
+            self.panel.set_cell("Segs OK", "TX", str(sender.sent))
+        elif isinstance(tx, engine.DrmTransmission):
+            self.panel.set_cell("Total", "TX", f"{len(tx.data)} o")
+            self.panel.set_cell("Segs OK", "TX", "—")
         self.panel.set_cell("Position", "TX", tr("émission"))
 
     # ------------------------------------------------------------- poste radio (CAT)
@@ -2107,13 +2111,24 @@ class App(tk.Tk):
                     P.set_led("BSR", LED_AMBER if inc else LED_OFF)
 
     def _poll(self):
+        # Une erreur dans une mise à jour ne doit jamais arrêter cette boucle : sinon
+        # plus rien ne passe (waterfall, fin d'émission, boutons) et le programme
+        # paraît figé.
         try:
             while True:
-                fn, a = self.uiq.get_nowait()
-                fn(*a)
-        except queue.Empty:
-            pass
-        self.after(100, self._poll)
+                try:
+                    fn, a = self.uiq.get_nowait()
+                except queue.Empty:
+                    break
+                try:
+                    fn(*a)
+                except Exception as e:
+                    try:
+                        self.log_exc(f"Interface ({getattr(fn, '__name__', fn)})", e)
+                    except Exception:
+                        pass
+        finally:
+            self.after(100, self._poll)
 
     API_ORDER = {"MME": 0, "Windows DirectSound": 1, "Windows WASAPI": 2}
 
