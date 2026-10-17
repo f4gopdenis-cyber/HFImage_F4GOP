@@ -49,7 +49,7 @@ import random
 import wave
 
 APP = "HFImage F4GOP"
-VERSION = "0.42"
+VERSION = "0.43"
 CONF_PATH = os.path.join(os.path.expanduser("~"), ".hfimage.json")
 DEFAULT_OUT = os.path.join(os.path.expanduser("~"), "Documents", "HFImage")
 DEFAULTS = {
@@ -228,6 +228,7 @@ class App(tk.Tk):
         self.pending_fix = {}       # id -> BSR reçus en attente de FIX
         self.bsr_state = {}         # id -> BSR envoyés (réception)
         self.ack_pending = {}       # id -> ACK à envoyer quand l'émetteur aura fini
+        self.sent_msgs = {}         # id -> message envoyé : texte, heure, mode, accusés {indicatif: (report, t, via)}
         self.bsr_target = None
         self.ctl_seen = {}
         self.rig = None
@@ -800,15 +801,21 @@ class App(tk.Tk):
         f = ttk.Frame(w, padding=10)
         f.pack(fill="both", expand=True)
         ttk.Label(f, text="Texte à envoyer :").pack(anchor="w")
-        self.txt_msg = tk.Text(f, height=8, width=56, wrap="word")
+        self.txt_msg = tk.Text(f, height=8, width=72, wrap="word")
         self.txt_msg.pack(fill="both", expand=True, pady=(2, 6))
         b = ttk.Frame(f)
         b.pack(fill="x")
         ttk.Checkbutton(b, text="Inclure ce texte avec l'image", variable=self.v_txtinc,
                         command=lambda: (self._btn_on("txtinc", self.v_txtinc.get()), self.prepare())).pack(side="left")
         ttk.Button(b, text="Fermer", command=lambda: (w.withdraw(), self.prepare())).pack(side="right")
-        ttk.Button(b, text="Envoyer le texte seul", command=lambda: (w.withdraw(), self.send_text())).pack(
-            side="right", padx=6)
+        ttk.Button(b, text="Envoyer le texte seul", command=self.send_text).pack(side="right", padx=6)
+        sf = ttk.LabelFrame(f, text="Messages envoyés — reçus par", padding=4)
+        sf.pack(fill="both", expand=True, pady=(8, 0))
+        self.tv_sent = ttk.Treeview(sf, columns=("h", "txt", "st"), show="headings", height=5)
+        for c, title, wd in (("h", "Heure", 50), ("txt", "Message", 260), ("st", "Reçu par", 320)):
+            self.tv_sent.heading(c, text=tr(title))
+            self.tv_sent.column(c, width=wd, anchor="w", stretch=c != "h")
+        self.tv_sent.pack(fill="both", expand=True)
 
     # ------------------------------------------------------------ fenêtre « Lire fichier Wave »
     def _build_wav_window(self):
@@ -1215,18 +1222,20 @@ class App(tk.Tk):
         first = call not in self.rxok_by_id.get(iid, {})
         # gardé pour toutes les images : si on reçoit (ou a reçu) la même, on verra ces reports
         self._rxok_add(call, rep, iid)
-        if mine:
+        if iid in self.sent_msgs:
+            self._msg_ack(iid, call, rep, "Internet")
+        elif mine:
             if first:
                 self.log(f"{call} confirme la réception de l'image par Internet"
                          + ("." if rep is None else f" (report {rep:+d} dB)."))
                 self.station_event(call, "Rx Ok (Internet)", "", None,
                                    "" if rep is None else f"report {rep:+d} dB")
 
-    def _net_confirm(self, iid, call):
-        """Image bien reçue : elle s'affiche dans Rx Ok avec notre report, et on prévient
+    def _net_confirm(self, iid, call, show=True):
+        """Image (ou message) bien reçu : l'image s'affiche dans Rx Ok avec notre report, et on prévient
         l'émetteur (et les autres stations) par Internet."""
         snr = self.snr_by_id.get(iid)
-        if iid not in self.my_ids:
+        if show and iid not in self.my_ids:
             self._rxok_show(iid)
             self._rxok_add(self.v_call.get().strip().upper(), None if snr is None else int(round(snr)), iid)
         if self.net is None or iid in self.rxok_sent:
@@ -1902,6 +1911,8 @@ class App(tk.Tk):
 
     def _clock(self):
         self.lb_clock.configure(text=self._clock_text())
+        if int(time.time()) % 15 == 0 and any(not m["acks"] for m in self.sent_msgs.values()):
+            self._msg_sent_refresh()                # « en attente » -> « pas d'accusé » au bout de 3 min
         # liste des stations : fréquence affichée et couleurs selon l'ancienneté
         fr = self.rig_freq
         if fr != getattr(self, "_heard_fr", None) or int(time.time()) % 30 == 0:
@@ -2600,6 +2611,7 @@ class App(tk.Tk):
             # « Compléter » et les réémissions envoient des symboles jamais émis
             self.tx = engine.Transmission(data, "hft" if text else fmt, call, mode, over, preview=preview)
             self.tx.key = key
+            self.tx.msg_text = text
         if q is None and fmt == "gif" and self.src_anim is not None:
             self.lb_cmp.set_animation(*self.src_anim)      # GIF animé en radio (fichier original)
         else:
@@ -2795,7 +2807,10 @@ class App(tk.Tk):
         if not complement:
             # nouvelle image : nouvelle liste Rx Ok (l'id d'une annonce hybride est connu plus tard)
             self._rxok_reset(None if isinstance(tx, HybridJob) else tx.image_id)
-        return self._start_job(job, quiet)
+        ok = self._start_job(job, quiet)
+        if ok and not complement and not isinstance(tx, HybridJob) and getattr(tx, "msg_text", ""):
+            self._msg_sent(tx.image_id, tx.msg_text, tx.mode, with_image=True)
+        return ok
 
     def send_text(self):
         text = self.txt_msg.get("1.0", "end").strip()
@@ -2807,7 +2822,9 @@ class App(tk.Tk):
         tx = engine.Transmission(protocol.pack_text(text), "hft", call, mode, 0.25)
         self.sent_images[tx.image_id] = tx
         self.log(f"Texte : {len(text)} caractères, {mode}, ~{_fmt_s(tx.estimate_s())}")
-        self._start_job({"kind": "text", "tx": tx, "complement": False, "extra": None})
+        self.my_ids.add(tx.image_id)
+        if self._start_job({"kind": "text", "tx": tx, "complement": False, "extra": None}):
+            self._msg_sent(tx.image_id, text, mode)
 
     def send_file(self):
         """Envoi d'un fichier quelconque (texte, PDF, ZIP, ADIF…) par radio, ou par Internet en hybride."""
@@ -3238,7 +3255,9 @@ class App(tk.Tk):
             self.station_event(call, "ACK : image reçue" if mine else "ACK (autre QSO)", "DATAC0", snr,
                                f"image {iid:04X}" + ("" if rep is None else f", report {rep:+d} dB"))
             self._rxok_add(call, rep, iid)
-            if mine:
+            if iid in self.sent_msgs:
+                self._msg_ack(iid, call, rep, "radio")
+            elif mine:
                 self.log(f"{call} confirme la réception de l'image"
                          + ("." if rep is None else f" (report {rep:+d} dB)."))
             return
@@ -3514,10 +3533,10 @@ class App(tk.Tk):
         self.station_event(hdr.get("call"), kind + (" (hybride)" if hdr.get("hybrid") else ""), mode, snr,
                            f"{hdr['size']} octets")
         self._heard(hdr.get("call"), snr, kind, hdr.get("loc"))
-        if not hdr.get("preview") and hdr.get("fmt") != "txt":
-            self._net_confirm(hdr["id"], hdr.get("call"))
-        if (not hdr.get("preview") and self.v_ack_auto.get() and self.rx_stream is not None
-                and hdr.get("fmt") != "txt"):
+        if not hdr.get("preview"):
+            # message texte seul : accusé de réception aussi (sans changer la liste Rx Ok de l'image)
+            self._net_confirm(hdr["id"], hdr.get("call"), show=hdr.get("fmt") != "txt")
+        if not hdr.get("preview") and self.v_ack_auto.get() and self.rx_stream is not None:
             act = self.rx_engine.activity.get(hdr["id"], {}) if self.rx_engine else {}
             self.ack_pending[hdr["id"]] = {"call": hdr.get("call"), "end_at": act.get("end", 0)}
             if hdr.get("hybrid"):
@@ -3559,6 +3578,58 @@ class App(tk.Tk):
         self.msgbox.configure(state="disabled")
         self.log(f"Message de {call or '?'} : {text[:80]}")
 
+    # ------------------------------------------------------------- messages envoyés : accusés de réception
+    def _msg_sent(self, iid, text, mode, with_image=False):
+        self.sent_msgs[iid] = {"text": text, "t": time.time(), "mode": mode, "acks": {}, "image": with_image}
+        for k in list(self.sent_msgs)[:-50]:
+            del self.sent_msgs[k]
+        self._msg_sent_refresh()
+
+    def _msg_ack(self, iid, call, rep, via):
+        m = self.sent_msgs.get(iid)
+        call = (call or "").strip().upper()
+        if not m or not call or call == "?" or call == self.v_call.get().strip().upper():
+            return
+        first = call not in m["acks"]
+        old = m["acks"].get(call)
+        m["acks"][call] = (rep if rep is not None else (old[0] if old else None), time.time(),
+                           via if not old or old[2] == via else old[2] + " + " + via)
+        self._msg_sent_refresh()
+        if not first:
+            return
+        short = m["text"] if len(m["text"]) <= 40 else m["text"][:38] + "…"
+        rs = "" if rep is None else f" ({rep:+d} dB)"
+        line = tr("✓ {0} a bien reçu votre message").replace("{0}", call) + f" « {short} »{rs}"
+        self.log(line)
+        self.msgbox.configure(state="normal")
+        self.msgbox.insert("1.0", f"[{time.strftime('%H:%M')}] {line}\n", "ack")
+        self.msgbox.tag_configure("ack", foreground="#1c7f1c")
+        self.msgbox.configure(state="disabled")
+        self.station_event(call, "Message reçu par le correspondant", "", None,
+                           f"« {short} »" + ("" if rep is None else f", report {rep:+d} dB") + f" — {via}")
+
+    def _msg_status(self, m):
+        if m["acks"]:
+            return ", ".join(f"✓ {c}" + ("" if r is None else f" ({r:+d} dB)") + f" {time.strftime('%H:%M', time.localtime(t))}"
+                             for c, (r, t, v) in sorted(m["acks"].items(), key=lambda kv: kv[1][1]))
+        if time.time() - m["t"] > 180:
+            return tr("pas d'accusé de réception")
+        return tr("en attente de l'accusé…")
+
+    def _msg_sent_refresh(self):
+        tv = getattr(self, "tv_sent", None)
+        if tv is None:
+            return
+        tv.delete(*tv.get_children())
+        for iid, m in reversed(list(self.sent_msgs.items())):
+            txt = m["text"].replace("\n", " ")
+            tv.insert("", "end", values=(clocktz.fmt("%H:%M", m["t"], suffix=False),
+                                         (tr("[image] ") if m.get("image") else "") + txt, self._msg_status(m)),
+                      tags=("ok" if m["acks"] else ("none" if time.time() - m["t"] > 180 else "wait"),))
+        tv.tag_configure("ok", foreground="#1c7f1c")
+        tv.tag_configure("none", foreground="#b00000")
+        tv.tag_configure("wait", foreground="#b06000")
+
     def _msg_popup(self, item):
         """Fenêtre « Message reçu » (ouverte automatiquement si l'option est cochée)."""
         if getattr(self, "msgwin", None) is None or not self.msgwin.winfo_exists():
@@ -3577,8 +3648,8 @@ class App(tk.Tk):
         if info["id"] in self.ack_pending:
             self.ack_pending[info["id"]]["call"] = info["call"]
         self._heard(info.get("call"), self.snr_by_id.get(info["id"]), "Image reçue", info.get("loc"))
-        if not info.get("preview") and info.get("fmt") != "txt":
-            self._net_confirm(info["id"], info.get("call"))
+        if not info.get("preview"):
+            self._net_confirm(info["id"], info.get("call"), show=info.get("fmt") != "txt")
         if info["id"] in self.snr_by_id and info.get("call") not in (None, "?"):
             self.snr_by_call[info["call"]] = self.snr_by_id[info["id"]]
         if info.get("text"):

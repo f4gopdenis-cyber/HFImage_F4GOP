@@ -303,6 +303,14 @@ s.append(P("Quand un correspondant envoie un message (texte seul, ou texte joint
            "<b>Répondre…</b> ouvre l'envoi de texte prérempli « F1BAL de F4GOP : ». Les cases du bas permettent de ne "
            "plus l'ouvrir automatiquement ou de couper le bip ; on la rouvre par Action → Messages reçus… ou par un "
            "double-clic dans le cadre « Messages reçus »."))
+s.append(P("<b>Le correspondant a-t-il reçu mon message ?</b>"))
+s.append(P("Dès qu'un message est bien reçu, le programme du correspondant renvoie un accusé de réception, par radio "
+           "(ACK en DATAC0, si « ACK auto » est coché chez lui) et par Internet (si le réseau est actif). Dans la fenêtre "
+           "<b>Envoi texte</b>, la liste <b>Messages envoyés — reçus par</b> montre pour chaque message : « ✓ F1BAL (+8 dB) » "
+           "en vert quand il est arrivé, « en attente de l'accusé… » en orange, puis « pas d'accusé de réception » en rouge "
+           "au bout de 3 minutes. Une ligne verte « ✓ F1BAL a bien reçu votre message » s'ajoute aussi dans le cadre "
+           "« Messages reçus » et dans le journal des stations. Le correspondant doit avoir la version 0.43 ou plus récente "
+           "pour les messages texte seuls ; un texte joint à une image est confirmé avec l'image."))
 s.append(P("Horloge", "h2"))
 s.append(P("L'horloge en bas à droite affiche l'heure de Windows (heure d'été comprise). Un clic dessus passe à "
            "« heure de Windows + UTC », puis « UTC seule », puis revient. Ce choix vaut pour tout le programme : "

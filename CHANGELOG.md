@@ -1,5 +1,13 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 0.43 — accusé de réception des messages
+
+- Un message texte seul bien reçu est maintenant confirmé à l'émetteur, comme une image : ACK radio en DATAC0 (si « ACK auto » est coché) et confirmation par Internet (si le réseau est actif).
+- Fenêtre Envoi texte : nouvelle liste **Messages envoyés — reçus par** : « ✓ F1BAL (+8 dB) 11:00 » en vert, « en attente de l'accusé… » en orange, « pas d'accusé de réception » en rouge après 3 minutes.
+- Ligne verte « ✓ F1BAL a bien reçu votre message » dans le cadre Messages reçus et dans le journal des stations.
+- La fenêtre Envoi texte reste ouverte après « Envoyer le texte seul » pour suivre l'accusé.
+- Le texte joint à une image est confirmé avec l'image.
+
 ## Version 0.42 — heure de Windows dans tout le programme
 
 - Toutes les heures affichées suivent maintenant l'heure de Windows (heure d'été comprise) : journal des stations, liste des stations entendues, messages, bandeau « Mes conditions de trafic », cartes QSL, Digi-Sites.

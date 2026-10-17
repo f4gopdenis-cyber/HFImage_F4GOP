@@ -1203,6 +1203,14 @@ T = [
     ("Date et heure", "Date and time", "Datum und Uhrzeit", "Fecha y hora", "Data e ora"),
     ("Date / heure", "Date / time", "Datum / Uhrzeit", "Fecha / hora", "Data / ora"),
     ("Date", "Date", "Datum", "Fecha", "Data"),
+    # ------------------------------------------------------------ v0.43 : accusé de réception des messages
+    ("✓ {0} a bien reçu votre message", "✓ {0} received your message", "✓ {0} hat Ihre Nachricht empfangen", "✓ {0} recibió su mensaje", "✓ {0} ha ricevuto il vostro messaggio"),
+    ("pas d'accusé de réception", "no acknowledgement", "keine Empfangsbestätigung", "sin acuse de recibo", "nessuna conferma di ricezione"),
+    ("en attente de l'accusé…", "waiting for acknowledgement…", "warte auf Bestätigung…", "esperando el acuse…", "in attesa della conferma…"),
+    ("Messages envoyés — reçus par", "Sent messages — received by", "Gesendete Nachrichten — empfangen von", "Mensajes enviados — recibidos por", "Messaggi inviati — ricevuti da"),
+    ("Reçu par", "Received by", "Empfangen von", "Recibido por", "Ricevuto da"),
+    ("[image] ", "[image] ", "[Bild] ", "[imagen] ", "[immagine] "),
+    ("Message reçu par le correspondant", "Message received by the correspondent", "Nachricht von der Gegenstation empfangen", "Mensaje recibido por el corresponsal", "Messaggio ricevuto dal corrispondente"),
 ]
 
 _lang = "fr"
