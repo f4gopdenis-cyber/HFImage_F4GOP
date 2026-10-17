@@ -22,7 +22,15 @@ THEMES = {
     "Nuit": "night",
 }
 BASE_GREEN = "#33d633"
-FONT_SIZES = {"Petite": 0.9, "Normale": 1.0, "Grande": 1.2, "Très grande": 1.45}
+# taille du texte en points (9 = taille normale de Windows) -> facteur appliqué aux polices
+FONT_SIZES = {str(p): p / 9.0 for p in range(8, 15)}
+OLD_SIZES = {"Petite": "8", "Normale": "9", "Grande": "11", "Très grande": "13"}   # anciens réglages
+
+
+def size_name(v):
+    """Réglage de taille (ancien nom ou nombre) -> "8" … "14"."""
+    v = OLD_SIZES.get(str(v), str(v))
+    return v if v in FONT_SIZES else "9"
 FONTS = ["(par défaut)", "Segoe UI", "Arial", "Tahoma", "Verdana", "Calibri", "Trebuchet MS",
          "Times New Roman", "Georgia", "Consolas", "Courier New"]
 MONO = {"consolas", "courier new", "courier", "tkfixedfont", "lucida console", "dejavu sans mono"}

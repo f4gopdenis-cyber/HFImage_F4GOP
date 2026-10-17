@@ -49,7 +49,7 @@ import random
 import wave
 
 APP = "HFImage F4GOP"
-VERSION = "0.49"
+VERSION = "0.50"
 CONF_PATH = os.path.join(os.path.expanduser("~"), ".hfimage.json")
 DEFAULT_OUT = os.path.join(os.path.expanduser("~"), "Documents", "HFImage")
 DEFAULTS = {
@@ -62,7 +62,7 @@ DEFAULTS = {
     "hyb_width": 640, "hyb_kb": 60, "gif_kb": 2000,
     "net_on": True, "net_host": presence.DEFAULT_HOST, "net_port": presence.DEFAULT_PORT,
     "update_check": True,
-    "theme": "Vert EasyPal", "theme_color": "#3a8ee6", "font_family": "(par défaut)", "font_size": "Normale",
+    "theme": "Vert EasyPal", "theme_color": "#3a8ee6", "font_family": "(par défaut)", "font_size": "9",
     "locator": "", "bsr_auto": True, "fix_auto": True, "ack_auto": True, "listen_after": True,
     "cwid": False, "cat_freq": True, "lang": "",
     "wav_volume": 5, "wft_font": "Arial", "wft_neg": False, "wft_text": "",
@@ -192,7 +192,8 @@ class App(tk.Tk):
         self.conf = load_conf()
         clocktz.MODE = self.conf.get("clock", "local")
         self.v_fbold = tk.BooleanVar(value=bool(self.conf.get("font_bold")))       # menu Police / Réglages
-        self.v_msize = tk.StringVar(value=self.conf.get("font_size", "Normale"))
+        self.conf["font_size"] = theme.size_name(self.conf.get("font_size", "9"))   # 8 … 14 points
+        self.v_msize = tk.StringVar(value=self.conf["font_size"])
         self.geometry(self.conf.get("win_geom") or "1320x880")
         self.minsize(900, 600)
         if self.conf.get("win_zoomed"):
@@ -371,8 +372,8 @@ class App(tk.Tk):
         th = self._theme_names.get(self.v_theme.get(), self.v_theme.get()) if hasattr(self, "v_theme") \
             else self.conf.get("theme", "Vert EasyPal")
         fam = self.v_font.get() if hasattr(self, "v_font") else self.conf.get("font_family")
-        size = self._size_names.get(self.v_fsize.get(), "Normale") if hasattr(self, "v_fsize") \
-            else self.conf.get("font_size", "Normale")
+        size = self._size_names.get(self.v_fsize.get(), "9") if hasattr(self, "v_fsize") \
+            else theme.size_name(self.conf.get("font_size", "9"))
         self.look.set(theme=th if th in theme.THEMES or th == "Personnalisée" else "Vert EasyPal",
                       custom=self.conf.get("theme_color"), family=fam,
                       scale=theme.FONT_SIZES.get(size, 1.0), text=self.conf.get("text_color") or "",
@@ -511,7 +512,8 @@ class App(tk.Tk):
         pm.add_checkbutton(label="Texte en gras", variable=self.v_fbold, command=self._font_menu)
         pm.add_separator()
         for n in theme.FONT_SIZES:
-            pm.add_radiobutton(label=n, value=n, variable=self.v_msize, command=self._font_menu)
+            pm.add_radiobutton(label=f"{n} points" + (" (normale)" if n == "9" else ""), value=n,
+                               variable=self.v_msize, command=self._font_menu)
         pm.add_separator()
         pm.add_command(label="Police, couleurs…", command=self.show_settings)
         r.add_cascade(label="Police et taille du texte", menu=pm)
@@ -1161,20 +1163,27 @@ class App(tk.Tk):
         self.lb_rxok = tk.Label(head, text="", bg=GREEN, fg=FG_DARK, anchor="e",
                                 font=("TkDefaultFont", 9, "bold"))
         self.lb_rxok.pack(side="right", padx=(0, 4))
-        body = tk.Frame(box, bg=GREEN)
-        body.pack(fill="both", expand=True, padx=2, pady=(0, 2))
+        tk.Label(box, text="* = en émission    HYB = mode hybride", bg=GREEN, fg=FG_DARK, anchor="w",
+                 font=("TkDefaultFont", 8)).pack(side="bottom", fill="x", padx=4)   # légende toujours visible
+        # séparateur réglable entre la liste des stations et Rx Ok (position gardée)
+        split = tk.PanedWindow(box, orient="horizontal", bg=GREEN, sashwidth=6, sashrelief="raised", bd=0,
+                               opaqueresize=True)
+        split.pack(fill="both", expand=True, padx=2, pady=(0, 2))
+        self.panes["stlists"] = split
+        body = tk.Frame(split, bg=GREEN)
+        rbody = tk.Frame(split, bg=GREEN)
+        split.add(body, minsize=70, stretch="always")
+        split.add(rbody, minsize=50, stretch="never")
         mono = ("Consolas", 9) if sys.platform.startswith("win") else ("TkFixedFont", 9)
         self.lst_heard = tk.Listbox(body, height=7, width=18, font=mono, activestyle="none",
                                     bg="white", fg="#062e06", selectbackground="#2f9e2f")
-        self.lst_heard.pack(side="left", fill="both", expand=True)
         sb = ttk.Scrollbar(body, orient="vertical", command=self.lst_heard.yview)
-        sb.pack(side="left", fill="y")
+        sb.pack(side="right", fill="y")                 # placée d'abord : jamais écrasée par la liste
+        self.lst_heard.pack(side="left", fill="both", expand=True)
         self.lst_heard.configure(yscrollcommand=sb.set)
-        self.lst_rxok = tk.Listbox(body, height=7, width=14, font=mono, activestyle="none",
+        self.lst_rxok = tk.Listbox(rbody, height=7, width=14, font=mono, activestyle="none",
                                    bg="white", fg="#062e06", selectbackground="#2f9e2f")
-        self.lst_rxok.pack(side="left", fill="both", padx=(2, 0))
-        tk.Label(box, text="* = en émission    HYB = mode hybride", bg=GREEN, fg=FG_DARK, anchor="w",
-                 font=("TkDefaultFont", 8)).pack(fill="x", padx=4)
+        self.lst_rxok.pack(side="left", fill="both", expand=True)
         self.lst_heard.bind("<Double-Button-1>", lambda e: self._heard_detail())
         self.lst_rxok.bind("<Double-Button-1>", lambda e: self._heard_detail(self.lst_rxok))
         menu = tk.Menu(self, tearoff=0)
@@ -1708,7 +1717,7 @@ class App(tk.Tk):
         self._size_names = {tr(n): n for n in theme.FONT_SIZES}
         self.v_theme = tk.StringVar(value=tr(self.conf.get("theme", "Vert EasyPal")))
         self.v_font = tk.StringVar(value=self.conf.get("font_family", "(par défaut)"))
-        self.v_fsize = tk.StringVar(value=tr(self.conf.get("font_size", "Normale")))
+        self.v_fsize = tk.StringVar(value=theme.size_name(self.conf.get("font_size", "9")))
         try:
             have = {f.lower() for f in tkfont.families(self)}
         except tk.TclError:
@@ -4357,7 +4366,8 @@ class App(tk.Tk):
 
     # zones réglables : (volet, côté mesuré) ; « first » = taille de la 1re zone,
     # « last » = taille de la dernière (gardée même si la fenêtre change de taille)
-    _LAYOUT = {"main": "first", "left": "last", "right": "last", "rx": "last", "rxside": "first"}
+    _LAYOUT = {"main": "first", "left": "last", "right": "last", "rx": "last", "rxside": "first",
+               "stlists": "last"}
 
     def _pane_len(self, p):
         return p.winfo_width() if str(p.cget("orient")) == "horizontal" else p.winfo_height()
@@ -4407,7 +4417,7 @@ class App(tk.Tk):
         except tk.TclError:
             pass
         self.geometry("1320x880")
-        self.conf["layout"] = {"main": 268, "left": 170, "right": 70, "rx": 250}
+        self.conf["layout"] = {"main": 268, "left": 170, "right": 70, "rx": 250, "stlists": 110}
         self.update_idletasks()
         self.after(150, self._restore_layout)
         self.after(400, lambda: self.panes["rxside"].sash_place(

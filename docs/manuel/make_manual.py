@@ -314,8 +314,8 @@ s.append(P("Dès qu'un message est bien reçu, le programme du correspondant ren
            "« Messages reçus » et dans le journal des stations. Le correspondant doit avoir la version 0.43 ou plus récente "
            "pour les messages texte seuls ; un texte joint à une image est confirmé avec l'image."))
 s.append(P("Police, taille et gras", "h2"))
-s.append(P("Menu <b>Réglages → Police et taille du texte</b> : « Texte en gras » et la taille (Petite, Normale, Grande, "
-           "Très grande), appliqués tout de suite à tout le programme, listes comprises. Le choix de la police et des "
+s.append(P("Menu <b>Réglages → Police et taille du texte</b> : « Texte en gras » et la taille, de 8 à 14 points "
+           "(9 = normale), appliqués tout de suite à tout le programme, listes comprises. Le choix de la police et des "
            "couleurs est dans Réglages → Apparence (case « Gras » aussi)."))
 s.append(P("Horloge", "h2"))
 s.append(P("L'horloge en bas à droite affiche l'heure de Windows (heure d'été comprise). Un clic dessus passe à "
@@ -350,7 +350,8 @@ s.append(P("Avec <b>Réglages → Internet</b> coché, chaque HFImage ouvert se 
 s.append(P("Dans la liste, <b>*</b> signale une station en émission (en rouge) et <b>HYB</b> une station en <b>mode "
            "hybride</b> (en bleu) : coché chez elle, ou annonce hybride entendue par radio dans la dernière demi-heure. "
            "Vos correspondants vous voient de même quand vous cochez « Mode hybride » (version 0.46 ou plus récente). "
-           "Double-clic sur une station : le détail s'affiche dans le journal."))
+           "Double-clic sur une station : le détail s'affiche dans le journal. Le séparateur entre la liste "
+           "Stations et la liste Rx Ok se déplace à la souris ; sa position est gardée."))
 s += B(["<b>Rx Ok</b> : les stations qui ont bien reçu l'image, avec leur <b>report en dB</b>, visibles par tous "
         "(par radio et par Internet).",
         "Clic sur une station : la <b>carte des stations</b> (comme Digi-Sites), avec le trajet et la distance. "

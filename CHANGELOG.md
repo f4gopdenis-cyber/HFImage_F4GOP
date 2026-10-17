@@ -1,5 +1,11 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 0.50 — taille du texte en points, séparateur Stations / Rx Ok
+
+- Taille du texte en points : 8, 9 (normale), 10, 11, 12, 13, 14 (menu Réglages → Police et taille du texte, et Réglages → Apparence). Les anciens réglages sont convertis (Petite 8, Normale 9, Grande 11, Très grande 13).
+- Séparateur réglable à la souris entre la liste Stations et la liste Rx Ok ; la position est gardée d'une session à l'autre (« Disposition d'origine des fenêtres » la remet par défaut).
+- La barre de défilement de la liste Stations et la légende restent toujours visibles.
+
 ## Version 0.49 — texte en gras, taille dans le menu, « HYB » dans la liste des stations
 
 - Nouveau menu **Réglages → Police et taille du texte** : « Texte en gras » et taille (Petite, Normale, Grande, Très grande), appliqués tout de suite à tout le programme. Case « Gras » aussi dans Réglages → Apparence. Le choix est gardé.
