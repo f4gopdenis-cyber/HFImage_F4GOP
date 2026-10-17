@@ -303,6 +303,10 @@ s.append(P("Quand un correspondant envoie un message (texte seul, ou texte joint
            "<b>Répondre…</b> ouvre l'envoi de texte prérempli « F1BAL de F4GOP : ». Les cases du bas permettent de ne "
            "plus l'ouvrir automatiquement ou de couper le bip ; on la rouvre par Action → Messages reçus… ou par un "
            "double-clic dans le cadre « Messages reçus »."))
+s.append(P("Horloge", "h2"))
+s.append(P("L'horloge en bas à droite affiche l'heure de Windows (heure d'été comprise). Un clic dessus passe à "
+           "« heure de Windows + UTC », puis « UTC seule », puis revient. Le journal des stations et les cartes QSL "
+           "restent en UTC, comme un carnet de trafic."))
 s.append(P("Envoyer un fichier", "h2"))
 s.append(P("Bouton <b>Envoyer un fichier…</b> (onglet TX) ou menu Images : n'importe quel fichier (texte, PDF, ZIP, "
            "journal ADIF…). Il est compressé s'il y gagne, protégé par le même code fontaine que les images (BSR / FIX "
