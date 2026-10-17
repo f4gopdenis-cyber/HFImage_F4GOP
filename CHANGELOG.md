@@ -1,5 +1,12 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 0.40 — fenêtre « Message reçu »
+
+- Quand un correspondant envoie un message (texte seul ou joint à une image), une fenêtre s'ouvre au premier plan, avec un bip et le clignotement de la barre des tâches.
+- Indicatif (complété dès que l'identification arrive), heure UTC, mode, SNR, texte en grand, vignette de l'image jointe.
+- Flèches pour revoir les messages de la session ; boutons Répondre… (envoi de texte prérempli), Copier, Fermer.
+- Options « Ouvrir à chaque message reçu » et « Bip » ; menu Action → Messages reçus…, ou double-clic dans le cadre des messages.
+
 ## Version 0.39 — police et couleurs du bandeau « Mes conditions de trafic »
 
 - Choix de la police (toutes les polices installées sur Windows), gras, italique.

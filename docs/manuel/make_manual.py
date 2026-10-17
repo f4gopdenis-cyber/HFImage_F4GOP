@@ -296,6 +296,13 @@ s.append(P("Pour répondre comme dans EasyPal : clic droit sur une image de la <
            "ou case <b>Image du correspondant</b> (onglet TX) et bouton <b>…</b>. Son image est incrustée dans un coin de la "
            "vôtre (taille et coin au choix), avec la légende « de F4EMK — +12 dB » : le <b>report</b> est le SNR que vous "
            "avez mesuré en le recevant. Se combine avec « Mes conditions de trafic »."))
+s.append(P("Messages reçus", "h2"))
+s.append(P("Quand un correspondant envoie un message (texte seul, ou texte joint à son image), la fenêtre <b>Message reçu</b> "
+           "s'ouvre au premier plan avec un bip : indicatif, heure UTC, mode, SNR, le texte en grand et la vignette de "
+           "l'image s'il y en a une (clic = plein format). Les flèches ◀ ▶ parcourent les messages de la session. "
+           "<b>Répondre…</b> ouvre l'envoi de texte prérempli « F1BAL de F4GOP : ». Les cases du bas permettent de ne "
+           "plus l'ouvrir automatiquement ou de couper le bip ; on la rouvre par Action → Messages reçus… ou par un "
+           "double-clic dans le cadre « Messages reçus »."))
 s.append(P("Envoyer un fichier", "h2"))
 s.append(P("Bouton <b>Envoyer un fichier…</b> (onglet TX) ou menu Images : n'importe quel fichier (texte, PDF, ZIP, "
            "journal ADIF…). Il est compressé s'il y gagne, protégé par le même code fontaine que les images (BSR / FIX "

@@ -28,6 +28,7 @@ import presence
 import gallery
 import websync
 import trafic
+import msgwin
 import radio
 import radiodlg
 import contextlib
@@ -46,7 +47,7 @@ import random
 import wave
 
 APP = "HFImage F4GOP"
-VERSION = "0.39"
+VERSION = "0.40"
 CONF_PATH = os.path.join(os.path.expanduser("~"), ".hfimage.json")
 DEFAULT_OUT = os.path.join(os.path.expanduser("~"), "Documents", "HFImage")
 DEFAULTS = {
@@ -505,6 +506,7 @@ class App(tk.Tk):
         a.add_command(label="Accord (10 s)", command=self.send_tune)
         a.add_command(label="ID morse", command=self.send_cwid)
         a.add_command(label="Envoi texte…", command=self.show_text)
+        a.add_command(label="Messages reçus…", command=self.show_messages)
         a.add_command(label="Texte waterfall…", command=self.show_wft)
         a.add_separator()
         a.add_command(label="Signaler ma présence (QRV)", command=self.send_qrv)
@@ -677,6 +679,7 @@ class App(tk.Tk):
                                                                                               pady=(6, 0))
         self.msgbox = tk.Text(h2, height=8, wrap="word", state="disabled")
         self.msgbox.pack(fill="both", expand=True, padx=4, pady=(0, 4))
+        self.msgbox.bind("<Double-Button-1>", lambda e: self.show_messages())
         self.lst.bind("<<ListboxSelect>>", self._hist_select)
         self.lst.bind("<Double-Button-1>", lambda e: self._open_full())
         self.lb_rx.bind("<Double-Button-1>", lambda e: self._open_full())
@@ -3464,6 +3467,10 @@ class App(tk.Tk):
         who = hdr["call"] if hdr["call"] != "?" else "(indicatif à venir)"
         if hdr.get("text"):
             self._show_message(hdr.get("call"), hdr["text"])
+            snr0 = self.rx_engine.last.get("snr") if self.rx_engine else None
+            img = None if hdr.get("fmt") in ("txt", "file") else (png if png and os.path.exists(png) else path)
+            self._msg_popup(dict(id=hdr.get("id"), call=hdr.get("call"), text=hdr["text"], mode=mode, snr=snr0,
+                                 utc=time.strftime("%H:%M", time.gmtime()), image=img))
         kind = "Aperçu reçu" if hdr.get("preview") else ("Texte reçu" if hdr.get("fmt") == "txt" else
                                                          ("Fichier reçu" if hdr.get("fmt") == "file" else "Image reçue"))
         if hdr.get("fmt") == "file":
@@ -3520,6 +3527,19 @@ class App(tk.Tk):
         self.msgbox.configure(state="disabled")
         self.log(f"Message de {call or '?'} : {text[:80]}")
 
+    def _msg_popup(self, item):
+        """Fenêtre « Message reçu » (ouverte automatiquement si l'option est cochée)."""
+        if getattr(self, "msgwin", None) is None or not self.msgwin.winfo_exists():
+            self.msgwin = msgwin.MessageWindow(self)
+        self.msgwin.add(item)
+
+    def show_messages(self):
+        if getattr(self, "msgwin", None) is None or not self.msgwin.winfo_exists():
+            self.msgwin = msgwin.MessageWindow(self)
+        self.msgwin.show()
+        self.msgwin.deiconify()
+        self.msgwin.lift()
+
     def _got_ident(self, info, path, png):
         """L'indicatif est arrivé (trame d'identification de fin) : mise à jour."""
         if info["id"] in self.ack_pending:
@@ -3530,6 +3550,10 @@ class App(tk.Tk):
         if info["id"] in self.snr_by_id and info.get("call") not in (None, "?"):
             self.snr_by_call[info["call"]] = self.snr_by_id[info["id"]]
         if info.get("text"):
+            if getattr(self, "msgwin", None) is not None:
+                self.msgwin.set_call(info["id"], info.get("call"))
+                if info.get("fmt") not in ("txt", "file") and (png or path):
+                    self.msgwin.set_image(info["id"], png if png and os.path.exists(png) else path)
             self.msgbox.configure(state="normal")
             self.msgbox.insert("1.0", tr(f"   ↳ message ci-dessous envoyé par {info['call']}") + "\n")
             self.msgbox.configure(state="disabled")

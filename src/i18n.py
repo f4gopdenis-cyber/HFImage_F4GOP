@@ -1183,6 +1183,16 @@ T = [
     ("Vert radio", "Radio green", "Funkgrün", "Verde radio", "Verde radio"),
     ("Noir sur blanc", "Black on white", "Schwarz auf weiß", "Negro sobre blanco", "Nero su bianco"),
     ("Sans fond (contour seul)", "No background (outline only)", "Ohne Hintergrund (nur Kontur)", "Sin fondo (solo contorno)", "Senza sfondo (solo contorno)"),
+    # ------------------------------------------------------------ v0.40 : fenêtre Message reçu
+    ("Message reçu", "Message received", "Nachricht empfangen", "Mensaje recibido", "Messaggio ricevuto"),
+    ("Message de", "Message from", "Nachricht von", "Mensaje de", "Messaggio da"),
+    ("Messages reçus…", "Received messages…", "Empfangene Nachrichten…", "Mensajes recibidos…", "Messaggi ricevuti…"),
+    ("Ouvrir à chaque message reçu", "Open for every message received", "Bei jeder Nachricht öffnen", "Abrir con cada mensaje recibido", "Aprire a ogni messaggio ricevuto"),
+    ("Bip", "Beep", "Piepton", "Pitido", "Bip"),
+    ("Copier", "Copy", "Kopieren", "Copiar", "Copiare"),
+    ("Répondre…", "Reply…", "Antworten…", "Responder…", "Rispondere…"),
+    ("Aucun message reçu pour l'instant.", "No message received yet.", "Noch keine Nachricht empfangen.", "Ningún mensaje recibido por ahora.", "Nessun messaggio ricevuto per ora."),
+    ("avec une image", "with an image", "mit einem Bild", "con una imagen", "con un'immagine"),
 ]
 
 _lang = "fr"
