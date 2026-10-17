@@ -27,8 +27,8 @@ reedSolomonCoder::reedSolomonCoder()
 
 reedSolomonCoder::~reedSolomonCoder()
 {
-  if(zeroPositions!=NULL) delete zeroPositions;
-  if(newZeroPositions!=NULL) delete newZeroPositions;
+  delete [] zeroPositions; zeroPositions=NULL;   // HFImage: delete[] + reset (double delete)
+  delete [] newZeroPositions; newZeroPositions=NULL;
 }
 
 void reedSolomonCoder::init()
@@ -42,8 +42,8 @@ void reedSolomonCoder::init()
   bep_size=0;
   sumOfFailures=0;
   uncorrectableFailures=0;
-  if(zeroPositions!=NULL) delete zeroPositions;
-  if(newZeroPositions!=NULL) delete newZeroPositions;
+  delete [] zeroPositions; zeroPositions=NULL;   // HFImage: delete[] + reset (double delete)
+  delete [] newZeroPositions; newZeroPositions=NULL;
 }
 
 
@@ -104,8 +104,8 @@ bool reedSolomonCoder::decode(QByteArray &ba,QString fn,QString &newFileName,QBy
       totalSegments=erasuresArray.at(0);
       segmentLength=erasuresArray.at(1);
       numMissing=erasuresArray.count()-2;
-      if(zeroPositions) delete zeroPositions;
-      if(newZeroPositions) delete newZeroPositions;
+      delete [] zeroPositions; zeroPositions=NULL;
+      delete [] newZeroPositions; newZeroPositions=NULL;
       zeroPositions=new int[segmentLength*(totalSegments+1)];
       newZeroPositions=new int[256*bep_size];
       for(i=0;i<(segmentLength*totalSegments);i++) zeroPositions[i]=-1;
@@ -288,6 +288,9 @@ bool reedSolomonCoder::encode(QByteArray &ba,QString extension,eRSType rsType)
   dataByte=0;
   ec_buf.append(dataByte);
   ec_buf.append(tr_buf.left(rs_dsize-7));
+  // HFImage: a file shorter than one block left the first block short and the
+  // encoder wrote past the end of the buffer (crash with short texts + RS)
+  while(ec_buf.count()<rs_dsize) ec_buf.append((char)0);
   ec_buf.resize(ec_buf.count()+RSBSIZE-rs_dsize);
   rse32(((_BYTE *)ec_buf.data()),((_BYTE *)ec_buf.data()+(rs_dsize)));
   for (i=1;i<bep_size;i++)

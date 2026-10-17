@@ -1,5 +1,13 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 0.56 — correction des fermetures du programme en mode EasyPal
+
+- **Correction de fermetures brutales du programme** dues au modem EasyPal (code repris de QSSTV), trouvées en faisant écouter au modem 40 minutes de bruit et de signaux abîmés sous un détecteur d'erreurs mémoire :
+  - réception en **mode E** (donc aussi chaque **annonce hybride EasyPal**) : écriture en dehors d'un tableau ;
+  - réception d'une image avec **Reed-Solomon** : mémoire libérée deux fois ;
+  - envoi d'un **texte court avec Reed-Solomon** : écriture après la fin d'un tampon.
+- Le signal émis est inchangé (identique à QSSTV, compatible EasyPal).
+
 ## Version 0.55 — mode EasyPal plus fiable
 
 - Correction de plusieurs erreurs mémoire dans le modem EasyPal (hérité de QSSTV), qui pouvaient **fermer le programme sans message** sous Windows, notamment pendant la réception (indicatif de la station écrit un caractère trop loin) et à l'envoi de texte.

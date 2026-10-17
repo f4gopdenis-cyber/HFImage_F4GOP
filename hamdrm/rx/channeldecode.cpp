@@ -141,7 +141,7 @@ void channel_decoding(void)
   static double squared_noise_signal[2959];
   double sum2;
   double weighted_noise_power_density[288];
-  double samples_resorted[288][15];
+  double samples_resorted[288][24];   /* HFImage: was [15], mode E has 20 symbols per frame (24 max) */
   int posrow, poscolumn, totindex;
   int VSPPlength, HPPlength;
   int Tu_list[] = { Tu_A, Tu_B, Tu_C, Tu_D };

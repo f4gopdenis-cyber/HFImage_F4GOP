@@ -41,6 +41,13 @@ sudo apt install g++-mingw-w64-x86-64-posix
   (`CellMappingTable.cpp`), index -12 dans le décodeur FAC (« + 12 » oublié,
   `msdhardfac.cpp`), dépassement d'entier (`Parameter.cpp`), variable non
   initialisée (`sourcedecoder.cpp`). Le signal émis reste identique.
+- Trouvées en faisant écouter au modem 40 minutes de bruit, de porteuses, de
+  signaux abîmés et de son quelconque (AddressSanitizer) :
+  tableau `samples_resorted` trop petit pour le mode E (15 symboles au lieu de
+  20 : écriture hors limites à chaque réception en mode E, donc à chaque
+  annonce hybride) ; double libération dans le décodeur Reed-Solomon (à chaque
+  image reçue en RS) ; encodeur Reed-Solomon qui écrivait après la fin de son
+  tampon pour un fichier plus petit qu'un bloc (texte court avec RS).
 
 ## Licence et auteurs
 
