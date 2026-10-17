@@ -287,6 +287,10 @@ s.append(P("Case <b>Mes conditions de trafic</b> (onglet TX) et bouton <b>…</b
            "champ est vide), puissance, antenne, fréquence, date et heure UTC, et un texte libre. Chaque élément "
            "peut être coché ou non ; l'aperçu se met à jour en direct. Le bandeau passe avec l'image, il est donc "
            "visible chez tous les correspondants, quelle que soit leur version."))
+s.append(P("Le cadre <b>Police et couleurs</b> permet de choisir la police (toutes celles installées sur Windows), "
+           "le gras et l'italique, la couleur du texte, une couleur à part pour l'<b>indicatif</b>, la couleur du "
+           "contour des lettres (✕ = sans contour), la couleur du fond et son opacité (0 % = pas de fond), et un filet "
+           "de couleur au bord du bandeau. La liste <b>Modèles…</b> propose des réglages tout prêts."))
 s.append(P("Image du correspondant", "h2"))
 s.append(P("Pour répondre comme dans EasyPal : clic droit sur une image de la <b>Galerie</b> → « Répondre avec cette image », "
            "ou case <b>Image du correspondant</b> (onglet TX) et bouton <b>…</b>. Son image est incrustée dans un coin de la "

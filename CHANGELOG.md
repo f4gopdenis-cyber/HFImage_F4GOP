@@ -1,5 +1,11 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 0.39 — police et couleurs du bandeau « Mes conditions de trafic »
+
+- Choix de la police (toutes les polices installées sur Windows), gras, italique.
+- Couleur du texte, couleur à part pour l'indicatif, couleur du contour (ou sans contour), couleur et opacité du fond, filet de couleur au bord du bandeau.
+- Modèles tout prêts : classique, jaune et rouge, vert radio, noir sur blanc, sans fond.
+
 ## Version 0.38 — image du correspondant dans l'image TX
 
 - Comme EasyPal, on peut répondre avec l'image reçue du correspondant incrustée dans la sienne, avec le report :

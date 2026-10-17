@@ -1169,6 +1169,20 @@ T = [
     ("Répondre avec cette image (incrustée dans mon image TX)", "Reply with this image (inserted into my TX image)", "Mit diesem Bild antworten (in mein TX-Bild eingefügt)", "Responder con esta imagen (insertada en mi imagen TX)", "Rispondere con questa immagine (inserita nella mia immagine TX)"),
     ("Ouvrez maintenant votre image : celle du correspondant y sera incrustée.", "Now open your image: the correspondent's image will be inserted into it.", "Öffnen Sie jetzt Ihr Bild: das Bild der Gegenstation wird eingefügt.", "Abra ahora su imagen: la del corresponsal se insertará en ella.", "Aprite ora la vostra immagine: quella del corrispondente vi sarà inserita."),
     ("Image du correspondant illisible : {0}", "Correspondent's image unreadable: {0}", "Bild der Gegenstation nicht lesbar: {0}", "Imagen del corresponsal ilegible: {0}", "Immagine del corrispondente illeggibile: {0}"),
+    # ------------------------------------------------------------ v0.39 : police et couleurs du bandeau
+    ("Police et couleurs", "Font and colours", "Schrift und Farben", "Fuente y colores", "Carattere e colori"),
+    ("Gras", "Bold", "Fett", "Negrita", "Grassetto"),
+    ("Italique", "Italic", "Kursiv", "Cursiva", "Corsivo"),
+    ("Contour", "Outline", "Kontur", "Contorno", "Contorno"),
+    ("Fond", "Background", "Hintergrund", "Fondo", "Sfondo"),
+    ("Opacité du fond", "Background opacity", "Deckkraft des Hintergrunds", "Opacidad del fondo", "Opacità dello sfondo"),
+    ("Filet de couleur au bord du bandeau", "Coloured line at the edge of the banner", "Farbige Linie am Rand des Banners", "Línea de color en el borde de la banda", "Linea colorata sul bordo della fascia"),
+    ("Modèles…", "Presets…", "Vorlagen…", "Modelos…", "Modelli…"),
+    ("Classique (blanc sur noir)", "Classic (white on black)", "Klassisch (weiß auf schwarz)", "Clásico (blanco sobre negro)", "Classico (bianco su nero)"),
+    ("Jaune et rouge", "Yellow and red", "Gelb und rot", "Amarillo y rojo", "Giallo e rosso"),
+    ("Vert radio", "Radio green", "Funkgrün", "Verde radio", "Verde radio"),
+    ("Noir sur blanc", "Black on white", "Schwarz auf weiß", "Negro sobre blanco", "Nero su bianco"),
+    ("Sans fond (contour seul)", "No background (outline only)", "Ohne Hintergrund (nur Kontur)", "Sin fondo (solo contorno)", "Senza sfondo (solo contorno)"),
 ]
 
 _lang = "fr"

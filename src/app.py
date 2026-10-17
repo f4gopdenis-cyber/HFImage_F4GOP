@@ -46,7 +46,7 @@ import random
 import wave
 
 APP = "HFImage F4GOP"
-VERSION = "0.38"
+VERSION = "0.39"
 CONF_PATH = os.path.join(os.path.expanduser("~"), ".hfimage.json")
 DEFAULT_OUT = os.path.join(os.path.expanduser("~"), "Documents", "HFImage")
 DEFAULTS = {
@@ -2119,12 +2119,16 @@ class App(tk.Tk):
         model = getattr(self.rig, "model", "") if self.rig is not None else ""
         items = trafic.parts(self.conf, self.v_call.get().strip().upper(), self.v_loc.get().strip().upper(),
                              model or "", freq)
+        style = {k: self.conf[k] for k in ("tc_font", "tc_bold", "tc_italic", "tc_color", "tc_stroke", "tc_bg",
+                                           "tc_alpha", "tc_callcolor", "tc_frame") if k in self.conf}
+        call = self.v_call.get().strip().upper()
         key = (id(base), tuple(i for i in items if not i.endswith(" UTC")),
-               self.conf.get("tc_pos"), self.conf.get("tc_size"))
+               self.conf.get("tc_pos"), self.conf.get("tc_size"), tuple(sorted(style.items())))
         c = getattr(self, "_tc_cache", None)
         if c and c[0] == key:
             return c[1]
-        im = trafic.overlay(base, items, self.conf.get("tc_pos", "bas"), self.conf.get("tc_size", "normale"))
+        im = trafic.overlay(base, items, self.conf.get("tc_pos", "bas"), self.conf.get("tc_size", "normale"),
+                            style, call)
         self._tc_cache = (key, im)
         return im
 
@@ -2304,9 +2308,85 @@ class App(tk.Tk):
         ttk.Label(pf, text="Taille du texte").pack(side="left", padx=(10, 0))
         ttk.Combobox(pf, textvariable=v_size, values=list(size_names.values()), width=9, state="readonly").pack(
             side="left", padx=6)
+        # --- police et couleurs
+        fams = list(trafic.fonts()) or ["Arial"]
+        v_font = tk.StringVar(value=c["tc_font"] if c["tc_font"] in fams else
+                              ("Arial" if "Arial" in fams else fams[0]))
+        sb = {k: tk.BooleanVar(value=bool(c[k])) for k in ("tc_bold", "tc_italic", "tc_frame")}
+        col = {k: tk.StringVar(value=c[k]) for k in ("tc_color", "tc_stroke", "tc_bg", "tc_callcolor")}
+        v_alpha = tk.IntVar(value=int(c["tc_alpha"]))
+        sf = ttk.LabelFrame(f, text="Police et couleurs", padding=8)
+        sf.grid(row=9, column=0, columnspan=3, sticky="we", pady=(8, 0))
+        r1 = ttk.Frame(sf)
+        r1.pack(fill="x")
+        ttk.Label(r1, text="Police").pack(side="left")
+        ttk.Combobox(r1, textvariable=v_font, values=fams, width=26, state="readonly").pack(side="left", padx=6)
+        ttk.Checkbutton(r1, text="Gras", variable=sb["tc_bold"]).pack(side="left", padx=(6, 0))
+        ttk.Checkbutton(r1, text="Italique", variable=sb["tc_italic"]).pack(side="left", padx=(6, 0))
+        r2 = ttk.Frame(sf)
+        r2.pack(fill="x", pady=(6, 0))
+
+        def swatch(parent, key, label, can_none=False):
+            fr = ttk.Frame(parent)
+            fr.pack(side="left", padx=(0, 12))
+            ttk.Label(fr, text=label).pack(side="left")
+            btn = tk.Button(fr, width=3, relief="solid", bd=1)
+            btn._no_theme = True
+            btn.pack(side="left", padx=4)
+
+            def paint(*_):
+                vv = col[key].get()
+                btn.configure(bg=vv or "#d9d9d9", activebackground=vv or "#d9d9d9",
+                              text="" if vv else "—")
+
+            def pick():
+                from tkinter import colorchooser
+                rgb, hx = colorchooser.askcolor(color=col[key].get() or "#ffffff", parent=w)
+                if hx:
+                    col[key].set(hx)
+            btn.configure(command=pick)
+            if can_none:
+                ttk.Button(fr, text="✕", width=2, command=lambda: col[key].set("")).pack(side="left")
+            col[key].trace_add("write", paint)
+            paint()
+
+        swatch(r2, "tc_color", tr("Texte"))
+        swatch(r2, "tc_callcolor", tr("Indicatif"), True)
+        swatch(r2, "tc_stroke", tr("Contour"), True)
+        swatch(r2, "tc_bg", tr("Fond"))
+        r3 = ttk.Frame(sf)
+        r3.pack(fill="x", pady=(6, 0))
+        ttk.Label(r3, text="Opacité du fond").pack(side="left")
+        lb_a = ttk.Label(r3, width=5)
+        ttk.Scale(r3, from_=0, to=100, variable=v_alpha, length=160,
+                  command=lambda x: (v_alpha.set(round(float(x) / 5) * 5))).pack(side="left", padx=6)
+        lb_a.pack(side="left")
+        v_alpha.trace_add("write", lambda *a: lb_a.configure(text=f"{v_alpha.get()} %"))
+        lb_a.configure(text=f"{v_alpha.get()} %")
+        ttk.Checkbutton(r3, text="Filet de couleur au bord du bandeau", variable=sb["tc_frame"]).pack(
+            side="left", padx=(12, 0))
+        presets = {tr("Modèles…"): None,
+                   tr("Classique (blanc sur noir)"): ("#ffffff", "", "#000000", "#000000", 60, False),
+                   tr("Jaune et rouge"): ("#ffff00", "#ff4040", "#000000", "#002060", 70, True),
+                   tr("Vert radio"): ("#7CFC00", "#ffffff", "#000000", "#003000", 75, True),
+                   tr("Noir sur blanc"): ("#000000", "#c00000", "", "#ffffff", 80, False),
+                   tr("Sans fond (contour seul)"): ("#ffffff", "#ffd700", "#000000", "#000000", 0, False)}
+        v_pre = tk.StringVar(value=tr("Modèles…"))
+
+        def apply_preset(*_):
+            p = presets.get(v_pre.get())
+            if p:
+                for k, x in zip(("tc_color", "tc_callcolor", "tc_stroke", "tc_bg"), p[:4]):
+                    col[k].set(x)
+                v_alpha.set(p[4])
+                sb["tc_frame"].set(p[5])
+                v_pre.set(tr("Modèles…"))
+        cb_pre = ttk.Combobox(r1, textvariable=v_pre, values=list(presets), width=22, state="readonly")
+        cb_pre.pack(side="right", padx=(12, 0))
+        cb_pre.bind("<<ComboboxSelected>>", apply_preset)
         cv = tk.Label(f, bg="black")
         cv._no_theme = True
-        cv.grid(row=9, column=0, columnspan=3, pady=(10, 0))
+        cv.grid(row=10, column=0, columnspan=3, pady=(10, 0))
 
         def store():
             for k, var in v.items():
@@ -2315,6 +2395,12 @@ class App(tk.Tk):
                 self.conf[k] = bool(var.get())
             self.conf["tc_pos"] = next(k for k, n in pos_names.items() if n == v_pos.get())
             self.conf["tc_size"] = next(k for k, n in size_names.items() if n == v_size.get())
+            self.conf["tc_font"] = v_font.get()
+            for k, var in sb.items():
+                self.conf[k] = bool(var.get())
+            for k, var in col.items():
+                self.conf[k] = var.get()
+            self.conf["tc_alpha"] = int(v_alpha.get())
             self._save_conf_file()
             if hasattr(self, "v_tcon"):
                 self.v_tcon.set(bool(self.conf["tc_on"]))
@@ -2337,13 +2423,20 @@ class App(tk.Tk):
             self._photos["tc"] = ImageTk.PhotoImage(im)
             cv.configure(image=self._photos["tc"])
 
-        for var in list(v.values()) + list(b.values()) + [v_pos, v_size]:
-            var.trace_add("write", lambda *a: self.after_idle(preview))
+        for var in list(v.values()) + list(b.values()) + list(sb.values()) + list(col.values()) + [
+                v_pos, v_size, v_font, v_alpha]:
+            var.trace_add("write", lambda *a: self._tc_preview_later(preview))
         bt = ttk.Frame(f)
-        bt.grid(row=10, column=0, columnspan=3, sticky="e", pady=(10, 0))
+        bt.grid(row=11, column=0, columnspan=3, sticky="e", pady=(10, 0))
         ttk.Button(bt, text="OK", command=lambda: (store(), w.destroy(), self.prepare())).pack(side="left")
         preview()
         self._translate_ui(w)
+
+    def _tc_preview_later(self, fn):
+        """Aperçu regroupé (le curseur d'opacité envoie beaucoup d'événements)."""
+        if getattr(self, "_tc_job", None):
+            self.after_cancel(self._tc_job)
+        self._tc_job = self.after(120, lambda: (setattr(self, "_tc_job", None), fn()))
 
     def _robust_choice(self):
         """-> pourcentage choisi, ou None pour « Auto »."""
