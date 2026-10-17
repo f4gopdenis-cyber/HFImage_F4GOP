@@ -52,7 +52,7 @@ import random
 import wave
 
 APP = "HFImage F4GOP"
-VERSION = "0.53"
+VERSION = "0.54"
 CONF_PATH = os.path.join(os.path.expanduser("~"), ".hfimage.json")
 DEFAULT_OUT = os.path.join(os.path.expanduser("~"), "Documents", "HFImage")
 DEFAULTS = {
@@ -3089,8 +3089,18 @@ class App(tk.Tk):
         call = self.v_call.get().strip().upper() or "NOCALL"
         mode = self._tx_mode()
         if mode == engine.DRM_MODE:
-            messagebox.showinfo(APP, "L'envoi de texte n'existe pas en mode EasyPal : choisissez un mode "
-                                     "DATAC (ou Auto) pour l'envoyer.")
+            # comme EasyPal / QSSTV : un petit fichier .txt (Windows : CRLF, accents en cp1252)
+            data = text.replace("\r\n", "\n").replace("\n", "\r\n").encode("cp1252", "replace")
+            params = self._drm_params()
+            tx = engine.DrmTransmission(data, "txt", call, params,
+                                        f"{call}_texte_{time.strftime('%H%M%S', time.gmtime())}")
+            self.sent_images[tx.image_id] = tx
+            self.my_ids.add(tx.image_id)
+            self.log(f"Texte EasyPal : {len(text)} caractères, {hamdrm.describe(params)}, "
+                     f"~{_fmt_s(tx.estimate_s())}")
+            if self._start_job({"kind": "text", "tx": tx, "complement": False, "extra": None}):
+                self.drm_last_tx = tx             # une station EasyPal peut aussi demander un BSR
+                self._msg_sent(tx.image_id, text, engine.DRM_MODE)
             return
         tx = engine.Transmission(protocol.pack_text(text), "hft", call, mode, 0.25)
         self.sent_images[tx.image_id] = tx
@@ -3299,7 +3309,8 @@ class App(tk.Tk):
                 raise RuntimeError("le BSR reçu ne correspond plus à la dernière image émise")
             dur, mode = len(drm_audio) / 8000, engine.DRM_MODE
             what = (f"FIX EasyPal, {job.get('drm_need', '?')} segments" if bsr else
-                    f"EasyPal {hamdrm.describe(tx.params)}, {len(tx.data)} octets")
+                    f"{'texte ' if tx.fmt == 'txt' else ''}EasyPal {hamdrm.describe(tx.params)}, "
+                    f"{len(tx.data)} octets")
             modem = frames = None
         elif kind == "hybrid" and job.get("drm_hybrid"):
             # hybride façon EasyPal : image dans HybridFiles1, annonce « de_… » en HamDRM

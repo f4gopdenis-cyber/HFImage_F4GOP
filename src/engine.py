@@ -489,6 +489,25 @@ class RxEngine:
             if acc is not None:              # annonce hybride : l'image est sur un serveur FTP
                 self.on_drm_hybrid(dict(acc, name=f["name"], call=call, snr=f["snr"], drm=f["mode"]))
                 return
+        if (f["name"] or "").lower().endswith((".txt", ".chat")):
+            # message texte d'EasyPal / QSSTV (ou de HFImage en mode EasyPal)
+            raw = data.split(b"\0", 1)[0]
+            try:
+                text = raw.decode("utf-8")
+            except UnicodeDecodeError:
+                text = raw.decode("cp1252", "replace")
+            text = text.replace("\r\n", "\n").strip()
+            iid = zlib.crc32(data + b"hamdrm") & 0xFFFF
+            stamp = time.strftime("%Y%m%d_%H%M%S")
+            suffix = "" if call == "?" else "_" + call.replace("/", "-")
+            path = os.path.join(self.outdir, f"{stamp}_{DRM_MODE}_texte{suffix}.txt")
+            with open(path, "w", encoding="utf-8") as fh:
+                fh.write(text + "\n")
+            info = {"id": iid, "call": call, "size": len(data), "fmt": "txt", "text": text,
+                    "drm": f["mode"], "snr": f["snr"], "name": f["name"]}
+            self.saved[iid] = [path, None, path[:-4], call != "?"]
+            self.on_image(info, path, None, DRM_MODE)
+            return
         fmt = protocol.detect_format(data)
         iid = zlib.crc32(data + b"hamdrm") & 0xFFFF
         info = {"id": iid, "call": call, "size": len(data), "fmt": fmt, "drm": f["mode"], "snr": f["snr"],

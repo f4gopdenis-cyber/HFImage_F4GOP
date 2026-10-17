@@ -1,5 +1,10 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 0.54 — envoi de texte en mode EasyPal
+
+- **Envoi de texte en mode EasyPal** : le bouton d'envoi de texte fonctionne maintenant aussi en mode EasyPal. Le message part comme dans EasyPal et QSSTV (petit fichier texte en HamDRM, avec vos réglages EasyPal), accents compris.
+- **Réception des messages texte d'EasyPal / QSSTV** : ils s'affichent dans la fenêtre des messages, comme les messages HFImage, au lieu d'arriver comme un fichier.
+
 ## Version 0.53 — mode hybride EasyPal
 
 - **Mode hybride façon EasyPal / QSSTV** : en mode EasyPal, cochez « Mode hybride » comme d'habitude. L'image est déposée par FTP dans le dossier `HybridFiles1` de votre serveur, puis une courte annonce (~20 s, mode E / QAM4) part par radio. Les stations EasyPal, QSSTV et HFImage téléchargent alors l'image en pleine qualité.
