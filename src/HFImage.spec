@@ -1,12 +1,21 @@
 # Spécification PyInstaller : exécutable Windows unique, sans console
+# (sert aussi à la version Windows 7, compilée avec Python 3.8 : voir release.yml)
+import sys
+LEGACY = sys.version_info < (3, 9)
+_legacy = ["pillow_avif", "numpy.core._multiarray_tests"] if LEGACY else []   # Pillow 10 + numpy 1.24
+# Windows 7 : resvg_py (Rust récent) appelle des fonctions de Windows 8 -> retiré ;
+# la CRT universelle (dossier ucrt/, copié depuis le SDK Windows par release.yml) est embarquée
+# pour les Windows 7 sans la mise à jour KB2999226.
+import glob as _glob
+_ucrt = [(f, '.') for f in _glob.glob('ucrt/*.dll')] if LEGACY else []
 a = Analysis(['app.py'], pathex=['.'],
-             binaries=[('libcodec2.dll', '.')],
+             binaries=[('libcodec2.dll', '.')] + _ucrt,
              datas=[('carte.bin', '.'), ('hfimage.ico', '.'), ('icon64.png', '.'), ('icon32.png', '.'), ('icon256.png', '.'), ('HFImage_mode_emploi.pdf', '.')],
-             hiddenimports=["loopback", "msgwin", "clocktz", "trafic", "channel", "waterfall", "hybrid", "panel", "qsl", "i18n", "wavtext", "imgfmt", "stationmap", "presence", "theme", "updater", "tkinter.colorchooser", "paho.mqtt.client", "resvg_py", "tkinter.simpledialog",
+             hiddenimports=["loopback", "msgwin", "clocktz", "trafic", "channel", "waterfall", "hybrid", "panel", "qsl", "i18n", "wavtext", "imgfmt", "stationmap", "presence", "theme", "updater", "tkinter.colorchooser", "paho.mqtt.client", "tkinter.simpledialog",
                             "serial.tools.list_ports", "secrets", "hmac", "radio", "radiodlg", "gallery", "qrmfilter", "websync", "trafic", "wavanalyze", "anadlg", "riglist", "contextlib",
-                            "xmlrpc.client", "comtypes", "comtypes.client", "comtypes.automation"],
+                            "xmlrpc.client", "comtypes", "comtypes.client", "comtypes.automation", "buildinfo"] + _legacy + ([] if LEGACY else ["resvg_py"]),
              excludes=['scipy', 'skimage', 'matplotlib', 'pandas', 'IPython', 'pytest',
-                       'PIL.ImageCms', 'numpy.f2py', 'numpy.testing', 'setuptools', 'pkg_resources', 'comtypes.test'])
+                       'PIL.ImageCms', 'numpy.f2py', 'numpy.testing', 'setuptools', 'pkg_resources', 'comtypes.test'] + (['resvg_py'] if LEGACY else []))
 
 
 def _keep(entry):
@@ -15,7 +24,7 @@ def _keep(entry):
         return False                      # ARM, 32 bits et ASIO inutiles ici
     if name.startswith(('_tcl_data/tzdata', '_tcl_data/msgs', '_tk_data/msgs', '_tk_data/images')):
         return False                      # fuseaux horaires, traductions et démos Tcl/Tk
-    if name.endswith('_imagingcms.cp312-win_amd64.pyd'):
+    if name.split('/')[-1].startswith('_imagingcms.'):
         return False
     return True
 

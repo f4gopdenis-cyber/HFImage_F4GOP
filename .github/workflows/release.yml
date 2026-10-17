@@ -3,12 +3,14 @@
 # HFImage_F4GOP.exe sous Windows et crée la release vX.YY avec les nouveautés
 # tirées de CHANGELOG.md. Les programmes HFImage ouverts (0.20 et plus) proposent
 # alors la mise à jour par le bandeau.
+# Ensuite, le travail « win7 » fabrique HFImage_F4GOP_Win7.exe (Python 3.8, pour Windows 7 / 8)
+# et l'ajoute à la même release ; s'il échoue, la version normale n'est pas touchée.
 name: Release
 
 on:
   push:
     branches: [main]
-    paths: ["src/**", "CHANGELOG.md", ".github/workflows/release.yml", "requirements-build.txt"]
+    paths: ["src/**", "CHANGELOG.md", ".github/**", "requirements-build*.txt"]
   workflow_dispatch:
 
 permissions:
@@ -90,5 +92,81 @@ jobs:
             exit 1
           fi
           echo "$out"
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+  win7:
+    needs: release
+    if: always() && needs.release.result == 'success'
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Faut-il fabriquer la version Windows 7 ?
+        id: w7
+        shell: bash
+        run: |
+          v=$(grep -m1 -oP '^VERSION = "\K[0-9.]+' src/app.py)
+          echo "tag=v$v" >> "$GITHUB_OUTPUT"
+          if ! gh release view "v$v" >/dev/null 2>&1; then
+            echo "todo=no" >> "$GITHUB_OUTPUT"; echo "Pas de release v$v."
+          elif gh release view "v$v" --json assets --jq '.assets[].name' | grep -qx 'HFImage_F4GOP_Win7.exe'; then
+            echo "todo=no" >> "$GITHUB_OUTPUT"; echo "HFImage_F4GOP_Win7.exe déjà présent."
+          else
+            echo "todo=yes" >> "$GITHUB_OUTPUT"
+          fi
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+      - uses: actions/setup-python@v5
+        if: steps.w7.outputs.todo == 'yes'
+        with:
+          python-version: "3.8"
+          architecture: x64
+
+      - name: Dépendances (Python 3.8)
+        if: steps.w7.outputs.todo == 'yes'
+        run: python -m pip install -r requirements-build-win7.txt
+
+      - name: Variante Windows 7 + CRT universelle embarquée
+        if: steps.w7.outputs.todo == 'yes'
+        working-directory: src
+        shell: pwsh
+        run: |
+          "LEGACY = True" | Set-Content -Encoding ascii buildinfo.py
+          $k = "${env:ProgramFiles(x86)}\Windows Kits\10\Redist"
+          $d = Get-ChildItem -Path $k -Recurse -Directory -Filter x64 -ErrorAction SilentlyContinue |
+               Where-Object { $_.FullName -match '\\ucrt\\DLLs\\x64$' } | Select-Object -First 1
+          if ($d) {
+            New-Item -ItemType Directory -Force ucrt | Out-Null
+            Copy-Item "$($d.FullName)\*.dll" ucrt\
+            echo "CRT universelle : $((Get-ChildItem ucrt).Count) fichiers depuis $($d.FullName)"
+          } else { echo "::warning::CRT universelle introuvable dans le SDK : non embarquée" }
+
+      - name: Fabrication de l'exe Windows 7
+        if: steps.w7.outputs.todo == 'yes'
+        working-directory: src
+        run: pyinstaller --noconfirm HFImage.spec
+
+      - name: Contrôle des fonctions Windows 8+
+        if: steps.w7.outputs.todo == 'yes'
+        working-directory: src
+        run: python ..\.github\scripts\win7check.py build\HFImage\Analysis-00.toc
+
+      - name: Autotest
+        if: steps.w7.outputs.todo == 'yes'
+        working-directory: src
+        shell: pwsh
+        run: |
+          Rename-Item dist\HFImage_F4GOP.exe HFImage_F4GOP_Win7.exe
+          $p = Start-Process -FilePath dist\HFImage_F4GOP_Win7.exe -ArgumentList "--selftest", "$env:RUNNER_TEMP\selftest.txt" -PassThru
+          if (-not $p.WaitForExit(600000)) { $p.Kill(); throw "autotest trop long" }
+          Get-Content "$env:RUNNER_TEMP\selftest.txt"
+          if (-not (Select-String -Path "$env:RUNNER_TEMP\selftest.txt" -Pattern "DATAC1X: .* -> OK" -Quiet)) { throw "modems en échec" }
+
+      - name: Ajout à la release
+        if: steps.w7.outputs.todo == 'yes'
+        shell: bash
+        run: gh release upload "${{ steps.w7.outputs.tag }}" src/dist/HFImage_F4GOP_Win7.exe --clobber
         env:
           GH_TOKEN: ${{ github.token }}

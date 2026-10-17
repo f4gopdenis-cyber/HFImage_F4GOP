@@ -1,5 +1,13 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 0.44 — version pour Windows 7 et 8
+
+- Nouveau fichier **HFImage_F4GOP_Win7.exe** dans chaque version, pour **Windows 7 SP1 et Windows 8 (64 bits)**. La version normale (HFImage_F4GOP.exe, Windows 8.1 / 10 / 11) ne change pas.
+- Même programme, compilé avec Python 3.8 et des bibliothèques compatibles ; la CRT universelle de Windows est embarquée.
+- La version Windows 7 se met à jour toute seule avec HFImage_F4GOP_Win7.exe (jamais avec l'exe normal) ; Infos → À propos indique « (Windows 7 / 8) ».
+- Seule différence : les images SVG reçues ne s'affichent pas (elles sont enregistrées).
+- Chaque fabrication vérifie qu'aucune DLL n'appelle de fonction propre à Windows 8 ou plus récent, puis lance l'autotest.
+
 ## Version 0.43 — accusé de réception des messages
 
 - Un message texte seul bien reçu est maintenant confirmé à l'émetteur, comme une image : ACK radio en DATAC0 (si « ACK auto » est coché) et confirmation par Internet (si le réseau est actif).

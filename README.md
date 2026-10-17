@@ -9,7 +9,8 @@ Programme Windows de F4GOP (Denis, IN98QR) pour envoyer et recevoir des photos p
 
 👉 **[Dernière version : HFImage_F4GOP.exe](https://github.com/f4gopdenis-cyber/HFImage_F4GOP/releases/latest)**
 
-- Un seul fichier, rien à installer (Windows 10 / 11, 64 bits).
+- Un seul fichier, rien à installer (Windows 8.1 / 10 / 11, 64 bits).
+- **Windows 7 ou 8 (64 bits)** : prenez **HFImage_F4GOP_Win7.exe** dans la même page (rubrique « Assets »). Même programme, compilé avec Python 3.8 ; il se met à jour avec sa propre version Windows 7. Seule différence : les images SVG ne s'affichent pas (elles sont quand même reçues et enregistrées). Windows 7 doit avoir le Service Pack 1 et la mise à jour KB2533623 (présente si Windows Update a été fait).
 - Au premier lancement, Windows SmartScreen peut afficher un avertissement : cliquez sur « Informations complémentaires », puis « Exécuter quand même ».
 - Ensuite, le programme se met à jour tout seul : un bandeau apparaît quand une nouvelle version est publiée, un clic suffit.
 

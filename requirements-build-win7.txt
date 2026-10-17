@@ -1,0 +1,11 @@
+# Version Windows 7 / 8 : Python 3.8 (le dernier qui démarre sous Windows 7) et bibliothèques compatibles
+numpy==1.24.4
+pillow==10.4.0
+pillow-avif-plugin==1.4.6
+sounddevice==0.5.1
+pyserial==3.5
+paho-mqtt==2.1.0
+comtypes==1.4.8
+pyinstaller==5.13.2
+pyinstaller-hooks-contrib==2024.8
+pefile==2024.8.26

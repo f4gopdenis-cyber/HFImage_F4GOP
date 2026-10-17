@@ -12,6 +12,13 @@ import re
 
 from PIL import Image
 
+try:                                              # Pillow < 11 (version Windows 7) : AVIF par greffon
+    Image.init()
+    if "AVIF" not in Image.SAVE:
+        import pillow_avif  # noqa: F401
+except Exception:
+    pass
+
 SVG_RENDER_W = 1280          # largeur de rendu d'un SVG pour l'affichage et la conversion
 
 
@@ -47,15 +54,45 @@ def svg_pack(svg: bytes) -> bytes:
     return gzip.compress(svg_minify(svg_text(svg)), compresslevel=9, mtime=0)
 
 
+SVG_OK = True
+try:
+    import importlib.util as _ilu
+    SVG_OK = _ilu.find_spec("resvg_py") is not None
+except Exception:
+    pass
+
+
+def _svg_placeholder(width=SVG_RENDER_W):
+    """Image grise « SVG non affichable » (version Windows 7, sans moteur SVG)."""
+    from PIL import ImageDraw
+    w = width or 640
+    im = Image.new("RGB", (w, w * 3 // 4), (225, 225, 225))
+    d = ImageDraw.Draw(im)
+    t = "Image SVG : affichage impossible sous Windows 7.\nLe fichier .svg est enregistré dans le dossier de réception."
+    d.multiline_text((w // 2, w * 3 // 8), t, fill=(60, 60, 60), anchor="mm", align="center")
+    return im
+
+
 def render_svg(data: bytes, width=SVG_RENDER_W) -> Image.Image:
     """SVG (ou SVGZ) -> image PIL sur fond blanc."""
-    import resvg_py
-    svg = svg_text(data).decode("utf-8", errors="replace")
     try:
+        import resvg_py
+    except (ImportError, OSError):                # version Windows 7 : pas de moteur SVG
+        return _svg_placeholder(width)
+    svg = svg_text(data).decode("utf-8", errors="replace")
+    old = tuple(int(x) for x in re.findall(r"\d+", getattr(resvg_py, "__version__", "0.5"))[:2]) < (0, 5)
+    try:
+        if old:                                   # resvg_py 0.2 (version Windows 7) : « width » rogne l'image
+            raise TypeError
         png = resvg_py.svg_to_bytes(svg_string=svg, width=width, background="white")
     except Exception:
         png = resvg_py.svg_to_bytes(svg_string=svg, background="white")   # sans taille imposée
-    return Image.open(io.BytesIO(bytes(png))).convert("RGB")
+    if isinstance(png, (list, tuple)) and png and isinstance(png[0], (bytes, bytearray)):
+        png = b"".join(png)                       # resvg_py ancien (version Windows 7)
+    im = Image.open(io.BytesIO(bytes(png))).convert("RGB")
+    if width and im.width != width:               # resvg_py ancien : largeur demandée ignorée
+        im = im.resize((width, max(1, round(im.height * width / im.width))), Image.LANCZOS)
+    return im
 
 
 def load_source(path):

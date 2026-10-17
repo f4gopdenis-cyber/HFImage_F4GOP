@@ -114,7 +114,10 @@ class Appearance:
         for n in ("TkDefaultFont", "TkTextFont", "TkFixedFont", "TkMenuFont", "TkHeadingFont",
                   "TkCaptionFont", "TkSmallCaptionFont", "TkIconFont", "TkTooltipFont"):
             try:
-                f = tkfont.nametofont(n, root=root)
+                try:
+                    f = tkfont.nametofont(n, root=root)
+                except TypeError:                 # Python < 3.10 (version Windows 7)
+                    f = tkfont.Font(root=root, name=n, exists=True)
                 self.named[n] = (f, dict(f.actual()))
             except tk.TclError:
                 pass

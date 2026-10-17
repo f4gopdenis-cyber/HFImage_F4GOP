@@ -19,7 +19,11 @@ import urllib.request
 REPO = "f4gopdenis-cyber/HFImage_F4GOP"
 LATEST_URL = os.environ.get("HFIMAGE_UPDATE_URL") or f"https://api.github.com/repos/{REPO}/releases/latest"
 PAGE_URL = f"https://github.com/{REPO}/releases/latest"
-ASSET_NAME = "HFImage_F4GOP.exe"
+try:
+    from buildinfo import LEGACY
+except ImportError:
+    LEGACY = False
+ASSET_NAME = "HFImage_F4GOP_Win7.exe" if LEGACY else "HFImage_F4GOP.exe"
 ALLOWED = (f"https://github.com/{REPO}/releases/download/",)
 UA = {"User-Agent": "HFImage-F4GOP-updater", "Accept": "application/vnd.github+json"}
 
@@ -44,12 +48,13 @@ def check(timeout=10):
     with urllib.request.urlopen(req, timeout=timeout) as r:
         d = json.loads(r.read().decode("utf-8"))
     asset = next((a for a in d.get("assets", []) if a.get("name") == ASSET_NAME), None)
-    if asset is None:
-        asset = next((a for a in d.get("assets", []) if a.get("name", "").lower().endswith(".exe")), None)
+    if asset is None and not LEGACY:      # la version Windows 7 ne prend jamais l'exe normal
+        asset = next((a for a in d.get("assets", []) if a.get("name", "").lower().endswith(".exe")
+                      and "win7" not in a.get("name", "").lower()), None)
     info = {"version": (parse_version(d.get("tag_name")) and ".".join(map(str, parse_version(d["tag_name"]))))
             or d.get("tag_name", "?"),
             "notes": (d.get("body") or "").strip(), "page": d.get("html_url") or PAGE_URL,
-            "url": None, "size": None, "sha256": None}
+            "url": None, "size": None, "sha256": None, "pending": asset is None and LEGACY}
     if asset:
         info["url"] = asset.get("browser_download_url")
         info["size"] = asset.get("size")

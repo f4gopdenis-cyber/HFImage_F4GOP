@@ -49,7 +49,7 @@ import random
 import wave
 
 APP = "HFImage F4GOP"
-VERSION = "0.43"
+VERSION = "0.44"
 CONF_PATH = os.path.join(os.path.expanduser("~"), ".hfimage.json")
 DEFAULT_OUT = os.path.join(os.path.expanduser("~"), "Documents", "HFImage")
 DEFAULTS = {
@@ -559,7 +559,8 @@ class App(tk.Tk):
         self.config(menu=m)
 
     def _about(self):
-        messagebox.showinfo(APP, f"{APP} {VERSION}\n\nImages numériques en HF : modem OFDM codec2 "
+        messagebox.showinfo(APP, f"{APP} {VERSION}" + (" (Windows 7 / 8)" if updater.LEGACY else "")
+                            + "\n\nImages numériques en HF : modem OFDM codec2 "
                                  "(DATAC1X / DATAC1 / DATAC3 / DATAC4, BSR/ACK en DATAC0), code fontaine, "
                                  "mode hybride par Internet.\n\nAutotests :\n"
                                  "  HFImage_F4GOP.exe --selftest rapport.txt\n"
@@ -4168,6 +4169,14 @@ class App(tk.Tk):
         threading.Thread(target=run, daemon=True).start()
 
     def _update_found(self, info, quiet):
+        if info.get("pending") and updater.newer(info["version"], VERSION):
+            # version Windows 7 : fabriquée quelques minutes après la version normale
+            self.log(f"Nouvelle version {info['version']} : l'exe Windows 7 n'est pas encore prêt, "
+                     "nouvel essai plus tard.")
+            if not quiet:
+                messagebox.showinfo(APP, f"La version {info['version']} est en préparation pour Windows 7.\n"
+                                         "Réessayez dans une quinzaine de minutes.")
+            return
         if updater.newer(info["version"], VERSION):
             self.upd_info = info
             self._update_banner(tr(f"Nouvelle version {info['version']} disponible — cliquez ici pour mettre à jour "
@@ -4386,8 +4395,12 @@ def selftest(report_path, hyb_test=None):
                b'<rect width="200" height="100" fill="#1d3557"/><circle cx="150" cy="50" r="30" fill="#ffd166"/></svg>')
         im = imgfmt.render_svg(svg, 400)
         pk = imgfmt.svg_pack(svg)
-        px = im.getpixel((300, 100))
-        ok = im.size == (400, 200) and px[0] > 200 and protocol.detect_format(pk) == "svg"
+        if imgfmt.SVG_OK:
+            px = im.getpixel((300, 100))
+            ok = im.size == (400, 200) and px[0] > 200 and protocol.detect_format(pk) == "svg"
+        else:                                     # version Windows 7 : pas de moteur SVG
+            ok = protocol.detect_format(pk) == "svg"
+            lines.append("SVG : affichage non disponible (version Windows 7)")
         jpg = engine.compress(im, 200, 3000, "jpeg")[0]
         ok &= protocol.detect_format(jpg) == "jpeg"
         ok_all &= ok
