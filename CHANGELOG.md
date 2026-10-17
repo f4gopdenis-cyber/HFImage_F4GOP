@@ -1,5 +1,14 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 0.53 — mode hybride EasyPal
+
+- **Mode hybride façon EasyPal / QSSTV** : en mode EasyPal, cochez « Mode hybride » comme d'habitude. L'image est déposée par FTP dans le dossier `HybridFiles1` de votre serveur, puis une courte annonce (~20 s, mode E / QAM4) part par radio. Les stations EasyPal, QSSTV et HFImage téléchargent alors l'image en pleine qualité.
+- **Réception automatique des images hybrides EasyPal / QSSTV** : quand une station EasyPal émet en hybride, HFImage décode l'annonce et télécharge l'image tout seul (case « Télécharger automatiquement » de l'onglet Réglages). L'image arrive comme les autres, marquée « EasyPal-HYB ».
+- La liste **Mode** reste disponible en mode hybride : « EasyPal » pour l'hybride façon EasyPal, les autres modes pour l'hybride HFImage habituel.
+- En hybride EasyPal, l'image part en JPEG (EasyPal n'affiche ni AVIF, ni WebP).
+- **Attention** : comme dans EasyPal, l'identifiant et le mot de passe FTP sont transmis dans l'annonce (simplement brouillés). Utilisez un **compte FTP dédié**, limité à un dossier. Ils ne doivent contenir ni accents ni caractères spéciaux.
+- Les fichiers émis en mode EasyPal portent maintenant le nom de la photo.
+
 ## Version 0.52 — correction : blocage après une émission en mode EasyPal
 
 - Correction : après une émission en mode EasyPal (terminée ou arrêtée), le waterfall et les boutons restaient bloqués. C'est réparé.

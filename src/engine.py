@@ -14,6 +14,7 @@ import numpy as np
 from PIL import Image
 
 import audio
+import easypal_hybrid
 import hamdrm
 import imgfmt
 from modem import MODE_FPB, Modem
@@ -401,6 +402,7 @@ class RxEngine:
         # mode EasyPal (HamDRM) : démodulé en parallèle à partir du son à 48 kHz
         self.drm = hamdrm.Receiver() if hamdrm.AVAILABLE else None
         self.on_drm_bsr = lambda *a: None
+        self.on_drm_hybrid = lambda *a: None      # annonce hybride EasyPal / QSSTV (« de_… »)
         self.drm_status = {}
         self.drm_t = 0.0             # dernière fois où un signal HamDRM était décodé
         self.drm_done_t = 0.0        # dernière image HamDRM complète
@@ -482,6 +484,11 @@ class RxEngine:
         """Fichier complet reçu en HamDRM (EasyPal / QSSTV)."""
         self.drm_files += 1
         data, call = f["data"], f["callsign"] or "?"
+        if easypal_hybrid.is_announce(f["name"]):
+            acc = easypal_hybrid.decrypt(data)
+            if acc is not None:              # annonce hybride : l'image est sur un serveur FTP
+                self.on_drm_hybrid(dict(acc, name=f["name"], call=call, snr=f["snr"], drm=f["mode"]))
+                return
         fmt = protocol.detect_format(data)
         iid = zlib.crc32(data + b"hamdrm") & 0xFFFF
         info = {"id": iid, "call": call, "size": len(data), "fmt": fmt, "drm": f["mode"], "snr": f["snr"],

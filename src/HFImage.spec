@@ -13,7 +13,7 @@ a = Analysis(['app.py'], pathex=['.'],
              datas=[('carte.bin', '.'), ('hfimage.ico', '.'), ('icon64.png', '.'), ('icon32.png', '.'), ('icon256.png', '.'), ('HFImage_mode_emploi.pdf', '.')],
              hiddenimports=["loopback", "msgwin", "clocktz", "trafic", "channel", "waterfall", "hybrid", "panel", "qsl", "i18n", "wavtext", "imgfmt", "stationmap", "presence", "theme", "updater", "tkinter.colorchooser", "paho.mqtt.client", "tkinter.simpledialog",
                             "serial.tools.list_ports", "secrets", "hmac", "radio", "radiodlg", "gallery", "qrmfilter", "websync", "trafic", "wavanalyze", "anadlg", "riglist", "contextlib",
-                            "xmlrpc.client", "comtypes", "comtypes.client", "comtypes.automation", "buildinfo", "hamdrm"] + _legacy + ([] if LEGACY else ["resvg_py"]),
+                            "xmlrpc.client", "comtypes", "comtypes.client", "comtypes.automation", "buildinfo", "hamdrm", "easypal_hybrid"] + _legacy + ([] if LEGACY else ["resvg_py"]),
              excludes=['scipy', 'skimage', 'matplotlib', 'pandas', 'IPython', 'pytest',
                        'PIL.ImageCms', 'numpy.f2py', 'numpy.testing', 'setuptools', 'pkg_resources', 'comtypes.test'] + (['resvg_py'] if LEGACY else []))
 

@@ -14,6 +14,7 @@ import threading
 import time
 import tkinter as tk
 import traceback
+import zlib
 import tkinter.font as tkfont
 from tkinter import filedialog, messagebox, ttk
 
@@ -21,6 +22,7 @@ import numpy as np
 from PIL import Image, ImageTk
 
 import audio
+import easypal_hybrid
 import engine
 import hamdrm
 import hybrid
@@ -50,7 +52,7 @@ import random
 import wave
 
 APP = "HFImage F4GOP"
-VERSION = "0.52"
+VERSION = "0.53"
 CONF_PATH = os.path.join(os.path.expanduser("~"), ".hfimage.json")
 DEFAULT_OUT = os.path.join(os.path.expanduser("~"), "Documents", "HFImage")
 DEFAULTS = {
@@ -180,6 +182,12 @@ def _fmt_s(sec):
     return f"{sec // 3600} h {sec % 3600 // 60:02d} min"
 
 
+def easypal_hybrid_params(cfg_call):
+    """Annonce hybride EasyPal : toujours en mode E, QAM4, protection haute, entrelacement long
+    (réglages imposés par EasyPal / QSSTV pour ce petit fichier)."""
+    return hamdrm.make_params(cfg_call or "NOCALL", mode=2, bandwidth=1, qam=0, protection=0, interleaver=0, rs=0)
+
+
 class HybridJob:
     """Image prête pour le mode hybride ; `announce` existe après le dépôt FTP."""
 
@@ -242,6 +250,7 @@ class App(tk.Tk):
         self.drm_last_tx = None     # mode EasyPal : dernière image émise (pour répondre aux BSR)
         self.drm_pending_bsr = None # mode EasyPal : BSR reçu en attente de FIX
         self._drm_hint = None       # mode EasyPal : image incomplète déjà signalée
+        self._drm_hyb_seen = set()  # annonces hybrides EasyPal déjà traitées
         self.bsr_state = {}         # id -> BSR envoyés (réception)
         self.ack_pending = {}       # id -> ACK à envoyer quand l'émetteur aura fini
         self.last_tx_id = None      # id de notre dernière image émise (carte : stations qui l'ont reçue)
@@ -782,7 +791,8 @@ class App(tk.Tk):
             ttk.Label(r1, text=lab).pack(side="left", padx=(6, 2))
             w.pack(side="left")
         ttk.Button(r1, text="Recalculer", command=self.prepare).pack(side="left", padx=(10, 0))
-        self._radio_widgets = [w for lab, w in widgets if lab != "Format"]
+        # en hybride, la liste Mode reste active : « EasyPal » = hybride façon EasyPal
+        self._radio_widgets = [w for lab, w in widgets if lab not in ("Format", "Mode")]
         for lab, w in widgets:
             w._ro = lab in ("Mode", "Robustesse")
         widgets[0][1].bind("<<ComboboxSelected>>", self._mode_changed)
@@ -2254,6 +2264,7 @@ class App(tk.Tk):
     def load_image(self, p):
         try:
             self.src_img, self.src_raw, self.src_kind = imgfmt.load_source(p)
+            self.src_path = p                 # nom repris pour les fichiers EasyPal (« de_…-photo.jpg »)
         except Exception as e:
             messagebox.showerror(APP, f"Image illisible : {e}")
             return
@@ -2872,6 +2883,9 @@ class App(tk.Tk):
         if fmt == "original" and (self.src_raw is None or self.src_kind not in ORIGINAL_KINDS
                                   or src is not self.src_img):
             fmt = "jpeg"
+        drm_hyb = self.v_mode.get() == engine.DRM_MODE
+        if drm_hyb and (fmt in ("avif", "webp") or (fmt == "original" and self.src_kind in ("avif", "webp", "svg"))):
+            fmt = "jpeg"                      # EasyPal n'affiche ni AVIF, ni WebP, ni SVG
         how = ""
         if anim:
             try:
@@ -2908,6 +2922,18 @@ class App(tk.Tk):
             self._show(self.lb_cmp, "cmp", self.src_img if q is None else Image.open(io.BytesIO(data)))
             desc = f"{imgfmt.describe(fmt)} original" if q is None else engine.quality_label(fmt, q)
         self._set_text(self.lb_cmp_info, f"{size[0]}×{size[1]} — {len(data)} octets ({desc})")
+        if drm_hyb:
+            self.tx.drm = True
+            cfg = self._hyb_cfg()
+            srv = cfg["host"] or "(serveur FTP non réglé)"
+            ann = hamdrm.estimate(120, easypal_hybrid_params(cfg_call=call)) if hamdrm.AVAILABLE else 0
+            self.v_txinfo.set(f"Mode hybride EasyPal (lisible par EasyPal et QSSTV)\n"
+                              f"Image déposée par FTP sur {srv}, dossier {easypal_hybrid.FILES_DIR}\n"
+                              f"Annonce radio : ~{ann:.0f} s (HamDRM mode E, QAM4)\n"
+                              f"Attention : l'identifiant et le mot de passe FTP partent dans l'annonce "
+                              f"(compte FTP dédié conseillé)")
+            self._update_comp()
+            return
         srv = self.v_hurl.get().strip() or "(lien public non réglé)"
         self.v_txinfo.set(f"Mode hybride\nImage déposée par FTP sur :\n{srv}\n"
                           f"Annonce radio : ~11 s (DATAC3)")
@@ -3020,12 +3046,22 @@ class App(tk.Tk):
             job.update(drm_bsr=self.drm_pending_bsr["bsr"], drm_need=self.drm_pending_bsr["need"])
         if isinstance(tx, HybridJob):
             job["kind"] = "hybrid"
-            if complement and tx.announce is None:
+            if complement and tx.announce is None and not getattr(tx, "drm", False):
                 messagebox.showinfo(APP, "Rien à répéter : émettez d'abord l'image.")
                 return False
-            if not complement:
+            job["drm_hybrid"] = bool(getattr(tx, "drm", False))
+            if complement and job["drm_hybrid"]:
+                if getattr(tx, "drm_announce", None) is None:
+                    messagebox.showinfo(APP, "Rien à répéter : émettez d'abord l'image.")
+                    return False
+            elif not complement:
                 cfg = self._hyb_cfg()
-                if not cfg["host"] or not cfg["url"]:
+                if job["drm_hybrid"]:
+                    if not cfg["host"]:
+                        messagebox.showinfo(APP, "Mode hybride EasyPal : renseignez le serveur FTP "
+                                                 "dans l'onglet Réglages.")
+                        return False
+                elif not cfg["host"] or not cfg["url"]:
                     messagebox.showinfo(APP, "Mode hybride : renseignez le serveur FTP et le lien "
                                              "public dans l'onglet Réglages.")
                     return False
@@ -3265,6 +3301,32 @@ class App(tk.Tk):
             what = (f"FIX EasyPal, {job.get('drm_need', '?')} segments" if bsr else
                     f"EasyPal {hamdrm.describe(tx.params)}, {len(tx.data)} octets")
             modem = frames = None
+        elif kind == "hybrid" and job.get("drm_hybrid"):
+            # hybride façon EasyPal : image dans HybridFiles1, annonce « de_… » en HamDRM
+            if not job["complement"] or getattr(tx, "drm_announce", None) is None:
+                cfg = job["cfg"]
+                if cfg.get("tls"):
+                    self.ui(self.log, "Hybride EasyPal : les stations EasyPal téléchargent en FTP simple "
+                                      "(sans TLS) : vérifiez que votre serveur l'accepte.")
+                n = int(self.conf.get("drm_hyb_n", 0)) + 1
+                self.conf["drm_hyb_n"] = n
+                base = os.path.splitext(os.path.basename(getattr(self, "src_path", "") or "image"))[0]
+                name = easypal_hybrid.file_name(tx.call, n, base, imgfmt.ext_for(tx.fmt))
+                blob = easypal_hybrid.encrypt(cfg["host"], cfg.get("user", ""), cfg.get("password", ""),
+                                              cfg.get("dir", ""))
+                self.ui(self.log, f"Hybride EasyPal : dépôt de {len(tx.data)} octets "
+                                  f"({easypal_hybrid.FILES_DIR}/{name}) sur {cfg['host']}…")
+                easypal_hybrid.upload(cfg, name, tx.data,
+                                      progress=lambda f: self.ui(self.pb_tx.configure, {"value": 100 * f}))
+                self.ui(self.log, "Hybride EasyPal : image déposée.")
+                tx.drm_announce = (name, blob)
+            name, blob = tx.drm_announce
+            stem, ext = os.path.splitext(name)
+            drm_audio = engine.drm_to_8k(hamdrm.tx_file(blob, stem, ext.lstrip("."),
+                                                         easypal_hybrid_params(cfg_call=tx.call)))
+            dur, mode = len(drm_audio) / 8000, engine.DRM_MODE
+            what = f"annonce hybride EasyPal {name}"
+            modem = frames = None
         elif kind == "hybrid":
             if not job["complement"]:
                 cfg = job["cfg"]
@@ -3497,6 +3559,7 @@ class App(tk.Tk):
         eng.qrm = bool(self.conf.get("qrm_filter", True))
         eng.on_control = lambda *a: self.ui(self._on_control, *a)
         eng.on_drm_bsr = lambda b, call, snr: self.ui(self._drm_bsr_heard, b, call, snr)
+        eng.on_drm_hybrid = lambda h: self.ui(self._drm_hybrid_announce, eng, h)
         return eng
 
     def _on_control(self, kind, iid, call, need, snr):
@@ -3672,6 +3735,31 @@ class App(tk.Tk):
         iid, got, K, end, age, mode, call = max(inc, key=lambda r: -r[4])
         if self.send_control(eng.rcv.nack(iid), f"BSR à {call} ({got}/{K} symboles)"):
             self.station_event(call, f"BSR envoyé : {got}/{K}", mode, None, f"image {iid:04X}")
+
+    def _drm_hybrid_announce(self, eng, h):
+        """Annonce hybride EasyPal / QSSTV : l'image est à télécharger par FTP."""
+        key = (h["call"], h["name"])
+        if key in self._drm_hyb_seen:
+            return
+        self._drm_hyb_seen.add(key)
+        where = easypal_hybrid.public_label(h, h["name"])
+        self._heard(h["call"], h.get("snr"), "Annonce hybride EasyPal", hyb=True)
+        self.station_event(h["call"], "Annonce hybride EasyPal", engine.DRM_MODE, h.get("snr"), h["name"])
+        self.log(f"Annonce hybride EasyPal de {h['call']} : {where}")
+        if not self.v_hauto.get():
+            self.log("Téléchargement automatique désactivé (Réglages).")
+            return
+
+        def run():
+            try:
+                data = easypal_hybrid.download(h, h["name"], log=lambda m: self.ui(self.log, m))
+                hyb = {"id": zlib.crc32(data + b"hamdrm") & 0xFFFF, "call": h["call"], "crc": zlib.crc32(data),
+                       "fmt": protocol.detect_format(data), "url": where}
+                eng.save_hybrid(hyb, data, engine.DRM_MODE)
+            except Exception as e:
+                self.ui(self.log_exc, "Téléchargement hybride EasyPal", e)
+
+        threading.Thread(target=run, daemon=True).start()
 
     def _hybrid_announce(self, eng, hyb, mode):
         self._heard(hyb.get("call"), eng.last.get("snr"), "Annonce hybride")
@@ -3857,7 +3945,7 @@ class App(tk.Tk):
         if hdr.get("fmt") == "file":
             self._show_message(hdr.get("call"), tr("Fichier reçu :") + f" {hdr.get('filename', '?')} "
                                f"({_fmt_size(hdr.get('size', 0))}) — " + tr("double-clic dans l'historique pour l'ouvrir"))
-        drm = mode == engine.DRM_MODE
+        drm = mode.startswith(engine.DRM_MODE)          # « EasyPal » ou « EasyPal-HYB »
         snr = hdr.get("snr") if drm else (self.rx_engine.last.get("snr") if self.rx_engine else None)
         if snr is not None:
             self.snr_by_id[hdr["id"]] = snr
@@ -3874,7 +3962,7 @@ class App(tk.Tk):
             if hdr.get("hybrid"):
                 # l'annonce hybride est répétée 3 fois (~11 s) : on attend qu'elle soit finie
                 self.ack_pending[hdr["id"]]["wait_until"] = time.time() + 12
-        if drm:
+        if mode == engine.DRM_MODE:
             mode = f"EasyPal {hdr.get('drm', '')}".strip()
         self.log(f"{kind} {who} ({mode}, {hdr['size']} octets) : {os.path.basename(path)}")
         if hdr.get("preview"):
