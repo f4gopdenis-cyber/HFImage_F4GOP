@@ -45,7 +45,7 @@ import random
 import wave
 
 APP = "HFImage F4GOP"
-VERSION = "0.33"
+VERSION = "0.34"
 CONF_PATH = os.path.join(os.path.expanduser("~"), ".hfimage.json")
 DEFAULT_OUT = os.path.join(os.path.expanduser("~"), "Documents", "HFImage")
 DEFAULTS = {
@@ -150,6 +150,11 @@ def load_conf():
     except Exception:
         pass
     return c
+
+
+def _fmt_size(n):
+    n = int(n or 0)
+    return f"{n} o" if n < 1000 else (f"{n / 1000:.1f} ko" if n < 1_000_000 else f"{n / 1e6:.2f} Mo")
 
 
 def _fmt_s(sec):
@@ -506,6 +511,7 @@ class App(tk.Tk):
         m.add_cascade(label="Action", menu=a)
         i = tk.Menu(m, tearoff=0)
         i.add_command(label="Ouvrir une image…", command=self.open_image)
+        i.add_command(label="Envoyer un fichier…", command=self.send_file)
         i.add_command(label="Carte QSL…", command=self.qsl_dialog)
         i.add_separator()
         i.add_command(label="Image reçue en plein format", command=self._open_full)
@@ -692,7 +698,8 @@ class App(tk.Tk):
         self.v_over = tk.StringVar(value=tr(near[0]))
         r1 = ttk.Frame(tb)
         r1.pack(fill="x")
-        ttk.Button(r1, text="Ouvrir une image…", command=self.open_image).pack(side="left", padx=(0, 10))
+        ttk.Button(r1, text="Ouvrir une image…", command=self.open_image).pack(side="left", padx=(0, 4))
+        ttk.Button(r1, text="Envoyer un fichier…", command=self.send_file).pack(side="left", padx=(0, 10))
         widgets = [
             ("Mode", ttk.Combobox(r1, textvariable=self.v_mode, values=TX_MODES, width=8, state="readonly")),
             ("Durée max (s)", ttk.Spinbox(r1, textvariable=self.v_sec, from_=15, to=3600, increment=30, width=6)),
@@ -2319,13 +2326,13 @@ class App(tk.Tk):
         if was_listening:
             self.toggle_listen(quiet=True)     # semi-duplex : on coupe la réception pendant l'émission
         job["relisten"] = was_listening or (bool(self.v_listen_after.get()) and bool(self.v_in.get())
-                                            and job["kind"] in ("image", "text", "hybrid", "wav", "wftext"))
+                                            and job["kind"] in ("image", "text", "hybrid", "wav", "wftext", "file"))
         self.tx_busy = True
         self.stop_tx.clear()
         self.v_state.set("ÉMISSION EN COURS")
         self._set_text(self.gbtn["tx"], "STOP")
         self.gbtn["tx"].configure(bg="#ff6b6b", activebackground="#ff8f8f")
-        if job["kind"] in ("image", "text", "hybrid"):
+        if job["kind"] in ("image", "text", "hybrid", "file"):
             self.nb.select(1)
         threading.Thread(target=self._tx_thread, args=(job,), daemon=True).start()
         return True
@@ -2380,6 +2387,53 @@ class App(tk.Tk):
         self.sent_images[tx.image_id] = tx
         self.log(f"Texte : {len(text)} caractères, {mode}, ~{_fmt_s(tx.estimate_s())}")
         self._start_job({"kind": "text", "tx": tx, "complement": False, "extra": None})
+
+    def send_file(self):
+        """Envoi d'un fichier quelconque (texte, PDF, ZIP, ADIF…) par radio, ou par Internet en hybride."""
+        if self.tx_busy:
+            return
+        p = filedialog.askopenfilename(title=tr("Fichier à envoyer"), filetypes=[(tr("Tous les fichiers"), "*.*")])
+        if not p:
+            return
+        try:
+            with open(p, "rb") as f:
+                raw = f.read()
+        except OSError as e:
+            messagebox.showerror(APP, f"Fichier illisible : {e}")
+            return
+        name = os.path.basename(p)
+        data = protocol.pack_file(name, raw)
+        call = self.v_call.get().strip().upper() or "NOCALL"
+        if len(data) >= 16_000_000:
+            messagebox.showerror(APP, "Fichier trop gros (16 Mo maximum).")
+            return
+        if self.v_hyb.get():
+            cfg = self._hyb_cfg()
+            if not cfg["host"] or not cfg["url"]:
+                messagebox.showinfo(APP, "Mode hybride : renseignez le serveur FTP et le lien public dans "
+                                         "l'onglet Réglages.")
+                return
+            if not messagebox.askyesno(APP, f"Envoyer {name} ({_fmt_size(len(raw))}) par Internet (mode hybride) ?\n"
+                                            f"Seul le lien passe par radio (~11 s)."):
+                return
+            job = HybridJob(data, "file", call)
+            self.log(f"Fichier {name} : {len(raw)} octets ({len(data)} compressés), mode hybride")
+            return self.transmit(tx=job)
+        mode = self._tx_mode()
+        over = self._robust_pct(mode) / 100
+        tx = engine.Transmission(data, "file", call, mode, over)
+        est = tx.estimate_s()
+        msg = (f"{name} : {_fmt_size(len(raw))}" + (f" ({_fmt_size(len(data))} compressé)" if len(data) < len(raw) else "")
+               + f"\nMode {mode}, robustesse {round(over * 100)} % : émission d'environ {_fmt_s(est)}.")
+        if est > 600:
+            msg += "\n\nC'est long : pensez au mode hybride (le fichier passe par Internet, seul le lien par radio)."
+        if not messagebox.askyesno(APP, msg + "\n\nÉmettre ?"):
+            return
+        self.sent_images[tx.image_id] = tx
+        self.my_ids.add(tx.image_id)
+        self._rxok_reset(tx.image_id)
+        self.log(f"Fichier {name} : {len(raw)} octets, {mode}, ~{_fmt_s(est)}")
+        self._start_job({"kind": "file", "tx": tx, "complement": False, "extra": None})
 
     def send_tune(self):
         self._start_job({"kind": "tune"})
@@ -3023,7 +3077,11 @@ class App(tk.Tk):
         who = hdr["call"] if hdr["call"] != "?" else "(indicatif à venir)"
         if hdr.get("text"):
             self._show_message(hdr.get("call"), hdr["text"])
-        kind = "Aperçu reçu" if hdr.get("preview") else ("Texte reçu" if hdr.get("fmt") == "txt" else "Image reçue")
+        kind = "Aperçu reçu" if hdr.get("preview") else ("Texte reçu" if hdr.get("fmt") == "txt" else
+                                                         ("Fichier reçu" if hdr.get("fmt") == "file" else "Image reçue"))
+        if hdr.get("fmt") == "file":
+            self._show_message(hdr.get("call"), tr("Fichier reçu :") + f" {hdr.get('filename', '?')} "
+                               f"({_fmt_size(hdr.get('size', 0))}) — " + tr("double-clic dans l'historique pour l'ouvrir"))
         snr = self.rx_engine.last.get("snr") if self.rx_engine else None
         if snr is not None:
             self.snr_by_id[hdr["id"]] = snr
@@ -3355,7 +3413,7 @@ class App(tk.Tk):
                     return                                     # message texte seul
                 data = img
             fmt = protocol.detect_format(data)
-            if fmt in ("hft", "txt"):
+            if fmt in ("hft", "txt", "file", "bin"):
                 return
             d = os.path.join(self.gal_store.folder, gallery.SENT_DIR)
             os.makedirs(d, exist_ok=True)

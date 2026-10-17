@@ -281,6 +281,15 @@ s.append(table([["Mode", "Largeur", "Débit utile", "En 2 min", "Usage"],
                 ["DATAC4", "0,25 kHz", "~85 bit/s", "~1 ko", "Très faibles signaux"],
                 ["DATAC0", "0,6 kHz", "—", "—", "BSR, ACK, présence (automatique)"]],
                [20, 20, 25, 22, 83]))
+s.append(P("Envoyer un fichier", "h2"))
+s.append(P("Bouton <b>Envoyer un fichier…</b> (onglet TX) ou menu Images : n'importe quel fichier (texte, PDF, ZIP, "
+           "journal ADIF…). Il est compressé s'il y gagne, protégé par le même code fontaine que les images (BSR / FIX "
+           "et ACK compris), et la durée d'émission est annoncée avant d'émettre. Avec le <b>mode hybride</b> coché, "
+           "le fichier passe par Internet et seul le lien passe par radio (~11 s) : idéal pour les gros fichiers. "
+           "À la réception, il est rangé sous son nom d'origine dans le sous-dossier <b>fichiers</b> du dossier des "
+           "images reçues ; double-clic dans l'historique pour l'ouvrir."))
+s += tip("ordre de grandeur en DATAC1X : environ 8 ko par minute. Un fichier texte de 30 ko compressé à 9 ko "
+         "passe en un peu plus d'une minute.")
 s.append(P("Autres envois", "h2"))
 s += B(["<b>Texte inclus</b> : un message joint à l'image, affiché dans « Messages reçus ».",
         "<b>Envoi Texte</b> : message seul.",

@@ -16,6 +16,7 @@ import audio
 import imgfmt
 from modem import MODE_FPB, Modem
 import qrmfilter
+import protocol
 from protocol import (T_ACK, T_HDR, T_NACK, T_QRV, Receiver, Sender, detect_format, hybrid_frame,
                       parse_control, parse_hybrid, unpack_text)
 
@@ -379,6 +380,26 @@ class RxEngine:
                 return
             data = img
             info["fmt"] = detect_format(img)
+        stamp = time.strftime("%Y%m%d_%H%M%S")
+        call = info["call"]
+        if info.get("fmt") == "file" or data[:4] == protocol.FILE_MAGIC:
+            # fichier quelconque : rangé dans « fichiers », sous son nom d'origine
+            try:
+                name, body = protocol.unpack_file(data)
+            except Exception:
+                name, body = "fichier.bin", data
+            safe = "".join(c if (c.isalnum() or c in "._- ()") else "_" for c in name).strip(" .") or "fichier"
+            d = os.path.join(self.outdir, "fichiers")
+            os.makedirs(d, exist_ok=True)
+            base = os.path.join(d, f"{stamp}_{mode}")
+            if call != "?":
+                base += "_" + call.replace("/", "-")
+            path = base + "__" + safe
+            with open(path, "wb") as f:
+                f.write(body)
+            self.saved[info["id"]] = [path, None, base, call != "?"]
+            self.on_image(dict(info, fmt="file", filename=name, size=len(body)), path, None, mode)
+            return
         stamp = time.strftime("%Y%m%d_%H%M%S")
         call = info["call"]
         base = os.path.join(self.outdir, f"{stamp}_{mode}" + ("_apercu" if info.get("preview") else ""))

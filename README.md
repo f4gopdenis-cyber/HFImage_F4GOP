@@ -20,6 +20,7 @@ Programme Windows de F4GOP (Denis, IN98QR) pour envoyer et recevoir des photos p
 - **Mode Auto** : DATAC1X, DATAC1 ou DATAC3 choisi d'après les reports des stations ; **robustesse** réglable contre le QSB.
 - **Coupe-QRM** à la réception : porteuses, CW, RTTY et BLU voisines effacées avant la démodulation.
 - **Analyseur de réception** : relit un enregistrement et donne un diagnostic (niveau, QRM, QSB, SNR, décalage, mode conseillé).
+- **Envoi de fichiers** quelconques (texte, PDF, ZIP, ADIF…), par radio ou en hybride.
 - L'image reçue est **identique bit à bit** à l'image envoyée, ou rien : pas d'image « abîmée ».
 - Formats AVIF (le plus compact), WebP, JPG, ou le fichier **original** tel quel ; SVG vectoriel en quelques centaines d'octets.
 - **Aperçu rapide** : une petite image arrive en ~20 s, puis l'image complète la remplace.

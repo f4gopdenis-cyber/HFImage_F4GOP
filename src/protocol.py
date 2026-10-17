@@ -23,7 +23,7 @@ VERSION = 2
 T_HDR, T_DATA, T_NACK, T_ACK, T_HYB, T_PDATA = 1, 2, 3, 4, 5, 6   # T_PDATA = DATA d'un aperçu
 T_QRV = 7                         # présence : « je suis à l'écoute avec HFImage »
 MY_LOCATOR = ""                   # locator de la station (réglé par l'interface) : HDR, ACK
-FORMATS = {"avif": 1, "webp": 2, "jpeg": 3, "txt": 4, "hft": 5, "svg": 6, "png": 7, "gif": 8}
+FORMATS = {"avif": 1, "webp": 2, "jpeg": 3, "txt": 4, "hft": 5, "svg": 6, "png": 7, "gif": 8, "file": 9}
 FORMATS_INV = {v: k for k, v in FORMATS.items()}
 HDR_FMT = ">BH8sBIHIH"           # 24 octets
 HDR_LEN = struct.calcsize(HDR_FMT)
@@ -56,9 +56,35 @@ def unpack_text(data: bytes):
     return data[6:6 + n].decode("utf-8", errors="replace"), data[6 + n:]
 
 
+FILE_MAGIC = b"HFFL"
+
+
+def pack_file(name: str, data: bytes) -> bytes:
+    """Fichier quelconque : nom + contenu (compressé si ça le rend plus petit)."""
+    import os
+    n = os.path.basename(name).encode("utf-8")[:200]
+    z = zlib.compress(data, 9)
+    flags, body = (1, z) if len(z) < len(data) else (0, data)
+    return FILE_MAGIC + bytes([flags, len(n)]) + n + body
+
+
+def unpack_file(data: bytes):
+    """-> (nom, contenu) si c'est un fichier, sinon None."""
+    if data[:4] != FILE_MAGIC or len(data) < 6:
+        return None
+    flags, n = data[4], data[5]
+    name = data[6:6 + n].decode("utf-8", errors="replace") or "fichier"
+    body = data[6 + n:]
+    if flags & 1:
+        body = zlib.decompress(body)
+    return name, body
+
+
 def detect_format(data: bytes) -> str:
     if data[:4] == TEXT_MAGIC:
         return "hft"
+    if data[:4] == FILE_MAGIC:
+        return "file"
     if data[4:12] in (b"ftypavif", b"ftypavis"):
         return "avif"
     if data[:4] == b"RIFF" and data[8:12] == b"WEBP":

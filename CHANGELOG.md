@@ -1,5 +1,16 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 0.34 — envoi de fichiers
+
+- Bouton **Envoyer un fichier…** (onglet TX, et menu Images) : n'importe quel fichier (texte, PDF, ZIP, journal ADIF…).
+  - Compressé automatiquement quand il y gagne (un texte de 29 ko part en 9 ko).
+  - Même protection que les images : code fontaine, robustesse Auto, BSR / FIX, ACK et Rx Ok.
+  - La taille et la durée d'émission sont annoncées avant d'émettre (conseil du mode hybride au-delà de 10 minutes).
+  - Avec le **mode hybride** coché, le fichier passe par Internet et seul le lien passe par radio.
+- À la réception : le fichier est rangé sous son nom d'origine dans le sous-dossier **fichiers** du dossier des images reçues, signalé dans « Messages reçus », et s'ouvre par un double-clic dans l'historique.
+- Les deux stations doivent avoir la version 0.34 ou plus récente.
+- Mode d'emploi complété.
+
 ## Version 0.33 — mode d'emploi à jour
 
 - Mode d'emploi (Infos → Mode d'emploi) mis à jour : reports en vrais dB et plafonds (+15 dB DATAC3 / DATAC0, +21 dB DATAC1X / DATAC1), réglage Site web / Digi-Sites (dossier vide = racine, exemple qsl.net).
