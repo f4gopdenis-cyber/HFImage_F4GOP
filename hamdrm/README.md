@@ -35,6 +35,12 @@ sudo apt install g++-mingw-w64-x86-64-posix
 - Qt 6 : lecture du nom de fichier dans l'en-tête MOT (pointeur invalide).
 - Compteur de segments reçus mis à jour après chaque recomptage.
 - Fuites de mémoire de l'émetteur.
+- Erreurs mémoire trouvées avec AddressSanitizer (pouvaient fermer le programme
+  sous Windows) : indicatif reçu écrit un caractère trop loin
+  (`localDrmCallsign`), lecture après la fin de la table FAC
+  (`CellMappingTable.cpp`), index -12 dans le décodeur FAC (« + 12 » oublié,
+  `msdhardfac.cpp`), dépassement d'entier (`Parameter.cpp`), variable non
+  initialisée (`sourcedecoder.cpp`). Le signal émis reste identique.
 
 ## Licence et auteurs
 

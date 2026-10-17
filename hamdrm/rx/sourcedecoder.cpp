@@ -124,6 +124,7 @@ bool sourceDecoder::setupDataBlock(unsigned char *buffer,bool crcIsOK,int len)
   unsigned int availableBytes;
   const char *bufPtr;
   currentDataBlock.ba=QByteArray((char *)buffer,len);
+  currentDataBlock.crcOK=crcIsOK;           // HFImage: was left uninitialised
   currentDataBlock.firstFlag=currentDataBlock.lastFlag=false;
   if(header & 0x80) currentDataBlock.firstFlag = true;
   if(header & 0x40) currentDataBlock.lastFlag  = true;

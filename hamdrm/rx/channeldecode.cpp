@@ -38,7 +38,8 @@
 #define PI (4.0*atan(1.0))
 
 #define CHANNELDECODING 1
-char localDrmCallsign[9]= {0, 0, 0, 0, 0, 0, 0, 0, 0}; //changed ON4QZ
+// HFImage: 10 chars (3 x 3 letters + terminating zero), 9 was one too short
+char localDrmCallsign[10]= {0, 0, 0, 0, 0, 0, 0, 0, 0, 0}; //changed ON4QZ
 
 #define MSD_ITER 4
 extern int transmission_frame_buffer_data_valid;

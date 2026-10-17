@@ -612,7 +612,7 @@ msdhardfac(double /*@out@ */ *received_real, double /*@out@ */ *received_imag,
 					|| !HMmix))) * (2 - HMmix) * N1,
 			       puncturing[(int) PL1[level]],
 			       puncturing[(int) PL2[level]],
-			       tailpuncturing[rp[level]],
+			       tailpuncturing[rp[level] + 12],   /* HFImage: "+ 12" was missing (index -12) */
 			       infoout[level] + n * ((int) L1_real[level] +
 						     (int) L2_real[level] +
 						     6), hardpoints_ptr,

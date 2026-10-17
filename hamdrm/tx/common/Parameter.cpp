@@ -1083,7 +1083,7 @@ void CParameter::GenerateRandomSerialNumber()
 	char serialNumTemp[7];
 
 	for (size_t i=0; i < 6; i++)
-		serialNumTemp[i] = randomChars[(int) 35.0*rand()/RAND_MAX];
+		serialNumTemp[i] = randomChars[(int) (35.0 * rand() / RAND_MAX)];   /* HFImage: int overflow */
 
 	serialNumTemp[6] = '\0';
 

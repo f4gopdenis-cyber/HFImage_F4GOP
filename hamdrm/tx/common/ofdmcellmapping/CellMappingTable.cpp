@@ -250,7 +250,9 @@ void CCellMappingTable::MakeTable(ERobMode eNewRobustnessMode,
 
           /* FAC ---------------------------------------------------------- */
           /* FAC positions are defined in a table */
-          if (iFACCounter <= NUM_FAC_CELLS)
+          /* HFImage: was "<=", which read one entry past the end of the
+             FAC table (NUM_FAC_CELLS entries) */
+          if (iFACCounter < NUM_FAC_CELLS)
             {
               /* piTableFAC[x * 2]: first column; piTableFAC[x * 2 + 1]:
            second column */

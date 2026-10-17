@@ -1,5 +1,11 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 0.55 — mode EasyPal plus fiable
+
+- Correction de plusieurs erreurs mémoire dans le modem EasyPal (hérité de QSSTV), qui pouvaient **fermer le programme sans message** sous Windows, notamment pendant la réception (indicatif de la station écrit un caractère trop loin) et à l'envoi de texte.
+- Le décodage des paramètres EasyPal (FAC) utilise maintenant le bon motif de poinçonnage lors de son deuxième passage.
+- Le signal émis est inchangé : toujours identique à celui de QSSTV, donc compatible EasyPal.
+
 ## Version 0.54 — envoi de texte en mode EasyPal
 
 - **Envoi de texte en mode EasyPal** : le bouton d'envoi de texte fonctionne maintenant aussi en mode EasyPal. Le message part comme dans EasyPal et QSSTV (petit fichier texte en HamDRM, avec vos réglages EasyPal), accents compris.
