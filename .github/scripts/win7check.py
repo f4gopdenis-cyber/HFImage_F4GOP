@@ -19,6 +19,7 @@ BAD_DLL = re.compile(r"api-ms-win-core-path|api-ms-win-core-synch-l1-2|api-ms-wi
 
 toc = open(sys.argv[1], encoding="utf-8", errors="replace").read()
 files = {re.sub(r"\\+", r"\\", p) for p in re.findall(r"'([A-Za-z]:\\[^']+?\.(?:dll|pyd|DLL|PYD))'", toc)}
+bundled = {os.path.basename(f).lower() for f in files}   # relais api-ms-win-* fournis avec l'exe (CRT universelle)
 files = [f for f in files if os.path.exists(f) and "\\windows\\system32\\" not in f.lower()]
 bad = {}
 for f in files:
@@ -30,7 +31,7 @@ for f in files:
             dll = e.dll.decode().lower()
             for imp in e.imports:
                 n = (imp.name or b"").decode()
-                if n in W8 or BAD_DLL.match(dll):
+                if n in W8 or (BAD_DLL.match(dll) and dll not in bundled):
                     bad.setdefault(os.path.basename(f), set()).add(f"{dll}:{n}")
 print(f"{len(files)} binaires analysés")
 for k, v in sorted(bad.items()):
