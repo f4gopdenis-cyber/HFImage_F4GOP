@@ -344,7 +344,8 @@ s += B(["<b>Bruit et QSB</b> : mode Auto + robustesse Auto. Si les pertes vienne
         "Un brouilleur <b>large posé sur le signal</b> (autre BLU sur la même fréquence) ne peut pas être effacé : "
         "décalez la fréquence."])
 s.append(P("Analyseur de réception", "h2"))
-s.append(P("Pour comprendre une réception ratée : bouton <b>WAVE</b> pour enregistrer, puis "
+s.append(P("Pour comprendre une réception ratée : bouton <b>WAVE</b> → <b>● Enregistrer RX</b> (ou menu "
+           "Fichiers → Enregistrement WAVE marche / arrêt) pendant la réception, puis "
            "<b>Fichiers → Analyser un enregistrement WAV…</b>. HFImage indique le niveau d'entrée (écrêtage, trop "
            "faible), le brouillage étroit et sa fréquence, pour chaque mode les trames justes / perdues, le SNR, "
            "le décalage de fréquence entre les postes, le type de pertes (QSB ou isolées), ce que le coupe-QRM a "

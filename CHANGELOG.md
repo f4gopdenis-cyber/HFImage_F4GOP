@@ -1,5 +1,11 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 0.36 — ménage
+
+- Vérification des commandes en double : aucune fonction définie deux fois ; les doublons restants sont voulus (même action dans un menu et sur un bouton, comme dans EasyPal).
+- 4 traductions présentes deux fois supprimées (« Annonce hybride » avait même deux traductions allemandes différentes).
+- Mode d'emploi : l'enregistrement d'une réception se fait par WAVE → « ● Enregistrer RX » (le bouton WAVE ouvre la fenêtre des fichiers WAV).
+
 ## Version 0.35 — image dans le waterfall
 
 - Comme EasyPal, une **image** (photo, logo, carte QSL) peut être dessinée dans le waterfall du correspondant : Action → Texte waterfall… → bouton **Image…** (« Texte » pour revenir au texte).

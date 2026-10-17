@@ -509,7 +509,6 @@ T = [
      "Mich melden und Stationen mit offenem HFImage sehen", "Anunciarme y ver las estaciones con HFImage abierto",
      "Segnalarmi e vedere le stazioni con HFImage aperto"),
     ("Serveur", "Server", "Server", "Servidor", "Server"),
-    ("Port", "Port", "Port", "Puerto", "Porta"),
     ("Appliquer", "Apply", "Übernehmen", "Aplicar", "Applica"),
     ("Partage seulement indicatif, locator et fréquence (serveur MQTT public).",
      "Only shares callsign, locator and frequency (public MQTT server).",
@@ -577,7 +576,6 @@ T = [
     ("(par défaut)", "(default)", "(Standard)", "(por defecto)", "(predefinito)"),
     # ------------------------------------------------------------ 0.18 : style de la carte QSL
     ("Style de la carte", "Card style", "Kartenstil", "Estilo de la tarjeta", "Stile della cartolina"),
-    ("Indicatif", "Callsign", "Rufzeichen", "Indicativo", "Nominativo"),
     ("Texte", "Text", "Text", "Texto", "Testo"),
     ("Locator / correspondant", "Locator / contact", "Locator / Gegenstation", "Locator / corresponsal",
      "Locator / corrispondente"),
@@ -663,7 +661,6 @@ T = [
     ("Minimum : environ {0}, ou choisissez un mode plus rapide.", "Minimum: about {0}, or choose a faster mode.",
      "Minimum: etwa {0}, oder schnelleren Modus wählen.", "Mínimo: unos {0}, o elija un modo más rápido.",
      "Minimo: circa {0}, o scegli un modo più veloce."),
-    ("Mode hybride", "Hybrid mode", "Hybridmodus", "Modo híbrido", "Modo ibrido"),
     ("Image déposée par FTP sur :", "Image uploaded by FTP to:", "Bild per FTP hochgeladen nach:",
      "Imagen subida por FTP a:", "Immagine caricata via FTP su:"),
     ("Annonce radio : ~11 s (DATAC3)", "Radio announcement: ~11 s (DATAC3)", "Funkankündigung: ~11 s (DATAC3)",
@@ -900,7 +897,6 @@ T = [
     ("Sortie audio impossible :", "Audio output failed:", "Audioausgang unmöglich:", "Salida de audio imposible:", "Uscita audio impossibile:"),
     ("Entrée audio impossible :", "Audio input failed:", "Audioeingang unmöglich:", "Entrada de audio imposible:", "Ingresso audio impossibile:"),
     ("Test du serveur échoué :", "Server test failed:", "Servertest fehlgeschlagen:", "Prueba del servidor fallida:", "Prova del server fallita:"),
-    ("Annonce hybride", "Hybrid announcement", "Hybridankündigung", "Anuncio híbrido", "Annuncio ibrido"),
     # ---- fenêtres WAVE et Texte waterfall
     ("Lire fichier Wave", "Play Wave file", "Wave-Datei abspielen", "Leer archivo Wave", "Leggi file Wave"),
     ("Mettre comme « begin.wav »", "Set as “begin.wav”", "Als „begin.wav“ setzen", "Poner como «begin.wav»",
