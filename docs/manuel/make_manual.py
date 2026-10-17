@@ -343,6 +343,10 @@ s.append(P("6. Stations en ligne, Rx Ok et carte", "h1"))
 s.append(P("Avec <b>Réglages → Internet</b> coché, chaque HFImage ouvert se signale sur un serveur public "
            "(indicatif, locator, fréquence, émission / réception) : la liste <b>Stations</b> montre tout de suite "
            "les stations qui ont HFImage ouvert, avec leur fréquence. Aucune autre donnée n'est partagée."))
+s.append(P("Dans la liste, <b>*</b> signale une station en émission (en rouge) et <b>H</b> une station en <b>mode "
+           "hybride</b> (en bleu) : coché chez elle, ou annonce hybride entendue par radio dans la dernière demi-heure. "
+           "Vos correspondants vous voient de même quand vous cochez « Mode hybride » (version 0.46 ou plus récente). "
+           "Double-clic sur une station : le détail s'affiche dans le journal."))
 s += B(["<b>Rx Ok</b> : les stations qui ont bien reçu l'image, avec leur <b>report en dB</b>, visibles par tous "
         "(par radio et par Internet).",
         "Clic sur une station : la <b>carte des stations</b> (comme Digi-Sites), avec le trajet et la distance. "

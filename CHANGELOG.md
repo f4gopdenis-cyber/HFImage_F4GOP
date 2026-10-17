@@ -1,5 +1,12 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 0.46 — les stations voient qui est en mode hybride
+
+- La présence Internet indique maintenant si « Mode hybride » est coché ; c'est republié dès qu'on coche ou décoche.
+- Panneau Stations : **H** et couleur bleue pour une station en mode hybride (présence Internet, ou annonce / image hybride entendue par radio dans la dernière demi-heure). Légende sous la liste : « * = en émission    H = mode hybride ».
+- Le double-clic sur une station et la carte indiquent « en mode hybride (image par Internet) ».
+- Les correspondants doivent avoir la version 0.46 pour voir votre mode hybride par Internet.
+
 ## Version 0.45 — passage hybride ↔ normal corrigé
 
 - Le format est maintenant mémorisé séparément pour la radio et pour l'hybride : « original » choisi en hybride (photo pleine qualité, GIF animé) ne reste plus en radio, où une grosse photo demandait des heures et laissait l'aperçu vide.

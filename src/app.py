@@ -49,7 +49,7 @@ import random
 import wave
 
 APP = "HFImage F4GOP"
-VERSION = "0.45"
+VERSION = "0.46"
 CONF_PATH = os.path.join(os.path.expanduser("~"), ".hfimage.json")
 DEFAULT_OUT = os.path.join(os.path.expanduser("~"), "Documents", "HFImage")
 DEFAULTS = {
@@ -1138,7 +1138,7 @@ class App(tk.Tk):
         body = tk.Frame(box, bg=GREEN)
         body.pack(fill="both", expand=True, padx=2, pady=(0, 2))
         mono = ("Consolas", 9) if sys.platform.startswith("win") else ("TkFixedFont", 9)
-        self.lst_heard = tk.Listbox(body, height=7, width=15, font=mono, activestyle="none",
+        self.lst_heard = tk.Listbox(body, height=7, width=17, font=mono, activestyle="none",
                                     bg="white", fg="#062e06", selectbackground="#2f9e2f")
         self.lst_heard.pack(side="left", fill="both", expand=True)
         sb = ttk.Scrollbar(body, orient="vertical", command=self.lst_heard.yview)
@@ -1147,6 +1147,8 @@ class App(tk.Tk):
         self.lst_rxok = tk.Listbox(body, height=7, width=14, font=mono, activestyle="none",
                                    bg="white", fg="#062e06", selectbackground="#2f9e2f")
         self.lst_rxok.pack(side="left", fill="both", padx=(2, 0))
+        tk.Label(box, text="* = en émission    H = mode hybride", bg=GREEN, fg=FG_DARK, anchor="w",
+                 font=("TkDefaultFont", 8)).pack(fill="x", padx=4)
         self.lst_heard.bind("<Double-Button-1>", lambda e: self._heard_detail())
         self.lst_rxok.bind("<Double-Button-1>", lambda e: self._heard_detail(self.lst_rxok))
         menu = tk.Menu(self, tearoff=0)
@@ -1178,7 +1180,8 @@ class App(tk.Tk):
         self._net_st = None
         try:
             self.net.start(call, {"loc": self.v_loc.get().strip(), "freq": self.rig_freq,
-                                  "mode": self.rig_mode, "state": "RX", "ver": VERSION, "app": "HFImage"})
+                                  "mode": self.rig_mode, "state": "RX", "ver": VERSION, "app": "HFImage",
+                                  "hyb": bool(self.v_hyb.get())})
         except Exception as e:
             self.log_exc("Présence Internet", e)
             self.net = None
@@ -1299,6 +1302,8 @@ class App(tk.Tk):
             if c in on:
                 d = on[c]
                 info.append(tr("en ligne") + (f", {audio.format_freq(d['freq'], True)}" if d.get("freq") else ""))
+            if self._is_hyb(c, on):
+                info.append(tr("en mode hybride (image par Internet)"))
             if c in self.rxok:
                 rep, t = self.rxok[c]
                 info.append(tr("a reçu votre image") + ("" if rep is None else f" (report {rep:+d} dB)")
@@ -1344,13 +1349,15 @@ class App(tk.Tk):
     def _mhz(hz):
         return f"{hz / 1e6:.3f}".replace(".", ",") if hz else "—"
 
-    def _heard(self, call, snr=None, what="", loc=None):
+    def _heard(self, call, snr=None, what="", loc=None, hyb=False):
         """Une station utilisant HFImage a été entendue (image, annonce, BSR, ACK, QRV)."""
         call = (call or "").strip().upper()
         if not call or call == "?" or call == self.v_call.get().strip().upper():
             return
         h = self.heard.setdefault(call, {"loc": ""})
         h.update(t=time.time(), freq=self.rig_freq, what=what)
+        if hyb or "hybride" in (what or "").lower():
+            h["hyb_t"] = time.time()              # annonce / image hybride entendue par radio
         if snr is not None:
             h["snr"] = snr
         if loc:
@@ -1407,16 +1414,20 @@ class App(tk.Tk):
         self._heard_names = sorted(set(on) | set(self.heard))
         self.lst_heard.delete(0, "end")
         for c in self._heard_names:
+            hyb = self._is_hyb(c, on)
+            tag = " H" if hyb else ""                                  # H = mode hybride
             if c in on:
                 d = on[c]
                 mark = "*" if d.get("state") == "TX" else " "        # * = en émission
-                self.lst_heard.insert("end", f"{c:<8}{mark}{self._mhz(d.get('freq'))}")
-                self.lst_heard.itemconfigure("end", fg=self._c("#c01818" if d.get("state") == "TX" else "#062e06"))
+                self.lst_heard.insert("end", f"{c:<8}{mark}{self._mhz(d.get('freq'))}{tag}")
+                self.lst_heard.itemconfigure("end", fg=self._c("#c01818" if d.get("state") == "TX" else
+                                                               ("#1f4fbf" if hyb else "#062e06")))
             else:
                 h = self.heard[c]
-                self.lst_heard.insert("end", f"{c:<8} {self._mhz(h.get('freq'))}")
-                # entendue par radio seulement (pas en ligne) : en gris-vert
-                self.lst_heard.itemconfigure("end", fg=self._c("#4a7a4a" if now - h["t"] < 1800 else "#8a9a8a"))
+                self.lst_heard.insert("end", f"{c:<8} {self._mhz(h.get('freq'))}{tag}")
+                # entendue par radio seulement (pas en ligne) : en gris-vert (bleu pâle si hybride)
+                self.lst_heard.itemconfigure("end", fg=self._c(("#5a78b8" if hyb else "#4a7a4a")
+                                                               if now - h["t"] < 1800 else "#8a9a8a"))
         self._rxok_names = sorted(self.rxok)
         self.lst_rxok.delete(0, "end")
         for c in self._rxok_names:
@@ -1428,6 +1439,14 @@ class App(tk.Tk):
         self._set_text(self.lb_rxok, tr(f"Rx Ok ({len(self.rxok)})"))
         if self.map_win is not None and self.map_win.alive() and self.map_win._drag is None:
             self.map_win.redraw()
+
+    def _is_hyb(self, c, on=None):
+        """La station est-elle en mode hybride ? (présence Internet, sinon annonce hybride
+        entendue par radio dans la dernière demi-heure)."""
+        on = on if on is not None else {str(d["call"]).upper(): d for d in self.online.values()}
+        if c in on and "hyb" in on[c]:
+            return bool(on[c]["hyb"])
+        return time.time() - self.heard.get(c, {}).get("hyb_t", 0) < 1800
 
     def _heard_detail(self, lst=None):
         lst = lst or self.lst_heard
@@ -1443,6 +1462,8 @@ class App(tk.Tk):
             parts.append(tr("en ligne") + (f", {audio.format_freq(d['freq'], True)}" if d.get("freq") else "")
                          + (f" {d['mode']}" if d.get("mode") else "")
                          + (" — " + tr("en émission") if d.get("state") == "TX" else ""))
+        if self._is_hyb(c):
+            parts.append(tr("en mode hybride (image par Internet)"))
         loc = h.get("loc") or self.known_loc.get(c)
         if loc:
             parts.append(loc)
@@ -1938,14 +1959,14 @@ class App(tk.Tk):
         # présence Internet : republiée à chaque changement (fréquence, émission…) et chaque minute
         if self.net is not None:
             st = (fr, self.rig_mode, "TX" if self.tx_busy else "RX", self.v_loc.get().strip(),
-                  self.v_call.get().strip().upper())
+                  self.v_call.get().strip().upper(), bool(self.v_hyb.get()))
             now = time.time()
             if st != getattr(self, "_net_st", None) or now - getattr(self, "_net_t", 0) > 60:
                 if st[4] and st[4] != self.net.call:
                     self.net_start()                         # indicatif changé : nouvelle présence
                 else:
                     self._net_st, self._net_t = st, now
-                    self.net.update(freq=fr, mode=self.rig_mode, state=st[2], loc=st[3])
+                    self.net.update(freq=fr, mode=self.rig_mode, state=st[2], loc=st[3], hyb=st[5])
         self.after(1000, self._clock)
 
     def _tick(self):
@@ -3567,7 +3588,7 @@ class App(tk.Tk):
             self.snr_by_id[hdr["id"]] = snr
         self.station_event(hdr.get("call"), kind + (" (hybride)" if hdr.get("hybrid") else ""), mode, snr,
                            f"{hdr['size']} octets")
-        self._heard(hdr.get("call"), snr, kind, hdr.get("loc"))
+        self._heard(hdr.get("call"), snr, kind, hdr.get("loc"), hyb=bool(hdr.get("hybrid")))
         if not hdr.get("preview"):
             # message texte seul : accusé de réception aussi (sans changer la liste Rx Ok de l'image)
             self._net_confirm(hdr["id"], hdr.get("call"), show=hdr.get("fmt") != "txt")
