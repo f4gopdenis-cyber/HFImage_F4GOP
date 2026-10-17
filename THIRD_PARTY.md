@@ -6,6 +6,7 @@ HFImage F4GOP s'appuie sur les composants libres suivants. Leurs licences s'appl
 |---|---|---|
 | [codec2](https://github.com/drowe67/codec2) (David Rowe et contributeurs) | Modems OFDM DATAC0/1/3/4, codes LDPC | LGPL-2.1 |
 | Mode DATAC1X (`codec2_patch/hfi_modes.c`) | Ajout à codec2, compilé dans `libcodec2.dll` | LGPL-2.1 (comme codec2) |
+| Modem HamDRM, mode EasyPal (`hamdrm/`, compilé dans `hamdrm.dll`) : [QSSTV](https://github.com/ON4QZ/QSSTV) (Johan Maes ON4QZ), Dream (Volker Fischer), RXAMADRM (Ties Bos PA0MBO) | Mode image d'EasyPal / QSSTV : OFDM, MOT, Reed-Solomon, BSR / FIX | GPL-3.0 (code source dans `hamdrm/`) |
 | [Natural Earth](https://www.naturalearthdata.com/) | Fond de la carte des stations (`carte.bin`) | Domaine public |
 | [Python](https://www.python.org/) | Langage, Tkinter | PSF License |
 | [NumPy](https://numpy.org/) | Calcul | BSD-3-Clause |

@@ -27,6 +27,7 @@ Programme Windows de F4GOP (Denis, IN98QR) pour envoyer et recevoir des photos p
 - **Aperçu rapide** : une petite image arrive en ~20 s, puis l'image complète la remplace.
 - **BSR / FIX** : une station à qui il manque des morceaux le demande, l'émetteur ne renvoie que ce qui manque.
 - **Mode hybride** : l'image passe par votre hébergement web (FTP), seul le lien passe par radio (~11 s). Fonctionne aussi pour les **GIF animés**.
+- **Mode EasyPal** (expérimental) : échange d'images avec les stations **EasyPal** et **QSSTV** dans leur mode image (HamDRM, JPEG 2000, Reed-Solomon, BSR / FIX). Les images EasyPal sont reçues automatiquement, en même temps que les modes DATAC.
 
 ### Comme dans EasyPal
 - Disposition familière : panneau d'état, grille de boutons, waterfall, onglets RX / TX.

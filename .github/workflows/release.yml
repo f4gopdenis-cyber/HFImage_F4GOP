@@ -64,9 +64,10 @@ jobs:
           $p = Start-Process -FilePath dist\HFImage_F4GOP.exe -ArgumentList "--selftest", "$env:RUNNER_TEMP\selftest.txt" -PassThru
           if (-not $p.WaitForExit(600000)) { $p.Kill(); throw "autotest trop long" }
           Get-Content "$env:RUNNER_TEMP\selftest.txt"
-          $r = (Select-String -Path "$env:RUNNER_TEMP\selftest.txt" -Pattern "DATAC|RÉSULTAT" | ForEach-Object { $_.Line }) -join " | "
+          $r = (Select-String -Path "$env:RUNNER_TEMP\selftest.txt" -Pattern "DATAC|HamDRM|RÉSULTAT" | ForEach-Object { $_.Line }) -join " | "
           echo "::notice::Autotest : $r"
           if (-not (Select-String -Path "$env:RUNNER_TEMP\selftest.txt" -Pattern "DATAC1X: .* -> OK" -Quiet)) { throw "modems en échec" }
+          if (-not (Select-String -Path "$env:RUNNER_TEMP\selftest.txt" -Pattern "HamDRM \(EasyPal\): .* -> OK" -Quiet)) { throw "mode EasyPal (hamdrm.dll) en échec" }
 
       - name: Nouveautés (CHANGELOG.md)
         if: steps.ver.outputs.exists == 'no'
@@ -163,6 +164,7 @@ jobs:
           if (-not $p.WaitForExit(600000)) { $p.Kill(); throw "autotest trop long" }
           Get-Content "$env:RUNNER_TEMP\selftest.txt"
           if (-not (Select-String -Path "$env:RUNNER_TEMP\selftest.txt" -Pattern "DATAC1X: .* -> OK" -Quiet)) { throw "modems en échec" }
+          if (-not (Select-String -Path "$env:RUNNER_TEMP\selftest.txt" -Pattern "HamDRM \(EasyPal\): .* -> OK" -Quiet)) { throw "mode EasyPal (hamdrm.dll) en échec" }
 
       - name: Ajout à la release
         if: steps.w7.outputs.todo == 'yes'

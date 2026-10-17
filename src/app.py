@@ -50,7 +50,7 @@ import random
 import wave
 
 APP = "HFImage F4GOP"
-VERSION = "0.50"
+VERSION = "0.51"
 CONF_PATH = os.path.join(os.path.expanduser("~"), ".hfimage.json")
 DEFAULT_OUT = os.path.join(os.path.expanduser("~"), "Documents", "HFImage")
 DEFAULTS = {
@@ -239,6 +239,9 @@ class App(tk.Tk):
         self.net_ok = False
         self.rxok_sent = set()      # images dont on a déjà confirmé la réception par Internet
         self.pending_fix = {}       # id -> BSR reçus en attente de FIX
+        self.drm_last_tx = None     # mode EasyPal : dernière image émise (pour répondre aux BSR)
+        self.drm_pending_bsr = None # mode EasyPal : BSR reçu en attente de FIX
+        self._drm_hint = None       # mode EasyPal : image incomplète déjà signalée
         self.bsr_state = {}         # id -> BSR envoyés (réception)
         self.ack_pending = {}       # id -> ACK à envoyer quand l'émetteur aura fini
         self.last_tx_id = None      # id de notre dernière image émise (carte : stations qui l'ont reçue)
@@ -835,7 +838,7 @@ class App(tk.Tk):
             cb = ttk.Combobox(self.drm_row, textvariable=v, values=vals, width=w, state="readonly")
             cb.pack(side="left")
             cb.bind("<<ComboboxSelected>>", lambda e: self._drm_changed())
-        ttk.Label(self.drm_row, text="  (compatible EasyPal / QSSTV, JPEG 2000)", foreground="#555").pack(side="left")
+        ttk.Label(self.drm_row, text="(compatible EasyPal / QSSTV, JPEG 2000)", foreground="#555").pack(side="left", padx=(10, 0))
         self._robust_widget = widgets[4][1]
         self.after_idle(self._drm_ui_update)
 
@@ -2998,6 +3001,8 @@ class App(tk.Tk):
             self.log(f"Mode Auto : {old} → {tx.mode}, robustesse {round(tx.overhead * 100)} % "
                      f"({self._tx_mode(explain=True)[1]})")
         job = {"kind": "image", "tx": tx, "complement": complement, "extra": extra}
+        if isinstance(tx, engine.DrmTransmission) and complement and self.drm_pending_bsr:
+            job.update(drm_bsr=self.drm_pending_bsr["bsr"], drm_need=self.drm_pending_bsr["need"])
         if isinstance(tx, HybridJob):
             job["kind"] = "hybrid"
             if complement and tx.announce is None:
@@ -3235,18 +3240,17 @@ class App(tk.Tk):
                 raise RuntimeError("aucune image EasyPal incomplète à demander")
             return (lambda: iter([a])), len(a) / 8000, engine.DRM_MODE, job["what"]
         tx = job["tx"]
+        drm_audio = None                  # mode EasyPal : signal HamDRM déjà fabriqué
         if isinstance(tx, engine.DrmTransmission):
             bsr = job.get("drm_bsr")
-            a = tx.audio8k(bsr)
-            if a is None:
+            drm_audio = tx.audio8k(bsr)
+            if drm_audio is None:
                 raise RuntimeError("le BSR reçu ne correspond plus à la dernière image émise")
-            dur, mode = len(a) / 8000, engine.DRM_MODE
+            dur, mode = len(drm_audio) / 8000, engine.DRM_MODE
             what = (f"FIX EasyPal, {job.get('drm_need', '?')} segments" if bsr else
                     f"EasyPal {hamdrm.describe(tx.params)}, {len(tx.data)} octets")
-            body = lambda: iter([a])
+            modem = frames = None
         elif kind == "hybrid":
-            body = None
-        if kind == "hybrid":
             if not job["complement"]:
                 cfg = job["cfg"]
                 name = hybrid.remote_name(tx.call, imgfmt.ext_for(tx.fmt))
@@ -3294,7 +3298,10 @@ class App(tk.Tk):
         def chunks():
             if begin is not None:
                 yield begin
-            yield from modem.modulate_iter(frames)
+            if drm_audio is not None:
+                yield drm_audio
+            else:
+                yield from modem.modulate_iter(frames)
             if end is not None:
                 yield end
             if cw is not None:
@@ -3474,6 +3481,7 @@ class App(tk.Tk):
         eng.on_hybrid = lambda h, m: self.ui(self._hybrid_announce, eng, h, m)
         eng.qrm = bool(self.conf.get("qrm_filter", True))
         eng.on_control = lambda *a: self.ui(self._on_control, *a)
+        eng.on_drm_bsr = lambda b, call, snr: self.ui(self._drm_bsr_heard, b, call, snr)
         return eng
 
     def _on_control(self, kind, iid, call, need, snr):
@@ -3513,10 +3521,43 @@ class App(tk.Tk):
         p["calls"].add(call)
         self._set_fix_text(f"FIX ({p['need']} symboles)")
 
+    def _drm_bsr_heard(self, bsr, call, snr):
+        """BSR reçu en mode EasyPal (d'EasyPal, de QSSTV ou de HFImage)."""
+        n = hamdrm.bsr_check(bsr) if self.drm_last_tx is not None else -1
+        self._heard(call, snr, "BSR EasyPal")
+        if n < 0:
+            self.station_event(call, "BSR EasyPal (autre QSO)", engine.DRM_MODE, snr, "")
+            return
+        p = self.drm_pending_bsr
+        if p is None or p["bsr"] != bsr:
+            self.drm_pending_bsr = p = {"bsr": bsr, "need": n, "calls": set(), "t": time.time(),
+                                        "rounds": (p or {}).get("rounds", 0)}
+        p["calls"].add(call)
+        self.station_event(call, f"BSR EasyPal : {n} segments", engine.DRM_MODE, snr, "")
+        self.log(f"BSR EasyPal de {call} : {n} segments demandés.")
+        self._set_fix_text(f"FIX ({n} segments)")
+
+    def _do_drm_fix(self, quiet=False):
+        p, tx = self.drm_pending_bsr, self.drm_last_tx
+        if not p or tx is None:
+            return False
+        if self.transmit(complement=True, tx=tx, quiet=quiet):
+            p["rounds"] += 1
+            self.drm_pending_bsr = None
+            self._set_fix_text("FIX")
+            self.station_event(", ".join(sorted(p["calls"])), f"FIX EasyPal envoyé : {p['need']} segments",
+                               engine.DRM_MODE, None, "")
+            return True
+        return False
+
     def _fix_due(self):
         """FIX automatique : quelques secondes après le premier BSR (pour regrouper
         les demandes de plusieurs stations), on envoie le maximum demandé."""
         now = time.time()
+        p = self.drm_pending_bsr
+        if (p and now - p["t"] >= 5 and not self.tx_busy and self.v_fix_auto.get()
+                and p["rounds"] < 5):
+            self._do_drm_fix(quiet=True)
         for iid, p in list(self.pending_fix.items()):
             if p["need"] <= 0 or now - p["t"] < 5 or self.tx_busy:
                 continue
@@ -3541,6 +3582,8 @@ class App(tk.Tk):
 
     def send_fix(self):
         """Bouton FIX : répond aux BSR en attente, sinon complément standard."""
+        if self.drm_pending_bsr and self._do_drm_fix():
+            return
         for iid, p in self.pending_fix.items():
             if p["need"] > 0 and self._do_fix(iid):
                 return
@@ -3555,6 +3598,14 @@ class App(tk.Tk):
         if eng is None or self.rx_stream is None or self.tx_busy:
             return
         now = time.time()
+        inc = eng.drm_incomplete()
+        if inc:
+            got, K, call = inc
+            key = (K, call, round(eng.drm_t))
+            if self._drm_hint != key:
+                self._drm_hint = key
+                self.log(f"Image EasyPal de {call} incomplète ({got}/{K} segments) : "
+                         "cliquez sur BSR pour demander les segments manquants.")
         for iid, got, K, end, age, mode, call in eng.incomplete():
             st = self.bsr_state.setdefault(iid, {"end": 0, "n": 0, "at": None})
             finished = (end > st["end"] and age > 1.5) or (age > 30 and st["n"] == 0 and got > 0)
@@ -3593,6 +3644,13 @@ class App(tk.Tk):
             messagebox.showinfo(APP, "Aucune image en cours de réception.")
             return
         inc = eng.incomplete()
+        drm = eng.drm_incomplete(wait=0)
+        if drm and (not inc or min(r[4] for r in inc) > time.time() - eng.drm_t):
+            got, K, call = drm                 # la plus récente est une image EasyPal
+            self._start_job({"kind": "drm_bsr", "params": self._drm_params(),
+                             "what": f"BSR EasyPal à {call} ({got}/{K} segments)"})
+            self.station_event(call, f"BSR EasyPal envoyé : {got}/{K}", engine.DRM_MODE, None, "")
+            return
         if not inc:
             messagebox.showinfo(APP, "Aucune image incomplète.")
             return
@@ -3677,7 +3735,8 @@ class App(tk.Tk):
                     break
                 lvl = float(np.sqrt(np.mean(x ** 2)))
                 self.rx_dbfs = 20 * np.log10(max(lvl, 1e-6)) + 3.0   # crête d'un sinus = RMS + 3 dB
-                y = ds.process(rs.process(x))
+                x48 = rs.process(x)
+                y = ds.process(x48)
                 self.ring.append(y)
                 self.ring_len += len(y)
                 while self.ring_len > RING_S * 8000:
@@ -3692,13 +3751,18 @@ class App(tk.Tk):
                 if rows:
                     self.ui(self.wf.add_rows, rows)
                 self.rx_engine.process(y)
+                try:
+                    self.rx_engine.process48(x48)          # mode EasyPal (HamDRM)
+                except Exception as e:
+                    self.ui(self.log_exc, "Réception EasyPal", e)
 
         threading.Thread(target=worker, daemon=True).start()
         self._set_text(self.btn_listen, "Écoute ON")
         self._btn_on("ecoute", True)
         self.v_state.set("RÉCEPTION")
         if not quiet:
-            self.log("Écoute démarrée (DATAC1X / DATAC1 / DATAC3 / DATAC4 + BSR/ACK en DATAC0).")
+            self.log("Écoute démarrée (DATAC1X / DATAC1 / DATAC3 / DATAC4 + BSR/ACK en DATAC0"
+                     + (" + EasyPal)." if hamdrm.AVAILABLE else ")."))
 
     def analyze_wav(self, path=None):
         """Diagnostic d'une réception enregistrée (niveau, QRM, trames, SNR, mode conseillé)."""
@@ -3729,9 +3793,19 @@ class App(tk.Tk):
                         self.ui(self.wf.add_rows, rows)
                     eng.process(x[i:i + step])
                 eng.process(np.zeros(8000 * 3, np.int16))   # vide les démodulateurs
-                n = len(eng.rcv.done)
+                if hamdrm.AVAILABLE:                         # puis le mode EasyPal, à 48 kHz
+                    engine.drm_claim(eng)
+                    try:
+                        x48 = engine.read_wav_48k(p)
+                        x48 = np.concatenate([x48, np.zeros(48000 * 3, np.float32)])
+                        for i in range(0, len(x48), 4800):
+                            eng.process48(x48[i:i + 4800])
+                    finally:
+                        engine.drm_release(eng)
+                n = len(eng.rcv.done) + eng.drm_files
                 h = len(eng.hyb_seen)
                 self.ui(self.log, f"Fichier traité : {n} image(s) reçue(s), {eng.last['frames']} trames valides."
+                        + (f" {eng.drm_files} en mode EasyPal." if eng.drm_files else "")
                         + (f" {h} annonce(s) hybride(s)." if h else ""))
             except Exception as e:
                 self.ui(self.log, f"Erreur de décodage : {e}")
@@ -3768,7 +3842,8 @@ class App(tk.Tk):
         if hdr.get("fmt") == "file":
             self._show_message(hdr.get("call"), tr("Fichier reçu :") + f" {hdr.get('filename', '?')} "
                                f"({_fmt_size(hdr.get('size', 0))}) — " + tr("double-clic dans l'historique pour l'ouvrir"))
-        snr = self.rx_engine.last.get("snr") if self.rx_engine else None
+        drm = mode == engine.DRM_MODE
+        snr = hdr.get("snr") if drm else (self.rx_engine.last.get("snr") if self.rx_engine else None)
         if snr is not None:
             self.snr_by_id[hdr["id"]] = snr
         self.station_event(hdr.get("call"), kind + (" (hybride)" if hdr.get("hybrid") else ""), mode, snr,
@@ -3777,12 +3852,15 @@ class App(tk.Tk):
         if not hdr.get("preview"):
             # message texte seul : accusé de réception aussi (sans changer la liste Rx Ok de l'image)
             self._net_confirm(hdr["id"], hdr.get("call"), show=hdr.get("fmt") != "txt")
-        if not hdr.get("preview") and self.v_ack_auto.get() and self.rx_stream is not None:
+        if not hdr.get("preview") and self.v_ack_auto.get() and self.rx_stream is not None and not drm:
+            # (EasyPal ne connaît pas l'ACK de HFImage : rien n'est émis en mode EasyPal)
             act = self.rx_engine.activity.get(hdr["id"], {}) if self.rx_engine else {}
             self.ack_pending[hdr["id"]] = {"call": hdr.get("call"), "end_at": act.get("end", 0)}
             if hdr.get("hybrid"):
                 # l'annonce hybride est répétée 3 fois (~11 s) : on attend qu'elle soit finie
                 self.ack_pending[hdr["id"]]["wait_until"] = time.time() + 12
+        if drm:
+            mode = f"EasyPal {hdr.get('drm', '')}".strip()
         self.log(f"{kind} {who} ({mode}, {hdr['size']} octets) : {os.path.basename(path)}")
         if hdr.get("preview"):
             mode = mode + " aperçu"
@@ -3966,7 +4044,15 @@ class App(tk.Tk):
             for i in range(0, len(x), 8000):
                 eng.process(x[i:i + 8000])
             eng.process(np.zeros(8000 * 3, np.int16))
-            self.ui(self.log, f"Relecture terminée : {len(eng.rcv.done)} élément(s) décodé(s) "
+            if hamdrm.AVAILABLE:          # mode EasyPal : le son gardé (8 kHz) suffit, il tient sous 3 kHz
+                engine.drm_claim(eng)
+                try:
+                    for i in range(0, len(x), 8000):
+                        eng.process48(audio.upsample(x[i:i + 8000]))
+                    eng.process48(np.zeros(48000 * 3, np.float32))
+                finally:
+                    engine.drm_release(eng)
+            self.ui(self.log, f"Relecture terminée : {len(eng.rcv.done) + eng.drm_files} élément(s) décodé(s) "
                               f"(dossier « relecture »).")
 
         threading.Thread(target=run, daemon=True).start()
@@ -4630,6 +4716,13 @@ def selftest(report_path, hyb_test=None):
         except Exception as e:
             ok_all = False
             lines.append(f"{mode}: ERREUR {e!r}")
+    # mode EasyPal (HamDRM, hamdrm.dll) : émission puis réception d'un fichier
+    try:
+        ok = hamdrm.selftest(lines.append)
+        ok_all &= ok
+    except Exception as e:
+        ok_all = False
+        lines.append(f"HamDRM (EasyPal): ERREUR {e!r}")
     # formats : SVG (rendu resvg + compression) et JPEG
     try:
         svg = (b'<svg xmlns="http://www.w3.org/2000/svg" width="200" height="100">'

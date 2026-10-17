@@ -1,5 +1,14 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 0.51 — mode EasyPal (expérimental) : échange d'images avec EasyPal et QSSTV
+
+- Nouveau mode **EasyPal** dans la liste des modes d'émission : HFImage parle maintenant le mode image d'**EasyPal** et de **QSSTV** (HamDRM : 2,3 ou 2,5 kHz, modes A / B / E, QAM 4 / 16 / 64). On peut envoyer des images aux stations qui utilisent encore EasyPal, et recevoir les leurs.
+- **Réception automatique** : les images EasyPal sont décodées en même temps que les modes DATAC, sans rien régler. Elles arrivent dans la fenêtre RX et la galerie comme les autres, avec l'indicatif et le mode (ex. « EasyPal B/2.5/Hi/16/Long »).
+- Réglages du mode EasyPal dans l'onglet TX : mode A / B / E, QAM, largeur, protection (HI / LO) et **Reed-Solomon** RS1 à RS4, comme dans EasyPal. Image en **JPEG 2000** (le format d'EasyPal), taille choisie pour tenir dans la durée demandée.
+- **BSR / FIX** compatibles EasyPal : bouton BSR pour demander les segments manquants d'une image EasyPal incomplète ; quand une station EasyPal demande des segments de votre image, le bouton FIX les renvoie (ou automatiquement, comme pour les modes DATAC).
+- Images EasyPal aussi décodées par « Décoder un fichier WAV » et « Relire RX ».
+- Mode **expérimental** : il reprend le modem de QSSTV, compatible avec EasyPal, mais n'a pas encore été essayé sur l'air avec des stations EasyPal. Merci de signaler vos essais !
+
 ## Version 0.50 — taille du texte en points, séparateur Stations / Rx Ok
 
 - Taille du texte en points : 8, 9 (normale), 10, 11, 12, 13, 14 (menu Réglages → Police et taille du texte, et Réglages → Apparence). Les anciens réglages sont convertis (Petite 8, Normale 9, Grande 11, Très grande 13).

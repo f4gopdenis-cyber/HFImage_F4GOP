@@ -405,6 +405,7 @@ class RxEngine:
         self.drm_t = 0.0             # dernière fois où un signal HamDRM était décodé
         self.drm_done_t = 0.0        # dernière image HamDRM complète
         self._drm_poll = 0.0
+        self.drm_files = 0           # fichiers reçus en HamDRM (bilan du décodage WAV)
         os.makedirs(outdir, exist_ok=True)
 
     def process(self, samples8k: np.ndarray):
@@ -448,34 +449,38 @@ class RxEngine:
             return
         self.drm.process(x48)
         now = time.time()
-        if now - self._drm_poll < 0.25:
-            return
-        self._drm_poll = now
-        st = self.drm.status()
-        self.drm_status = st
-        if st["fac_valid"]:
-            self.drm_t = now
-            prog = (st["seg_received"], st["seg_total"]) if st["seg_total"] > 0 else None
-            self.on_status(dict(snr=st["snr"], mode=DRM_MODE, frames=self.last["frames"], id=None,
-                                progress=prog, call=st["callsign"] or None))
-        for f in self.drm.files():
+        # fichiers et BSR terminés : relevés à chaque appel (un WAV est décodé bien plus
+        # vite que le temps réel, ils ne doivent pas rester dans le modem)
+        files, bsrs = self.drm.files(), self.drm.bsrs()
+        if now - self._drm_poll >= 0.25 or files or bsrs:
+            self._drm_poll = now
+            st = self.drm.status()
+            self.drm_status = st
+            if st["fac_valid"]:
+                self.drm_t = now
+                prog = (st["seg_received"], st["seg_total"]) if st["seg_total"] > 0 else None
+                self.on_status(dict(snr=st["snr"], mode=DRM_MODE, frames=self.last["frames"], id=None,
+                                    progress=prog, call=st["callsign"] or None))
+        st = self.drm_status
+        for f in files:
             self.drm_done_t = now
             self._save_drm(f)
-        for b in self.drm.bsrs():
+        for b in bsrs:
             self.on_drm_bsr(b, st.get("callsign") or "?", st.get("snr"))
 
-    def drm_incomplete(self):
-        """Image EasyPal en cours mais incomplète, signal fini depuis 3 s :
+    def drm_incomplete(self, wait=3.0):
+        """Image EasyPal en cours mais incomplète, signal fini depuis `wait` s :
         (reçus, total, indicatif) ou None."""
         st = self.drm_status
         if not st or st.get("seg_total", 0) <= 0 or st["seg_received"] >= st["seg_total"]:
             return None
-        if time.time() - self.drm_t < 3 or self.drm_done_t > self.drm_t:
+        if time.time() - self.drm_t < wait or self.drm_done_t > self.drm_t:
             return None
         return st["seg_received"], st["seg_total"], st.get("callsign") or "?"
 
     def _save_drm(self, f):
         """Fichier complet reçu en HamDRM (EasyPal / QSSTV)."""
+        self.drm_files += 1
         data, call = f["data"], f["callsign"] or "?"
         fmt = protocol.detect_format(data)
         iid = zlib.crc32(data + b"hamdrm") & 0xFFFF
