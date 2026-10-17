@@ -1,5 +1,12 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 0.41 — horloge à l'heure de Windows
+
+- L'horloge du programme affiche maintenant l'heure de Windows (heure locale, heure d'été comprise).
+- Un clic sur l'horloge passe à « heure de Windows + UTC », puis « UTC seule » ; le choix est gardé.
+- Les messages reçus sont horodatés à l'heure de Windows (avec l'UTC entre parenthèses dans la fenêtre Message reçu).
+- Le journal des stations et les cartes QSL restent en UTC.
+
 ## Version 0.40 — fenêtre « Message reçu »
 
 - Quand un correspondant envoie un message (texte seul ou joint à une image), une fenêtre s'ouvre au premier plan, avec un bip et le clignotement de la barre des tâches.

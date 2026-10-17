@@ -1193,6 +1193,10 @@ T = [
     ("Répondre…", "Reply…", "Antworten…", "Responder…", "Rispondere…"),
     ("Aucun message reçu pour l'instant.", "No message received yet.", "Noch keine Nachricht empfangen.", "Ningún mensaje recibido por ahora.", "Nessun messaggio ricevuto per ora."),
     ("avec une image", "with an image", "mit einem Bild", "con una imagen", "con un'immagine"),
+    # ------------------------------------------------------------ v0.41 : horloge
+    ("Horloge : heure de Windows", "Clock: Windows time", "Uhr: Windows-Zeit", "Reloj: hora de Windows", "Orologio: ora di Windows"),
+    ("Horloge : heure de Windows et UTC", "Clock: Windows time and UTC", "Uhr: Windows-Zeit und UTC", "Reloj: hora de Windows y UTC", "Orologio: ora di Windows e UTC"),
+    ("Horloge : UTC", "Clock: UTC", "Uhr: UTC", "Reloj: UTC", "Orologio: UTC"),
 ]
 
 _lang = "fr"

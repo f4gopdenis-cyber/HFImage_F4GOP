@@ -47,7 +47,7 @@ import random
 import wave
 
 APP = "HFImage F4GOP"
-VERSION = "0.40"
+VERSION = "0.41"
 CONF_PATH = os.path.join(os.path.expanduser("~"), ".hfimage.json")
 DEFAULT_OUT = os.path.join(os.path.expanduser("~"), "Documents", "HFImage")
 DEFAULTS = {
@@ -333,8 +333,10 @@ class App(tk.Tk):
         bar.pack(fill="x", pady=(2, 0))
         tk.Label(bar, textvariable=self.v_state, bg=GREEN_DARK, fg="white",
                  font=("TkDefaultFont", 9, "bold")).pack(side="left", padx=6)
-        self.lb_clock = tk.Label(bar, text="", bg=GREEN_DARK, fg="white")
+        self.lb_clock = tk.Label(bar, text="", bg=GREEN_DARK, fg="white", cursor="hand2",
+                                 font=("TkDefaultFont", 9, "bold"))
         self.lb_clock.pack(side="right", padx=6)
+        self.lb_clock.bind("<Button-1>", lambda e: self._clock_cycle())
         self.lb_freq = tk.Label(bar, text="", bg=GREEN_DARK, fg="#ffe066", font=("TkDefaultFont", 9, "bold"))
         self.lb_freq.pack(side="right", padx=12)
 
@@ -1869,8 +1871,28 @@ class App(tk.Tk):
         self.panel.set_freq(audio.format_freq(f), sub)
         self.lb_freq.configure(text=f"{audio.format_freq(f, True)}  {self.rig_mode or ''}")
 
+    def _clock_text(self):
+        """Horloge : heure de Windows (locale, heure d'été comprise), et/ou UTC — clic pour changer."""
+        how = self.conf.get("clock", "local")
+        loc = time.strftime("%H:%M:%S", time.localtime())
+        utc = time.strftime("%H:%M", time.gmtime())
+        if how == "utc":
+            return time.strftime("%H:%M:%S UTC", time.gmtime())
+        if how == "both":
+            return f"{loc}   ·   {utc} UTC"
+        return loc
+
+    def _clock_cycle(self):
+        order = ["local", "both", "utc"]
+        cur = self.conf.get("clock", "local")
+        self.conf["clock"] = order[(order.index(cur) + 1) % 3 if cur in order else 0]
+        self._save_conf_file()
+        self.lb_clock.configure(text=self._clock_text())
+        self.log({"local": "Horloge : heure de Windows", "both": "Horloge : heure de Windows et UTC",
+                  "utc": "Horloge : UTC"}[self.conf["clock"]])
+
     def _clock(self):
-        self.lb_clock.configure(text=time.strftime("%H:%M:%S UTC", time.gmtime()))
+        self.lb_clock.configure(text=self._clock_text())
         # liste des stations : fréquence affichée et couleurs selon l'ancienneté
         fr = self.rig_freq
         if fr != getattr(self, "_heard_fr", None) or int(time.time()) % 30 == 0:
@@ -3470,7 +3492,8 @@ class App(tk.Tk):
             snr0 = self.rx_engine.last.get("snr") if self.rx_engine else None
             img = None if hdr.get("fmt") in ("txt", "file") else (png if png and os.path.exists(png) else path)
             self._msg_popup(dict(id=hdr.get("id"), call=hdr.get("call"), text=hdr["text"], mode=mode, snr=snr0,
-                                 utc=time.strftime("%H:%M", time.gmtime()), image=img))
+                                 utc=time.strftime("%H:%M", time.gmtime()), local=time.strftime("%H:%M"),
+                                 image=img))
         kind = "Aperçu reçu" if hdr.get("preview") else ("Texte reçu" if hdr.get("fmt") == "txt" else
                                                          ("Fichier reçu" if hdr.get("fmt") == "file" else "Image reçue"))
         if hdr.get("fmt") == "file":
@@ -3523,7 +3546,7 @@ class App(tk.Tk):
 
     def _show_message(self, call, text):
         self.msgbox.configure(state="normal")
-        self.msgbox.insert("1.0", f"[{time.strftime('%H:%M', time.gmtime())} UTC] {call or '?'} : {text}\n")
+        self.msgbox.insert("1.0", f"[{time.strftime('%H:%M')}] {call or '?'} : {text}\n")
         self.msgbox.configure(state="disabled")
         self.log(f"Message de {call or '?'} : {text[:80]}")
 

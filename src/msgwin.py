@@ -145,7 +145,7 @@ class MessageWindow(tk.Toplevel):
         call = it.get("call")
         self.lb_call.configure(text=tr("Message de") + " " + (call if call not in (None, "", "?")
                                                               else tr("(indicatif à venir)")))
-        info = [it["utc"] + " UTC"]
+        info = [f"{it['local']}  ({it['utc']} UTC)" if it.get("local") else it["utc"] + " UTC"]
         if it.get("mode"):
             info.append(it["mode"])
         if it.get("snr") is not None:
