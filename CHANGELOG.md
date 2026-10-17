@@ -1,5 +1,12 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 0.48 — carte : seulement les stations qui ont reçu l'image
+
+- La carte des stations montre maintenant par défaut **seulement les stations qui ont reçu votre dernière image** (en vert, avec le trait depuis votre station) ; les stations simplement en ligne ou entendues n'y sont plus.
+- Nouvelle case « Aussi les autres stations (en jaune) » pour les rajouter ; le choix est gardé.
+- La carte se base sur votre dernière image émise, même si une image reçue entre-temps a changé la liste Rx Ok.
+- « Coller la carte dans la fenêtre TX » envoie donc une carte avec uniquement les stations qui vous ont reçu.
+
 ## Version 0.47 — fréquence devant le H dans le panneau Stations
 
 - La fréquence est maintenant toujours affichée devant le H (« F1BAL 14,230H »), sur la largeur d'origine de la liste.

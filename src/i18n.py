@@ -1216,6 +1216,8 @@ T = [
     # ------------------------------------------------------------ v0.46 : stations en hybride
     ("* = en émission    H = mode hybride", "* = transmitting    H = hybrid mode", "* = sendet    H = Hybridmodus", "* = transmitiendo    H = modo híbrido", "* = in trasmissione    H = modo ibrido"),
     ("en mode hybride (image par Internet)", "in hybrid mode (image via Internet)", "im Hybridmodus (Bild über Internet)", "en modo híbrido (imagen por Internet)", "in modo ibrido (immagine via Internet)"),
+    # ------------------------------------------------------------ v0.48 : carte
+    ("Aussi les autres stations (en jaune)", "Other stations too (in yellow)", "Auch andere Stationen (gelb)", "También las otras estaciones (en amarillo)", "Anche le altre stazioni (in giallo)"),
 ]
 
 _lang = "fr"

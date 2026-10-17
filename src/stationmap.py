@@ -288,7 +288,8 @@ def _star(g, x, y, r):
 class MapWindow:
     """Fenêtre « Carte des stations ». provider() -> (moi, [stations]) ; tr : traduction."""
 
-    def __init__(self, master, provider, tr=lambda s: s, lang=lambda: "fr", on_paste=None):
+    def __init__(self, master, provider, tr=lambda s: s, lang=lambda: "fr", on_paste=None,
+                 show_all=False, on_show_all=None):
         import tkinter as tk
         from tkinter import ttk
         self.tk, self.provider, self.tr, self.lang, self.on_paste = tk, provider, tr, lang, on_paste
@@ -305,9 +306,20 @@ class MapWindow:
         cb.set(tr("Europe"))
         cb.pack(side="left", padx=6, pady=4)
         cb.bind("<<ComboboxSelected>>", lambda e: self.set_view(self._names[self.v_view.get()]))
-        self.v_heard = tk.BooleanVar(value=True)
-        tk.Checkbutton(bar, text=tr("Stations entendues aussi"), variable=self.v_heard, bg="#33d633",
-                       activebackground="#33d633", command=self.redraw).pack(side="left", padx=6)
+        # par défaut : seulement les stations qui ont reçu notre image (en vert, avec le trait)
+        self.v_heard = tk.BooleanVar(value=show_all)
+        self.on_show_all = on_show_all
+
+        def toggled():
+            if self.on_show_all:
+                self.on_show_all(self.v_heard.get())
+            if self._preset == "*" and not self._moved:
+                self.set_view("*")              # recadre sur les stations affichées
+            else:
+                self.redraw()
+        tk.Checkbutton(bar, text=tr("Aussi les autres stations (en jaune)"),
+                       variable=self.v_heard, bg="#33d633", activebackground="#33d633",
+                       command=toggled).pack(side="left", padx=6)
         if on_paste:
             tk.Button(bar, text=tr("Coller la carte dans la fenêtre TX"),
                       command=self._paste).pack(side="left", padx=6)

@@ -49,7 +49,7 @@ import random
 import wave
 
 APP = "HFImage F4GOP"
-VERSION = "0.47"
+VERSION = "0.48"
 CONF_PATH = os.path.join(os.path.expanduser("~"), ".hfimage.json")
 DEFAULT_OUT = os.path.join(os.path.expanduser("~"), "Documents", "HFImage")
 DEFAULTS = {
@@ -228,6 +228,7 @@ class App(tk.Tk):
         self.pending_fix = {}       # id -> BSR reçus en attente de FIX
         self.bsr_state = {}         # id -> BSR envoyés (réception)
         self.ack_pending = {}       # id -> ACK à envoyer quand l'émetteur aura fini
+        self.last_tx_id = None      # id de notre dernière image émise (carte : stations qui l'ont reçue)
         self.sent_msgs = {}         # id -> message envoyé : texte, heure, mode, accusés {indicatif: (report, t, via)}
         self.bsr_target = None
         self.ctl_seen = {}
@@ -1295,7 +1296,12 @@ class App(tk.Tk):
         me = {"call": mycall, "loc": myloc, "pos": protocol.locator_to_latlon(myloc), "info": tr("votre station")}
         out = []
         on = {str(d["call"]).upper(): d for d in self.online.values()}
-        for c in sorted(set(self.heard) | set(self.rxok) | set(on)):
+        # stations qui ont reçu NOTRE dernière image (même si Rx Ok affiche depuis une image reçue)
+        if self.last_tx_id is not None:
+            mine = self.rxok_by_id.get(self.last_tx_id, {})
+        else:
+            mine = self.rxok if self.rxok_ctx in self.my_ids else {}
+        for c in sorted(set(self.heard) | set(mine) | set(on)):
             h = self.heard.get(c, {})
             loc = (on.get(c) or {}).get("loc") or h.get("loc") or self.known_loc.get(c, "")
             info = []
@@ -1304,8 +1310,8 @@ class App(tk.Tk):
                 info.append(tr("en ligne") + (f", {audio.format_freq(d['freq'], True)}" if d.get("freq") else ""))
             if self._is_hyb(c, on):
                 info.append(tr("en mode hybride (image par Internet)"))
-            if c in self.rxok:
-                rep, t = self.rxok[c]
+            if c in mine:
+                rep, t = mine[c]
                 info.append(tr("a reçu votre image") + ("" if rep is None else f" (report {rep:+d} dB)")
                             + " " + clocktz.fmt("%H:%M", t))
             elif h.get("t"):
@@ -1315,7 +1321,7 @@ class App(tk.Tk):
             if h.get("freq") and c not in on:
                 info.append(audio.format_freq(h["freq"], True))
             # trait depuis notre station seulement vers ceux qui ont reçu NOTRE image
-            ok = c in self.rxok and self.rxok_ctx in self.my_ids
+            ok = c in mine
             out.append({"call": c, "loc": loc, "pos": protocol.locator_to_latlon(loc), "ok": ok,
                         "info": "   —   ".join(info)})
         return me, out
@@ -1323,16 +1329,24 @@ class App(tk.Tk):
     def show_map(self, call=None):
         if self.map_win is None or not self.map_win.alive():
             self.map_win = stationmap.MapWindow(self, self._map_data, tr=tr, lang=i18n.get_lang,
-                                                on_paste=self._map_to_tx)
+                                                on_paste=self._map_to_tx,
+                                                show_all=bool(self.conf.get("map_all", False)),
+                                                on_show_all=self._map_all_changed)
             self.look.apply(self.map_win.win)
             self.map_win.win.update_idletasks()
-            self.map_win.set_view("*" if (self.rxok or self.heard) else "Europe")
+            me, st = self._map_data()
+            self.map_win.set_view("*" if any(x["ok"] for x in st) or (self.conf.get("map_all") and st)
+                                  else "Europe")
         else:
             self.map_win.win.deiconify()
             self.map_win.win.lift()
         if call:
             self.map_win.win.update_idletasks()
             self.map_win.focus(call)
+
+    def _map_all_changed(self, v):
+        self.conf["map_all"] = bool(v)
+        self._save_conf_file()
 
     def _map_to_tx(self, img):
         """« Coller l'image dans la fenêtre TX » (comme EasyPal) : la carte devient l'image à émettre."""
@@ -2862,6 +2876,8 @@ class App(tk.Tk):
         if not complement:
             # nouvelle image : nouvelle liste Rx Ok (l'id d'une annonce hybride est connu plus tard)
             self._rxok_reset(None if isinstance(tx, HybridJob) else tx.image_id)
+            if not isinstance(tx, HybridJob):
+                self.last_tx_id = tx.image_id     # pour la carte : qui a reçu NOTRE dernière image
         ok = self._start_job(job, quiet)
         if ok and not complement and not isinstance(tx, HybridJob) and getattr(tx, "msg_text", ""):
             self._msg_sent(tx.image_id, tx.msg_text, tx.mode, with_image=True)
@@ -3079,6 +3095,7 @@ class App(tk.Tk):
                 tx.announce = engine.HybridTransmission(tx.data, tx.fmt, tx.call, url)
                 self.my_ids.add(tx.announce.image_id)
                 self.ui(self._rxok_show, tx.announce.image_id)
+                self.ui(setattr, self, "last_tx_id", tx.announce.image_id)
             modem, frames, mode = tx.announce.modem, tx.announce.frames(), tx.announce.mode
             dur, what = tx.announce.estimate_s(), f"annonce hybride {mode}"
         else:

@@ -350,6 +350,8 @@ s.append(P("Dans la liste, <b>*</b> signale une station en émission (en rouge) 
 s += B(["<b>Rx Ok</b> : les stations qui ont bien reçu l'image, avec leur <b>report en dB</b>, visibles par tous "
         "(par radio et par Internet).",
         "Clic sur une station : la <b>carte des stations</b> (comme Digi-Sites), avec le trajet et la distance. "
+        "Elle montre en vert, avec un trait, les stations qui ont reçu <b>votre dernière image</b> ; la case "
+        "« Aussi les autres stations (en jaune) » ajoute les stations en ligne ou entendues. "
         "« Coller la carte dans la fenêtre TX » pour l'envoyer en image.",
         "Pare-feu qui bloque le port 1883 : essayez 8883 (chiffré) ou 8000 (web)."])
 s.append(img("carte_stations.png", 150, "La carte des stations qui ont reçu l'image."))
