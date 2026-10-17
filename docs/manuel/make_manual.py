@@ -281,6 +281,12 @@ s.append(table([["Mode", "Largeur", "Débit utile", "En 2 min", "Usage"],
                 ["DATAC4", "0,25 kHz", "~85 bit/s", "~1 ko", "Très faibles signaux"],
                 ["DATAC0", "0,6 kHz", "—", "—", "BSR, ACK, présence (automatique)"]],
                [20, 20, 25, 22, 83]))
+s.append(P("Mes conditions de trafic", "h2"))
+s.append(P("Case <b>Mes conditions de trafic</b> (onglet TX) et bouton <b>…</b> à côté (ou menu Images) : un bandeau est "
+           "incrusté en bas ou en haut de l'image émise, avec votre indicatif, locator, QTH, poste (lu par CAT si le "
+           "champ est vide), puissance, antenne, fréquence, date et heure UTC, et un texte libre. Chaque élément "
+           "peut être coché ou non ; l'aperçu se met à jour en direct. Le bandeau passe avec l'image, il est donc "
+           "visible chez tous les correspondants, quelle que soit leur version."))
 s.append(P("Envoyer un fichier", "h2"))
 s.append(P("Bouton <b>Envoyer un fichier…</b> (onglet TX) ou menu Images : n'importe quel fichier (texte, PDF, ZIP, "
            "journal ADIF…). Il est compressé s'il y gagne, protégé par le même code fontaine que les images (BSR / FIX "

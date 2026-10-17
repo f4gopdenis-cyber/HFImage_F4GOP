@@ -1,5 +1,11 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 0.37 — mes conditions de trafic sur l'image
+
+- Case **Mes conditions de trafic** dans l'onglet TX (et bouton « … », ou menu Images → Mes conditions de trafic…) : un bandeau est incrusté sur l'image émise.
+- Contenu au choix : indicatif, locator, QTH, poste (lu par CAT si le champ est vide), puissance, antenne, fréquence (CAT), date et heure UTC, texte libre.
+- Position en bas ou en haut, trois tailles de texte, aperçu en direct. Le bandeau fait partie de l'image : visible chez tous les correspondants.
+
 ## Version 0.36 — ménage
 
 - Vérification des commandes en double : aucune fonction définie deux fois ; les doublons restants sont voulus (même action dans un menu et sur un bouton, comme dans EasyPal).

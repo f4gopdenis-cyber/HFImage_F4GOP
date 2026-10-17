@@ -1141,6 +1141,21 @@ T = [
     ("Émettre ?", "Transmit?", "Senden?", "¿Transmitir?", "Trasmettere?"),
     ("Texte ou image dans le waterfall", "Text or image in the waterfall", "Text oder Bild im Wasserfall", "Texto o imagen en la cascada", "Testo o immagine nel waterfall"),
     ("Texte / image waterfall", "Waterfall text / image", "Wasserfall-Text / Bild", "Texto / imagen en cascada", "Testo / immagine waterfall"),
+    # ------------------------------------------------------------ v0.37 : conditions de trafic
+    ("Mes conditions de trafic", "My station info", "Meine Stationsdaten", "Mis condiciones de tráfico", "Le mie condizioni di traffico"),
+    ("Mes conditions de trafic…", "My station info…", "Meine Stationsdaten…", "Mis condiciones de tráfico…", "Le mie condizioni di traffico…"),
+    ("Ajouter ces informations sur les images émises", "Add this information to sent images", "Diese Angaben in gesendete Bilder einfügen", "Añadir esta información a las imágenes enviadas", "Aggiungere queste informazioni alle immagini inviate"),
+    ("Poste", "Rig", "Gerät", "Equipo", "Radio"),
+    ("Puissance (W)", "Power (W)", "Leistung (W)", "Potencia (W)", "Potenza (W)"),
+    ("Antenne", "Antenna", "Antenne", "Antena", "Antenna"),
+    ("QTH", "QTH", "QTH", "QTH", "QTH"),
+    ("Autre", "Other", "Sonstiges", "Otro", "Altro"),
+    ("vide = poste lu par CAT", "empty = rig read by CAT", "leer = per CAT gelesenes Gerät", "vacío = equipo leído por CAT", "vuoto = radio letta via CAT"),
+    ("Fréquence (CAT)", "Frequency (CAT)", "Frequenz (CAT)", "Frecuencia (CAT)", "Frequenza (CAT)"),
+    ("Date et heure UTC", "UTC date and time", "Datum und Uhrzeit UTC", "Fecha y hora UTC", "Data e ora UTC"),
+    ("Taille du texte", "Text size", "Textgröße", "Tamaño del texto", "Dimensione del testo"),
+    ("En bas", "Bottom", "Unten", "Abajo", "In basso"),
+    ("En haut", "Top", "Oben", "Arriba", "In alto"),
 ]
 
 _lang = "fr"

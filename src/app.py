@@ -27,6 +27,7 @@ import imgfmt
 import presence
 import gallery
 import websync
+import trafic
 import radio
 import radiodlg
 import contextlib
@@ -45,7 +46,7 @@ import random
 import wave
 
 APP = "HFImage F4GOP"
-VERSION = "0.36"
+VERSION = "0.37"
 CONF_PATH = os.path.join(os.path.expanduser("~"), ".hfimage.json")
 DEFAULT_OUT = os.path.join(os.path.expanduser("~"), "Documents", "HFImage")
 DEFAULTS = {
@@ -512,6 +513,7 @@ class App(tk.Tk):
         i = tk.Menu(m, tearoff=0)
         i.add_command(label="Ouvrir une image…", command=self.open_image)
         i.add_command(label="Envoyer un fichier…", command=self.send_file)
+        i.add_command(label="Mes conditions de trafic…", command=self.trafic_dialog)
         i.add_command(label="Carte QSL…", command=self.qsl_dialog)
         i.add_separator()
         i.add_command(label="Image reçue en plein format", command=self._open_full)
@@ -733,6 +735,15 @@ class App(tk.Tk):
         ttk.Checkbutton(r2, text="Texte inclus", variable=self.v_txtinc,
                         command=lambda: (self._btn_on("txtinc", self.v_txtinc.get()), self.prepare())).pack(side="left")
         ttk.Checkbutton(r2, text="ID morse en fin d'émission", variable=self.v_cwid).pack(side="left", padx=12)
+        self.v_tcon = tk.BooleanVar(value=bool(self.conf.get("tc_on")))
+
+        def _tc_toggle():
+            self.conf["tc_on"] = bool(self.v_tcon.get())
+            self._save_conf_file()
+            self.prepare()
+        ttk.Checkbutton(r2, text="Mes conditions de trafic", variable=self.v_tcon,
+                        command=_tc_toggle).pack(side="left")
+        ttk.Button(r2, text="…", width=3, command=self.trafic_dialog).pack(side="left", padx=(2, 0))
 
         bar = self._green_bar(t)
         self.v_txinfo = TrVar(value="")
@@ -2085,6 +2096,106 @@ class App(tk.Tk):
         self.v_sec.set(MODE_SEC.get(self.v_mode.get(), 120))
         self.prepare()
 
+    def _tx_source(self):
+        """Image à émettre : l'image ouverte, avec « mes conditions de trafic » si la case est cochée."""
+        if self.src_img is None or not self.conf.get("tc_on"):
+            return self.src_img
+        freq = audio.format_freq(self.rig_freq, True) if self.rig_freq else ""
+        model = getattr(self.rig, "model", "") if self.rig is not None else ""
+        items = trafic.parts(self.conf, self.v_call.get().strip().upper(), self.v_loc.get().strip().upper(),
+                             model or "", freq)
+        key = (id(self.src_img), tuple(i for i in items if not i.endswith(" UTC")),
+               self.conf.get("tc_pos"), self.conf.get("tc_size"))
+        c = getattr(self, "_tc_cache", None)
+        if c and c[0] == key:
+            return c[1]
+        im = trafic.overlay(self.src_img, items, self.conf.get("tc_pos", "bas"), self.conf.get("tc_size", "normale"))
+        self._tc_cache = (key, im)
+        return im
+
+    def trafic_dialog(self):
+        """Fenêtre « Mes conditions de trafic » (bandeau incrusté sur l'image émise)."""
+        w = getattr(self, "_tc_win", None)
+        if w is not None and w.winfo_exists():
+            w.lift()
+            return
+        w = self._tc_win = tk.Toplevel(self)
+        w.title("Mes conditions de trafic")
+        w.transient(self)
+        w.resizable(False, False)
+        f = ttk.Frame(w, padding=12)
+        f.pack(fill="both", expand=True)
+        c = dict(trafic.DEFAULT, **{k: v for k, v in self.conf.items() if k.startswith("tc_")})
+        model = getattr(self.rig, "model", "") if self.rig is not None else ""
+        v = {k: tk.StringVar(value=str(c[k])) for k in ("tc_rig", "tc_power", "tc_ant", "tc_qth", "tc_extra")}
+        b = {k: tk.BooleanVar(value=bool(c[k])) for k in ("tc_on", "tc_call", "tc_loc", "tc_freq", "tc_date")}
+        pos_names = {"bas": tr("En bas"), "haut": tr("En haut")}
+        size_names = {"petite": tr("Petite"), "normale": tr("Normale"), "grande": tr("Grande")}
+        v_pos = tk.StringVar(value=pos_names.get(c["tc_pos"], pos_names["bas"]))
+        v_size = tk.StringVar(value=size_names.get(c["tc_size"], size_names["normale"]))
+        ttk.Checkbutton(f, text="Ajouter ces informations sur les images émises", variable=b["tc_on"]).grid(
+            row=0, column=0, columnspan=3, sticky="w")
+        rows = [("Poste", "tc_rig", tr("vide = poste lu par CAT") + (f" ({model})" if model else "")),
+                ("Puissance (W)", "tc_power", "ex. 100"), ("Antenne", "tc_ant", "ex. dipôle 40 m, Yagi 3 él."),
+                ("QTH", "tc_qth", "ex. Flers (61)"), ("Autre", "tc_extra", "ex. TNX QSO 73 !")]
+        for i, (lab, k, hint) in enumerate(rows, 1):
+            ttk.Label(f, text=lab).grid(row=i, column=0, sticky="w", pady=2)
+            ttk.Entry(f, textvariable=v[k], width=30).grid(row=i, column=1, sticky="w", padx=6, pady=2)
+            ttk.Label(f, text=hint, foreground="#777").grid(row=i, column=2, sticky="w")
+        cf = ttk.Frame(f)
+        cf.grid(row=7, column=0, columnspan=3, sticky="w", pady=(6, 0))
+        for k, lab in (("tc_call", "Indicatif"), ("tc_loc", "Locator"), ("tc_freq", "Fréquence (CAT)"),
+                       ("tc_date", "Date et heure UTC")):
+            ttk.Checkbutton(cf, text=lab, variable=b[k]).pack(side="left", padx=(0, 10))
+        pf = ttk.Frame(f)
+        pf.grid(row=8, column=0, columnspan=3, sticky="w", pady=(6, 0))
+        ttk.Label(pf, text="Position").pack(side="left")
+        ttk.Combobox(pf, textvariable=v_pos, values=list(pos_names.values()), width=8, state="readonly").pack(
+            side="left", padx=6)
+        ttk.Label(pf, text="Taille du texte").pack(side="left", padx=(10, 0))
+        ttk.Combobox(pf, textvariable=v_size, values=list(size_names.values()), width=9, state="readonly").pack(
+            side="left", padx=6)
+        cv = tk.Label(f, bg="black")
+        cv._no_theme = True
+        cv.grid(row=9, column=0, columnspan=3, pady=(10, 0))
+
+        def store():
+            for k, var in v.items():
+                self.conf[k] = var.get().strip()
+            for k, var in b.items():
+                self.conf[k] = bool(var.get())
+            self.conf["tc_pos"] = next(k for k, n in pos_names.items() if n == v_pos.get())
+            self.conf["tc_size"] = next(k for k, n in size_names.items() if n == v_size.get())
+            self._save_conf_file()
+            if hasattr(self, "v_tcon"):
+                self.v_tcon.set(bool(self.conf["tc_on"]))
+
+        def preview(*_):
+            store()
+            on = self.conf.get("tc_on")
+            self.conf["tc_on"] = True
+            base = self.src_img
+            if base is None:
+                base = Image.new("RGB", (640, 480), (40, 90, 140))
+                self.src_img = base
+                im = self._tx_source()
+                self.src_img = None
+            else:
+                im = self._tx_source()
+            self.conf["tc_on"] = on
+            im = im.copy()
+            im.thumbnail((480, 360))
+            self._photos["tc"] = ImageTk.PhotoImage(im)
+            cv.configure(image=self._photos["tc"])
+
+        for var in list(v.values()) + list(b.values()) + [v_pos, v_size]:
+            var.trace_add("write", lambda *a: self.after_idle(preview))
+        bt = ttk.Frame(f)
+        bt.grid(row=10, column=0, columnspan=3, sticky="e", pady=(10, 0))
+        ttk.Button(bt, text="OK", command=lambda: (store(), w.destroy(), self.prepare())).pack(side="left")
+        preview()
+        self._translate_ui(w)
+
     def _robust_choice(self):
         """-> pourcentage choisi, ou None pour « Auto »."""
         v = self.v_over.get()
@@ -2159,14 +2270,16 @@ class App(tk.Tk):
             over = self._robust_pct(mode) / 100
         except (tk.TclError, ValueError):
             return
-        if fmt == "original" and (self.src_raw is None or self.src_kind not in ORIGINAL_KINDS):
-            fmt = "jpeg"                      # carte QSL, BMP, TIFF… : réencodé en JPEG
+        src = self._tx_source()
+        if fmt == "original" and (self.src_raw is None or self.src_kind not in ORIGINAL_KINDS
+                                  or src is not self.src_img):
+            fmt = "jpeg"                      # carte QSL, BMP, TIFF, bandeau ajouté… : réencodé en JPEG
         pfmt = fmt if fmt in ("avif", "webp") else "avif"
         # aperçu rapide : seulement pour les émissions longues, pris sur la durée totale
         preview = None
         if self.v_prev.get() and seconds >= PREVIEW_MIN_S:
             w = {"DATAC1X": 200, "DATAC1": 160, "DATAC3": 128, "DATAC4": 96}[mode]
-            preview = engine.compress(self.src_img, w, PREVIEW_BYTES[mode], pfmt)[0]
+            preview = engine.compress(src, w, PREVIEW_BYTES[mode], pfmt)[0]
             seconds_main = seconds - engine.Transmission(preview, pfmt, "X", mode, 0.25).estimate_s() + 0.7
         else:
             seconds_main = seconds
@@ -2178,9 +2291,9 @@ class App(tk.Tk):
                 data, fmt = self._payload(fmt)
                 q, size = None, (self.src_img.width, self.src_img.height)
             elif width == "auto":
-                data, q, size = engine.compress_auto(self.src_img, budget, fmt)
+                data, q, size = engine.compress_auto(src, budget, fmt)
             else:
-                data, q, size = engine.compress(self.src_img, width, budget, fmt)
+                data, q, size = engine.compress(src, width, budget, fmt)
         finally:
             self.config(cursor="")
         if len(data) > budget:
@@ -2230,7 +2343,7 @@ class App(tk.Tk):
             lines.append(f"Aperçu reçu après ~{self.tx.preview_s():.0f} s")
         if q is not None and q < 35:
             # combien de temps pour une qualité correcte à cette taille ?
-            need = engine.bytes_for_quality(self.src_img, size[0], 45, fmt)
+            need = engine.bytes_for_quality(src, size[0], 45, fmt)
             t_need = seconds
             while engine.max_bytes_for(mode, t_need, over) < need and t_need < 7200:
                 t_need += 15
@@ -2250,7 +2363,9 @@ class App(tk.Tk):
         if anim and fmt != "original":
             self.v_fmt.set("original")         # un GIF animé part tel quel (animation gardée)
             fmt = "original"
-        if fmt == "original" and (self.src_raw is None or self.src_kind not in ORIGINAL_KINDS):
+        src = self.src_img if anim else self._tx_source()
+        if fmt == "original" and (self.src_raw is None or self.src_kind not in ORIGINAL_KINDS
+                                  or src is not self.src_img):
             fmt = "jpeg"
         how = ""
         if anim:
@@ -2274,7 +2389,7 @@ class App(tk.Tk):
             data, fmt = self._payload(fmt, hybrid=True)
             q, size = None, (self.src_img.width, self.src_img.height)
         else:
-            data, q, size = engine.compress(self.src_img, width, int(kb * 1000), fmt)
+            data, q, size = engine.compress(src, width, int(kb * 1000), fmt)
         call = self.v_call.get().strip().upper() or "NOCALL"
         key = ("hyb", data, fmt, call)
         if self.tx is None or getattr(self.tx, "key", None) != key:
