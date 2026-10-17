@@ -1218,6 +1218,11 @@ T = [
     ("en mode hybride (image par Internet)", "in hybrid mode (image via Internet)", "im Hybridmodus (Bild über Internet)", "en modo híbrido (imagen por Internet)", "in modo ibrido (immagine via Internet)"),
     # ------------------------------------------------------------ v0.48 : carte
     ("Aussi les autres stations (en jaune)", "Other stations too (in yellow)", "Auch andere Stationen (gelb)", "También las otras estaciones (en amarillo)", "Anche le altre stazioni (in giallo)"),
+    # ------------------------------------------------------------ v0.49 : gras, HYB
+    ("Texte en gras", "Bold text", "Fettschrift", "Texto en negrita", "Testo in grassetto"),
+    ("Police et taille du texte", "Text font and size", "Schrift und Textgröße", "Fuente y tamaño del texto", "Carattere e dimensione del testo"),
+    ("Police, couleurs…", "Font, colours…", "Schrift, Farben…", "Fuente, colores…", "Carattere, colori…"),
+    ("* = en émission    HYB = mode hybride", "* = transmitting    HYB = hybrid mode", "* = sendet    HYB = Hybridmodus", "* = transmitiendo    HYB = modo híbrido", "* = in trasmissione    HYB = modo ibrido"),
 ]
 
 _lang = "fr"

@@ -109,6 +109,7 @@ class Appearance:
         self.orig = {}                  # widget -> {option: valeur d'origine}
         self.theme, self.custom, self.family, self.scale = "Vert EasyPal", None, None, 1.0
         self.text = None                # couleur du texte choisie (None : celle du thème)
+        self.bold = False               # tout le texte en gras
         self.map = make_mapper(self.theme)
         self.named = {}
         for n in ("TkDefaultFont", "TkTextFont", "TkFixedFont", "TkMenuFont", "TkHeadingFont",
@@ -125,7 +126,7 @@ class Appearance:
         self.ttk_theme0 = self.style.theme_use()
         self.ttk_fg0 = {st: self.style.lookup(st, "foreground") for st in TTK_TEXT}
 
-    def set(self, theme=None, custom=None, family=None, scale=None, text=None):
+    def set(self, theme=None, custom=None, family=None, scale=None, text=None, bold=None):
         if theme is not None:
             self.theme = theme
         if custom is not None:
@@ -136,6 +137,8 @@ class Appearance:
             self.scale = float(scale)
         if text is not None:
             self.text = text or None             # "" : couleur du thème
+        if bold is not None:
+            self.bold = bool(bold)
         base = make_mapper(self.theme, self.custom)
         txt = self.text
 
@@ -159,7 +162,8 @@ class Appearance:
             fam = a["family"]
             if self.family and n != "TkFixedFont":
                 fam = self.family
-            f.configure(family=fam, size=self._size(a["size"]))
+            f.configure(family=fam, size=self._size(a["size"]),
+                        weight="bold" if self.bold else a.get("weight", "normal"))
 
     def _font(self, desc):
         try:
@@ -181,7 +185,10 @@ class Appearance:
             new_fam = self.family or self.named.get("TkDefaultFont", (None, {"family": fam}))[1]["family"]
         else:
             new_fam = self.family or fam
-        return (new_fam, self._size(size), *rest[1:])
+        styles = [s for s in rest[1:] if s != "normal"]
+        if self.bold and "bold" not in styles:
+            styles.append("bold")
+        return (new_fam, self._size(size), *styles)
 
     # ---------------------------------------------------------------- couleurs
     def _norm(self, w, c):

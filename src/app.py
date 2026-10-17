@@ -49,7 +49,7 @@ import random
 import wave
 
 APP = "HFImage F4GOP"
-VERSION = "0.48"
+VERSION = "0.49"
 CONF_PATH = os.path.join(os.path.expanduser("~"), ".hfimage.json")
 DEFAULT_OUT = os.path.join(os.path.expanduser("~"), "Documents", "HFImage")
 DEFAULTS = {
@@ -191,6 +191,8 @@ class App(tk.Tk):
         self._set_icon()
         self.conf = load_conf()
         clocktz.MODE = self.conf.get("clock", "local")
+        self.v_fbold = tk.BooleanVar(value=bool(self.conf.get("font_bold")))       # menu Police / Réglages
+        self.v_msize = tk.StringVar(value=self.conf.get("font_size", "Normale"))
         self.geometry(self.conf.get("win_geom") or "1320x880")
         self.minsize(900, 600)
         if self.conf.get("win_zoomed"):
@@ -353,6 +355,17 @@ class App(tk.Tk):
         self._translate_ui()
 
     # ------------------------------------------------------------------ apparence
+    def _font_menu(self):
+        """Menu Réglages → Police et taille du texte : gras et taille, appliqués tout de suite."""
+        self.conf["font_bold"] = bool(self.v_fbold.get())
+        size = self.v_msize.get()
+        if hasattr(self, "v_fsize"):
+            self.v_fsize.set(tr(size))
+        else:
+            self.conf["font_size"] = size
+        self._apply_look()
+        self._save_conf_file()
+
     def _apply_look(self, save=True):
         """Thème de couleurs et police choisis dans les Réglages (appliqués tout de suite)."""
         th = self._theme_names.get(self.v_theme.get(), self.v_theme.get()) if hasattr(self, "v_theme") \
@@ -362,8 +375,11 @@ class App(tk.Tk):
             else self.conf.get("font_size", "Normale")
         self.look.set(theme=th if th in theme.THEMES or th == "Personnalisée" else "Vert EasyPal",
                       custom=self.conf.get("theme_color"), family=fam,
-                      scale=theme.FONT_SIZES.get(size, 1.0), text=self.conf.get("text_color") or "")
+                      scale=theme.FONT_SIZES.get(size, 1.0), text=self.conf.get("text_color") or "",
+                      bold=bool(self.conf.get("font_bold")))
         self.conf.update(theme=th, font_family=fam, font_size=size)
+        if hasattr(self, "v_msize") and self.v_msize.get() != size:
+            self.v_msize.set(size)
         try:
             self.wf.configure(bg="#000")
         except Exception:
@@ -490,6 +506,15 @@ class App(tk.Tk):
         r.add_command(label="Poste radio…", command=self.radio_dialog)
         r.add_command(label="Vérifier le poste (CAT)", command=self.check_rig)
         r.add_command(label="Tester le PTT (1 s)", command=self.test_ptt)
+        r.add_separator()
+        pm = tk.Menu(r, tearoff=0)
+        pm.add_checkbutton(label="Texte en gras", variable=self.v_fbold, command=self._font_menu)
+        pm.add_separator()
+        for n in theme.FONT_SIZES:
+            pm.add_radiobutton(label=n, value=n, variable=self.v_msize, command=self._font_menu)
+        pm.add_separator()
+        pm.add_command(label="Police, couleurs…", command=self.show_settings)
+        r.add_cascade(label="Police et taille du texte", menu=pm)
         r.add_separator()
         r.add_command(label="Enregistrer les réglages", command=self.save_conf)
         r.add_command(label="Ouvrir le journal", command=self.open_journal)
@@ -1139,7 +1164,7 @@ class App(tk.Tk):
         body = tk.Frame(box, bg=GREEN)
         body.pack(fill="both", expand=True, padx=2, pady=(0, 2))
         mono = ("Consolas", 9) if sys.platform.startswith("win") else ("TkFixedFont", 9)
-        self.lst_heard = tk.Listbox(body, height=7, width=15, font=mono, activestyle="none",
+        self.lst_heard = tk.Listbox(body, height=7, width=18, font=mono, activestyle="none",
                                     bg="white", fg="#062e06", selectbackground="#2f9e2f")
         self.lst_heard.pack(side="left", fill="both", expand=True)
         sb = ttk.Scrollbar(body, orient="vertical", command=self.lst_heard.yview)
@@ -1148,7 +1173,7 @@ class App(tk.Tk):
         self.lst_rxok = tk.Listbox(body, height=7, width=14, font=mono, activestyle="none",
                                    bg="white", fg="#062e06", selectbackground="#2f9e2f")
         self.lst_rxok.pack(side="left", fill="both", padx=(2, 0))
-        tk.Label(box, text="* = en émission    H = mode hybride", bg=GREEN, fg=FG_DARK, anchor="w",
+        tk.Label(box, text="* = en émission    HYB = mode hybride", bg=GREEN, fg=FG_DARK, anchor="w",
                  font=("TkDefaultFont", 8)).pack(fill="x", padx=4)
         self.lst_heard.bind("<Double-Button-1>", lambda e: self._heard_detail())
         self.lst_rxok.bind("<Double-Button-1>", lambda e: self._heard_detail(self.lst_rxok))
@@ -1361,7 +1386,7 @@ class App(tk.Tk):
 
     @staticmethod
     def _mhz(hz):
-        return f"{hz / 1e6:.3f}".replace(".", ",") if hz else "—"
+        return f"{hz / 1e6:.3f}" if hz else "—"
 
     def _heard(self, call, snr=None, what="", loc=None, hyb=False):
         """Une station utilisant HFImage a été entendue (image, annonce, BSR, ACK, QRV)."""
@@ -1429,7 +1454,7 @@ class App(tk.Tk):
         self.lst_heard.delete(0, "end")
         for c in self._heard_names:
             hyb = self._is_hyb(c, on)
-            tag = "H" if hyb else ""                                   # H = mode hybride, après la fréquence
+            tag = " HYB" if hyb else ""                                # HYB = mode hybride, après la fréquence
             h = self.heard.get(c, {})
             if c in on:
                 d = on[c]
@@ -1701,6 +1726,8 @@ class App(tk.Tk):
         cb_s.grid(row=1, column=3, sticky="w", padx=4, pady=(4, 0))
         for cb in (cb_t, cb_f, cb_s):
             cb.bind("<<ComboboxSelected>>", lambda e: self._apply_look())
+        ttk.Checkbutton(af, text="Gras", variable=self.v_fbold, command=self._font_menu).grid(
+            row=1, column=4, sticky="w", padx=4, pady=(4, 0))
         ttk.Label(af, text="Couleur du texte").grid(row=2, column=0, sticky="w", pady=(4, 0))
         tcf = ttk.Frame(af)
         tcf.grid(row=2, column=1, columnspan=3, sticky="w", padx=4, pady=(4, 0))

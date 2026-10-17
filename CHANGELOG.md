@@ -1,5 +1,10 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 0.49 — texte en gras, taille dans le menu, « HYB » dans la liste des stations
+
+- Nouveau menu **Réglages → Police et taille du texte** : « Texte en gras » et taille (Petite, Normale, Grande, Très grande), appliqués tout de suite à tout le programme. Case « Gras » aussi dans Réglages → Apparence. Le choix est gardé.
+- Liste des stations : « F1ABL 7.058 HYB » (fréquence avec un point, puis HYB pour le mode hybride) ; légende « HYB = mode hybride ».
+
 ## Version 0.48 — carte : seulement les stations qui ont reçu l'image
 
 - La carte des stations montre maintenant par défaut **seulement les stations qui ont reçu votre dernière image** (en vert, avec le trait depuis votre station) ; les stations simplement en ligne ou entendues n'y sont plus.

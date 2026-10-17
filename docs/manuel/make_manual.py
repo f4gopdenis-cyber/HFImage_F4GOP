@@ -313,6 +313,10 @@ s.append(P("Dès qu'un message est bien reçu, le programme du correspondant ren
            "au bout de 3 minutes. Une ligne verte « ✓ F1BAL a bien reçu votre message » s'ajoute aussi dans le cadre "
            "« Messages reçus » et dans le journal des stations. Le correspondant doit avoir la version 0.43 ou plus récente "
            "pour les messages texte seuls ; un texte joint à une image est confirmé avec l'image."))
+s.append(P("Police, taille et gras", "h2"))
+s.append(P("Menu <b>Réglages → Police et taille du texte</b> : « Texte en gras » et la taille (Petite, Normale, Grande, "
+           "Très grande), appliqués tout de suite à tout le programme, listes comprises. Le choix de la police et des "
+           "couleurs est dans Réglages → Apparence (case « Gras » aussi)."))
 s.append(P("Horloge", "h2"))
 s.append(P("L'horloge en bas à droite affiche l'heure de Windows (heure d'été comprise). Un clic dessus passe à "
            "« heure de Windows + UTC », puis « UTC seule », puis revient. Ce choix vaut pour tout le programme : "
@@ -343,7 +347,7 @@ s.append(P("6. Stations en ligne, Rx Ok et carte", "h1"))
 s.append(P("Avec <b>Réglages → Internet</b> coché, chaque HFImage ouvert se signale sur un serveur public "
            "(indicatif, locator, fréquence, émission / réception) : la liste <b>Stations</b> montre tout de suite "
            "les stations qui ont HFImage ouvert, avec leur fréquence. Aucune autre donnée n'est partagée."))
-s.append(P("Dans la liste, <b>*</b> signale une station en émission (en rouge) et <b>H</b> une station en <b>mode "
+s.append(P("Dans la liste, <b>*</b> signale une station en émission (en rouge) et <b>HYB</b> une station en <b>mode "
            "hybride</b> (en bleu) : coché chez elle, ou annonce hybride entendue par radio dans la dernière demi-heure. "
            "Vos correspondants vous voient de même quand vous cochez « Mode hybride » (version 0.46 ou plus récente). "
            "Double-clic sur une station : le détail s'affiche dans le journal."))
