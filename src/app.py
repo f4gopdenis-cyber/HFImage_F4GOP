@@ -53,7 +53,7 @@ import random
 import wave
 
 APP = "HFImage F4GOP"
-VERSION = "0.61"
+VERSION = "0.62"
 CONF_PATH = os.path.join(os.path.expanduser("~"), ".hfimage.json")
 DEFAULT_OUT = os.path.join(os.path.expanduser("~"), "Documents", "HFImage")
 DEFAULTS = {
@@ -69,7 +69,7 @@ DEFAULTS = {
     "theme": "Vert EasyPal", "theme_color": "#3a8ee6", "font_family": "(par défaut)", "font_size": "9",
     "locator": "", "bsr_auto": True, "fix_auto": True, "ack_auto": True, "listen_after": True,
     "cwid": False, "cat_freq": True, "lang": "",
-    "drm_mode": "B", "drm_qam": "QAM16", "drm_bw": "2,4 kHz", "drm_prot": "Haute (HI)", "drm_rs": "Aucun",
+    "drm_mode": "B", "drm_qam": "QAM16", "drm_bw": "2,4 kHz", "drm_prot": "Haute (HI)", "drm_rs": "RS2",
     "wav_volume": 5, "wft_font": "Arial", "wft_neg": False, "wft_text": "",
 }
 TX_MODES = ["Auto", "DATAC1X", "DATAC1", "DATAC3", "DATAC4"] + (["EasyPal"] if hamdrm.AVAILABLE else [])
@@ -162,6 +162,9 @@ def load_conf():
         if saved.get("conf_v", 0) < 24 and str(c.get("overhead")) in ("10", "40"):
             # v0.24 : robustesse « Auto » (15 % si le lien est bon, 40 % s'il est juste)
             c["overhead"] = "auto"
+        if saved.get("conf_v", 0) < 62 and c.get("drm_rs") == "Aucun":
+            # v0.62 : Reed-Solomon RS2 par défaut en EasyPal (image complète malgré le QSB)
+            c["drm_rs"] = "RS2"
         if c.get("fmt") not in FORMATS_TX:
             c["fmt"] = {"jpeg": "jpg"}.get(c.get("fmt"), "avif")
     except Exception:
@@ -2297,7 +2300,7 @@ class App(tk.Tk):
                 width=self.v_width.get(), seconds=int(self.v_sec.get()),
                 fmt=self._fmt_mem["radio"] if self._fmt_side == "hyb" else self.v_fmt.get(),
                 hyb_fmt=self.v_fmt.get() if self._fmt_side == "hyb" else self._fmt_mem["hyb"],
-                overhead=self._robust_conf(), conf_v=24,
+                overhead=self._robust_conf(), conf_v=62,
                 out_dev=self.v_out.get(), in_dev=self.v_in.get(), level=int(self.v_lvl.get()),
                 radio=self.radio_cfg,
                 folder=self.v_folder.get(),

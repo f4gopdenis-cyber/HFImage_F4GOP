@@ -1,5 +1,11 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 0.62 — EasyPal plus robuste dans le bruit
+
+- **Réception EasyPal** : le décodeur calcule maintenant la fiabilité de chaque bit de façon exacte (distances au carré) : environ **0,5 dB de mieux en QAM16**, identique en QAM4. Rien ne change pour les autres stations.
+- **Émission EasyPal** : **Reed-Solomon RS2 par défaut** (le réglage « Aucun » existant passe à RS2 une seule fois, vous pouvez le remettre). Avec un peu de QSB, quelques segments se perdent toujours et l'image restait incomplète ; avec RS2, elle est reconstruite sans attendre de BSR/FIX. Mesuré au simulateur en mode B / QAM16 avec QSB léger : image complète **dès 14 dB au lieu de 17 à 20 dB**, pour une émission environ 18 % plus longue. RS est lu par EasyPal et QSSTV : le signal reste 100 % compatible.
+- Le signal émis reste celui d'EasyPal (on ne peut pas changer le format sans perdre la compatibilité) ; le niveau moyen avait déjà été relevé de 4 dB en 0.59.
+
 ## Version 0.61 — listes de cartes son sans doublons
 
 - **Sortie vers le poste / Entrée depuis le poste** : chaque appareil n'apparaît plus qu'**une fois**, avec son nom complet. Windows présente chaque carte son plusieurs fois (MME, DirectSound, WASAPI…) ; HFImage choisit lui-même l'interface la plus sûre et, si elle échoue, essaie toujours automatiquement les autres pour le même appareil.

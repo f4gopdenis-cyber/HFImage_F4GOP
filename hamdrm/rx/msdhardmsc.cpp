@@ -25,6 +25,9 @@
 
 #define ITER_BREAK
 #define CONSIDERING_SNR
+/* HFImage : vraisemblance des bits calculée sur les distances au carré (mesuré :
+   environ +0,5 dB en QAM16, identique en QAM4) */
+#define HFI_SQUARED_LLR
 
 #ifdef CONSIDERING_SNR
 
@@ -392,6 +395,11 @@ int msdhardmsc(double *received_real, double *received_imag, int Lrxdata,
 		  SNR =
 		    (float) signal_to_noise_ratio[sample_index >>
 						  (1 - HMmix)];
+		  /* HFImage : distances au carré = vraisemblance correcte pour un bruit gaussien */
+#ifdef HFI_SQUARED_LLR
+		  closest_zero *= closest_zero;
+		  closest_one *= closest_one;
+#endif
 		  llr[sample_index] = (closest_zero - closest_one) * SNR;
 
 		  /* printf("llr[%d] = %g\n", sample_index, llr[sample_index]);   */
@@ -505,6 +513,11 @@ int msdhardmsc(double *received_real, double *received_imag, int Lrxdata,
 		      SNR =
 			(float) signal_to_noise_ratio[sample_index >>
 						      (1 - HMmix)];
+		      /* HFImage : distances au carré = vraisemblance correcte pour un bruit gaussien */
+#ifdef HFI_SQUARED_LLR
+		      closest_zero *= closest_zero;
+		      closest_one *= closest_one;
+#endif
 		      llr[sample_index] = (closest_zero - closest_one) * SNR;
 
 		      /* llr[sample_index] = (closest_zero*closest_zero - closest_one*closest_one) * SNR * SNR; */
