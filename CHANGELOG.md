@@ -1,5 +1,10 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 0.65 — le mode d'émission change dès le début de la réception
+
+- Le passage automatique sur le mode reçu (EasyPal ↔ HFImage) se fait maintenant **dès que l'image commence à arriver**, et plus seulement quand elle est complète. Les réglages A / B / E et QAM d'EasyPal sont repris quand l'image est complète.
+- Rappel : la réception décode toujours les deux modes, quel que soit le mode d'émission choisi. Si l'image HFImage reste incomplète, le BSR part automatiquement (en DATAC0) à la fin de l'émission du correspondant, même en mode EasyPal ; c'est le FIX du correspondant qui complète l'image.
+
 ## Version 0.64 — bascule automatique sur l'onglet Réception
 
 - Quand une image commence à arriver (HFImage ou EasyPal) alors que l'onglet **Émission** est affiché, HFImage passe **tout de suite** sur l'onglet **Réception** pour la montrer, comme EasyPal, sans attendre la fin de l'image. Si vous revenez sur l'onglet Émission pendant la réception, le programme vous y laisse jusqu'à la fin de l'image. Rien ne bascule pendant vos propres émissions.

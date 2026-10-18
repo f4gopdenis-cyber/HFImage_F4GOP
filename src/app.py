@@ -53,7 +53,7 @@ import random
 import wave
 
 APP = "HFImage F4GOP"
-VERSION = "0.64"
+VERSION = "0.65"
 CONF_PATH = os.path.join(os.path.expanduser("~"), ".hfimage.json")
 DEFAULT_OUT = os.path.join(os.path.expanduser("~"), "Documents", "HFImage")
 DEFAULTS = {
@@ -2162,6 +2162,8 @@ class App(tk.Tk):
         got, K = st.get("seg_received", 0), st.get("seg_total", 0)
         if K > 0:
             self._rx_tab_auto(("easypal", K, st.get("callsign") or good.get("callsign")))
+            # dès le début : mode EasyPal (A/B/E et QAM repris quand l'image sera complète)
+            self._follow_mode({"call": st.get("callsign") or good.get("callsign"), "hybrid": True}, None, True)
             done = eng.drm_done_t >= eng.drm_t - 1 and got >= K
             P.set_cell("Total", "RX", str(K))
             P.set_cell("Segs OK", "RX", str(min(got, K)))
@@ -4010,6 +4012,7 @@ class App(tk.Tk):
         self.log(f"Décodage de {os.path.basename(p)}…")
         eng = self._new_engine()
         eng.on_image = lambda *a: self.ui(self._got_image, *a, True)      # fichier : mode d'émission gardé
+        eng.on_status = lambda st: self.ui(self._rx_status, dict(st, from_file=True))
 
         def run():
             try:
@@ -4053,8 +4056,10 @@ class App(tk.Tk):
         self.v_rxstat.set(txt)
         if prog:
             got, K = prog
-            if st["mode"] != "DATAC0":
+            if st["mode"] not in ("DATAC0", engine.DRM_MODE) and not st.get("from_file"):
                 self._rx_tab_auto(("datac", st.get("id")))
+                # dès le début de l'image : l'émission passe sur le mode reçu (réponse, BSR…)
+                self._follow_mode({"call": st.get("call")}, None, False)
             self.pb_rx.configure(value=100 * min(got, K) / K)
             self.v_rxstat.set(txt + f"\nImage en cours : {min(got, K)} / {K} symboles "
                                     f"({100 * min(got, K) // K} %)")
@@ -4157,7 +4162,8 @@ class App(tk.Tk):
             if not changes:
                 return
             v = self.v_drm
-            what = f"EasyPal {v['drm_mode'].get()} / {v['drm_bw'].get()} / {v['drm_qam'].get()}"
+            what = "EasyPal" if changes == ["EasyPal"] else \
+                f"EasyPal {v['drm_mode'].get()} / {v['drm_bw'].get()} / {v['drm_qam'].get()}"
         else:
             if cur != engine.DRM_MODE:
                 return                               # déjà en HFImage : réglage de l'utilisateur gardé
