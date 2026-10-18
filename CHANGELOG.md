@@ -1,5 +1,11 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 0.58 — panneau d'état en mode EasyPal
+
+- **Panneau de gauche en réception EasyPal** : il affiche maintenant l'indicatif de la station, le S/B, le mode (« EP B/16 » = EasyPal mode B, QAM16), la largeur, le débit, le nombre de segments reçus et la progression, comme pour les modes DATAC. Les voyants Sync, Trame, Image et BSR suivent la réception EasyPal.
+- Après la fin du signal, le panneau garde les dernières valeurs valides (mode, S/B) au lieu d'afficher le bruit.
+- En émission EasyPal, la colonne TX indique aussi le mode, la largeur et le débit.
+
 ## Version 0.57 — indicatif des messages texte plus fiable
 
 - **Messages texte** : la trame d'identification, qui porte l'indicatif de l'expéditeur, part maintenant **deux fois** à la fin du message. Avec un signal faible ou du QSB, le message passait souvent alors que cette unique trame était perdue, et la fenêtre « Message reçu » restait sur « (indicatif à venir) ». Au simulateur (QSB faible, 6 dB), l'indicatif manquait sur 7 messages sur 39 ; il ne manque plus que sur 1. Compatible avec les versions précédentes.

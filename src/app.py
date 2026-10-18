@@ -52,7 +52,7 @@ import random
 import wave
 
 APP = "HFImage F4GOP"
-VERSION = "0.57"
+VERSION = "0.58"
 CONF_PATH = os.path.join(os.path.expanduser("~"), ".hfimage.json")
 DEFAULT_OUT = os.path.join(os.path.expanduser("~"), "Documents", "HFImage")
 DEFAULTS = {
@@ -1888,6 +1888,12 @@ class App(tk.Tk):
         self.panel.set_cell("Mode", "TX", mode or job["kind"])
         self.panel.set_cell("Bande kHz", "TX", f"{MODE_BW.get(mode, 0):.2f}" if mode else "—")
         self.panel.set_cell("Débit b/s", "TX", str(MODE_BPS.get(mode, "—")))
+        if mode == engine.DRM_MODE:
+            p = getattr(tx, "params", None) or self._drm_params()
+            self.panel.set_cell("Mode", "TX", f"EP {'ABE'[p.mode]}/{(4, 16, 64)[p.qam]}")
+            self.panel.set_cell("Bande kHz", "TX", "2.30" if p.bandwidth == 0 else "2.50")
+            rate = self._drm_rate(p.mode, p.bandwidth, p.qam, p.protection)
+            self.panel.set_cell("Débit b/s", "TX", str(rate) if rate else "—")
         sender = getattr(tx, "sender", None)       # (une émission EasyPal n'en a pas)
         if sender is not None and not isinstance(tx, HybridJob):
             self.panel.set_cell("Total", "TX", str(sender.K))
@@ -2075,6 +2081,64 @@ class App(tk.Tk):
             self.log_exc("Mise à jour", e)
         self.after(300, self._tick)
 
+    _drm_rates = {}
+
+    def _drm_rate(self, mode, bw, qam, prot):
+        """Débit utile EasyPal (bit/s) pour ces réglages, calculé par le modem (mis en cache)."""
+        key = (mode, bw, qam, prot)
+        if key not in self._drm_rates and hamdrm.AVAILABLE:
+            try:
+                p = hamdrm.make_params("RATE", mode=mode, bandwidth=bw, qam=qam, protection=prot)
+                d = hamdrm.estimate(60000, p) - hamdrm.estimate(20000, p)
+                self._drm_rates[key] = int(round(8 * 40000 / d)) if d > 0 else None
+            except Exception:
+                self._drm_rates[key] = None
+        return self._drm_rates.get(key)
+
+    def _update_panel_drm(self, eng, now, listening):
+        """Panneau de gauche quand la réception la plus récente est en mode EasyPal.
+        -> True si le panneau a été rempli avec les infos EasyPal."""
+        st = getattr(eng, "drm_status", None) or {}
+        if not st or not listening:
+            return False
+        act_t = max([a["t"] for a in eng.activity.values()] or [0])
+        recent = now - eng.drm_t < 15                   # signal EasyPal décodé il y a peu
+        if not (st.get("time_sync") or recent) or act_t > eng.drm_t:
+            return False                                # rien en EasyPal, ou un mode DATAC plus récent
+        P = self.panel
+        P.set_led("Sync", LED_GREEN if st.get("time_sync") else LED_OFF)
+        if st.get("fac_valid"):
+            P.set_led("Trame", LED_GREEN if st.get("msc_valid") else LED_RED)
+        else:
+            P.set_led("Trame", LED_AMBER if st.get("frame_sync") else LED_OFF)
+        if not recent:
+            return True                                 # synchronisation en cours : seulement les voyants
+        good = getattr(eng, "drm_good", None) or st      # derniers paramètres valides
+        snr = good.get("snr")
+        P.set_bar("SNR", snr, -10, 20, "" if snr is None else f"{snr:+.0f} dB")
+        m = good.get("mode", -1)
+        qam = good.get("qam", 0)
+        bw = good.get("bandwidth", 1)
+        prot = good.get("protection", 0)
+        # cellule de 7 caractères : « EP B/16 » (EP = EasyPal)
+        mode_txt = "EP " + ("ABE"[m] if 0 <= m <= 2 else "?") + (f"/{qam}" if qam else "")
+        P.set_cell("Mode", "RX", mode_txt)
+        P.set_cell("Bande kHz", "RX", "2.30" if bw == 0 else "2.50")
+        rate = self._drm_rate(m, bw, {4: 0, 16: 1, 64: 2}.get(qam, 1), 1 if prot == 1 else 0) \
+            if 0 <= m <= 2 else None
+        P.set_cell("Débit b/s", "RX", str(rate) if rate else "—")
+        if good.get("callsign") or st.get("callsign"):
+            P.set_call(st.get("callsign") or good.get("callsign"))
+        got, K = st.get("seg_received", 0), st.get("seg_total", 0)
+        if K > 0:
+            done = eng.drm_done_t >= eng.drm_t - 1 and got >= K
+            P.set_cell("Total", "RX", str(K))
+            P.set_cell("Segs OK", "RX", str(min(got, K)))
+            P.set_cell("Position", "RX", f"{100 * min(got, K) // K} %")
+            P.set_led("Image", LED_GREEN if done or got >= K else LED_AMBER)
+            P.set_led("BSR", LED_AMBER if eng.drm_incomplete() else LED_OFF)
+        return True
+
     def _update_panel(self):
         P = self.panel
         now = time.time()
@@ -2088,6 +2152,11 @@ class App(tk.Tk):
         eng = self.rx_engine
         if eng is None:
             return
+        try:
+            if self._update_panel_drm(eng, now, listening):
+                return
+        except Exception as e:
+            self.log_exc("Panneau EasyPal", e)
         last = eng.last
         snr = last.get("snr")
         fresh = any(now - m.last_ok < 10 for m in eng.modems.values())

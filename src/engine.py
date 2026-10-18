@@ -418,6 +418,7 @@ class RxEngine:
         self.drm_done_t = 0.0        # dernière image HamDRM complète
         self._drm_poll = 0.0
         self.drm_files = 0           # fichiers reçus en HamDRM (bilan du décodage WAV)
+        self.drm_good = {}           # dernier état HamDRM décodé avec des paramètres valides
         os.makedirs(outdir, exist_ok=True)
 
     def process(self, samples8k: np.ndarray):
@@ -470,6 +471,7 @@ class RxEngine:
             self.drm_status = st
             if st["fac_valid"]:
                 self.drm_t = now
+                self.drm_good = dict(st)      # derniers réglages / S/B valides (affichés après le signal)
                 prog = (st["seg_received"], st["seg_total"]) if st["seg_total"] > 0 else None
                 self.on_status(dict(snr=st["snr"], mode=DRM_MODE, frames=self.last["frames"], id=None,
                                     progress=prog, call=st["callsign"] or None))
