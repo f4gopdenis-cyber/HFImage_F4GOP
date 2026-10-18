@@ -571,6 +571,8 @@ class RxEngine:
         """Enregistre une image hybride téléchargée et prévient l'interface."""
         info = {"id": hyb["id"], "call": hyb["call"] or "?", "size": len(data), "crc": hyb["crc"],
                 "fmt": hyb["fmt"], "hybrid": True, "url": hyb["url"]}
+        if hyb.get("snr") is not None:
+            info["snr"] = hyb["snr"]           # hybride EasyPal : S/B mesuré sur l'annonce (report Rx Ok)
         self._save((info, data), mode + "-HYB")
 
     def incomplete(self):

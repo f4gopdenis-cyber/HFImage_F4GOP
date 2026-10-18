@@ -1,5 +1,9 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 0.60 — report Rx Ok en hybride EasyPal
+
+- **Rx Ok en hybride EasyPal** : la station qui reçoit une image hybride EasyPal renvoie maintenant son **report** (S/B mesuré sur l'annonce radio) avec sa confirmation ; seul l'indicatif apparaissait. Il faut que la station qui reçoit ait la version 0.60.
+
 ## Version 0.59 — mode EasyPal : signal plus fort, largeurs et Rx Ok
 
 - **Signal EasyPal plus fort de 4 dB** : à réglage égal, l'émission EasyPal partait 5,6 dB plus faible que les modes DATAC (signal OFDM aux crêtes très marquées) : trame à peine visible chez le correspondant, et l'image en mode B / QAM16 ne passait pas alors que l'annonce hybride (mode E, robuste) passait. Les crêtes rares sont maintenant écrêtées en douceur : l'image passe avec 4 à 5 dB de bruit en plus au simulateur, et le signal reste lu à l'identique par le récepteur de QSSTV dans les 9 modes. Pensez à revérifier le niveau d'émission (ALC) en mode EasyPal.

@@ -53,7 +53,7 @@ import random
 import wave
 
 APP = "HFImage F4GOP"
-VERSION = "0.59"
+VERSION = "0.60"
 CONF_PATH = os.path.join(os.path.expanduser("~"), ".hfimage.json")
 DEFAULT_OUT = os.path.join(os.path.expanduser("~"), "Documents", "HFImage")
 DEFAULTS = {
@@ -3865,7 +3865,7 @@ class App(tk.Tk):
             try:
                 data = easypal_hybrid.download(h, h["name"], log=lambda m: self.ui(self.log, m))
                 hyb = {"id": zlib.crc32(data + b"hamdrm") & 0xFFFF, "call": h["call"], "crc": zlib.crc32(data),
-                       "fmt": protocol.detect_format(data), "url": where}
+                       "fmt": protocol.detect_format(data), "url": where, "snr": h.get("snr")}
                 eng.save_hybrid(hyb, data, engine.DRM_MODE)
             except Exception as e:
                 self.ui(self.log_exc, "Téléchargement hybride EasyPal", e)
