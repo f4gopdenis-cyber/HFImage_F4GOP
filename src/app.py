@@ -54,7 +54,7 @@ import random
 import wave
 
 APP = "HFImage F4GOP"
-VERSION = "0.77"
+VERSION = "0.78"
 CONF_PATH = os.path.join(os.path.expanduser("~"), ".hfimage.json")
 DEFAULT_OUT = os.path.join(os.path.expanduser("~"), "Documents", "HFImage")
 DEFAULTS = {
@@ -96,7 +96,7 @@ MODE_THR = {"DATAC1X": 9, "DATAC1": 5, "DATAC3": 0, "DATAC4": -4}
 AUTO_MAX_AGE = 45 * 60           # reports pris en compte (s)
 # robustesse = redondance du code fontaine (trames en plus, pour les trames perdues dans le QSB)
 ROBUST = [("Auto (selon les reports)", None), ("Faible (15 %)", 15), ("Normale (40 %)", 40), ("Forte (70 %)", 70), ("Très forte (100 %)", 100)]
-DATA_ACTIONS = {"ask": "Demander", "switch": "Passer en USB-DATA automatiquement",
+DATA_ACTIONS = {"ask": "Demander", "switch": "Passer en DATA automatiquement (USB-DATA / LSB-DATA)",
                 "send": "Émettre sans rien dire"}
 HEARD_KEEP_S = 2 * 3600     # stations entendues gardées 2 h dans la liste
 RING_S = 15 * 60          # Relire RX : 15 dernières minutes gardées en mémoire
@@ -1820,8 +1820,8 @@ class App(tk.Tk):
         da.grid(row=2, column=0, columnspan=2, sticky="w", pady=(6, 0))
         ttk.Label(da, text="Poste pas en DATA avant d'émettre :").pack(side="left")
         self._data_act_names = {tr(v): k for k, v in DATA_ACTIONS.items()}
-        self.v_dataact = tk.StringVar(value=tr(DATA_ACTIONS.get(self.conf.get("data_action", "ask"), DATA_ACTIONS["ask"])))
-        cbd = ttk.Combobox(da, textvariable=self.v_dataact, values=list(self._data_act_names), state="readonly", width=30)
+        self.v_dataact = tk.StringVar(value=tr(DATA_ACTIONS.get(self.conf.get("data_action", "switch"), DATA_ACTIONS["ask"])))
+        cbd = ttk.Combobox(da, textvariable=self.v_dataact, values=list(self._data_act_names), state="readonly", width=46)
         cbd.pack(side="left", padx=4)
 
         def _act_changed(_e=None):
@@ -3694,7 +3694,7 @@ class App(tk.Tk):
             return False
         self.log(txt)
         if ok is False:
-            act = self.conf.get("data_action", "ask")
+            act = self.conf.get("data_action", "switch")
             if act not in ("switch", "send"):
                 act, remember = self._ask_data_mode(txt)
                 if remember and act in ("switch", "send"):
@@ -3715,7 +3715,7 @@ class App(tk.Tk):
         return True
 
     def _ask_data_mode(self, txt):
-        """Poste pas en DATA : passer en USB-DATA, émettre quand même ou annuler,
+        """Poste pas en DATA : passer en DATA (USB-DATA ou LSB-DATA), émettre quand même ou annuler,
         avec « Ne plus me demander ». -> (choix, mémoriser)."""
         win = tk.Toplevel(self)
         win.title(APP)
@@ -3738,7 +3738,7 @@ class App(tk.Tk):
             res["act"] = act
             win.destroy()
 
-        first = ttk.Button(b, text="Passer en USB-DATA et émettre", command=lambda: done("switch"))
+        first = ttk.Button(b, text="Passer en DATA et émettre", command=lambda: done("switch"))
         first.pack(side="left")
         ttk.Button(b, text="Émettre quand même", command=lambda: done("send")).pack(side="left", padx=6)
         ttk.Button(b, text="Annuler", command=lambda: done("cancel")).pack(side="right")

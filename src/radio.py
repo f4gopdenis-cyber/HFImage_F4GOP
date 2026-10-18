@@ -173,6 +173,19 @@ class RigBase:
         m = (mode or "").upper()
         return "DATA" in m or m.startswith("PKT") or "DIG" in m or m.endswith("-D") or "-D1" in m
 
+    @staticmethod
+    def is_lsb(mode):
+        """Bande latérale inférieure (LSB, LSB-DATA, PKTLSB, DIG-L…) ?"""
+        m = (mode or "").upper().replace(" ", "")
+        return "LSB" in m or m in ("DIG-L", "DIGL", "PKT-L", "DATA-L", "D-L")
+
+    def _side(self):
+        """Bande latérale actuelle du poste : « LSB » ou « USB » (USB si inconnue)."""
+        try:
+            return "LSB" if self.is_lsb(self.mode()) else "USB"
+        except Exception:
+            return "USB"
+
     def close(self):
         pass
 
@@ -219,21 +232,25 @@ class KenwoodRig(RigBase):
             self.write("RX;")
 
     def set_mode(self, which):
+        """« data » : DATA en gardant la bande latérale du poste (LSB -> LSB-DATA,
+        USB -> USB-DATA) ; « usb » : USB."""
+        side = self._side() if which == "data" else "USB"
+        lsb = side == "LSB"
         if self.model == "TS-990S":
-            cmds = ["OM0D;"] if which == "data" else ["OM02;"]
+            cmds = [("OM0C;" if lsb else "OM0D;")] if which == "data" else ["OM02;"]
         elif self.model == "TS-890S":
-            cmds = ["OM02;", "DA1;" if which == "data" else "DA0;"]
+            cmds = [("OM01;" if lsb else "OM02;"), "DA1;" if which == "data" else "DA0;"]
         else:
-            cmds = ["MD2;", "DA1;" if which == "data" else "DA0;"]
+            cmds = [("MD1;" if lsb else "MD2;"), "DA1;" if which == "data" else "DA0;"]
         for c in cmds:
             self.write(c)
             time.sleep(0.15)
         time.sleep(0.3)
         m = self.mode()
-        ok = bool(m) and (self.is_data(m) if which == "data" else m == "USB")
+        want = f"{side}-DATA" if which == "data" else "USB"
+        ok = bool(m) and (self.is_data(m) and self.is_lsb(m) == lsb if which == "data" else m == "USB")
         return ok, (f"{self.model} passé en {m} par CAT." if ok else
-                    f"{self.model} : le passage en {'USB-DATA' if which == 'data' else 'USB'} par CAT "
-                    f"n'a pas pris (mode lu : {m}).")
+                    f"{self.model} : le passage en {want} par CAT n'a pas pris (mode lu : {m}).")
 
     def set_line(self, which, on):
         with self.lock:
@@ -332,7 +349,7 @@ class RigctlRig(RigBase):
             raise RuntimeError("PTT : le poste refuse la commande d'émission (Hamlib T)")
 
     def set_mode(self, which):
-        modes = ["PKTUSB"] if which == "data" else ["USB"]
+        modes = [("PKTLSB" if self._side() == "LSB" else "PKTUSB")] if which == "data" else ["USB"]
         for m in modes:
             if self._ok(f"M {m} -1"):
                 time.sleep(0.2)
@@ -527,8 +544,12 @@ class FlrigRig(RigBase):
     def set_mode(self, which):
         with self.lock:
             modes = [str(m) for m in (self.srv.rig.get_modes() or [])]
-        wanted = (["USB-D", "USB-D1", "D-USB", "PKT-U", "PKTUSB", "DATA-U", "USB-DATA", "DIGU", "DIG"]
-                  if which == "data" else ["USB"])
+        if which != "data":
+            wanted = ["USB"]
+        elif self._side() == "LSB":
+            wanted = ["LSB-D", "LSB-D1", "D-LSB", "PKT-L", "PKTLSB", "DATA-L", "LSB-DATA", "DIGL"]
+        else:
+            wanted = ["USB-D", "USB-D1", "D-USB", "PKT-U", "PKTUSB", "DATA-U", "USB-DATA", "DIGU", "DIG"]
         for w in wanted:
             for m in modes:
                 if m.upper() == w:
@@ -542,7 +563,7 @@ class OmniRigRig(RigBase):
     """OmniRig (serveur COM Windows), Rig 1 ou Rig 2."""
     kind = "omnirig"
     PM_RX, PM_TX = 0x200000, 0x400000
-    PM_SSB_U, PM_DIG_U = 0x2000000, 0x8000000
+    PM_SSB_U, PM_DIG_U, PM_DIG_L = 0x2000000, 0x8000000, 0x10000000
     MODES = {0x800000: "CW", 0x1000000: "CW-R", 0x2000000: "USB", 0x4000000: "LSB", 0x8000000: "DIG-U",
              0x10000000: "DIG-L", 0x20000000: "AM", 0x40000000: "FM"}
 
@@ -585,7 +606,11 @@ class OmniRigRig(RigBase):
         self._call(lambda: setattr(self.rig, "Tx", self.PM_TX if on else self.PM_RX))
 
     def set_mode(self, which):
-        self._call(lambda: setattr(self.rig, "Mode", self.PM_DIG_U if which == "data" else self.PM_SSB_U))
+        if which == "data":
+            want = self.PM_DIG_L if self._side() == "LSB" else self.PM_DIG_U
+        else:
+            want = self.PM_SSB_U
+        self._call(lambda: setattr(self.rig, "Mode", want))
         time.sleep(0.3)
         return True, f"OmniRig : mode {self.mode()}."
 

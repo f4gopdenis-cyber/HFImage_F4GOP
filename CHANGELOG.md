@@ -1,5 +1,12 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 0.78 — passage automatique en DATA, en LSB comme en USB
+
+- **Poste pas en DATA avant d'émettre** : HFImage passe maintenant le poste en DATA **en gardant sa bande latérale** : **LSB → LSB-DATA**, **USB → USB-DATA**. Avant, il le mettait toujours en USB-DATA, ce qui changeait de bande latérale sur 40 et 80 m (où l'image numérique se trafique souvent en LSB, comme dans EasyPal).
+- Réglage par défaut : **« Passer en DATA automatiquement (USB-DATA / LSB-DATA) »** (Réglages → Poste radio). Si vous aviez choisi « Demander » ou « Émettre sans rien dire », votre choix est gardé.
+- Kenwood en direct (TS-990 : LSB-D1 / USB-D1 ; TS-890 et TS-590 / TS-480… : LSB ou USB puis DATA), Hamlib (PKTLSB / PKTUSB), FLRig et OmniRig (DIG-L / DIG-U).
+- Rappel : les deux stations doivent être sur la même bande latérale.
+
 ## Version 0.77 — menu Fenêtres simplifié
 
 - Le menu **Fenêtres** ne propose plus de séparer les onglets **RX**, **TX**, **Simulation** ni le **Journal** : ils restent toujours dans la fenêtre principale. On peut toujours séparer le panneau et les boutons, le waterfall, la liste des stations entendues, l'onglet Stations et la galerie.

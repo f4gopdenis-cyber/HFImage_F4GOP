@@ -1,0 +1,92 @@
+"""Version 0.78 : passage automatique en DATA en gardant la bande latérale (LSB-DATA / USB-DATA)."""
+import os
+import sys
+import threading
+import unittest
+
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "src"))
+
+import radio  # noqa: E402
+
+# codes Kenwood : 1 LSB, 2 USB, C LSB-DATA1, D USB-DATA1 (cf. audio.KENWOOD_MODES)
+
+
+class FakeKenwood(radio.KenwoodRig):
+    """Poste Kenwood simulé : retient le mode, répond à OM0; / SF0;, comprend OM0x, MDx, DAx."""
+
+    def __init__(self, model, mode):
+        self.model, self.cfg, self.port, self.baud = model, {}, "COM9", 115200
+        self.lock = threading.Lock()
+        self.base, self.data = mode, False            # base : « 1 » LSB ou « 2 » USB
+        self.sent = []
+
+    def write(self, cmd):
+        self.sent.append(cmd)
+        if cmd.startswith("OM0"):
+            c = cmd[3]
+            if c in "CD":
+                self.base, self.data = ("1" if c == "C" else "2"), True
+            else:
+                self.base, self.data = c, False
+        elif cmd.startswith("MD"):
+            self.base, self.data = cmd[2], False
+        elif cmd.startswith("DA"):
+            self.data = cmd[2] == "1"
+
+    def query(self, cmd, timeout=0.6):
+        code = {("1", False): "1", ("2", False): "2", ("1", True): "C", ("2", True): "D"}[(self.base, self.data)]
+        if cmd == "SF0;":
+            return "SF0" + "0" * 11 + code + ";"
+        if cmd == "OM0;":
+            return f"OM0{code};"
+        return ""
+
+
+class Kenwood(unittest.TestCase):
+    def check(self, model, start, expect_mode, expect_cmds):
+        r = FakeKenwood(model, start)
+        radio.time.sleep, old = (lambda s: None), radio.time.sleep
+        try:
+            ok, msg = r.set_mode("data")
+        finally:
+            radio.time.sleep = old
+        self.assertTrue(ok, msg)
+        self.assertEqual(r.mode(), expect_mode)
+        self.assertEqual(r.sent, expect_cmds)
+
+    def test_ts990(self):
+        self.check("TS-990S", "1", "LSB-DATA1", ["OM0C;"])
+        self.check("TS-990S", "2", "USB-DATA1", ["OM0D;"])
+
+    def test_ts890(self):
+        self.check("TS-890S", "1", "LSB-DATA1", ["OM01;", "DA1;"])
+        self.check("TS-890S", "2", "USB-DATA1", ["OM02;", "DA1;"])
+
+    def test_ts590(self):
+        self.check("TS-590SG", "1", "LSB-DATA1", ["MD1;", "DA1;"])
+        self.check("TS-590SG", "2", "USB-DATA1", ["MD2;", "DA1;"])
+
+
+class Bande(unittest.TestCase):
+    def test_is_lsb(self):
+        for m in ("LSB", "LSB-DATA1", "PKTLSB", "DIG-L", "lsb-d"):
+            self.assertTrue(radio.RigBase.is_lsb(m), m)
+        for m in ("USB", "USB-DATA1", "PKTUSB", "DIG-U", "", None, "CW"):
+            self.assertFalse(radio.RigBase.is_lsb(m), m)
+
+    def test_omnirig_lsb(self):
+        r = radio.OmniRigRig.__new__(radio.OmniRigRig)
+        r.lock, r._tid = threading.Lock(), threading.get_ident()
+        state = {"mode": 0x4000000}                    # LSB
+        r.rig = type("R", (), {"Mode": property(lambda s: state["mode"],
+                                                lambda s, v: state.__setitem__("mode", v))})()
+        radio.time.sleep, old = (lambda s: None), radio.time.sleep
+        try:
+            r.set_mode("data")
+        finally:
+            radio.time.sleep = old
+        self.assertEqual(r.mode(), "DIG-L")
+
+
+if __name__ == "__main__":
+    unittest.main()
