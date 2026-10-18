@@ -1,5 +1,10 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 0.74 — fenêtres séparées toujours visibles
+
+- **Correction** : un clic sur la fenêtre principale faisait passer les fenêtres séparées **derrière** elle, comme si elles avaient disparu. Les fenêtres séparées restent maintenant **toujours devant la fenêtre principale**, à l'endroit et à la taille où vous les avez mises. On peut cliquer et travailler dans n'importe quelle fenêtre sans que les autres bougent ou se cachent.
+- Elles se réduisent et reviennent avec la fenêtre principale.
+
 ## Version 0.73 — fenêtres séparées : organisez l'écran comme vous voulez
 
 - **Nouveau menu « Fenêtres »** : chaque zone du programme peut devenir une **fenêtre séparée**, à placer et dimensionner où vous voulez, y compris sur un **autre écran** :

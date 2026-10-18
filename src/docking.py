@@ -76,6 +76,9 @@ class Dock:
         self._wm("title", f, f"{self.prefix} — {self.tr(z['title'])}")
         self._wm("protocol", f, "WM_DELETE_WINDOW", self.root.register(lambda n=name: self.attach(n)))
         self._wm("minsize", f, MIN_W, MIN_H)
+        # fenêtre « fille » de la fenêtre principale : toujours devant elle (un clic sur la
+        # fenêtre principale ne la cache plus), réduite et rouverte avec elle
+        self._wm("transient", f, self.root)
         geometry = geometry or self.geom.get(name) or f"{w}x{h}+{x}+{y}"
         if not _on_screen(self.root, geometry):
             geometry = f"{w}x{h}+{self.root.winfo_rootx() + 60}+{self.root.winfo_rooty() + 60}"
@@ -90,6 +93,10 @@ class Dock:
         f = z["frame"]
         try:
             self.geom[name] = self._wm("geometry", f)
+        except tk.TclError:
+            pass
+        try:
+            self._wm("transient", f, "")
         except tk.TclError:
             pass
         self._wm("forget", f)
