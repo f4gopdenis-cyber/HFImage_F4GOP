@@ -262,6 +262,8 @@ class HybridTransmission:
 
     def __init__(self, data: bytes, fmt: str, callsign: str, url: str, flash=False):
         self.data, self.fmt, self.url, self.flash = data, fmt, url, flash
+        # éclair : 5 copies de la trame DATAC0 (4,5 s) ; il suffit d'en recevoir une
+        self.COPIES = self.FLASH_COPIES if flash else HybridTransmission.COPIES
         self.image_id = zlib.crc32(data + url.encode()) & 0xFFFF
         self.key = flash_key(data)
         if flash:
@@ -278,6 +280,7 @@ class HybridTransmission:
             raise ValueError("lien trop long pour une trame radio")
 
     COPIES = 3
+    FLASH_COPIES = 5
 
     def frames(self):
         return [self.frame] * (self.COPIES if self.modem.fpb == 1 else self.modem.fpb)

@@ -81,11 +81,12 @@ class Modem(unittest.TestCase):
             self.skipTest(str(e))
         tx = engine.HybridTransmission(DATA, "avif", "F4GOP", URL, flash=True)
         self.assertEqual(tx.mode, "DATAC0")
-        self.assertLess(tx.estimate_s(), 4.0)
+        self.assertEqual(len(tx.frames()), 5)
+        self.assertLess(tx.estimate_s(), 5.0)
         a = np.concatenate([np.zeros(4000, np.float32), tx.audio().astype(np.float32), np.zeros(8000, np.float32)])
         for i in range(0, len(a), 800):
             rx.process(a[i:i + 800])
-        self.assertEqual(len(rx_holder), 1)                  # 3 copies, une seule annonce
+        self.assertEqual(len(rx_holder), 1)                  # 5 copies, une seule annonce
         h, mode = rx_holder[0]
         self.assertTrue(h["flash"])
         self.assertEqual((h["key"], h["size"], h["id"], mode), (tx.key, len(DATA), tx.image_id, "DATAC0"))

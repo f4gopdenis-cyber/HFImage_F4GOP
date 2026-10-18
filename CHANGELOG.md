@@ -1,5 +1,20 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 0.72 — hybride éclair plus robuste (4,5 s)
+
+- L'annonce **éclair** part maintenant en **5 copies** au lieu de 3 : **4,5 s** sur l'air au lieu de 3 s (toujours 2,5 fois plus court que l'annonce normale de 11 s). Une seule copie reçue suffit, et elles sont plus étalées dans le temps face au QSB.
+- Mesuré au simulateur (20 essais par point) :
+
+| Canal | SNR | Normale (11 s) | Éclair 0.71 (3 s) | Éclair 0.72 (4,5 s) |
+|---|---|---|---|---|
+| Calme | −4 dB | 100 % | 75 % | **100 %** |
+| Fading moyen | −2 dB | 60 % | 70 % | **85 %** |
+| Fading moyen | 0 dB | 85 % | 85 % | **100 %** |
+| Fading fort | −2 dB | 55 % | 70 % | **90 %** |
+| Fading fort | 0 dB | 95 % | 85 % | **100 %** |
+
+- La case s'appelle maintenant « Éclair (5 s) ». Compatible avec la 0.71 (même trame).
+
 ## Version 0.71 — hybride éclair : annonce radio en 3 secondes
 
 - **Nouveau : « Éclair (3 s) »**, à côté de « Mode hybride » dans l'onglet TX. L'annonce radio ne porte plus le lien de l'image, seulement son **empreinte** (SHA-256 abrégé), sa taille et son format : elle tient dans **une seule trame DATAC0** (500 Hz de large). Durée sur l'air : **3 s au lieu de 11 s**.
