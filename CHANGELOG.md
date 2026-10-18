@@ -1,5 +1,10 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 0.68 — mode d'emploi en anglais et mode d'emploi complété
+
+- **Nouveau : mode d'emploi en anglais** (PDF, 15 pages, captures de l'interface en anglais), menu **Infos → Mode d'emploi en anglais (PDF)**. Il couvre tout le programme : modes HFImage, mode EasyPal / QSSTV, hybride, stations en ligne, messages, problèmes fréquents.
+- **Mode d'emploi en français mis à jour** (il datait de la 0.50) : nouveau chapitre **Mode EasyPal (HamDRM)** (réglages, réglages conseillés, BSR / FIX, textes, hybride EasyPal, suivi du mode reçu), zoom à la souris, bascule automatique sur l'onglet RX, image du correspondant placée à la souris, cartes son sans doublons, problèmes fréquents complétés, crédits.
+
 ## Version 0.67 — image du correspondant placée et dimensionnée à la souris
 
 - Fenêtre **Image du correspondant** : dans l'aperçu, **faites glisser** l'image du correspondant pour la placer **où vous voulez** dans votre image, et utilisez la **molette** pour l'**agrandir ou la réduire** (de 10 % à 90 % de la largeur). Position et taille passent alors sur « Libre » ; choisir un coin ou une taille dans les listes revient aux réglages habituels.

@@ -53,7 +53,7 @@ import random
 import wave
 
 APP = "HFImage F4GOP"
-VERSION = "0.67"
+VERSION = "0.68"
 CONF_PATH = os.path.join(os.path.expanduser("~"), ".hfimage.json")
 DEFAULT_OUT = os.path.join(os.path.expanduser("~"), "Documents", "HFImage")
 DEFAULTS = {
@@ -604,6 +604,8 @@ class App(tk.Tk):
         m.add_cascade(label="Effacer", menu=e)
         n = tk.Menu(m, tearoff=0)
         n.add_command(label="Mode d'emploi (PDF)", command=self.open_manual)
+        n.add_command(label="Mode d'emploi en anglais (PDF)",
+                      command=lambda: self.open_manual("HFImage_user_manual_EN.pdf"))
         n.add_command(label="Rechercher une mise à jour", command=lambda: self.update_check(quiet=False))
         n.add_command(label="Page du programme sur GitHub",
                       command=lambda: __import__("webbrowser").open(f"https://github.com/{updater.REPO}"))
@@ -5059,16 +5061,16 @@ class App(tk.Tk):
         except Exception:
             pass
 
-    def open_manual(self):
+    def open_manual(self, name="HFImage_mode_emploi.pdf"):
         """Ouvre le mode d'emploi PDF (copié dans Documents\\HFImage pour rester ouvrable)."""
         here = getattr(sys, "_MEIPASS", os.path.dirname(os.path.abspath(__file__)))
-        src = os.path.join(here, "HFImage_mode_emploi.pdf")
+        src = os.path.join(here, name)
         if not os.path.exists(src):
             messagebox.showerror(APP, "Mode d'emploi introuvable.")
             return
         try:
             os.makedirs(DEFAULT_OUT, exist_ok=True)
-            dst = os.path.join(DEFAULT_OUT, "HFImage_mode_emploi.pdf")
+            dst = os.path.join(DEFAULT_OUT, name)
             if not os.path.exists(dst) or os.path.getsize(dst) != os.path.getsize(src):
                 shutil.copyfile(src, dst)
         except OSError:

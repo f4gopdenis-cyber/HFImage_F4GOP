@@ -72,7 +72,8 @@ def N(items):
 
 
 def img(name, width_mm, caption=None):
-    p = os.path.join(D, name)
+    p = next((q for q in (os.path.join(D, name), os.path.join(D, "..", "images", name),
+               os.path.join(D, "..", "manual_en", name)) if os.path.exists(q)), os.path.join(D, name))
     im = PImage.open(p).convert("RGB")
     buf = io.BytesIO()
     im.save(buf, "JPEG", quality=82, optimize=True)
@@ -130,7 +131,7 @@ def cover(c, doc):
     c.saveState()
     c.setFillColor(DARK)
     c.rect(0, h - 120 * mm, w, 120 * mm, fill=1, stroke=0)
-    c.drawImage(os.path.join(D, "icone.png"), w / 2 - 32 * mm, h - 92 * mm, 64 * mm, 64 * mm, mask="auto")
+    c.drawImage(next(q for q in (os.path.join(D, "icone.png"), os.path.join(D, "..", "images", "icone.png")) if os.path.exists(q)), w / 2 - 32 * mm, h - 92 * mm, 64 * mm, 64 * mm, mask="auto")
     c.setFillColor(colors.white)
     c.setFont("DVB", 30)
     c.drawCentredString(w / 2, h - 108 * mm, "HFImage F4GOP")
@@ -139,7 +140,7 @@ def cover(c, doc):
     c.drawCentredString(w / 2, h - 140 * mm, "Mode d'emploi")
     c.setFont("DV", 12)
     c.setFillColor(GREY)
-    c.drawCentredString(w / 2, h - 150 * mm, "Images numériques en HF, façon EasyPal — sans SSTV")
+    c.drawCentredString(w / 2, h - 150 * mm, "Images numériques en HF — modes HFImage et EasyPal / QSSTV (HamDRM)")
     c.drawCentredString(w / 2, h - 158 * mm, f"Version {VERSION}")
     c.setFont("DV", 10)
     c.drawCentredString(w / 2, 30 * mm, "F4GOP — Denis — IN98QR — f4gop.denis@gmail.com")
@@ -161,7 +162,14 @@ s.append(P("1. Présentation", "h1"))
 s.append(P("HFImage F4GOP envoie et reçoit des <b>photos numériques par radio en HF</b>, comme EasyPal, mais avec "
            "un modem moderne (OFDM de codec2) et une correction d'erreurs par <b>code fontaine</b>. L'image reçue est "
            "<b>identique bit à bit</b> à l'image envoyée, ou elle n'est pas affichée : jamais d'image abîmée."))
+s.append(P("Le programme réunit deux familles de modes et <b>écoute toujours les deux en même temps</b> : les "
+           "<b>modes HFImage (DATAC)</b> ci-dessus, et le <b>mode EasyPal (HamDRM)</b>, celui d'<b>EasyPal</b> et de "
+           "<b>QSSTV</b> : HFImage échange images, textes et images hybrides avec les stations qui utilisent ces "
+           "logiciels, pour faire vivre ce mode depuis la disparition d'Erik Sundstrup VK4AES, l'auteur d'EasyPal."))
 s += B(["Photo 800×600 nette en environ 2 minutes (mode rapide DATAC1X, 2,2 kHz de large).",
+        "Mode <b>EasyPal</b> compatible EasyPal / QSSTV : modes A / B / E, QAM4 / 16 / 64, 2,2 ou 2,4 kHz, "
+        "Reed-Solomon, BSR / FIX, mode hybride.",
+        "L'émission <b>suit le mode reçu</b> : on répond à chaque station dans le mode qu'elle utilise.",
         "Mode <b>Auto</b> : le mode et la robustesse s'adaptent aux reports des stations.",
         "<b>Coupe-QRM</b> à la réception : porteuses, CW, RTTY et BLU voisines effacées.",
         "Liste des <b>stations en ligne</b>, <b>Rx Ok</b> avec reports en dB, <b>carte</b> des stations.",
@@ -169,7 +177,8 @@ s += B(["Photo 800×600 nette en environ 2 minutes (mode rapide DATAC1X, 2,2 kHz
         "Plus de 300 postes pilotés (Hamlib), Kenwood en direct, OmniRig, FLRig.",
         "<b>Galerie</b>, mise en ligne sur votre site (<b>Digi-Sites</b>), <b>analyseur</b> de réception.",
         "Mise à jour automatique, 5 langues."])
-s += tip("les deux stations doivent utiliser HFImage. Le mode DATAC1X n'existe que dans HFImage.", "Important")
+s += tip("en modes HFImage (DATAC), les deux stations doivent utiliser HFImage. Pour trafiquer avec EasyPal ou "
+         "QSSTV, choisissez le mode EasyPal (chapitre 6).", "Important")
 s.append(img("fenetre_principale.png", 170, "La fenêtre principale : panneau d'état et boutons à gauche, "
                                            "waterfall, liste des stations, image reçue, historique et messages."))
 
@@ -189,6 +198,9 @@ s.append(P("Au démarrage (puis toutes les 3 heures), HFImage regarde sur GitHub
            "récente. Si oui, un <b>bandeau orange</b> apparaît en haut de la fenêtre : un clic, « Oui », et le "
            "programme se met à jour et redémarre tout seul. Menu <b>Infos → Rechercher une mise à jour</b> pour "
            "vérifier à tout moment."))
+s.append(P("Mode d'emploi en anglais", "h2"))
+s.append(P("Menu <b>Infos → Mode d'emploi en anglais (PDF)</b> : le même mode d'emploi en anglais, à donner aux "
+           "correspondants étrangers."))
 s += tip("après une mise à jour, si l'explorateur Windows affiche encore l'ancienne icône, redémarrez le PC "
          "(Windows garde les icônes en mémoire).")
 
@@ -205,7 +217,9 @@ s += B(["<b>Sortie (vers le poste)</b> et <b>Entrée (depuis le poste)</b> : ave
         "<b>Tester la sortie (1 kHz)</b> : tonalité de 2 s sans PTT, pour vérifier la carte son.",
         "<b>Niveau d'émission</b> : réglez-le pour que l'<b>ALC ne bouge pas</b>. Un signal OFDM surmodulé "
         "devient illisible.",
-        "<b>Coupe-QRM à la réception</b> : laissez-le coché (voir chapitre 8)."])
+        "<b>Coupe-QRM à la réception</b> : laissez-le coché (voir chapitre 9).",
+        "Chaque carte son n'apparaît qu'<b>une fois</b>, avec son nom complet : HFImage choisit lui-même "
+        "l'interface Windows la plus sûre (MME, DirectSound, WASAPI) et essaie automatiquement les autres si elle échoue."])
 s.append(P("Poste radio (CAT / PTT)", "h2"))
 s.append(P("Bouton <b>Poste radio…</b> : la fenêtre reprend l'onglet Radio de WSJT-X."))
 s.append(img("poste_radio.png", 150, "Réglages du poste : poste, liaison CAT, PTT, source audio, mode, tests."))
@@ -229,10 +243,15 @@ s += tip("Kenwood TS-890 / TS-990 : poste en <b>USB-DATA</b>, source audio DATA 
 s.append(PageBreak())
 s.append(P("4. Recevoir des images", "h1"))
 s.append(P("L'écoute démarre toute seule si l'entrée audio est réglée (bouton <b>Écoute</b> pour arrêter / "
-           "reprendre). Rien à choisir : <b>tous les modes</b> sont décodés en même temps."))
+           "reprendre). Rien à choisir : <b>tous les modes</b> sont décodés en même temps — DATAC1X, DATAC1, DATAC3, "
+           "DATAC4 <b>et</b> EasyPal (HamDRM), quel que soit le mode choisi pour l'émission."))
 s += B(["<b>Panneau d'état</b> (en haut à gauche) : indicatif de la station reçue, fréquence et mode du poste, "
         "niveau RX, SNR, mode, débit, segments reçus, voyants Signal / Sync / Trame / Image / BSR.",
-        "<b>Aperçu rapide</b> : une petite image arrive en ~20 s, puis l'image complète la remplace.",
+        "Quand une image commence à arriver alors que l'<b>onglet TX</b> est affiché, HFImage passe sur l'<b>onglet RX</b> "
+        "pour la montrer (sauf pendant vos propres émissions).",
+        "<b>Aperçu rapide</b> (modes HFImage) : une petite image arrive en ~20 s, puis l'image complète la remplace.",
+        "<b>Zoom</b> : molette de la souris sur l'image pour l'agrandir / la réduire autour du pointeur (jusqu'à ×16), "
+        "clic gauche maintenu pour la déplacer, clic droit pour revenir à l'image entière.",
         "<b>Historique</b> à droite : clic pour réafficher, double-clic pour le plein format.",
         "<b>BSR / ACK automatiques</b> : s'il manque des morceaux à la fin, HFImage les demande (BSR) ; "
         "l'émetteur ne renvoie que ce qui manque (FIX). Une fois l'image complète, un accusé (ACK) avec "
@@ -248,7 +267,7 @@ s.append(img("galerie.png", 160, "La galerie des dernières images reçues."))
 
 # ------------------------------------------------------------------ 5
 s.append(PageBreak())
-s.append(P("5. Envoyer une image", "h1"))
+s.append(P("5. Envoyer une image (modes HFImage)", "h1"))
 s += N(["Onglet <b>TX</b> → <b>Ouvrir une image…</b> (JPG, PNG, GIF, WebP, AVIF, SVG, BMP…).",
         "Choisissez le <b>Mode</b> (Auto conseillé), la <b>Durée max</b> (120 s par défaut), la <b>Largeur</b> "
         "(auto), le <b>Format</b> (avif conseillé) et la <b>Robustesse</b> (Auto conseillé).",
@@ -296,13 +315,19 @@ s.append(P("Le cadre <b>Police et couleurs</b> permet de choisir la police (tout
 s.append(P("Image du correspondant", "h2"))
 s.append(P("Pour répondre comme dans EasyPal : clic droit sur une image de la <b>Galerie</b> → « Répondre avec cette image », "
            "ou case <b>Image du correspondant</b> (onglet TX) et bouton <b>…</b>. Son image est incrustée dans un coin de la "
-           "vôtre (taille et coin au choix), avec la légende « de F4EMK — +12 dB » : le <b>report</b> est le SNR que vous "
+           "vôtre avec la légende « de F4EMK — +12 dB » : le <b>report</b> est le SNR que vous "
            "avez mesuré en le recevant. Se combine avec « Mes conditions de trafic »."))
+s += B(["Choisissez un <b>coin</b> et une <b>taille</b> (petite, moyenne, grande) dans les listes,",
+        "ou, dans l'aperçu, <b>faites glisser</b> l'image du correspondant à la souris pour la placer où vous voulez, "
+        "et utilisez la <b>molette</b> pour l'agrandir ou la réduire (10 % à 90 % de la largeur). Position et taille "
+        "passent alors sur « Libre ».",
+        "Le réglage est gardé ; l'image émise est exactement celle de l'aperçu."])
 s.append(P("Messages reçus", "h2"))
 s.append(P("Quand un correspondant envoie un message (texte seul, ou texte joint à son image), la fenêtre <b>Message reçu</b> "
            "s'ouvre au premier plan avec un bip : indicatif, heure UTC, mode, SNR, le texte en grand et la vignette de "
            "l'image s'il y en a une (clic = plein format). Les flèches ◀ ▶ parcourent les messages de la session. "
-           "<b>Répondre…</b> ouvre l'envoi de texte prérempli « F1BAL de F4GOP : ». Les cases du bas permettent de ne "
+           "<b>Répondre…</b> ouvre l'envoi de texte prérempli « F1BAL de F4GOP : ». L'indicatif de l'expéditeur est aussi "
+           "écrit au-dessus de chaque message dans le cadre « Messages reçus ». Les cases du bas permettent de ne "
            "plus l'ouvrir automatiquement ou de couper le bip ; on la rouvre par Action → Messages reçus… ou par un "
            "double-clic dans le cadre « Messages reçus »."))
 s.append(P("<b>Le correspondant a-t-il reçu mon message ?</b>"))
@@ -341,9 +366,72 @@ s += B(["<b>Texte inclus</b> : un message joint à l'image, affiché dans « Mes
         "<b>IMG/QSL</b> : carte QSL avec photo de fond, indicatif, locator et report remplis automatiquement, "
         "police et couleurs au choix."])
 
+# ------------------------------------------------------------------ 6 EasyPal
+s.append(PageBreak())
+s.append(P("6. Mode EasyPal (HamDRM) — compatible EasyPal / QSSTV", "h1"))
+s.append(P("Choisissez <b>Mode : EasyPal</b> dans l'onglet TX. Une deuxième ligne apparaît avec les réglages "
+           "d'EasyPal. Le signal est le signal HamDRM d'EasyPal et de QSSTV (OFDM DRM) : ces stations décodent vos "
+           "images, et HFImage décode les leurs."))
+s.append(img("en_tx.png", 165, "L'onglet TX en mode EasyPal (capture de l'interface en anglais) : ligne des réglages "
+                               "EasyPal, image compressée en JPEG 2000 et durée d'émission exacte."))
+s.append(P("Réglages EasyPal", "h2"))
+s.append(table([["Réglage", "Valeurs", "Rôle"],
+                ["Mode EasyPal", "A, B, E", "Robustesse du signal OFDM. A : le plus rapide, bonnes conditions. B : le mode "
+                                            "HF habituel. E : le plus robuste (grandes distances, fort QSB)."],
+                ["QAM", "QAM4, QAM16, QAM64", "Modulation : QAM4 robuste et lente, QAM64 rapide mais demande un signal fort."],
+                ["Largeur", "2,2 kHz, 2,4 kHz", "Largeur de bande, notée comme dans EasyPal (2,3 / 2,5 kHz dans QSSTV, même "
+                                                "signal). 2,2 kHz avec un filtre étroit."],
+                ["Erreur (protection)", "Haute (HI), Normale (LO)", "Rendement de la correction d'erreurs. HI est plus robuste."],
+                ["Reed-Solomon", "Aucun, RS1 … RS4", "Redondance en plus : l'image est reconstruite même avec des segments "
+                                                    "perdus. <b>RS2 par défaut</b>. Lu par EasyPal et QSSTV."]],
+               [32, 42, 96]))
+s.append(Spacer(1, 6))
+s.append(P("Les images partent en <b>JPEG 2000</b> (format habituel d'EasyPal) ou en JPEG, à la taille qui tient dans "
+           "la durée choisie ; la durée exacte est calculée avant d'émettre. Le waterfall marque la bande exacte du mode "
+           "reçu (A / B / E, 2,2 / 2,4 kHz)."))
+s.append(P("Réglages conseillés", "h2"))
+s.append(table([["Conditions", "Réglages", "S/B nécessaire (environ)"],
+                ["Bonne propagation, signal fort", "A / QAM64", "15 dB"],
+                ["HF habituelle (le plus courant)", "B / QAM16 / RS2", "10 dB sans QSB, 14 dB avec un QSB léger"],
+                ["Propagation difficile, QSB", "B ou E / QAM4 / RS3 ou RS4", "6 dB sans QSB, une douzaine de dB avec un QSB moyen"]],
+               [55, 55, 60]))
+s.append(Spacer(1, 4))
+s.append(P("Mesuré au simulateur : avec un QSB léger, B / QAM16 avec <b>RS2</b> donne une image complète dès 14 dB environ "
+           "au lieu de 17 à 20 dB sans Reed-Solomon, pour une émission environ 18 % plus longue. HFImage émet aussi le "
+           "signal EasyPal avec un facteur de crête réduit (+4 dB de niveau moyen pour la même puissance crête) et le "
+           "décode avec une meilleure estimation de la fiabilité des bits (environ +0,5 dB en QAM16) : le signal reste "
+           "100 % compatible EasyPal."))
+s.append(P("Recevoir des images EasyPal", "h2"))
+s += B(["Le panneau d'état affiche l'indicatif, « EP B/16 » (mode EasyPal / QAM), la largeur, le débit, les segments "
+        "reçus et attendus, la position et les voyants Sync / Trame / Image / BSR.",
+        "Si une image reste incomplète, le voyant BSR passe à l'orange et le journal vous invite à cliquer sur <b>BSR</b> : "
+        "le BSR EasyPal demande à l'émetteur les segments manquants.",
+        "Les textes envoyés par EasyPal / QSSTV (fichiers .txt) s'affichent dans les messages reçus avec l'indicatif."])
+s.append(P("Répondre aux BSR (FIX)", "h2"))
+s.append(P("Quand une station EasyPal ou QSSTV demande les segments manquants de votre dernière image (BSR), HFImage "
+           "répond <b>automatiquement</b> par un FIX qui ne contient que ces segments (option de l'onglet Stations), ou "
+           "à la main avec le bouton <b>FIX</b>."))
+s.append(P("Textes en mode EasyPal", "h2"))
+s.append(P("<b>Envoi Texte</b> en mode EasyPal envoie le message sous forme de fichier .txt, lisible par EasyPal et QSSTV."))
+s.append(P("Hybride EasyPal", "h2"))
+s.append(P("Avec <b>Mode hybride</b> coché en mode EasyPal, HFImage fait comme EasyPal : l'image est déposée par FTP dans "
+           "<b>&lt;dossier&gt;/HybridFiles1/de_INDICATIF-n-nom.jpg</b>, et seule une courte annonce passe par radio, en "
+           "mode <b>E / QAM4</b> (réglé automatiquement, et remis comme avant quand on décoche le mode hybride). Les "
+           "stations EasyPal, QSSTV et HFImage qui la reçoivent téléchargent l'image et renvoient leur Rx Ok avec report."))
+s += tip("comme dans EasyPal, l'annonce contient le serveur, l'identifiant et le mot de passe FTP <b>brouillés, pas "
+         "chiffrés</b> : toute station qui la reçoit peut les relire. Utilisez un <b>compte FTP dédié</b>, limité à un "
+         "seul dossier, et uniquement des caractères sans accents dans ces champs.", "Important")
+s.append(P("Suivre le mode reçu", "h2"))
+s.append(P("Avec « <b>Passer en émission sur le mode reçu</b> » coché (onglet Stations, coché par défaut), le mode "
+           "d'émission change dès qu'une image ou un message commence à arriver dans l'autre famille de modes :"))
+s += B(["réception EasyPal → mode <b>EasyPal</b> ; quand l'image est complète, le mode A / B / E, la largeur et la QAM "
+        "de la station reçue sont repris aussi (sauf annonce hybride, toujours en E / QAM4) ;",
+        "réception HFImage (DATAC) alors qu'on est en EasyPal → mode <b>Auto</b>.",
+        "Rien ne change pendant vos émissions ni lors du décodage d'un fichier WAV. Chaque changement est noté dans le journal."])
+
 # ------------------------------------------------------------------ 6
 s.append(PageBreak())
-s.append(P("6. Stations en ligne, Rx Ok et carte", "h1"))
+s.append(P("7. Stations en ligne, Rx Ok et carte", "h1"))
 s.append(P("Avec <b>Réglages → Internet</b> coché, chaque HFImage ouvert se signale sur un serveur public "
            "(indicatif, locator, fréquence, émission / réception) : la liste <b>Stations</b> montre tout de suite "
            "les stations qui ont HFImage ouvert, avec leur fréquence. Aucune autre donnée n'est partagée."))
@@ -362,7 +450,7 @@ s += B(["<b>Rx Ok</b> : les stations qui ont bien reçu l'image, avec leur <b>re
 s.append(img("carte_stations.png", 150, "La carte des stations qui ont reçu l'image."))
 
 # ------------------------------------------------------------------ 7
-s.append(P("7. Mode hybride et site web", "h1"))
+s.append(P("8. Mode hybride (modes HFImage) et site web", "h1"))
 s.append(P("Mode hybride", "h2"))
 s.append(P("L'image passe par votre <b>hébergement web</b> (FTP) ; seul le <b>lien</b> passe par radio "
            "(~11 s en DATAC3). Les stations la téléchargent automatiquement. Idéal pour les grandes images et les "
@@ -383,9 +471,11 @@ s.append(img("webdlg.png", 110, "Réglages de la mise en ligne (serveur FTP du m
 
 # ------------------------------------------------------------------ 8
 s.append(PageBreak())
-s.append(P("8. Bruit, QSB et QRM", "h1"))
+s.append(P("9. Bruit, QSB et QRM", "h1"))
 s += B(["<b>Bruit et QSB</b> : mode Auto + robustesse Auto. Si les pertes viennent par groupes, choisissez la "
         "robustesse « Forte ».",
+        "<b>Bruit et QSB en mode EasyPal</b> : gardez Reed-Solomon (RS2 ou plus), baissez la QAM (QAM4) ou passez en "
+        "mode E. Une image incomplète se complète par BSR / FIX.",
         "<b>QRM</b> : le <b>coupe-QRM</b> (Réglages → Audio) efface avant la démodulation tout ce qui est hors de "
         "la bande du mode (BLU voisine) et, dans la bande, les raies étroites (porteuse, CW, RTTY). Sans lui, "
         "une simple porteuse aussi forte que le signal suffisait à tout bloquer.",
@@ -402,7 +492,7 @@ s.append(img("analyse.png", 160, "L'analyseur : diagnostic en clair et SNR de ch
 
 # ------------------------------------------------------------------ 9
 s.append(PageBreak())
-s.append(P("9. Problèmes fréquents", "h1"))
+s.append(P("10. Problèmes fréquents", "h1"))
 s.append(table([["Symptôme", "Cause probable", "Que faire"],
                 ["Le poste ne passe pas en émission", "PTT mal réglé, port COM occupé",
                  "Poste radio… → Tester le PTT ; fermer les logiciels qui tiennent le port ou passer par OmniRig"],
@@ -412,6 +502,10 @@ s.append(table([["Symptôme", "Cause probable", "Que faire"],
                  "Réglages → Audio ; vérifier que le waterfall bouge ; analyser un enregistrement WAVE"],
                 ["Trames détectées mais perdues", "Signal faible, QSB, QRM, écrêtage",
                  "Analyseur WAV ; mode Auto / robustesse Forte ; baisser le niveau d'entrée"],
+                ["Image EasyPal incomplète", "QSB, segments perdus",
+                 "Cliquer sur BSR ; demander à l'émetteur RS2 ou plus, QAM4 ou le mode E"],
+                ["Image HFImage incomplète", "BSR pas entendu ou pas de FIX",
+                 "Vérifier « envoyer un BSR » chez vous et « répondre aux BSR par un FIX » chez l'émetteur (onglet Stations)"],
                 ["Images peu nettes", "Mode lent ou robustesse forte, durée courte",
                  "Robustesse Auto ; durée 3 min ; DATAC1X si les reports le permettent"],
                 ["« Poste pas en mode DATA »", "Kenwood en USB avec audio arrière",
@@ -422,8 +516,13 @@ s.append(table([["Symptôme", "Cause probable", "Que faire"],
                  "Réglages → Mode hybride → Tester le serveur"]],
                [45, 55, 70]))
 s.append(Spacer(1, 8))
-s.append(P("Diagnostic complet : <b>HFImage_F4GOP.exe --selftest rapport.txt</b> (modems, carte, Internet, "
+s.append(P("Diagnostic complet : <b>HFImage_F4GOP.exe --selftest rapport.txt</b> (modems dont EasyPal, carte, Internet, "
            "cartes son, ports COM, poste radio). Journal : Réglages → Ouvrir le journal."))
+s.append(P("Crédits et licence", "h2"))
+s.append(P("Le modem EasyPal (HamDRM) provient de <b>QSSTV</b> (Johan Maes ON4QZ), lui-même issu de <b>Dream</b> "
+           "(Volker Fischer, TU Darmstadt) et de <b>RXAMADRM</b> (Ties Bos PA0MBO), licence GNU GPL v3. Les modes DATAC "
+           "utilisent <b>codec2</b> (David Rowe VK5DGR et contributeurs). Hommage à <b>Erik Sundstrup VK4AES</b>, "
+           "auteur d'EasyPal."))
 s.append(P("Contact", "h2"))
 s.append(P("F4GOP — Denis — f4gop.denis@gmail.com<br/>Page du programme : "
            "github.com/f4gopdenis-cyber/HFImage_F4GOP (versions, nouveautés, sources).<br/>73 !"))

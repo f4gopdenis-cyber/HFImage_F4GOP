@@ -166,6 +166,8 @@ T = [
      "Maus: Bild des Partners ziehen, um es zu platzieren, Mausrad zum Vergrößern oder Verkleinern.",
      "Ratón: arrastre la imagen del corresponsal para colocarla, rueda para agrandarla o reducirla.",
      "Mouse: trascina l'immagine del corrispondente per posizionarla, rotellina per ingrandirla o ridurla."),
+    ("Mode d'emploi en anglais (PDF)", "User manual in English (PDF)", "Bedienungsanleitung auf Englisch (PDF)",
+     "Manual de usuario en inglés (PDF)", "Manuale d'uso in inglese (PDF)"),
     ("Écouter après chaque émission (pour recevoir BSR et ACK)",
      "Receive after each transmission (to hear BSR and ACK)",
      "Nach jeder Sendung empfangen (für BSR und ACK)",
