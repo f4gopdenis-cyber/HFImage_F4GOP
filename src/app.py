@@ -29,6 +29,7 @@ import hybrid
 import i18n
 import imgfmt
 import presence
+import docking
 import gallery
 import websync
 import trafic
@@ -53,7 +54,7 @@ import random
 import wave
 
 APP = "HFImage F4GOP"
-VERSION = "0.72"
+VERSION = "0.73"
 CONF_PATH = os.path.join(os.path.expanduser("~"), ".hfimage.json")
 DEFAULT_OUT = os.path.join(os.path.expanduser("~"), "Documents", "HFImage")
 DEFAULTS = {
@@ -296,6 +297,7 @@ class App(tk.Tk):
             self.after(5000, lambda: self.update_check(quiet=True))
         self.after(400, self._restore_layout)
         self.after(1500, self._restore_layout)     # une 2e fois, une fois tout affiché
+        self.after(1700, lambda: self.dock.restore(self.conf.get("detached")))   # fenêtres séparées
         self.protocol("WM_DELETE_WINDOW", self._quit)
         self.journal_devices()
         self.log(f"{APP} {VERSION} prêt. Images reçues : {self.conf['folder']}")
@@ -336,14 +338,18 @@ class App(tk.Tk):
         # ---------------- colonne de gauche : état, boutons, spectre + waterfall, stations
         left = tk.Frame(main, bg=GREEN, width=268)
         main.add(left, minsize=230, stretch="never", width=268)
-        self.panel = StatusPanel(left)
+        ctl = tk.Frame(left, bg=GREEN)               # panneau d'état + grille de boutons
+        ctl.pack(fill="x")
+        self.panel = StatusPanel(ctl)
         self.panel.pack(fill="x")
-        self._button_grid(left)
+        self._button_grid(ctl)
         lpw = tk.PanedWindow(left, orient="vertical", **pw)
         lpw.pack(fill="both", expand=True, pady=(4, 0))
         self.panes["left"] = lpw
-        self.wf = Waterfall(lpw, height=200)
-        lpw.add(self.wf, minsize=90, stretch="always")
+        wfbox = tk.Frame(lpw, bg="#000")
+        self.wf = Waterfall(wfbox, height=200)
+        self.wf.pack(fill="both", expand=True)
+        lpw.add(wfbox, minsize=90, stretch="always")
         sbox = tk.Frame(lpw, bg=GREEN)
         lpw.add(sbox, minsize=80, stretch="never", height=170)
         self._stations_box(sbox)
@@ -362,8 +368,10 @@ class App(tk.Tk):
         self._tab_sim(nb)
         self.gal = gallery.GalleryView(nb, self, tr)
         nb.add(self.gal, text="  Galerie  ")
-        self.logbox = tk.Text(rpw, height=4, state="disabled", wrap="word", bg="#f4fff4")
-        rpw.add(self.logbox, minsize=40, stretch="never", height=70)
+        logbox = tk.Frame(rpw, bg=GREEN)
+        self.logbox = tk.Text(logbox, height=4, state="disabled", wrap="word", bg="#f4fff4")
+        self.logbox.pack(fill="both", expand=True)
+        rpw.add(logbox, minsize=40, stretch="never", height=70)
         bar = tk.Frame(right, bg=GREEN_DARK)
         bar.pack(fill="x", pady=(2, 0))
         tk.Label(bar, textvariable=self.v_state, bg=GREEN_DARK, fg="white",
@@ -379,8 +387,45 @@ class App(tk.Tk):
         self._build_text_window()
         self._build_wav_window()
         self._build_wft_window()
+        # ---------------- fenêtres séparées (menu Fenêtres)
+        d = self.dock = docking.Dock(self, APP, on_change=self._dock_changed, tr=tr)
+        d.add_pack("commandes", "Panneau et boutons", ctl, [ctl, lpw], fill="x")
+        d.add_pane("waterfall", "Waterfall", wfbox, lpw, [wfbox, sbox], minsize=90, stretch="always")
+        d.add_pane("liste", "Stations entendues", sbox, lpw, [wfbox, sbox], minsize=80, stretch="never")
+        tabs = [self.tab_rx, self.tab_tx, self.tab_stations, self.tab_sim, self.gal]
+        for name, title, fr, text in (("rx", "Réception (RX)", self.tab_rx, "  RX  "),
+                                      ("tx", "Émission (TX)", self.tab_tx, "  TX  "),
+                                      ("stations", "Stations", self.tab_stations, "  Stations  "),
+                                      ("sim", "Simulation", self.tab_sim, "  Simulation  "),
+                                      ("gal", "Galerie", self.gal, "  Galerie  ")):
+            d.add_tab(name, title, fr, nb, text, tabs)
+        d.add_pane("journal", "Journal", logbox, rpw, [nb, logbox], minsize=40, stretch="never")
         self._menus()
         self._translate_ui()
+
+    # ------------------------------------------------------------------ fenêtres séparées
+    def _dock_changed(self):
+        for n, v in getattr(self, "v_dock", {}).items():
+            v.set(self.dock.detached(n))
+        self.conf["detached"] = self.dock.saved()
+
+    def show_tab(self, name, focus=True):
+        """Montre un onglet : dans la fenêtre principale, ou sa fenêtre séparée (au premier plan
+        si focus)."""
+        if self.dock.detached(name):
+            if focus:
+                self.dock.show(name)
+            return
+        self.nb.select(self.dock.zones[name]["frame"])
+
+    def _tab_shown(self, name):
+        """L'onglet est-il celui affiché dans la fenêtre principale ?"""
+        if self.dock.detached(name):
+            return False
+        try:
+            return self.nb.select() == str(self.dock.zones[name]["frame"])
+        except tk.TclError:
+            return False
 
     # ------------------------------------------------------------------ apparence
     def _font_menu(self):
@@ -550,6 +595,15 @@ class App(tk.Tk):
         r.add_separator()
         r.add_command(label="Disposition d'origine des fenêtres", command=self.reset_layout)
         m.add_cascade(label="Réglages", menu=r)
+        fw = tk.Menu(m, tearoff=0)
+        self.v_dock = {}
+        for n in self.dock.order:
+            v = self.v_dock[n] = tk.BooleanVar(value=self.dock.detached(n))
+            fw.add_checkbutton(label=self.dock.zones[n]["title"], variable=v,
+                               command=lambda n=n: self.dock.toggle(n))
+        fw.add_separator()
+        fw.add_command(label="Tout remettre dans la fenêtre principale", command=self.dock.attach_all)
+        m.add_cascade(label="Fenêtres", menu=fw)
         h = tk.Menu(m, tearoff=0)
         h.add_checkbutton(label="Mode hybride", variable=self.v_hyb, command=self._toggle_hyb_ui)
         h.add_command(label="Tester le serveur", command=self.test_hybrid)
@@ -582,7 +636,7 @@ class App(tk.Tk):
         i.add_separator()
         i.add_command(label="Image reçue en plein format", command=self._open_full)
         i.add_command(label="Dossier des images reçues", command=self.open_folder)
-        i.add_command(label="Galerie des dernières images", command=lambda: self.nb.select(self.gal))
+        i.add_command(label="Galerie des dernières images", command=lambda: self.show_tab("gal"))
         i.add_command(label="Site web / Digi-Sites…", command=self.web_dialog)
         m.add_cascade(label="Images", menu=i)
         f = tk.Menu(m, tearoff=0)
@@ -652,7 +706,7 @@ class App(tk.Tk):
             ("accord", "Accord", self.send_tune), ("id", "ID", self.send_cwid),
             ("texte", "Envoi Texte", self.show_text), ("wave", "WAVE", self.show_wav),
             ("ecoute", "Écoute", self.toggle_listen), ("txtinc", "Txt inclus", self._toggle_txtinc),
-            ("log", "Log Station", lambda: self.nb.select(self.tab_stations)), ("qsl", "IMG/QSL", self.qsl_dialog),
+            ("log", "Log Station", lambda: self.show_tab("stations")), ("qsl", "IMG/QSL", self.qsl_dialog),
             ("image", "Image…", self.open_image), ("hyb", "Hybride", self._toggle_hyb_btn),
             ("reglages", "Réglages", self.show_settings), ("dossier", "Dossier", self.open_folder),
         ]
@@ -743,7 +797,7 @@ class App(tk.Tk):
         return bar
 
     def _tab_rx(self, nb):
-        t = tk.Frame(nb, bg="black")
+        t = self.tab_rx = tk.Frame(nb, bg="black")
         nb.add(t, text="  RX  ")
         bar = self._green_bar(t)
         self.lb_rx_info = tk.Label(bar, text="En attente d'image…", bg=GREEN, anchor="w",
@@ -782,7 +836,7 @@ class App(tk.Tk):
         self.hist = []
 
     def _tab_tx(self, nb):
-        t = tk.Frame(nb, bg="black")
+        t = self.tab_tx = tk.Frame(nb, bg="black")
         nb.add(t, text="  TX  ")
         tb = ttk.Frame(t, padding=(6, 4))
         tb.pack(fill="x", side="top")
@@ -1199,9 +1253,10 @@ class App(tk.Tk):
         self.win_conf.lift()
 
     def _tab_stations(self, nb):
-        t = ttk.Frame(nb, padding=10)
-        nb.add(t, text="  Stations  ")
-        self.tab_stations = t
+        w = self.tab_stations = tk.Frame(nb)      # cadre tk : peut devenir une fenêtre séparée
+        t = ttk.Frame(w, padding=10)
+        t.pack(fill="both", expand=True)
+        nb.add(w, text="  Stations  ")
         opt = ttk.LabelFrame(t, text="BSR / FIX (demandes de compléments)", padding=6)
         opt.pack(fill="x")
         self.v_bsr_auto = tk.BooleanVar(value=self.conf.get("bsr_auto", True))
@@ -1472,7 +1527,7 @@ class App(tk.Tk):
         self.tx = None
         self._show(self.lb_src, "src", self.src_img)
         self._set_text(self.lb_src_info, f"Carte des stations — {img.width}×{img.height}")
-        self.nb.select(1)
+        self.show_tab("tx")
         self.prepare()
         self.log("Carte des stations placée dans la fenêtre TX.")
 
@@ -1644,8 +1699,10 @@ class App(tk.Tk):
             pass
 
     def _tab_sim(self, nb):
-        t = ttk.Frame(nb, padding=10)
-        nb.add(t, text="  Simulation  ")
+        w = self.tab_sim = tk.Frame(nb)
+        t = ttk.Frame(w, padding=10)
+        t.pack(fill="both", expand=True)
+        nb.add(w, text="  Simulation  ")
         ttk.Label(t, text="Teste l'image préparée dans l'onglet Émission sur un canal HF simulé "
                           "(bruit + fading CCIR), avec compléments automatiques (NACK).",
                   wraplength=700).pack(anchor="w")
@@ -2612,7 +2669,7 @@ class App(tk.Tk):
         if hasattr(self, "v_pipon"):
             self.v_pipon.set(True)
         self._save_conf_file()
-        self.nb.select(1)
+        self.show_tab("tx")
         if self.src_img is None:
             messagebox.showinfo(APP, "Ouvrez maintenant votre image : celle du correspondant y sera incrustée.")
         self.prepare()
@@ -3411,7 +3468,7 @@ class App(tk.Tk):
         self._set_text(self.gbtn["tx"], "STOP")
         self.gbtn["tx"].configure(bg="#ff6b6b", activebackground="#ff8f8f")
         if job["kind"] in ("image", "text", "hybrid", "file"):
-            self.nb.select(1)
+            self.show_tab("tx", focus=False)
         threading.Thread(target=self._tx_thread, args=(job,), daemon=True).start()
         return True
 
@@ -4417,8 +4474,8 @@ class App(tk.Tk):
             seen.clear()
             seen.add(key)
         try:
-            if not self.tx_busy and self.nb.index("current") == 1:
-                self.nb.select(0)
+            if not self.tx_busy and self._tab_shown("tx"):
+                self.show_tab("rx", focus=False)
         except tk.TclError:
             pass
 
@@ -4466,7 +4523,7 @@ class App(tk.Tk):
             self._set_text(self.lb_rx_info, f"{os.path.basename(path)}   —   {hdr['call']}   —   {mode}   —   "
                                            f"{im.width}×{im.height}   —   {hdr['size'] / 1000:.1f} K" + anim)
             if not self.tx_busy:
-                self.nb.select(0)
+                self.show_tab("rx", focus=False)
             if not hdr.get("preview") and os.sep + "relecture" + os.sep not in path:
                 self._gallery_add("rx", hdr.get("call"), mode, path, png, hdr.get("size"), snr)
                 self._web_queue("rx", png, hdr.get("call"), mode, hdr.get("id"))
@@ -5041,7 +5098,7 @@ class App(tk.Tk):
         who = e.get("call") if e.get("dir") == "rx" else tr("envoyée")
         self._set_text(self.lb_rx_info, f"{os.path.basename(e.get('file') or '')}   —   {who}   —   "
                                        f"{e.get('mode', '')}   —   {im.width}×{im.height}" + anim)
-        self.nb.select(0)
+        self.show_tab("rx")
 
     def gallery_full(self, e):
         p = e.get("file")
@@ -5056,7 +5113,7 @@ class App(tk.Tk):
             p = e["png"]
         if p and os.path.exists(p):
             self.load_image(p)
-            self.nb.select(1)
+            self.show_tab("tx")
 
     def gallery_folder(self, e):
         p = e.get("file")
@@ -5244,6 +5301,7 @@ class App(tk.Tk):
                 pos = x if str(p.cget("orient")) == "horizontal" else y
                 lay[k] = pos if side == "first" else self._pane_len(p) - pos
             self.conf["layout"] = lay
+            self.conf["detached"] = self.dock.saved()
             self.conf.pop("panes", None)
             with open(CONF_PATH, "w", encoding="utf-8") as f:
                 json.dump(self.conf, f, indent=1)
@@ -5272,6 +5330,7 @@ class App(tk.Tk):
             self.state("normal")
         except tk.TclError:
             pass
+        self.dock.attach_all()
         self.geometry("1320x880")
         self.conf["layout"] = {"main": 268, "left": 170, "right": 70, "rx": 250, "stlists": 110}
         self.update_idletasks()

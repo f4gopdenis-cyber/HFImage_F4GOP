@@ -1,5 +1,15 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 0.73 — fenêtres séparées : organisez l'écran comme vous voulez
+
+- **Nouveau menu « Fenêtres »** : chaque zone du programme peut devenir une **fenêtre séparée**, à placer et dimensionner où vous voulez, y compris sur un **autre écran** :
+  - Panneau et boutons, Waterfall, Stations entendues, Journal ;
+  - les onglets **Réception (RX)**, **Émission (TX)**, **Stations**, **Simulation** et **Galerie**.
+- Cochez une zone dans le menu pour la séparer, décochez-la (ou **fermez sa fenêtre**) pour la remettre à sa place dans la fenêtre principale. « Tout remettre dans la fenêtre principale » remet tout d'un coup, comme « Réglages → Disposition d'origine des fenêtres ».
+- Tout continue de fonctionner dans les fenêtres séparées (waterfall, réception, émission, galerie…). Quand une image arrive et que l'onglet RX est séparé, il reste simplement affiché dans sa fenêtre ; les boutons qui ouvrent un onglet (Galerie, Log Station…) font passer sa fenêtre au premier plan.
+- La disposition est **gardée** : au prochain lancement, les fenêtres séparées reviennent à leur place et à leur taille. Si un écran a été débranché entre-temps, la fenêtre revient près de la fenêtre principale.
+- Quand le waterfall est séparé, la liste des stations prend toute la colonne de gauche.
+
 ## Version 0.72 — hybride éclair plus robuste (4,5 s)
 
 - L'annonce **éclair** part maintenant en **5 copies** au lieu de 3 : **4,5 s** sur l'air au lieu de 3 s (toujours 2,5 fois plus court que l'annonce normale de 11 s). Une seule copie reçue suffit, et elles sont plus étalées dans le temps face au QSB.
