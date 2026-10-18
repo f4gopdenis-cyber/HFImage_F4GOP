@@ -1,5 +1,11 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 0.75 — Historique et Messages reçus : affichés ou masqués
+
+- Menu **Fenêtres** : **« Afficher l'historique (onglet RX) »** et **« Afficher les messages reçus (onglet RX) »**. Décochez-les pour masquer ces listes à droite de l'image reçue ; sans aucune des deux, l'**image reçue prend toute la largeur**. Le choix est gardé d'une session à l'autre.
+- Les messages continuent d'arriver même quand la liste est masquée (fenêtre « Message reçu », menu Images).
+- « Disposition d'origine des fenêtres » les réaffiche.
+
 ## Version 0.74 — fenêtres séparées toujours visibles
 
 - **Correction** : un clic sur la fenêtre principale faisait passer les fenêtres séparées **derrière** elle, comme si elles avaient disparu. Les fenêtres séparées restent maintenant **toujours devant la fenêtre principale**, à l'endroit et à la taille où vous les avez mises. On peut cliquer et travailler dans n'importe quelle fenêtre sans que les autres bougent ou se cachent.

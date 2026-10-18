@@ -54,7 +54,7 @@ import random
 import wave
 
 APP = "HFImage F4GOP"
-VERSION = "0.74"
+VERSION = "0.75"
 CONF_PATH = os.path.join(os.path.expanduser("~"), ".hfimage.json")
 DEFAULT_OUT = os.path.join(os.path.expanduser("~"), "Documents", "HFImage")
 DEFAULTS = {
@@ -596,6 +596,11 @@ class App(tk.Tk):
         r.add_command(label="Disposition d'origine des fenêtres", command=self.reset_layout)
         m.add_cascade(label="Réglages", menu=r)
         fw = tk.Menu(m, tearoff=0)
+        fw.add_checkbutton(label="Afficher l'historique (onglet RX)", variable=self.v_show_hist,
+                           command=lambda: self._rx_side_apply(save=True))
+        fw.add_checkbutton(label="Afficher les messages reçus (onglet RX)", variable=self.v_show_msgs,
+                           command=lambda: self._rx_side_apply(save=True))
+        fw.add_separator()
         self.v_dock = {}
         for n in self.dock.order:
             v = self.v_dock[n] = tk.BooleanVar(value=self.dock.detached(n))
@@ -816,12 +821,12 @@ class App(tk.Tk):
         side = tk.PanedWindow(rxp, orient="vertical", **pw)
         rxp.add(side, minsize=150, stretch="never", width=250)
         self.panes["rxside"] = side
-        h1 = tk.Frame(side, bg=GREEN)
+        h1 = self._rx_hist = tk.Frame(side, bg=GREEN)
         side.add(h1, minsize=60, stretch="always")
         tk.Label(h1, text="Historique", bg=GREEN, font=("TkDefaultFont", 9, "bold")).pack(anchor="w", padx=4)
         self.lst = tk.Listbox(h1, height=12)
         self.lst.pack(fill="both", expand=True, padx=4)
-        h2 = tk.Frame(side, bg=GREEN)
+        h2 = self._rx_msgs = tk.Frame(side, bg=GREEN)
         side.add(h2, minsize=60, stretch="always")
         tk.Label(h2, text="Messages reçus", bg=GREEN, font=("TkDefaultFont", 9, "bold")).pack(anchor="w", padx=4,
                                                                                               pady=(6, 0))
@@ -834,6 +839,32 @@ class App(tk.Tk):
         self.v_rxstat = tk.StringVar(value="")
         self.v_level = tk.DoubleVar(value=0)
         self.hist = []
+        self.v_show_hist = tk.BooleanVar(value=self.conf.get("rx_hist", True))
+        self.v_show_msgs = tk.BooleanVar(value=self.conf.get("rx_msgs", True))
+        self.after_idle(self._rx_side_apply)
+
+    def _rx_side_apply(self, save=False):
+        """Onglet RX : affiche ou masque « Historique » et « Messages reçus ». Sans aucun des
+        deux, l'image reçue prend toute la largeur."""
+        rxp, side = self.panes["rx"], self.panes["rxside"]
+        show = [(self._rx_hist, bool(self.v_show_hist.get())), (self._rx_msgs, bool(self.v_show_msgs.get()))]
+        for f, on in show:
+            there = str(f) in [str(p) for p in side.panes()]
+            if on and not there:
+                if f is self._rx_hist and str(self._rx_msgs) in [str(p) for p in side.panes()]:
+                    side.add(f, before=self._rx_msgs, minsize=60, stretch="always")
+                else:
+                    side.add(f, minsize=60, stretch="always")
+            elif not on and there:
+                side.forget(f)
+        in_rxp = str(side) in [str(p) for p in rxp.panes()]
+        if any(on for _, on in show) and not in_rxp:
+            rxp.add(side, minsize=150, stretch="never", width=250)
+        elif not any(on for _, on in show) and in_rxp:
+            rxp.forget(side)
+        if save:
+            self.conf.update(rx_hist=bool(self.v_show_hist.get()), rx_msgs=bool(self.v_show_msgs.get()))
+            self._save_conf_file()
 
     def _tab_tx(self, nb):
         t = self.tab_tx = tk.Frame(nb, bg="black")
@@ -5331,6 +5362,9 @@ class App(tk.Tk):
         except tk.TclError:
             pass
         self.dock.attach_all()
+        self.v_show_hist.set(True)
+        self.v_show_msgs.set(True)
+        self._rx_side_apply(save=True)
         self.geometry("1320x880")
         self.conf["layout"] = {"main": 268, "left": 170, "right": 70, "rx": 250, "stlists": 110}
         self.update_idletasks()
