@@ -45,6 +45,7 @@ from i18n import tr
 import protocol
 import qsl
 import shutil
+import webbrowser
 import wavtext
 from panel import LED_AMBER, LED_GREEN, LED_OFF, LED_RED, ImageView, StatusPanel
 import waterfall
@@ -54,7 +55,7 @@ import random
 import wave
 
 APP = "HFImage F4GOP"
-VERSION = "0.82"
+VERSION = "0.83"
 CONF_PATH = os.path.join(os.path.expanduser("~"), ".hfimage.json")
 DEFAULT_OUT = os.path.join(os.path.expanduser("~"), "Documents", "HFImage")
 DEFAULTS = {
@@ -669,6 +670,7 @@ class App(tk.Tk):
                       command=lambda: __import__("webbrowser").open(f"https://github.com/{updater.REPO}"))
         n.add_separator()
         n.add_command(label="À propos…", command=self._about)
+        n.add_command(label="Licence (GNU GPL v3)", command=self._license)
         m.add_cascade(label="Infos", menu=n)
         self.config(menu=m)
 
@@ -678,7 +680,24 @@ class App(tk.Tk):
                                  "(DATAC1X / DATAC1 / DATAC3 / DATAC4, BSR/ACK en DATAC0), code fontaine, "
                                  "mode hybride par Internet.\n\nAutotests :\n"
                                  "  HFImage_F4GOP.exe --selftest rapport.txt\n"
-                                 "  HFImage_F4GOP.exe --audiotest test.txt \"USB Audio CODEC\"")
+                                 "  HFImage_F4GOP.exe --audiotest test.txt \"USB Audio CODEC\""
+                            + "\n\n© 2026 Denis F4GOP — logiciel libre et gratuit, licence GNU GPL v3 : "
+                                 "vous pouvez l'utiliser, le copier, le partager et le modifier ; une version modifiée "
+                                 "doit rester sous la même licence, avec ses sources.\n"
+                                 "Sources et licence : github.com/f4gopdenis-cyber/HFImage_F4GOP\n"
+                                 "Modem EasyPal d'après QSSTV (ON4QZ), modems DATAC : codec2 (VK5DGR).")
+
+    def _license(self):
+        """Texte complet de la licence (copié dans Documents\\HFImage pour rester ouvrable)."""
+        here = getattr(sys, "_MEIPASS", os.path.dirname(os.path.abspath(__file__)))
+        src = os.path.join(here, "LICENSE.txt")
+        try:
+            os.makedirs(DEFAULT_OUT, exist_ok=True)
+            dst = os.path.join(DEFAULT_OUT, "LICENCE_GPL-3.0.txt")
+            shutil.copyfile(src, dst)
+            self._open_path(dst)
+        except OSError:
+            webbrowser.open("https://www.gnu.org/licenses/gpl-3.0.html")
 
     def _open_path(self, p):
         if not os.path.exists(p):

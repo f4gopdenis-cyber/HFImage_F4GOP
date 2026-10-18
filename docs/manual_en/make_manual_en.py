@@ -529,6 +529,9 @@ s.append(Spacer(1, 8))
 s.append(P("Full diagnosis: <b>HFImage_F4GOP.exe --selftest report.txt</b> (modems including EasyPal, map, Internet, "
            "sound cards, COM ports, radio). Log: <b>Documents\\HFImage\\journal.txt</b>."))
 s.append(P("Credits and licence", "h2"))
+s.append(P("HFImage F4GOP — © 2026 Denis F4GOP — is <b>free software</b>, at no cost, under the <b>GNU GPL v3</b>: you may "
+           "use, copy, share and modify it; a modified version you distribute must keep the same licence, with its "
+           "sources. Full text: menu <b>Info → Licence (GNU GPL v3)</b>, or the LICENSE file on the program's GitHub page."))
 s.append(P("The EasyPal (HamDRM) modem comes from <b>QSSTV</b> (Johan Maes ON4QZ), itself derived from <b>Dream</b> "
            "(Volker Fischer, TU Darmstadt) and <b>RXAMADRM</b> (Ties Bos PA0MBO), GNU GPL v3. The DATAC modes use "
            "<b>codec2</b> (David Rowe VK5DGR and contributors). Tribute to <b>Erik Sundstrup VK4AES</b>, author of "

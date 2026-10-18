@@ -581,6 +581,10 @@ s.append(Spacer(1, 8))
 s.append(P("Diagnostic complet : <b>HFImage_F4GOP.exe --selftest rapport.txt</b> (modems dont EasyPal, carte, Internet, "
            "cartes son, ports COM, poste radio). Journal : Réglages → Ouvrir le journal."))
 s.append(P("Crédits et licence", "h2"))
+s.append(P("HFImage F4GOP — © 2026 Denis F4GOP — est un <b>logiciel libre et gratuit</b>, sous licence <b>GNU GPL v3</b> : "
+           "vous pouvez l'utiliser, le copier, le partager et le modifier ; une version modifiée que vous distribuez doit "
+           "rester sous la même licence, avec ses sources. Texte complet : menu <b>Infos → Licence (GNU GPL v3)</b>, ou "
+           "fichier LICENSE sur la page GitHub du programme."))
 s.append(P("Le modem EasyPal (HamDRM) provient de <b>QSSTV</b> (Johan Maes ON4QZ), lui-même issu de <b>Dream</b> "
            "(Volker Fischer, TU Darmstadt) et de <b>RXAMADRM</b> (Ties Bos PA0MBO), licence GNU GPL v3. Les modes DATAC "
            "utilisent <b>codec2</b> (David Rowe VK5DGR et contributeurs). Hommage à <b>Erik Sundstrup VK4AES</b>, "

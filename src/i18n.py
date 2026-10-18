@@ -1319,6 +1319,7 @@ T = [
      "Ajuste «Transmitir sin preguntar»: el equipo se queda en su modo. Para el paso automático a DATA: Ajustes → «Equipo no en DATA antes de transmitir».",
      "Impostazione «Trasmetti senza chiedere»: la radio resta nel suo modo. Per il passaggio automatico a DATA: Impostazioni → «Radio non in DATA prima di trasmettere»."),
     ("Poste pas passé en DATA : vérifiez son mode si l'audio ne part pas.", "Radio not switched to DATA: check its mode if no audio goes out.", "Gerät nicht auf DATA geschaltet: prüfen Sie die Betriebsart, falls kein Audio gesendet wird.", "Equipo no pasado a DATA: compruebe su modo si el audio no sale.", "Radio non passata in DATA: controllate il modo se l'audio non esce."),
+    ("Licence (GNU GPL v3)", "Licence (GNU GPL v3)", "Lizenz (GNU GPL v3)", "Licencia (GNU GPL v3)", "Licenza (GNU GPL v3)"),
     ("Fenêtres", "Windows", "Fenster", "Ventanas", "Finestre"),
     ("Panneau et boutons", "Panel and buttons", "Anzeige und Tasten", "Panel y botones", "Pannello e pulsanti"),
     ("Stations entendues", "Stations heard", "Gehörte Stationen", "Estaciones oídas", "Stazioni ascoltate"),

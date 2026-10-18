@@ -1,5 +1,10 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 0.83 — licence GNU GPL v3
+
+- HFImage F4GOP est maintenant officiellement un **logiciel libre et gratuit**, sous licence **GNU GPL v3** (© 2026 Denis F4GOP) : chacun peut l'utiliser, le copier, le partager et le modifier ; une version modifiée distribuée doit rester sous la même licence, avec ses sources. C'est aussi la licence du modem EasyPal repris de QSSTV.
+- Texte complet : fichier **LICENSE** du dépôt GitHub, et nouveau menu **Infos → Licence (GNU GPL v3)** dans le programme. La fenêtre **À propos** et les modes d'emploi le mentionnent.
+
 ## Version 0.82 — retrait de l'envoi de pages web
 
 - La fonction « page web envoyée comme une image » de la version 0.81 est **retirée**, pour garder le programme simple. **Ouvrir une image…** n'accepte plus les fichiers .html ; le menu Images → Pages web disparaît. Tout le reste est identique à la 0.81.

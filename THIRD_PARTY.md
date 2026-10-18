@@ -1,5 +1,7 @@
 # Composants utilisés
 
+HFImage F4GOP lui-même est sous licence **GNU GPL v3** (fichier [LICENSE](LICENSE)).
+
 HFImage F4GOP s'appuie sur les composants libres suivants. Leurs licences s'appliquent à ces composants, y compris quand ils sont inclus dans `HFImage_F4GOP.exe`.
 
 | Composant | Rôle | Licence |
