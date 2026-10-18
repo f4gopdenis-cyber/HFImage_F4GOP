@@ -1,5 +1,9 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 0.64 — bascule automatique sur l'onglet Réception
+
+- Quand une image commence à arriver (HFImage ou EasyPal) alors que l'onglet **Émission** est affiché, HFImage passe **tout de suite** sur l'onglet **Réception** pour la montrer, comme EasyPal, sans attendre la fin de l'image. Si vous revenez sur l'onglet Émission pendant la réception, le programme vous y laisse jusqu'à la fin de l'image. Rien ne bascule pendant vos propres émissions.
+
 ## Version 0.63 — l'émission suit le mode reçu
 
 - Quel que soit le mode choisi pour l'émission, HFImage **décode toujours les deux** : les images et messages EasyPal **et** ceux de HFImage (DATAC).

@@ -53,7 +53,7 @@ import random
 import wave
 
 APP = "HFImage F4GOP"
-VERSION = "0.63"
+VERSION = "0.64"
 CONF_PATH = os.path.join(os.path.expanduser("~"), ".hfimage.json")
 DEFAULT_OUT = os.path.join(os.path.expanduser("~"), "Documents", "HFImage")
 DEFAULTS = {
@@ -2161,6 +2161,7 @@ class App(tk.Tk):
             P.set_call(st.get("callsign") or good.get("callsign"))
         got, K = st.get("seg_received", 0), st.get("seg_total", 0)
         if K > 0:
+            self._rx_tab_auto(("easypal", K, st.get("callsign") or good.get("callsign")))
             done = eng.drm_done_t >= eng.drm_t - 1 and got >= K
             P.set_cell("Total", "RX", str(K))
             P.set_cell("Segs OK", "RX", str(min(got, K)))
@@ -4052,9 +4053,28 @@ class App(tk.Tk):
         self.v_rxstat.set(txt)
         if prog:
             got, K = prog
+            if st["mode"] != "DATAC0":
+                self._rx_tab_auto(("datac", st.get("id")))
             self.pb_rx.configure(value=100 * min(got, K) / K)
             self.v_rxstat.set(txt + f"\nImage en cours : {min(got, K)} / {K} symboles "
                                     f"({100 * min(got, K) // K} %)")
+
+    def _rx_tab_auto(self, key):
+        """Une image commence à arriver alors que l'onglet Émission est affiché : on passe
+        sur l'onglet Réception pour la voir (une seule fois par image : si l'opérateur
+        revient sur l'onglet Émission, on l'y laisse)."""
+        seen = self.__dict__.setdefault("_rx_tab_seen", set())
+        if key in seen:
+            return
+        seen.add(key)
+        if len(seen) > 200:
+            seen.clear()
+            seen.add(key)
+        try:
+            if not self.tx_busy and self.nb.index("current") == 1:
+                self.nb.select(0)
+        except tk.TclError:
+            pass
 
     def _got_image(self, hdr, path, png, mode, from_file=False):
         self.pb_rx.configure(value=100)
