@@ -100,6 +100,55 @@ LEAD_IN_S = 0.6
 API_PREF = ("MME", "Windows WASAPI", "Windows DirectSound")
 
 
+# entrées virtuelles de Windows (« périphérique par défaut ») : doublons d'un vrai appareil
+_VIRTUAL = ("sound mapper", "mappeur de sons", "primary sound", "pilote de son principal",
+            "pilote de capture audio principal", "périphérique audio principal")
+
+
+def _same_device(full: str, other: str) -> bool:
+    """Même appareil vu par deux interfaces : les noms MME sont tronqués à 31 caractères."""
+    a, b = full.strip().lower(), other.strip().lower()
+    if a == b:
+        return True
+    short, long_ = (a, b) if len(a) < len(b) else (b, a)
+    # nom tronqué par MME (31 caractères, parfois avec une espace finale retirée ici)
+    return len(short) >= 25 and long_.startswith(short)
+
+
+def unique_devices(sd, output=True):
+    """Un seul choix par appareil réel : [(index, nom complet, interface)].
+    Windows présente chaque carte son plusieurs fois (MME, DirectSound, WASAPI, WDM-KS) ;
+    on garde l'interface préférée (API_PREF) et le nom le plus complet. Si cette interface
+    échoue, la lecture / l'enregistrement essaient déjà les autres (same_device_other_apis)."""
+    devs = sd.query_devices()
+    apis = sd.query_hostapis()
+    key = "max_output_channels" if output else "max_input_channels"
+    groups = []                                  # [{"name": nom le plus long, "members": [(rang, i, api)]}]
+    for i, d in enumerate(devs):
+        if d[key] <= 0:
+            continue
+        api = apis[d["hostapi"]]["name"]
+        if api == "Windows WDM-KS":              # souvent muet ou exclusif
+            continue
+        name = str(d["name"]).strip()
+        if any(v in name.lower() for v in _VIRTUAL):
+            continue
+        rank = API_PREF.index(api) if api in API_PREF else len(API_PREF)
+        for g in groups:
+            if _same_device(g["name"], name):
+                g["members"].append((rank, i, api))
+                if len(name) > len(g["name"]):
+                    g["name"] = name
+                break
+        else:
+            groups.append({"name": name, "members": [(rank, i, api)]})
+    out = []
+    for g in groups:
+        rank, i, api = min(g["members"])
+        out.append((i, g["name"], api))
+    return sorted(out, key=lambda t: t[1].lower())
+
+
 def device_label(sd, i):
     d = sd.query_devices(i)
     return f"{d['name']} [{sd.query_hostapis(d['hostapi'])['name']}]"

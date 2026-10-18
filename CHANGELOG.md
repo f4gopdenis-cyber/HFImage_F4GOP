@@ -1,5 +1,11 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 0.61 — listes de cartes son sans doublons
+
+- **Sortie vers le poste / Entrée depuis le poste** : chaque appareil n'apparaît plus qu'**une fois**, avec son nom complet. Windows présente chaque carte son plusieurs fois (MME, DirectSound, WASAPI…) ; HFImage choisit lui-même l'interface la plus sûre et, si elle échoue, essaie toujours automatiquement les autres pour le même appareil.
+- Les entrées virtuelles de Windows (« Mappeur de sons Microsoft », « Pilote de son principal »…) ne sont plus proposées.
+- Votre réglage actuel est conservé, même s'il désignait l'un des anciens doublons.
+
 ## Version 0.60 — report Rx Ok en hybride EasyPal
 
 - **Rx Ok en hybride EasyPal** : la station qui reçoit une image hybride EasyPal renvoie maintenant son **report** (S/B mesuré sur l'annonce radio) avec sa confirmation ; seul l'indicatif apparaissait. Il faut que la station qui reçoit ait la version 0.60.

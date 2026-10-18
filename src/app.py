@@ -53,7 +53,7 @@ import random
 import wave
 
 APP = "HFImage F4GOP"
-VERSION = "0.60"
+VERSION = "0.61"
 CONF_PATH = os.path.join(os.path.expanduser("~"), ".hfimage.json")
 DEFAULT_OUT = os.path.join(os.path.expanduser("~"), "Documents", "HFImage")
 DEFAULTS = {
@@ -2243,18 +2243,18 @@ class App(tk.Tk):
         except Exception as e:
             self.log(f"Audio indisponible : {e}")
             devs, hostapis = [], []
-        outs, ins = [], []
-        for i, d in enumerate(devs):
-            api = hostapis[d["hostapi"]]["name"]
-            if api == "Windows WDM-KS":          # souvent muet ou exclusif : on l'écarte
-                continue
-            entry = (self.API_ORDER.get(api, 3), i, f"{i}: {d['name']} [{api}]")
-            if d["max_output_channels"] > 0:
-                outs.append(entry)
-            if d["max_input_channels"] > 0:
-                ins.append(entry)
-        self.cb_out["values"] = [e[2] for e in sorted(outs)]
-        self.cb_in["values"] = [e[2] for e in sorted(ins)]
+        if not devs:
+            self.cb_out["values"] = self.cb_in["values"] = []
+            return
+        # un seul choix par appareil réel (plus les doublons MME / DirectSound / WASAPI)
+        try:
+            outs = audio.unique_devices(sd(), output=True)
+            ins = audio.unique_devices(sd(), output=False)
+        except Exception as e:
+            self.log(f"Audio : {e}")
+            outs, ins = [], []
+        self.cb_out["values"] = [f"{i}: {name} [{api}]" for i, name, api in outs]
+        self.cb_in["values"] = [f"{i}: {name} [{api}]" for i, name, api in ins]
 
     @staticmethod
     def _dev_index(s):
@@ -2265,8 +2265,15 @@ class App(tk.Tk):
         idx, _, label = s.partition(": ")
         try:
             hostapis = sd().query_hostapis()
-            for i, d in enumerate(sd().query_devices()):
+            devs = sd().query_devices()
+            for i, d in enumerate(devs):
                 if f"{d['name']} [{hostapis[d['hostapi']]['name']}]" == label:
+                    return i
+            # le nom affiché est le nom complet ; en MME Windows le tronque à 31 caractères
+            name, _, api = label.rpartition(" [")
+            api = api.rstrip("]")
+            for i, d in enumerate(devs):
+                if hostapis[d["hostapi"]]["name"] == api and audio._same_device(name, d["name"]):
                     return i
         except Exception:
             pass
