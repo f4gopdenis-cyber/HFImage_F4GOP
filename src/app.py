@@ -54,7 +54,7 @@ import random
 import wave
 
 APP = "HFImage F4GOP"
-VERSION = "0.78"
+VERSION = "0.79"
 CONF_PATH = os.path.join(os.path.expanduser("~"), ".hfimage.json")
 DEFAULT_OUT = os.path.join(os.path.expanduser("~"), "Documents", "HFImage")
 DEFAULTS = {
@@ -2365,24 +2365,34 @@ class App(tk.Tk):
         self.cb_in["values"] = [f"{i}: {name} [{api}]" for i, name, api in ins]
 
     @staticmethod
-    def _dev_index(s):
+    def _dev_index(s, output=None):
         """Retrouve le périphérique par son nom et son API (les numéros changent
-        quand on branche/débranche un appareil USB), sinon par son numéro."""
+        quand on branche/débranche un appareil USB), sinon par son numéro.
+        output : True (sortie) / False (entrée) / None. L'entrée et la sortie d'un même
+        codec peuvent porter exactement le même nom (ex. « TS-890 (2- USB AUDIO CODEC) »
+        renommé dans Windows) : on ne garde que les appareils du bon sens."""
         if not s:
             return None
         idx, _, label = s.partition(": ")
         try:
             hostapis = sd().query_hostapis()
             devs = sd().query_devices()
-            for i, d in enumerate(devs):
-                if f"{d['name']} [{hostapis[d['hostapi']]['name']}]" == label:
-                    return i
-            # le nom affiché est le nom complet ; en MME Windows le tronque à 31 caractères
-            name, _, api = label.rpartition(" [")
-            api = api.rstrip("]")
-            for i, d in enumerate(devs):
-                if hostapis[d["hostapi"]]["name"] == api and audio._same_device(name, d["name"]):
-                    return i
+            key = None if output is None else ("max_output_channels" if output else "max_input_channels")
+
+            def ok(i):
+                return key is None or devs[i][key] > 0
+
+            cands = [i for i, d in enumerate(devs)
+                     if f"{d['name']} [{hostapis[d['hostapi']]['name']}]" == label and ok(i)]
+            if not cands:
+                # le nom affiché est le nom complet ; en MME Windows le tronque à 31 caractères
+                name, _, api = label.rpartition(" [")
+                api = api.rstrip("]")
+                cands = [i for i, d in enumerate(devs)
+                         if hostapis[d["hostapi"]]["name"] == api and audio._same_device(name, d["name"]) and ok(i)]
+            if cands:
+                # plusieurs appareils du même nom : celui du numéro enregistré s'il en fait partie
+                return int(idx) if idx.isdigit() and int(idx) in cands else cands[0]
         except Exception:
             pass
         return int(idx)
@@ -3704,6 +3714,9 @@ class App(tk.Tk):
                     self._save_conf_file()
             if act == "cancel":
                 return False
+            if act == "send":
+                self.log("Réglage « Émettre sans rien dire » : le poste reste dans son mode. Pour le passage "
+                         "automatique en DATA : Réglages → « Poste pas en DATA avant d'émettre ».")
             if act == "switch":
                 try:
                     msg, ok2 = r.set_mode("data")
@@ -3969,12 +3982,13 @@ class App(tk.Tk):
         même périphérique par les autres interfaces Windows (MME, WASAPI,
         DirectSound) et garde celle qui marche."""
         S = sd()
-        dev = self._dev_index(dev_label)
-        tried, errors = [dev] + audio.same_device_other_apis(S, dev, output=True), []
+        dev = self._dev_index(dev_label, output=True)
+        tried = list(dict.fromkeys([dev] + audio.same_device_other_apis(S, dev, output=True)))
+        errors = []
         for k, d in enumerate(tried):
             try:
                 ok = player(S, d)
-                if k > 0:
+                if k > 0 and audio.device_label(S, d) != audio.device_label(S, dev):
                     label = f"{d}: {audio.device_label(S, d)}"
                     self.ui(self.log, f"La sortie « {dev_label} » ne fonctionne pas ; "
                                       f"« {label} » utilisée à la place (réglage mis à jour).")
@@ -4358,7 +4372,7 @@ class App(tk.Tk):
             self.audio_q.put(indata[:, 0].copy())
 
         S = sd()
-        dev0 = self._dev_index(self.v_in.get())
+        dev0 = self._dev_index(self.v_in.get(), output=False)
         errors, rs = [], None
         for k, dev in enumerate([dev0] + audio.same_device_other_apis(S, dev0, output=False)):
             try:

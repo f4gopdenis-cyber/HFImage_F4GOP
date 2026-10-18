@@ -1,5 +1,10 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 0.79 — sortie audio du TS-890 et journal du mode DATA
+
+- **Sortie audio** : quand l'entrée et la sortie du codec USB du poste portent exactement le même nom dans Windows (par ex. renommées « TS-890 »), HFImage prenait parfois l'**entrée** à la place de la sortie : erreur « Invalid number of channels », puis message « … ne fonctionne pas ; … utilisée à la place » avec deux fois le même nom. HFImage choisit maintenant toujours un appareil du bon sens (sortie pour l'émission, entrée pour la réception).
+- **Mode DATA** : si le réglage « Poste pas en DATA avant d'émettre » est sur « Émettre sans rien dire », le journal le dit maintenant, avec l'endroit où choisir le passage automatique en DATA.
+
 ## Version 0.78 — passage automatique en DATA, en LSB comme en USB
 
 - **Poste pas en DATA avant d'émettre** : HFImage passe maintenant le poste en DATA **en gardant sa bande latérale** : **LSB → LSB-DATA**, **USB → USB-DATA**. Avant, il le mettait toujours en USB-DATA, ce qui changeait de bande latérale sur 40 et 80 m (où l'image numérique se trafique souvent en LSB, comme dans EasyPal).
