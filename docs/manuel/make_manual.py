@@ -191,7 +191,9 @@ s.append(P("Installation", "h2"))
 s += N(["Téléchargez <b>HFImage_F4GOP.exe</b> sur la page <i>Releases</i> du projet GitHub.",
         "Placez-le dans un dossier à vous, par exemple <b>C:\\Prg-Radio\\HFImage</b> (évitez « Program Files »).",
         "Au premier lancement, Windows SmartScreen peut afficher un avertissement : « Informations "
-        "complémentaires », puis « Exécuter quand même »."])
+        "complémentaires », puis « Exécuter quand même ».",
+        "Au premier démarrage, la <b>licence</b> s'affiche (logiciel libre et gratuit, GNU GPL v3) : lisez-la et "
+        "cliquez « <b>J'accepte</b> ». On la relit à tout moment par Infos → Licence."])
 s.append(P("Rien d'autre à installer : un seul fichier, Windows 8.1 / 10 / 11 64 bits. Pour <b>Windows 7 SP1 ou 8</b> "
            "(64 bits), prenez <b>HFImage_F4GOP_Win7.exe</b> sur la même page GitHub : même programme, qui se met à jour "
            "avec sa propre version ; seules les images SVG ne s'y affichent pas."))

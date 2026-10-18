@@ -112,7 +112,7 @@ pyinstaller --noconfirm HFImage.spec
 
 HFImage F4GOP — © 2026 Denis F4GOP.
 
-Logiciel **libre et gratuit**, sous licence **GNU GPL v3** (texte complet : [LICENSE](LICENSE)). Vous pouvez l'utiliser, le copier, le partager et le modifier. Une version modifiée que vous distribuez doit rester sous la même licence, avec ses sources.
+Logiciel **libre et gratuit**, sous licence **GNU GPL v3** (texte officiel : [LICENSE](LICENSE)), avec les conditions complémentaires et les informations en français de [LICENCE.txt](LICENCE.txt) : attribution, nom du programme, aucune garantie, données personnelles. Vous pouvez l'utiliser, le copier, le partager et le modifier. Une version modifiée que vous distribuez doit rester sous la même licence, avec ses sources, garder la mention de l'auteur et porter un autre nom que « HFImage F4GOP ».
 
 HFImage intègre le modem HamDRM de QSSTV (Johan Maes ON4QZ, GPL v3) et utilise codec2 (David Rowe VK5DGR, LGPL-2.1) : voir [THIRD_PARTY.md](THIRD_PARTY.md).
 

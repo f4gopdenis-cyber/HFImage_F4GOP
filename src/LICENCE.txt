@@ -1,0 +1,141 @@
+HFIMAGE F4GOP — LICENCE
+Version 1.0 du 18 octobre 2026
+
+© 2026 Denis, F4GOP (Flers, France).
+Contact : f4gop.denis@gmail.com
+Site officiel : https://github.com/f4gopdenis-cyber/HFImage_F4GOP
+
+HFImage F4GOP (« le Logiciel ») est un logiciel libre et gratuit, distribué sous la
+licence publique générale GNU, version 3 (GNU GPL v3), dont le texte officiel complet
+est dans le fichier LICENSE (en anglais, seule version officielle de la GPL).
+Le présent document résume ce que cette licence vous permet, et précise les conditions
+complémentaires que la GPL v3 autorise expressément (article 7 de la GPL v3).
+
+
+1. AUTEUR
+Le Logiciel (programme, code, textes, mode d'emploi, images) est l'œuvre de Denis, F4GOP,
+sauf les éléments d'autres auteurs cités à l'article 8, qui restent la propriété de leurs
+auteurs. Il est protégé par le droit d'auteur (Code de la propriété intellectuelle) et les
+conventions internationales.
+
+2. UTILISATION GRATUITE ET LIBRE
+Le Logiciel est gratuit. Vous pouvez l'installer et l'utiliser sur autant d'ordinateurs
+que vous voulez, pour toute activité de radioamateur : station personnelle, radio-club,
+expédition, démonstration, formation.
+
+3. PARTAGE ET MODIFICATION
+Conformément à la GPL v3, vous pouvez copier, partager et modifier le Logiciel. Si vous
+distribuez une copie, modifiée ou non, vous devez la distribuer sous la même licence
+(GNU GPL v3), avec ses sources complètes (ou l'indication de l'endroit où les obtenir),
+ce document et le fichier LICENSE. Le plus simple pour partager le Logiciel : donner le
+lien du site officiel ci-dessus, où se trouve toujours la dernière version.
+
+4. CONDITIONS COMPLÉMENTAIRES (article 7 de la GPL v3)
+Toute personne qui distribue le Logiciel ou une version modifiée doit :
+  a) conserver intactes les mentions d'auteur « Denis, F4GOP », le lien du site officiel
+     et ce document, dans le programme (fenêtre « À propos ») et dans sa documentation
+     (article 7 b) ;
+  b) indiquer clairement qu'une version modifiée est modifiée, par qui et quand, et ne
+     pas la présenter comme la version d'origine ni comme une version publiée ou
+     approuvée par F4GOP (article 7 c) ;
+  c) ne pas utiliser le nom « HFImage F4GOP », ni l'indicatif F4GOP, comme nom d'une
+     version modifiée ou pour en faire la promotion, sans l'accord écrit de l'auteur ;
+     une version modifiée doit porter un autre nom (article 7 e).
+Ces conditions ne limitent pas les droits que la GPL v3 vous donne : elles protègent
+seulement l'identité de l'auteur et évitent que des copies modifiées soient confondues
+avec l'original.
+
+5. AUCUNE GARANTIE
+Le Logiciel est fourni « tel quel », gratuitement, sans aucune garantie, ni expresse ni
+implicite (articles 15 et 16 de la GPL v3) : ni qu'il fonctionne sans erreur ou sans
+interruption, ni qu'il convient à un usage particulier, ni que les images, fichiers,
+messages, reports (S/B), listes de stations, cartes ou informations affichées sont
+exacts ou complets.
+
+6. LIMITATION DE RESPONSABILITÉ
+Le Logiciel commande du matériel radio : mise en émission (PTT par CAT, RTS, DTR ou VOX),
+changement de mode du poste (passage automatique en DATA, USB-DATA ou LSB-DATA),
+lecture de la fréquence, émissions longues à plein cycle (images, compléments FIX,
+réponses automatiques BSR, ACK et FIX, identification). Il échange aussi des données par
+Internet (stations en ligne, mode hybride, mises à jour). Vous l'utilisez sous votre
+seule responsabilité, en restant présent et maître de votre station, et en respectant
+la réglementation radioamateur de votre pays (bandes, puissance, identification, contenu
+des émissions). Dans toute la mesure permise par la loi, l'auteur ne pourra être tenu
+responsable d'aucun dommage, direct ou indirect, notamment : matériel endommagé (poste,
+amplificateur, antenne, interface), émission non voulue, trop longue ou hors bande,
+brouillage, perte ou altération de données, d'images ou de réglages, fichiers reçus
+de tiers, ou interruption d'un serveur extérieur.
+
+7. DONNÉES PERSONNELLES
+Le Logiciel ne collecte aucune donnée pour l'auteur. Vos réglages, images et journaux
+restent sur votre ordinateur (le mot de passe FTP y est chiffré par Windows). Selon vos
+réglages, et seulement pour les fonctions que vous utilisez :
+  - Stations en ligne (case à décocher dans les Réglages) : votre indicatif, votre
+    locator, la fréquence et le mode du poste, l'état émission / réception, la version du
+    programme, les reports « Rx Ok » et, en hybride éclair, le lien de l'image annoncée
+    sont publiés sur un serveur MQTT public (broker.hivemq.com par défaut), visible par
+    tous les utilisateurs.
+  - Mode hybride : l'image est déposée sur VOTRE serveur FTP, et son lien public est
+    annoncé par radio (ou par le serveur des stations en ligne en mode éclair).
+  - Mode hybride EasyPal : comme dans EasyPal, le serveur, l'identifiant et le mot de passe
+    FTP sont transmis par radio, simplement brouillés : toute station qui reçoit l'annonce
+    peut les lire. Utilisez un compte FTP dédié, limité à un seul dossier.
+  - Site web / Digi-Sites : les images reçues et envoyées sont déposées sur VOTRE serveur.
+  - Mises à jour : le programme consulte la page des versions du site officiel (GitHub).
+  - Hamlib : téléchargé à votre demande depuis les publications officielles de Hamlib.
+Tout ce que vous émettez par radio (images, textes, indicatif) est, par nature, reçu par
+toute station à l'écoute.
+
+8. ÉLÉMENTS D'AUTRES AUTEURS
+Le Logiciel contient ou utilise des éléments d'autres auteurs, chacun sous sa propre
+licence, qui reste applicable (détail dans THIRD_PARTY.md) :
+  - modem HamDRM (mode EasyPal) et brouillage des annonces hybrides EasyPal : QSSTV
+    (Johan Maes ON4QZ), d'après Dream (Volker Fischer) et RXAMADRM (Ties Bos PA0MBO),
+    licence GNU GPL v3 ;
+  - modems DATAC et mode DATAC1X : codec2 (David Rowe VK5DGR et contributeurs), licence
+    GNU LGPL 2.1 ;
+  - Python et Tcl/Tk (licence PSF, licence Tcl/Tk), NumPy et pySerial (BSD),
+    Pillow (MIT-CMU), python-sounddevice et PortAudio (MIT), comtypes (MIT),
+    Eclipse Paho MQTT (EPL-2.0 / EDL-1.0), resvg (Apache-2.0 / MIT) ;
+  - carte du monde : Natural Earth (domaine public) ;
+  - Hamlib (LGPL 2.1, GPL 2.0 pour rigctld), OmniRig, FLRig, EasyPal et QSSTV ne sont pas
+    fournis avec le Logiciel et restent soumis à leurs propres licences.
+Hommage à Erik Sundstrup VK4AES (SK), auteur d'EasyPal.
+
+9. ÉVOLUTION
+L'auteur peut à tout moment modifier le Logiciel ou arrêter sa diffusion. Une nouvelle
+version de ce document s'applique aux versions du Logiciel publiées avec elle ; les
+versions déjà publiées restent sous la licence avec laquelle elles ont été distribuées.
+Si vous ne respectez pas la licence, vos droits prennent fin dans les conditions prévues
+par l'article 8 de la GPL v3.
+
+10. DROIT APPLICABLE
+Le présent document est soumis au droit français, sans préjudice de la GPL v3. En cas de
+désaccord, une solution amiable sera recherchée en priorité.
+
+──────────────────────────────────────────────────────────────────────────────────────────────
+ENGLISH SUMMARY (the French text above and the GNU GPL v3 in the LICENSE file are the
+official versions)
+
+HFImage F4GOP © 2026 Denis F4GOP — free software, at no cost, under the GNU General
+Public License version 3 (full text: LICENSE).
+  - Free to use on any number of computers for amateur radio.
+  - You may copy, share and modify it. Any copy you distribute, modified or not, must stay
+    under the GNU GPL v3, with its complete source code, this document and LICENSE.
+    Simplest: share the official link above.
+  - Additional terms (GPL v3 section 7): keep the author's name "Denis, F4GOP", the official
+    link and this document; clearly mark modified versions as modified and do not present
+    them as the original; do not use the name "HFImage F4GOP" or the callsign F4GOP for a
+    modified version without written permission.
+  - Provided "as is", without any warranty. The software keys transmitters (PTT), changes
+    the radio's mode (automatic DATA / USB-DATA / LSB-DATA) and uses Internet services: you
+    use it at your own risk, remain in control of your station and follow your country's
+    amateur radio rules. To the extent permitted by law, the author is not liable for any
+    damage.
+  - No data is collected by the author. "Online stations" publishes your callsign, locator,
+    frequency, mode and Rx Ok reports on a public MQTT server (can be disabled). Hybrid
+    pictures go to YOUR FTP server; in EasyPal hybrid mode the FTP login is sent over the
+    air, only scrambled, as in EasyPal: use a dedicated FTP account.
+  - Third-party components remain under their own licences (section 8; QSSTV GPL v3,
+    codec2 LGPL 2.1…).
+  - Governed by French law, without prejudice to the GNU GPL v3.

@@ -56,7 +56,7 @@ import random
 import wave
 
 APP = "HFImage F4GOP"
-VERSION = "0.84"
+VERSION = "0.85"
 CONF_PATH = os.path.join(os.path.expanduser("~"), ".hfimage.json")
 DEFAULT_OUT = os.path.join(os.path.expanduser("~"), "Documents", "HFImage")
 DEFAULTS = {
@@ -297,6 +297,7 @@ class App(tk.Tk):
             self.after(ms, self._update_cleanup)      # programme met parfois quelques s à se fermer)
         if self.conf.get("update_check", True):
             self.after(5000, lambda: self.update_check(quiet=True))
+        self.after(300, self._licence_first_run)   # licence au premier démarrage
         self.after(400, self._restore_layout)
         self.after(1500, self._restore_layout)     # une 2e fois, une fois tout affiché
         self.after(1700, lambda: self.dock.restore(self.conf.get("detached")))   # fenêtres séparées
@@ -685,21 +686,83 @@ class App(tk.Tk):
                                  "  HFImage_F4GOP.exe --audiotest test.txt \"USB Audio CODEC\""
                             + "\n\n© 2026 Denis F4GOP — logiciel libre et gratuit, licence GNU GPL v3 : "
                                  "vous pouvez l'utiliser, le copier, le partager et le modifier ; une version modifiée "
-                                 "doit rester sous la même licence, avec ses sources.\n"
+                                 "doit rester sous la même licence, avec ses sources, sans reprendre le nom "
+                                 "HFImage F4GOP (fichier LICENCE.txt).\n"
                                  "Sources et licence : github.com/f4gopdenis-cyber/HFImage_F4GOP\n"
                                  "Modem EasyPal d'après QSSTV (ON4QZ), modems DATAC : codec2 (VK5DGR).")
 
-    def _license(self):
-        """Texte complet de la licence (copié dans Documents\\HFImage pour rester ouvrable)."""
+    LICENCE_VERSION = "1.0"
+
+    def _licence_first_run(self):
+        """Premier démarrage (ou nouvelle version de la licence) : la licence s'affiche,
+        « J'accepte » pour continuer, « Je refuse » ferme le programme."""
+        if self.conf.get("licence_ok") == self.LICENCE_VERSION:
+            return
         here = getattr(sys, "_MEIPASS", os.path.dirname(os.path.abspath(__file__)))
-        src = os.path.join(here, "LICENSE.txt")
+        try:
+            with open(os.path.join(here, "LICENCE.txt"), encoding="utf-8") as f:
+                text = f.read()
+        except OSError:
+            text = ("HFImage F4GOP — © 2026 Denis F4GOP — logiciel libre et gratuit, licence GNU GPL v3.\n"
+                    "https://github.com/f4gopdenis-cyber/HFImage_F4GOP/blob/main/LICENCE.txt")
+        w = tk.Toplevel(self)
+        w.title(tr("Licence d'utilisation"))
+        w.transient(self)
+        w.geometry("760x560")
+        w.minsize(520, 360)
+        f = ttk.Frame(w, padding=12)
+        f.pack(fill="both", expand=True)
+        ttk.Label(f, text="Licence d'utilisation (logiciel libre et gratuit)",
+                  font=("TkDefaultFont", 12, "bold")).pack(anchor="w")
+        ttk.Label(f, text="Le programme est gratuit. Avant la première utilisation, lisez la licence ci-dessous "
+                          "et cliquez « J'accepte » pour continuer.", wraplength=720,
+                  justify="left").pack(anchor="w", pady=(2, 8))
+        b = ttk.Frame(f)
+        b.pack(side="bottom", fill="x", pady=(10, 0))
+        box = ttk.Frame(f)
+        box.pack(fill="both", expand=True)
+        sb = ttk.Scrollbar(box, orient="vertical")
+        t = tk.Text(box, wrap="word", yscrollcommand=sb.set, padx=8, pady=6, font=("TkDefaultFont", 9))
+        sb.configure(command=t.yview)
+        sb.pack(side="right", fill="y")
+        t.pack(side="left", fill="both", expand=True)
+        t.insert("1.0", text)
+        t.configure(state="disabled")
+        res = {"ok": False}
+
+        def done(ok):
+            res["ok"] = ok
+            w.destroy()
+
+        ttk.Button(b, text="J'accepte", command=lambda: done(True)).pack(side="right")
+        ttk.Button(b, text="Je refuse", command=lambda: done(False)).pack(side="right", padx=8)
+        w.protocol("WM_DELETE_WINDOW", lambda: done(False))
+        self._translate_ui(w)
+        w.update_idletasks()
+        x = self.winfo_rootx() + max(0, (self.winfo_width() - w.winfo_width()) // 2)
+        y = self.winfo_rooty() + max(0, (self.winfo_height() - w.winfo_height()) // 3)
+        w.geometry(f"+{x}+{y}")
+        w.grab_set()
+        self.wait_window(w)
+        if res["ok"]:
+            self.conf["licence_ok"] = self.LICENCE_VERSION
+            self._save_conf_file()
+            self.log("Licence acceptée (LICENCE.txt, menu Infos → Licence).")
+        else:
+            self._quit()
+
+    def _license(self):
+        """Licence (en français, conditions de F4GOP) + texte officiel de la GPL v3, copiés dans
+        Documents\\HFImage pour rester ouvrables."""
+        here = getattr(sys, "_MEIPASS", os.path.dirname(os.path.abspath(__file__)))
         try:
             os.makedirs(DEFAULT_OUT, exist_ok=True)
-            dst = os.path.join(DEFAULT_OUT, "LICENCE_GPL-3.0.txt")
-            shutil.copyfile(src, dst)
+            shutil.copyfile(os.path.join(here, "LICENSE.txt"), os.path.join(DEFAULT_OUT, "LICENSE_GPL-3.0.txt"))
+            dst = os.path.join(DEFAULT_OUT, "LICENCE.txt")
+            shutil.copyfile(os.path.join(here, "LICENCE.txt"), dst)
             self._open_path(dst)
         except OSError:
-            webbrowser.open("https://www.gnu.org/licenses/gpl-3.0.html")
+            webbrowser.open("https://github.com/f4gopdenis-cyber/HFImage_F4GOP/blob/main/LICENCE.txt")
 
     def _open_path(self, p):
         if not os.path.exists(p):

@@ -1,5 +1,11 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 0.85 — licence en français (LICENCE.txt)
+
+- Nouveau fichier **LICENCE.txt**, en français avec un résumé en anglais, à côté du texte officiel de la GPL v3 (LICENSE) : auteur, utilisation gratuite, partage et modification, **conditions complémentaires** permises par l'article 7 de la GPL v3 (garder la mention « Denis, F4GOP » et le lien officiel, marquer clairement une version modifiée, ne pas reprendre le nom « HFImage F4GOP » pour une version modifiée), **aucune garantie**, **limitation de responsabilité** (PTT, passage en DATA, émissions automatiques), **données personnelles** (ce qui part sur Internet, et quand), éléments d'autres auteurs, droit français.
+- Menu **Infos → Licence (GNU GPL v3)** : ouvre LICENCE.txt (et copie le texte de la GPL à côté). La fenêtre À propos le mentionne.
+- **Au premier démarrage**, la licence s'affiche : « J'accepte » pour continuer, « Je refuse » ferme le programme. Les utilisateurs actuels la voient **une seule fois** après cette mise à jour ; elle ne revient que si la licence change.
+
 ## Version 0.84 — dossier des images rangé : une copie par image, un dossier par jour, nettoyage
 
 - **Une seule copie par image** : HFImage enregistrait chaque image reçue deux fois, l'original (AVIF, JPEG, WebP…) et une copie PNG pour l'afficher, souvent 5 à 10 fois plus lourde. Il affiche maintenant directement l'original : **deux fois moins de fichiers**, et beaucoup moins de place. Seuls les dessins SVG gardent un rendu PNG, rangé à part dans un sous-dossier caché « apercus ». Pour le plein format (double-clic), une image AVIF ou JPEG 2000 est convertie à la volée pour la visionneuse de Windows.
