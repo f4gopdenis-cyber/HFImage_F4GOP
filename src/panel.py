@@ -82,7 +82,11 @@ class StatusPanel(tk.Frame):
 class ImageView(tk.Canvas):
     """Grande zone d'image sur fond noir : l'image est agrandie/réduite pour remplir
     la place disponible (comme EasyPal), centrée, sans déformation.
-    set_animation() joue un GIF animé en boucle."""
+    set_animation() joue un GIF animé en boucle.
+    Molette de la souris : zoom autour du pointeur ; clic gauche maintenu : déplacer
+    l'image agrandie ; clic droit : retour à l'image entière."""
+
+    ZOOM_MAX = 16.0
 
     def __init__(self, master, placeholder="", **kw):
         super().__init__(master, bg="#000", highlightthickness=0, **kw)
@@ -92,7 +96,17 @@ class ImageView(tk.Canvas):
         self.frames, self.durs, self.k = None, None, 0
         self._job = None
         self._cache = {}
+        self.zoom = 1.0                 # 1 = image entière dans la fenêtre
+        self.view = None                # centre affiché (coordonnées dans l'image)
+        self._drag = None
         self.bind("<Configure>", lambda e: (self._cache.clear(), self._redraw()))
+        self.bind("<MouseWheel>", lambda e: self._wheel(e, 1 if e.delta > 0 else -1))   # Windows
+        self.bind("<Button-4>", lambda e: self._wheel(e, 1))                            # Linux
+        self.bind("<Button-5>", lambda e: self._wheel(e, -1))
+        self.bind("<ButtonPress-1>", self._drag_start, add="+")
+        self.bind("<B1-Motion>", self._drag_move, add="+")
+        self.bind("<ButtonRelease-1>", lambda e: setattr(self, "_drag", None), add="+")
+        self.bind("<Button-3>", lambda e: self.reset_zoom(), add="+")
 
     def _stop(self):
         if self._job is not None:
@@ -101,14 +115,70 @@ class ImageView(tk.Canvas):
         self.frames, self.durs = None, None
         self._cache.clear()
 
+    def reset_zoom(self):
+        if self.zoom != 1.0:
+            self.zoom, self.view = 1.0, None
+            self._redraw()
+
+    def _fit(self):
+        w, h = max(10, self.winfo_width()), max(10, self.winfo_height())
+        r = min((w - 20) / self.pil.width, (h - 20) / self.pil.height)
+        return w, h, max(r, 0.01)
+
+    def _clamp_view(self, s, w, h):
+        """Garde l'image dans la fenêtre (pas de bord noir inutile quand elle déborde)."""
+        W, H = self.pil.width, self.pil.height
+        vx, vy = self.view
+        hw, hh = w / (2 * s), h / (2 * s)
+        vx = W / 2 if hw * 2 >= W else min(max(vx, hw), W - hw)
+        vy = H / 2 if hh * 2 >= H else min(max(vy, hh), H - hh)
+        self.view = (vx, vy)
+
+    def _wheel(self, e, step):
+        if self.pil is None:
+            return
+        w, h, r = self._fit()
+        old = self.zoom
+        new = min(self.ZOOM_MAX, max(1.0, old * (1.25 if step > 0 else 0.8)))
+        if abs(new - old) < 1e-9:
+            return
+        if new < 1.02:
+            return self.reset_zoom()
+        if self.view is None:
+            self.view = (self.pil.width / 2, self.pil.height / 2)
+        s0, s1 = r * old, r * new
+        # le point de l'image sous le pointeur reste sous le pointeur
+        px = self.view[0] + (e.x - w / 2) / s0
+        py = self.view[1] + (e.y - h / 2) / s0
+        self.zoom = new
+        self.view = (px - (e.x - w / 2) / s1, py - (e.y - h / 2) / s1)
+        self._clamp_view(s1, w, h)
+        self._redraw()
+
+    def _drag_start(self, e):
+        self._drag = (e.x, e.y) if self.zoom > 1.0 and self.pil is not None else None
+
+    def _drag_move(self, e):
+        if self._drag is None or self.zoom <= 1.0 or self.pil is None:
+            return
+        w, h, r = self._fit()
+        s = r * self.zoom
+        dx, dy = e.x - self._drag[0], e.y - self._drag[1]
+        self._drag = (e.x, e.y)
+        self.view = (self.view[0] - dx / s, self.view[1] - dy / s)
+        self._clamp_view(s, w, h)
+        self._redraw()
+
     def set_image(self, pil_img):
         self._stop()
+        self.zoom, self.view = 1.0, None
         self.pil = pil_img.convert("RGB") if pil_img is not None else None
         self._redraw()
 
     def set_animation(self, frames, durations):
         """frames : images PIL RGB ; durations : ms par image."""
         self._stop()
+        self.zoom, self.view = 1.0, None
         if not frames:
             return self.set_image(None)
         self.frames, self.durs, self.k = frames, durations, 0
@@ -132,6 +202,8 @@ class ImageView(tk.Canvas):
             self.create_text(w // 2, h // 2, text=self.placeholder, fill="#777",
                              font=("TkDefaultFont", 11))
             return
+        if self.zoom > 1.0:
+            return self._redraw_zoom(w, h)
         ph = self._cache.get(key) if key is not None else None
         if ph is None:
             r = min((w - 20) / self.pil.width, (h - 20) / self.pil.height)
@@ -144,3 +216,27 @@ class ImageView(tk.Canvas):
                 self._cache[key] = ph
         self._ph = ph
         self.create_image(w // 2, h // 2, image=ph)
+
+    def _redraw_zoom(self, w, h):
+        """Image agrandie : on ne redimensionne que la partie visible."""
+        from PIL import Image, ImageTk
+        _, _, r = self._fit()
+        s = r * self.zoom
+        if self.view is None:
+            self.view = (self.pil.width / 2, self.pil.height / 2)
+        self._clamp_view(s, w, h)
+        vx, vy = self.view
+        W, H = self.pil.width, self.pil.height
+        x0, y0 = max(0.0, vx - w / (2 * s)), max(0.0, vy - h / (2 * s))
+        x1, y1 = min(float(W), vx + w / (2 * s)), min(float(H), vy + h / (2 * s))
+        if x1 - x0 < 0.5 or y1 - y0 < 0.5:
+            return
+        dw, dh = max(1, round((x1 - x0) * s)), max(1, round((y1 - y0) * s))
+        meth = Image.NEAREST if s >= 4 else Image.BICUBIC
+        crop = self.pil.resize((dw, dh), meth, box=(x0, y0, x1, y1))
+        self._ph = ImageTk.PhotoImage(crop)
+        sx, sy = w / 2 + (x0 - vx) * s, h / 2 + (y0 - vy) * s
+        self.create_image(round(sx), round(sy), image=self._ph, anchor="nw")
+        self.create_text(w - 8, 8, text=f"Zoom ×{self.zoom:.1f}  (clic droit : image entière)", fill="#ffe066",
+                         anchor="ne",
+                         font=("TkDefaultFont", 9, "bold"))

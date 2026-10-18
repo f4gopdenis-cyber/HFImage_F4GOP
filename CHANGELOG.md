@@ -1,5 +1,12 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 0.66 — zoom à la souris sur les images
+
+- **Molette de la souris** sur l'image reçue (et sur l'image à émettre) : agrandit ou réduit autour du pointeur, jusqu'à ×16.
+- **Clic gauche maintenu** : déplace l'image agrandie.
+- **Clic droit** : retour à l'image entière. Le zoom revient aussi à l'image entière à chaque nouvelle image.
+- Le double-clic ouvre toujours l'image en grand dans la visionneuse de Windows.
+
 ## Version 0.65 — le mode d'émission change dès le début de la réception
 
 - Le passage automatique sur le mode reçu (EasyPal ↔ HFImage) se fait maintenant **dès que l'image commence à arriver**, et plus seulement quand elle est complète. Les réglages A / B / E et QAM d'EasyPal sont repris quand l'image est complète.
