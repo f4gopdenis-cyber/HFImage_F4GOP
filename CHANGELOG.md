@@ -1,5 +1,10 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 0.86 — fenêtre Réglages utilisable sur les écrans moyens
+
+- **Réglages** : sur un écran moyen (par exemple 1366×768), la fenêtre dépassait en bas de l'écran et l'on ne pouvait plus atteindre « Enregistrer les réglages » ni « Fermer ». La fenêtre s'ouvre maintenant à la taille de l'écran, son contenu **défile** (barre de défilement et molette de la souris), et les boutons **Enregistrer les réglages / Ouvrir le journal / Fermer** restent toujours visibles en bas.
+- Texte d'aide des stations en ligne mis à jour : HFImage essaie tout seul les ports 8883, 8884 et 8000 si le 1883 est bloqué.
+
 ## Version 0.85 — licence en français (LICENCE.txt)
 
 - Nouveau fichier **LICENCE.txt**, en français avec un résumé en anglais, à côté du texte officiel de la GPL v3 (LICENSE) : auteur, utilisation gratuite, partage et modification, **conditions complémentaires** permises par l'article 7 de la GPL v3 (garder la mention « Denis, F4GOP » et le lien officiel, marquer clairement une version modifiée, ne pas reprendre le nom « HFImage F4GOP » pour une version modifiée), **aucune garantie**, **limitation de responsabilité** (PTT, passage en DATA, émissions automatiques), **données personnelles** (ce qui part sur Internet, et quand), éléments d'autres auteurs, droit français.

@@ -56,7 +56,7 @@ import random
 import wave
 
 APP = "HFImage F4GOP"
-VERSION = "0.85"
+VERSION = "0.86"
 CONF_PATH = os.path.join(os.path.expanduser("~"), ".hfimage.json")
 DEFAULT_OUT = os.path.join(os.path.expanduser("~"), "Documents", "HFImage")
 DEFAULTS = {
@@ -1362,8 +1362,21 @@ class App(tk.Tk):
         self.txt_msg.focus_set()
 
     def show_settings(self):
-        self.win_conf.deiconify()
-        self.win_conf.lift()
+        w = self.win_conf
+        if not getattr(self, "_conf_sized", False):
+            # taille d'ouverture : tout le contenu si l'écran le permet, sinon la hauteur de
+            # l'écran (moins la barre des tâches) avec défilement
+            w.update_idletasks()
+            t = self._conf_inner
+            need_w = t.winfo_reqwidth() + 24
+            need_h = t.winfo_reqheight() + 60
+            sw, sh = w.winfo_screenwidth(), w.winfo_screenheight()
+            ww, wh = min(need_w, sw - 40), min(need_h, sh - 110)
+            x = max(0, min(self.winfo_rootx() + 40, sw - ww - 10))
+            w.geometry(f"{ww}x{wh}+{x}+20")
+            self._conf_sized = True
+        w.deiconify()
+        w.lift()
 
     def _tab_stations(self, nb):
         w = self.tab_stations = tk.Frame(nb)      # cadre tk : peut devenir une fenêtre séparée
@@ -1838,8 +1851,46 @@ class App(tk.Tk):
         win.withdraw()
         win.transient(self)
         win.protocol("WM_DELETE_WINDOW", win.withdraw)
-        t = ttk.Frame(win, padding=10)
-        t.pack(fill="both", expand=True)
+        # contenu dans une zone qui défile : sur un écran moyen, la fenêtre ne dépasse pas
+        # l'écran et les boutons du bas (Enregistrer, Fermer) restent toujours visibles
+        sc = tk.Frame(win)
+        sc.pack(side="top", fill="both", expand=True)
+        cv = self._conf_canvas = tk.Canvas(sc, highlightthickness=0, bd=0)
+        vs = ttk.Scrollbar(sc, orient="vertical", command=cv.yview)
+        cv.configure(yscrollcommand=vs.set)
+        vs.pack(side="right", fill="y")
+        cv.pack(side="left", fill="both", expand=True)
+        t = self._conf_inner = ttk.Frame(cv, padding=10)
+        tid = cv.create_window(0, 0, window=t, anchor="nw")
+
+        def _inner_cfg(_e=None):
+            cv.configure(scrollregion=(0, 0, t.winfo_reqwidth(), t.winfo_reqheight()))
+            need = t.winfo_reqheight() > cv.winfo_height() + 1
+            if need and not vs.winfo_ismapped():
+                vs.pack(side="right", fill="y", before=cv)
+            elif not need and vs.winfo_ismapped():
+                vs.pack_forget()
+                cv.yview_moveto(0)
+
+        def _canvas_cfg(e):
+            cv.itemconfigure(tid, width=max(e.width, t.winfo_reqwidth()))
+            _inner_cfg()
+
+        t.bind("<Configure>", _inner_cfg)
+        cv.bind("<Configure>", _canvas_cfg)
+
+        def _wheel(e):
+            if t.winfo_reqheight() <= cv.winfo_height():
+                return
+            w = e.widget
+            if isinstance(w, (ttk.Combobox, ttk.Spinbox, tk.Spinbox)):
+                return                                  # la molette sert à la liste / au compteur
+            step = -1 if (getattr(e, "num", 0) == 4 or e.delta > 0) else 1
+            cv.yview_scroll(step * 3, "units")
+
+        win.bind("<MouseWheel>", _wheel, add="+")
+        win.bind("<Button-4>", _wheel, add="+")
+        win.bind("<Button-5>", _wheel, add="+")
         colL = ttk.Frame(t)
         colL.pack(side="left", fill="both", expand=True, padx=(0, 6))
         st = ttk.LabelFrame(colL, text="Station", padding=8)
@@ -2023,7 +2074,7 @@ class App(tk.Tk):
         self.lb_netstat.grid(row=2, column=0, columnspan=5, sticky="w", pady=(4, 0))
         ttk.Label(nf, text="Partage seulement indicatif, locator et fréquence (serveur MQTT public).\n"
                            "Toutes les stations doivent utiliser le même serveur.\n"
-                           "Port 1883 bloqué par un pare-feu ? Essayez 8883 (chiffré) ou 8000 (web).",
+                           "Port 1883 bloqué par un pare-feu : HFImage essaie seul 8883, 8884 et 8000.",
                   foreground="#555", justify="left").grid(row=3, column=0, columnspan=5, sticky="w", pady=(4, 0))
 
         d = ttk.LabelFrame(colR, text="Dossier des images reçues", padding=8)
@@ -2044,8 +2095,9 @@ class App(tk.Tk):
                           "les fichiers reçus et les anciennes images ne sont jamais touchés.",
                   foreground="#555", justify="left").pack(anchor="w", pady=(4, 0))
 
-        bb = ttk.Frame(colR)
-        bb.pack(fill="x")
+        bb = ttk.Frame(win, padding=(10, 6, 10, 8))
+        bb.pack(side="bottom", fill="x", before=sc)
+        ttk.Separator(win, orient="horizontal").pack(side="bottom", fill="x", before=bb)
         ttk.Button(bb, text="Enregistrer les réglages", command=self.save_conf).pack(side="left")
         ttk.Button(bb, text="Ouvrir le journal", command=self.open_journal).pack(side="left", padx=6)
         ttk.Button(bb, text="Fermer", command=lambda: (self.save_conf(quiet=True), win.withdraw())).pack(side="right")
