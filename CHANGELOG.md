@@ -1,5 +1,13 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 0.81 — envoyer une page web comme une image
+
+- **Ouvrir une image…** accepte maintenant les **pages web** (.html, .htm, .mht). HFImage ouvre la page avec **Microsoft Edge** (présent dans Windows 10 et 11 ; sinon Google Chrome), attend quelques secondes que ses images se chargent (y compris celles qui viennent d'Internet), puis en fait une **capture** : elle s'affiche dans l'onglet TX et part comme une image normale. Tous les correspondants la voient telle quelle, **EasyPal et QSSTV compris**, sans avoir besoin d'Internet.
+- Taille de la capture : menu **Images → Pages web : taille de la capture** (800×600, **1024×768** par défaut, 1280×960, 1280×720).
+- Les animations (texte qui défile, GIF animés) sont figées à l'instant de la capture.
+- Une page écrite en UTF-8 sans le déclarer (accents qui s'affichent « DÃ©partement ») est corrigée automatiquement.
+- Le navigateur tourne avec un profil temporaire : il ne touche ni à votre navigateur ouvert, ni à son historique.
+
 ## Version 0.80 — contrôle DATA quel que soit le PTT, modes d'emploi à jour
 
 - **Mode DATA vérifié dès que le CAT est relié, quelle que soit la méthode PTT** (CAT, RTS, DTR ou VOX). Avant, le contrôle ne se faisait qu'avec le PTT par CAT : avec un PTT par RTS ou VOX, on pouvait émettre en LSB ou en USB sans DATA sans le savoir. Avec un PTT par RTS / DTR / VOX, un échec du passage en DATA est signalé dans le journal sans bloquer l'émission. Choisissez « Avant / Micro » comme source audio si votre poste émet l'audio sans le mode DATA : HFImage ne touche alors pas à son mode (ce choix est maintenant possible aussi avec un PTT par RTS / DTR / VOX).

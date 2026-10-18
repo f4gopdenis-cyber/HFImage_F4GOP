@@ -414,6 +414,11 @@ s.append(P("Tick <b>My station info</b> (TX tab) and click <b>…</b> next to it
 s.append(P("Other transmissions", "h2"))
 s += B(["<b>Incl. text</b>: a message attached to the picture, shown in “Received messages”.",
         "<b>Send Text</b>: message alone.",
+        "<b>Web page</b>: <b>Open image…</b> also accepts web pages (.html, .htm, .mht). HFImage opens the page with "
+        "<b>Microsoft Edge</b> (built into Windows 10 and 11; otherwise Google Chrome), waits a few seconds for its pictures, "
+        "and takes a <b>capture</b> shown in the TX tab and sent as a normal picture, so every correspondent sees it, "
+        "EasyPal and QSSTV included. Capture size: menu Images → Web pages (1024×768 by default). Animations are frozen; "
+        "undeclared UTF-8 pages are fixed automatically. Captures are kept in Documents\\HFImage\\pages.",
         "<b>Send a file…</b> (HFImage modes): any file (text, PDF, ZIP, ADIF log…), compressed when useful and "
         "protected by the same fountain code (BSR / FIX and ACK included); with hybrid mode, the file goes via the "
         "Internet and only the link goes over the air. Received files are stored under their original name in the "
