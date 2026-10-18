@@ -54,7 +54,7 @@ import random
 import wave
 
 APP = "HFImage F4GOP"
-VERSION = "0.76"
+VERSION = "0.77"
 CONF_PATH = os.path.join(os.path.expanduser("~"), ".hfimage.json")
 DEFAULT_OUT = os.path.join(os.path.expanduser("~"), "Documents", "HFImage")
 DEFAULTS = {
@@ -392,14 +392,12 @@ class App(tk.Tk):
         d.add_pack("commandes", "Panneau et boutons", ctl, [ctl, lpw], fill="x")
         d.add_pane("waterfall", "Waterfall", wfbox, lpw, [wfbox, sbox], minsize=90, stretch="always")
         d.add_pane("liste", "Stations entendues", sbox, lpw, [wfbox, sbox], minsize=80, stretch="never")
-        tabs = [self.tab_rx, self.tab_tx, self.tab_stations, self.tab_sim, self.gal]
-        for name, title, fr, text in (("rx", "Réception (RX)", self.tab_rx, "  RX  "),
-                                      ("tx", "Émission (TX)", self.tab_tx, "  TX  "),
-                                      ("stations", "Stations", self.tab_stations, "  Stations  "),
-                                      ("sim", "Simulation", self.tab_sim, "  Simulation  "),
-                                      ("gal", "Galerie", self.gal, "  Galerie  ")):
-            d.add_tab(name, title, fr, nb, text, tabs)
-        d.add_pane("journal", "Journal", logbox, rpw, [nb, logbox], minsize=40, stretch="never")
+        # onglets RX, TX, Simulation et le journal restent dans la fenêtre principale
+        self.tab_frames = {"rx": self.tab_rx, "tx": self.tab_tx, "stations": self.tab_stations,
+                           "sim": self.tab_sim, "gal": self.gal}
+        tabs = list(self.tab_frames.values())
+        for name, title, text in (("stations", "Stations", "  Stations  "), ("gal", "Galerie", "  Galerie  ")):
+            d.add_tab(name, title, self.tab_frames[name], nb, text, tabs)
         self._menus()
         self._translate_ui()
 
@@ -416,14 +414,14 @@ class App(tk.Tk):
             if focus:
                 self.dock.show(name)
             return
-        self.nb.select(self.dock.zones[name]["frame"])
+        self.nb.select(self.tab_frames[name])
 
     def _tab_shown(self, name):
         """L'onglet est-il celui affiché dans la fenêtre principale ?"""
         if self.dock.detached(name):
             return False
         try:
-            return self.nb.select() == str(self.dock.zones[name]["frame"])
+            return self.nb.select() == str(self.tab_frames[name])
         except tk.TclError:
             return False
 

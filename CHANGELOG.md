@@ -1,5 +1,10 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 0.77 — menu Fenêtres simplifié
+
+- Le menu **Fenêtres** ne propose plus de séparer les onglets **RX**, **TX**, **Simulation** ni le **Journal** : ils restent toujours dans la fenêtre principale. On peut toujours séparer le panneau et les boutons, le waterfall, la liste des stations entendues, l'onglet Stations et la galerie.
+- Si l'une de ces zones avait été séparée, elle revient d'elle-même dans la fenêtre principale.
+
 ## Version 0.76 — tous les ports COM, et stations en ligne derrière un pare-feu
 
 - **Ports COM manquants** (signalé par RK1AT, merci !) : certains ports présents dans le Gestionnaire de périphériques n'apparaissaient pas dans les listes **Port série** et **PTT** (convertisseurs Prolific, CH340, Silicon Labs, ports virtuels…). HFImage lit maintenant aussi la liste des ports actifs de Windows (celle qu'utilisent la plupart des logiciels radio) : tous les ports apparaissent, classés COM1, COM2, COM3…
