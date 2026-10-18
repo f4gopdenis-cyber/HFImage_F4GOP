@@ -382,18 +382,6 @@ s.append(P("L'horloge en bas à droite affiche l'heure de Windows (heure d'été
            "« heure de Windows + UTC », puis « UTC seule », puis revient. Ce choix vaut pour tout le programme : "
            "journal des stations, messages, bandeau « Mes conditions de trafic », cartes QSL, Digi-Sites. En mode "
            "« UTC seule », les heures sont suivies de « UTC »."))
-s.append(P("Envoyer une page web", "h2"))
-s.append(P("<b>Ouvrir une image…</b> accepte aussi les <b>pages web</b> (.html, .htm, .mht). HFImage ouvre la page avec "
-           "<b>Microsoft Edge</b> (présent dans Windows 10 et 11 ; sinon Google Chrome), attend quelques secondes que ses "
-           "images se chargent, puis en fait une <b>capture</b> qui s'affiche dans l'onglet TX et part comme une image "
-           "normale. Tous les correspondants la voient telle quelle, EasyPal et QSSTV compris, sans avoir besoin "
-           "d'Internet."))
-s += B(["Taille de la capture : menu <b>Images → Pages web : taille de la capture</b> (800×600, 1024×768 par défaut, "
-        "1280×960, 1280×720). L'image est ensuite réduite et compressée comme une photo, selon la durée choisie.",
-        "Les animations (texte qui défile, GIF animés) sont <b>figées</b> à l'instant de la capture.",
-        "Les images de la page peuvent venir d'Internet : la capture se fait chez vous, au moment d'ouvrir la page.",
-        "Une page en UTF-8 qui ne le déclare pas (accents mal affichés, « DÃ©partement ») est corrigée automatiquement.",
-        "La capture est gardée dans <b>Documents\\HFImage\\pages</b>."])
 s.append(P("Envoyer un fichier", "h2"))
 s.append(P("Bouton <b>Envoyer un fichier…</b> (onglet TX) ou menu Images : n'importe quel fichier (texte, PDF, ZIP, "
            "journal ADIF…). Il est compressé s'il y gagne, protégé par le même code fontaine que les images (BSR / FIX "

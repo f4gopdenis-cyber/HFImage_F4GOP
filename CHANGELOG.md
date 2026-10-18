@@ -1,5 +1,10 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 0.82 — retrait de l'envoi de pages web
+
+- La fonction « page web envoyée comme une image » de la version 0.81 est **retirée**, pour garder le programme simple. **Ouvrir une image…** n'accepte plus les fichiers .html ; le menu Images → Pages web disparaît. Tout le reste est identique à la 0.81.
+- Pour envoyer une page web, faites-en une capture d'écran (touche Impr. écran ou Outil Capture de Windows) et ouvrez-la comme une image.
+
 ## Version 0.81 — envoyer une page web comme une image
 
 - **Ouvrir une image…** accepte maintenant les **pages web** (.html, .htm, .mht). HFImage ouvre la page avec **Microsoft Edge** (présent dans Windows 10 et 11 ; sinon Google Chrome), attend quelques secondes que ses images se chargent (y compris celles qui viennent d'Internet), puis en fait une **capture** : elle s'affiche dans l'onglet TX et part comme une image normale. Tous les correspondants la voient telle quelle, **EasyPal et QSSTV compris**, sans avoir besoin d'Internet.

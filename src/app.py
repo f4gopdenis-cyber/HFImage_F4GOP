@@ -31,7 +31,6 @@ import imgfmt
 import presence
 import docking
 import gallery
-import htmlshot
 import websync
 import trafic
 import msgwin
@@ -55,7 +54,7 @@ import random
 import wave
 
 APP = "HFImage F4GOP"
-VERSION = "0.81"
+VERSION = "0.82"
 CONF_PATH = os.path.join(os.path.expanduser("~"), ".hfimage.json")
 DEFAULT_OUT = os.path.join(os.path.expanduser("~"), "Documents", "HFImage")
 DEFAULTS = {
@@ -636,15 +635,6 @@ class App(tk.Tk):
         i.add_command(label="Envoyer un fichier…", command=self.send_file)
         i.add_command(label="Mes conditions de trafic…", command=self.trafic_dialog)
         i.add_command(label="Image du correspondant…", command=self.pip_dialog)
-        hm = tk.Menu(i, tearoff=0)
-        self.v_htmlsize = tk.StringVar(value=self.conf.get("html_size", htmlshot.DEFAULT_SIZE))
-
-        def _html_size():
-            self.conf["html_size"] = self.v_htmlsize.get()
-            self._save_conf_file()
-        for n in htmlshot.SIZES:
-            hm.add_radiobutton(label=n, value=n, variable=self.v_htmlsize, command=_html_size)
-        i.add_cascade(label="Pages web : taille de la capture", menu=hm)
         i.add_command(label="Carte QSL…", command=self.qsl_dialog)
         i.add_separator()
         i.add_command(label="Image reçue en plein format", command=self._open_full)
@@ -2484,49 +2474,14 @@ class App(tk.Tk):
 
     # -------------------------------------------------------------- émission
     def open_image(self):
-        p = filedialog.askopenfilename(filetypes=[("Images", "*.jpg *.jpeg *.png *.svg *.svgz *.bmp *.gif *.webp *.avif *.tif *.tiff"
-                                                             " *.html *.htm *.mht *.mhtml"),
+        p = filedialog.askopenfilename(filetypes=[("Images", "*.jpg *.jpeg *.png *.svg *.svgz *.bmp *.gif *.webp *.avif *.tif *.tiff"),
                                                   ("JPEG", "*.jpg *.jpeg"), ("SVG", "*.svg *.svgz"),
-                                                  (tr("Pages web (capturées en image)"), "*.html *.htm *.mht *.mhtml"),
                                                   ("Tous", "*.*")])
         if not p:
             return
         self.load_image(p)
 
-    def load_html(self, p):
-        """Page web : capture par Edge (en tâche de fond), puis la capture devient l'image à émettre."""
-        if self.tx_busy:
-            return
-        name = self.conf.get("html_size", htmlshot.DEFAULT_SIZE)
-        size = htmlshot.SIZES.get(name, htmlshot.SIZES[htmlshot.DEFAULT_SIZE])
-        d = os.path.join(DEFAULT_OUT, "pages")
-        os.makedirs(d, exist_ok=True)
-        out = os.path.join(d, os.path.splitext(os.path.basename(p))[0] + ".png")
-        self.log(f"Page web {os.path.basename(p)} : capture {size[0]}×{size[1]} par le navigateur "
-                 f"(quelques secondes, le temps de charger ses images)…")
-        self._set_text(self.lb_src_info, f"{os.path.basename(p)} — capture de la page…")
-
-        def run():
-            try:
-                htmlshot.render(p, out, size)
-                self.ui(done)
-            except Exception as e:
-                self.ui(self.log_exc, "Page web", e)
-                self.ui(messagebox.showerror, APP, f"Page web impossible à capturer :\n{e}")
-
-        def done():
-            self.load_image(out)
-            self.src_path = p                 # nom repris pour les fichiers envoyés
-            self._set_text(self.lb_src_info, f"{os.path.basename(p)} — page web capturée — "
-                                             f"{self.src_img.width}×{self.src_img.height}")
-            self.log("Page web capturée : elle part comme une image (animations figées). "
-                     "Taille de la capture : menu Images → Pages web.")
-
-        threading.Thread(target=run, daemon=True).start()
-
     def load_image(self, p):
-        if htmlshot.is_html(p):
-            return self.load_html(p)
         try:
             self.src_img, self.src_raw, self.src_kind = imgfmt.load_source(p)
             self.src_path = p                 # nom repris pour les fichiers EasyPal (« de_…-photo.jpg »)
