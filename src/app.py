@@ -53,7 +53,7 @@ import random
 import wave
 
 APP = "HFImage F4GOP"
-VERSION = "0.68"
+VERSION = "0.69"
 CONF_PATH = os.path.join(os.path.expanduser("~"), ".hfimage.json")
 DEFAULT_OUT = os.path.join(os.path.expanduser("~"), "Documents", "HFImage")
 DEFAULTS = {
@@ -2249,10 +2249,9 @@ class App(tk.Tk):
     def _fill_devices(self):
         try:
             devs = sd().query_devices()
-            hostapis = sd().query_hostapis()
         except Exception as e:
             self.log(f"Audio indisponible : {e}")
-            devs, hostapis = [], []
+            devs = []
         if not devs:
             self.cb_out["values"] = self.cb_in["values"] = []
             return
@@ -2618,7 +2617,6 @@ class App(tk.Tk):
                 small = real.copy()
                 small.thumbnail((960, 720))
                 geo["src_id"], geo["small"] = id(real), small
-            tmp = True
             saved_src, saved_cache = self.src_img, getattr(self, "_pip_cache", None)
             self.src_img = base = geo["small"]
             im = self._pip_source().copy()

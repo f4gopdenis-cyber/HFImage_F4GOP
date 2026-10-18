@@ -162,7 +162,6 @@ def render(view, stations=(), me=None, lang="fr", show_lines=True):
     img = Image.new("RGB", (W, H), OCEAN)
     g = ImageDraw.Draw(img)
     lo0, la0, lo1, la1 = view.bbox()
-    wide = view.span() > 300
 
     def shifts(bb):
         """Décalages de ±360° pour lesquels ce contour est dans la vue (aucun : invisible)."""

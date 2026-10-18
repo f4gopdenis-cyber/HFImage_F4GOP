@@ -68,6 +68,7 @@ def run(data, fmt, mode, snr, fading, overhead, seed=1, outdir=None, tag="", ver
 
     res = {"mode": mode, "snr": snr, "fading": fading, "K": snd.K, "T": snd.T}
     t_air = 0.0
+    need = None                                   # symboles demandés par le NACK du passage précédent
     for rnd in range(4):                          # émission initiale + 3 compléments max
         frames = (snd.frames(overhead=overhead, multiple=FPB[mode]) if rnd == 0
                   else snd.frames(extra=need, multiple=FPB[mode]))

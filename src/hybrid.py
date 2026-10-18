@@ -8,6 +8,8 @@ Aucun identifiant de serveur n'est transmis par radio.
 import base64
 import ftplib
 import io
+import ipaddress
+import socket
 import ssl
 import sys
 import time
@@ -140,22 +142,76 @@ def upload(cfg, name: str, data: bytes, progress=None) -> str:
 
 
 # ---------------------------------------------------------------- réception
+class Refused(RuntimeError):
+    """Téléchargement refusé d'office (inutile de réessayer)."""
+
+
+def public_address(host: str, port: int) -> str:
+    """Adresse d'un serveur annoncé par radio : refuse les adresses locales et privées.
+
+    Une annonce reçue par radio ne doit pas pouvoir faire contacter par HFImage une
+    machine du réseau de la maison (box, NAS, imprimante…) ni l'ordinateur lui-même.
+    Renvoie la première adresse IP trouvée, à utiliser pour la connexion."""
+    host = (host or "").strip().strip("[]")
+    if not host:
+        raise Refused("serveur non indiqué dans l'annonce")
+    try:
+        infos = socket.getaddrinfo(host, port, type=socket.SOCK_STREAM)
+    except OSError as e:
+        raise RuntimeError(f"serveur introuvable ({host}) : {e}") from e
+    ips = []
+    for info in infos:
+        ip = info[4][0]
+        a = ipaddress.ip_address(ip.split("%")[0])
+        if a.version == 6 and a.ipv4_mapped:
+            a = a.ipv4_mapped
+        if not a.is_global:
+            raise Refused(f"serveur {host} refusé : adresse locale ou privée ({a})")
+        ips.append(ip)
+    if not ips:
+        raise RuntimeError(f"serveur introuvable ({host})")
+    return ips[0]
+
+
+def _check_public_url(url: str):
+    u = urllib.parse.urlparse(url)
+    public_address(u.hostname or "", u.port or (443 if u.scheme == "https" else 80))
+
+
+class _PublicRedirect(urllib.request.HTTPRedirectHandler):
+    """Suit les redirections, mais seulement vers des serveurs publics."""
+
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        _check_url(newurl)
+        _check_public_url(newurl)
+        return super().redirect_request(req, fp, code, msg, headers, newurl)
+
+
 def _check_url(url: str):
     u = urllib.parse.urlparse(url)
     if u.scheme not in ("http", "https") or not u.netloc:
         raise RuntimeError(f"lien refusé (seuls http et https sont acceptés) : {url!r}")
 
 
-def download(url: str, size: int, crc: int, timeout=20) -> bytes:
-    """Télécharge et vérifie (taille annoncée, CRC32). Lève RuntimeError sinon."""
+def download(url: str, size: int, crc: int, timeout=20, from_air=False) -> bytes:
+    """Télécharge et vérifie (taille annoncée, CRC32). Lève RuntimeError sinon.
+    from_air : lien reçu par radio -> serveurs locaux / privés refusés."""
     _check_url(url)
     if size <= 0 or size > MAX_DOWNLOAD:
-        raise RuntimeError(f"taille annoncée invalide ({size} octets)")
+        raise Refused(f"taille annoncée invalide ({size} octets)")
+    if from_air:
+        _check_public_url(url)
     req = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
     ctx = ssl.create_default_context()
+    handlers = [urllib.request.HTTPSHandler(context=ctx)]
+    if from_air:
+        handlers.append(_PublicRedirect())
+    opener = urllib.request.build_opener(*handlers)
     try:
-        with urllib.request.urlopen(req, timeout=timeout, context=ctx) as r:
+        with opener.open(req, timeout=timeout) as r:
             data = r.read(size + 1)
+    except Refused:
+        raise
     except urllib.error.HTTPError as e:
         raise RuntimeError(f"téléchargement refusé : HTTP {e.code}") from e
     except (urllib.error.URLError, OSError) as e:
@@ -172,10 +228,13 @@ def download(url: str, size: int, crc: int, timeout=20) -> bytes:
 
 
 def download_retry(url, size, crc, tries=4, wait=5.0, log=None):
+    """Lien reçu par radio : plusieurs essais, serveurs locaux / privés refusés."""
     last = None
     for k in range(tries):
         try:
-            return download(url, size, crc)
+            return download(url, size, crc, from_air=True)
+        except Refused:
+            raise
         except RuntimeError as e:
             last = e
             if log:

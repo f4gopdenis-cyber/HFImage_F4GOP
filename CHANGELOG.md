@@ -1,5 +1,13 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 0.69 — réception plus sûre
+
+- **Correction de sécurité : indicatif reçu dans le nom des fichiers.** L'indicatif d'une station (reçu par radio, en HFImage comme en EasyPal) sert à nommer l'image ou le fichier enregistré. Un indicatif piégé, contenant par exemple `\..\..\`, pouvait faire enregistrer un fichier **en dehors** du dossier de réception (dans Documents ou plus haut), avec une extension choisie par l'émetteur pour les fichiers. Seuls les lettres, chiffres et « - » de l'indicatif sont maintenant gardés (« / » devient « - » comme avant), et chaque fichier reçu est vérifié avant d'être écrit : il doit rester dans le dossier de réception. Les noms de fichiers ne changent pas pour les indicatifs normaux.
+- **Hybride EasyPal : fichier limité à 8 Mo**, comme l'hybride HFImage. Une annonce pouvait faire télécharger un fichier de taille quelconque, jusqu'à faire planter le programme faute de mémoire.
+- **Téléchargements hybrides (HFImage et EasyPal) : serveurs locaux refusés.** Le serveur indiqué dans une annonce radio ne peut plus désigner l'ordinateur lui-même ni une machine du réseau de la maison (box, NAS, imprimante…) : seules les adresses Internet publiques sont contactées, y compris après une redirection. Le test du serveur dans les Réglages n'est pas concerné (votre propre serveur peut être local).
+- Tests automatiques de ces protections, lancés à chaque fabrication de l'exe (`tests/test_securite.py`).
+- Petits nettoyages du code (variables inutilisées, banc d'essai `loopback.py`).
+
 ## Version 0.68 — mode d'emploi en anglais et mode d'emploi complété
 
 - **Nouveau : mode d'emploi en anglais** (PDF, 15 pages, captures de l'interface en anglais), menu **Infos → Mode d'emploi en anglais (PDF)**. Il couvre tout le programme : modes HFImage, mode EasyPal / QSSTV, hybride, stations en ligne, messages, problèmes fréquents.

@@ -142,10 +142,16 @@ def upload(cfg, name: str, data: bytes, progress=None):
             ftp.close()
 
 
-def _download_once(acc, name, tls, timeout):
+class _TooBig(Exception):
+    pass
+
+
+def _download_once(acc, name, tls, timeout, ip=None):
     ftp = ftplib.FTP_TLS(timeout=timeout) if tls else ftplib.FTP(timeout=timeout)
     try:
-        ftp.connect(acc["host"], 21)
+        # ip : adresse déjà vérifiée (publique) ; on s'y connecte directement pour que le
+        # nom du serveur ne puisse pas désigner une autre machine entre-temps
+        ftp.connect(ip or acc["host"], 21)
         ftp.login(acc["user"], acc["password"])
         if tls:
             ftp.prot_p()
@@ -155,8 +161,20 @@ def _download_once(acc, name, tls, timeout):
         except ftplib.error_perm:
             for part in path.strip("/").split("/"):
                 ftp.cwd(part)
+        try:
+            announced = ftp.size(name)
+        except (ftplib.all_errors + (ValueError,)):
+            announced = None
+        if announced is not None and announced > hybrid.MAX_DOWNLOAD:
+            raise _TooBig(announced)
         buf = io.BytesIO()
-        ftp.retrbinary(f"RETR {name}", buf.write)
+
+        def keep(block):
+            if buf.tell() + len(block) > hybrid.MAX_DOWNLOAD:
+                raise _TooBig(buf.tell() + len(block))
+            buf.write(block)
+
+        ftp.retrbinary(f"RETR {name}", keep)
         return buf.getvalue()
     finally:
         try:
@@ -166,14 +184,21 @@ def _download_once(acc, name, tls, timeout):
 
 
 def download(acc, name: str, tries=4, wait=5.0, timeout=20, log=None) -> bytes:
-    """Télécharge l'image annoncée (FTP simple comme EasyPal, puis FTP sécurisé)."""
+    """Télécharge l'image annoncée (FTP simple comme EasyPal, puis FTP sécurisé).
+
+    Le serveur vient de l'annonce radio : adresses locales / privées refusées, et
+    fichier limité à 8 Mo comme l'hybride HFImage."""
+    ip = hybrid.public_address(acc.get("host"), 21)
     last = None
     for k in range(tries):
         for tls in (False, True):
             try:
-                data = _download_once(acc, name, tls, timeout)
+                data = _download_once(acc, name, tls, timeout, ip)
                 if data:
                     return data
+            except _TooBig as e:
+                raise hybrid.Refused(f"fichier {name} refusé : trop gros ({e.args[0]} octets, "
+                                     f"maximum {hybrid.MAX_DOWNLOAD // (1024 * 1024)} Mo)") from None
             except ftplib.all_errors as e:
                 last = e
         if k + 1 < tries:

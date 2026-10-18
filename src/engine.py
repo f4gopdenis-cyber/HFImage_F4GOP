@@ -6,6 +6,7 @@ hamdrm.py) est démodulé en même temps, à partir du son à 48 kHz.
 """
 import io
 import os
+import re
 import time
 import wave
 import zlib
@@ -25,6 +26,33 @@ from protocol import (T_ACK, T_HDR, T_NACK, T_QRV, Receiver, Sender, detect_form
 
 RX_MODES = ("DATAC1X", "DATAC1", "DATAC3", "DATAC4", "DATAC0")   # DATAC0 : BSR / ACK
 DRM_MODE = "EasyPal"      # nom du mode HamDRM dans le programme (images d'EasyPal / QSSTV)
+
+
+def safe_call(call, maxlen=16):
+    """Indicatif reçu par radio -> morceau de nom de fichier sûr.
+
+    L'indicatif vient de l'air : on ne garde que A-Z, 0-9 et « - » (« / » devient « - »).
+    Ainsi « \\..\\..\\x » ou « C:x » ne peuvent pas faire sortir un fichier du dossier
+    de réception. Renvoie "" si rien d'utilisable (alors pas de suffixe)."""
+    s = str(call or "").upper().replace("/", "-")
+    return re.sub(r"[^A-Z0-9-]", "", s)[:maxlen].strip("-")
+
+
+def call_suffix(call):
+    """« _F4GOP-P » pour un indicatif reçu, "" s'il est inconnu ou inutilisable."""
+    if not call or call == "?":
+        return ""
+    s = safe_call(call)
+    return "_" + s if s else ""
+
+
+def inside(folder, path):
+    """Vérifie que path reste dans folder (dernière barrière avant d'écrire un fichier reçu)."""
+    root = os.path.realpath(folder)
+    full = os.path.realpath(path)
+    if os.path.commonpath([root, full]) != root:
+        raise ValueError(f"chemin refusé (hors du dossier de réception) : {path!r}")
+    return path
 
 
 def png_colors(q):
@@ -535,8 +563,8 @@ class RxEngine:
             text = text.replace("\r\n", "\n").strip()
             iid = zlib.crc32(data + b"hamdrm") & 0xFFFF
             stamp = time.strftime("%Y%m%d_%H%M%S")
-            suffix = "" if call == "?" else "_" + call.replace("/", "-")
-            path = os.path.join(self.outdir, f"{stamp}_{DRM_MODE}_texte{suffix}.txt")
+            suffix = call_suffix(call)
+            path = inside(self.outdir, os.path.join(self.outdir, f"{stamp}_{DRM_MODE}_texte{suffix}.txt"))
             with open(path, "w", encoding="utf-8") as fh:
                 fh.write(text + "\n")
             info = {"id": iid, "call": call, "size": len(data), "fmt": "txt", "text": text,
@@ -549,20 +577,20 @@ class RxEngine:
         info = {"id": iid, "call": call, "size": len(data), "fmt": fmt, "drm": f["mode"], "snr": f["snr"],
                 "name": f["name"]}
         stamp = time.strftime("%Y%m%d_%H%M%S")
-        suffix = "" if call == "?" else "_" + call.replace("/", "-")
+        suffix = call_suffix(call)
         if fmt in ("bin", "hft", "file"):
             name = f["name"] or "fichier.bin"
             safe = "".join(c if (c.isalnum() or c in "._- ()") else "_" for c in name).strip(" .") or "fichier"
             d = os.path.join(self.outdir, "fichiers")
             os.makedirs(d, exist_ok=True)
             base = os.path.join(d, f"{stamp}_{DRM_MODE}{suffix}")
-            path = base + "__" + safe
+            path = inside(self.outdir, base + "__" + safe)
             with open(path, "wb") as fh:
                 fh.write(data)
             self.saved[iid] = [path, None, base, call != "?"]
             self.on_image(dict(info, fmt="file", filename=name), path, None, DRM_MODE)
             return
-        base = os.path.join(self.outdir, f"{stamp}_{DRM_MODE}{suffix}")
+        base = inside(self.outdir, os.path.join(self.outdir, f"{stamp}_{DRM_MODE}{suffix}"))
         path, png = imgfmt.save_received(base, fmt, data)
         self.saved[iid] = [path, png, base, call != "?"]
         self.on_image(info, path, png, DRM_MODE)
@@ -594,7 +622,7 @@ class RxEngine:
             info["text"] = text            # gardé aussi pour l'identification de fin
             stamp = time.strftime("%Y%m%d_%H%M%S")
             call = info["call"]
-            tbase = os.path.join(self.outdir, f"{stamp}_{mode}_texte" + ("" if call == "?" else "_" + call))
+            tbase = inside(self.outdir, os.path.join(self.outdir, f"{stamp}_{mode}_texte" + call_suffix(call)))
             with open(tbase + ".txt", "w", encoding="utf-8") as f:
                 f.write(text)
             if not img:                               # message texte seul
@@ -614,10 +642,8 @@ class RxEngine:
             safe = "".join(c if (c.isalnum() or c in "._- ()") else "_" for c in name).strip(" .") or "fichier"
             d = os.path.join(self.outdir, "fichiers")
             os.makedirs(d, exist_ok=True)
-            base = os.path.join(d, f"{stamp}_{mode}")
-            if call != "?":
-                base += "_" + call.replace("/", "-")
-            path = base + "__" + safe
+            base = os.path.join(d, f"{stamp}_{mode}") + call_suffix(call)
+            path = inside(self.outdir, base + "__" + safe)
             with open(path, "wb") as f:
                 f.write(body)
             self.saved[info["id"]] = [path, None, base, call != "?"]
@@ -626,16 +652,19 @@ class RxEngine:
         stamp = time.strftime("%Y%m%d_%H%M%S")
         call = info["call"]
         base = os.path.join(self.outdir, f"{stamp}_{mode}" + ("_apercu" if info.get("preview") else ""))
-        if call != "?":
-            base += "_" + call.replace("/", "-")
+        base = inside(self.outdir, base + call_suffix(call))
         path, png = imgfmt.save_received(base, info["fmt"], data)
         self.saved[info["id"]] = [path, png, base, call != "?"]
         self.on_image(info, path, png, mode)
 
     def _rename(self, iid, call):
         path, png, base, _ = self.saved[iid]
-        nb = base + "_" + call.replace("/", "-")
+        suffix = call_suffix(call)
+        nb = base + suffix
         try:
+            if not suffix:
+                raise OSError("indicatif inutilisable dans un nom de fichier")
+            inside(self.outdir, nb)
             same = png == path
             new_path = nb + path[len(base):]
             os.replace(path, new_path)
@@ -645,8 +674,9 @@ class RxEngine:
             elif png:
                 os.replace(png, nb + ".png")
                 png = nb + ".png"
-        except OSError:
-            pass
+        except (OSError, ValueError):
+            if not path.startswith(nb):
+                nb = base                    # fichier laissé sous son nom d'origine
         self.saved[iid] = [path, png, nb, True]
         self.on_ident(self.rcv.done[iid][0], path, png)
 
