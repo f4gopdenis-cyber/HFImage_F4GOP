@@ -88,5 +88,53 @@ class Bande(unittest.TestCase):
         self.assertEqual(r.mode(), "DIG-L")
 
 
+
+class AvantEmission(unittest.TestCase):
+    """0.80 : contrôle du mode DATA dès que le CAT est relié, quel que soit le PTT."""
+
+    def run_check(self, ptt, tx_audio, start="1", action="switch"):
+        try:
+            import app
+        except ImportError as e:                         # pas de tkinter sur cette machine
+            self.skipTest(str(e))
+        rig = FakeKenwood("TS-890S", start)
+        rig.freq = lambda: 7058000
+        logs = []
+
+        class Stub:
+            conf = {"data_action": action}
+            _rig_open = staticmethod(lambda: rig)
+            log = staticmethod(logs.append)
+            _rig_status = app.App._rig_status
+        cfg = {"rig": "hamlib:2041", "ptt": ptt, "tx_audio": tx_audio, "set_mode": "none"}
+        radio.time.sleep, old = (lambda s: None), radio.time.sleep
+        try:
+            ok = app.App._check_rig_before_tx(Stub(), cfg)
+        finally:
+            radio.time.sleep = old
+        return ok, rig, logs
+
+    def test_ptt_rts_passe_en_lsb_data(self):
+        ok, rig, logs = self.run_check("RTS", "rear")
+        self.assertTrue(ok)
+        self.assertEqual(rig.mode(), "LSB-DATA1")
+
+    def test_ptt_cat(self):
+        ok, rig, _ = self.run_check("CAT", "rear", start="2")
+        self.assertTrue(ok)
+        self.assertEqual(rig.mode(), "USB-DATA1")
+
+    def test_avant_micro_inchange(self):
+        ok, rig, _ = self.run_check("VOX", "front")
+        self.assertTrue(ok)
+        self.assertEqual(rig.mode(), "LSB")
+
+    def test_emettre_sans_rien_dire(self):
+        ok, rig, logs = self.run_check("RTS", "rear", action="send")
+        self.assertTrue(ok)
+        self.assertEqual(rig.mode(), "LSB")
+        self.assertTrue(any("Émettre sans rien dire" in m for m in logs))
+
+
 if __name__ == "__main__":
     unittest.main()

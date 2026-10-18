@@ -225,7 +225,8 @@ class RadioDialog(tk.Toplevel):
         if kind not in ("flrig", "netrigctl") and self.v["host"].get() in ("127.0.0.1:12345", "127.0.0.1:4532"):
             self.v["host"].set("")
         self._state(self.mode_frame, kind != "none")
-        self._state(self.audio_frame, c["ptt"] == "CAT")
+        # source audio : sert au PTT CAT (TX1; / TX0;) et au contrôle du mode DATA (dès que le CAT est relié)
+        self._state(self.audio_frame, c["ptt"] == "CAT" or kind != "none")
         self.cb_pttport.configure(state="normal" if c["ptt"] in ("DTR", "RTS") else "disabled")
         if kind == "hamlib":
             exe = radio.find_rigctld()

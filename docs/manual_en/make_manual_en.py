@@ -175,8 +175,10 @@ s += B(["Sharp 800×600 photo in about 2 minutes (fast DATAC1X mode, 2.2 kHz wid
         "Transmission <b>follows the received mode</b>: answer each station in the mode it uses.",
         "<b>QRM cutter</b> on receive: carriers, CW, RTTY and adjacent SSB signals removed.",
         "<b>Stations online</b> list, <b>Rx Ok</b> with reports in dB, <b>map</b> of stations.",
-        "<b>Hybrid</b> mode (picture via the Internet, link over the air), animated GIFs, <b>QSL</b> card, text in the "
-        "waterfall, correspondent's picture inserted into yours (placed and sized with the mouse).",
+        "<b>Hybrid</b> mode (picture via the Internet, link over the air), including <b>flash hybrid</b>: a 4.5 s "
+        "announcement over the air.",
+        "Up to <b>4 correspondents' pictures</b> inserted into yours, animated GIFs, <b>QSL</b> card, text in the waterfall.",
+        "<b>Separate windows</b>: waterfall, gallery, station list… placed where you want, even on another screen.",
         "More than 300 radios controlled (Hamlib), Kenwood direct, OmniRig, FLRig.",
         "<b>Gallery</b>, upload to your website (<b>Digi-Sites</b>), reception <b>analyser</b>.",
         "Automatic updates, 5 languages (English, French, German, Spanish, Italian)."])
@@ -224,16 +226,43 @@ s += B(["<b>Radio</b>: type part of the name in “Search” (e.g. 7300, FT-991,
         "Kenwood TS-990S / TS-890S / TS-590 / TS-2000 / TS-480 are driven directly, nothing to install. "
         "Other radios: Hamlib, downloaded once (“Install Hamlib” button, 3 MB).",
         "<b>OmniRig</b> (Rig 1 / Rig 2) or <b>FLRig</b>: to share the radio with other programs (logger, WSJT-X…).",
-        "<b>Serial port</b> and speed; advanced parameters if needed (bits, stop, flow control, forced DTR / RTS).",
+        "<b>Serial port</b> and speed; advanced parameters if needed (bits, stop, flow control, forced DTR / RTS). "
+        "The list shows every active Windows port (Prolific, CH340, Silicon Labs and virtual ports included); you can "
+        "also type the port name, e.g. COM9.",
         "<b>PTT method</b>: CAT (recommended), DTR or RTS (also on the port of an interface next to the radio), "
         "or VOX.",
-        "<b>Transmit audio source</b>: “Rear / Data” (USB audio, ACC) or “Front / Mic”.",
-        "<b>Mode</b>: “Data / Pkt” puts the radio in USB-DATA before each transmission.",
+        "<b>Transmit audio source</b>: “Rear / Data” (USB audio, ACC) or “Front / Mic”. Choose “Front / Mic” if your "
+        "radio transmits USB audio without DATA mode: HFImage then leaves its mode alone.",
+        "<b>Mode</b>: “Data / Pkt” puts the radio in DATA before each transmission, keeping its sideband "
+        "(LSB → LSB-DATA, USB → USB-DATA).",
         "<b>Test CAT</b> reads the frequency; <b>Test PTT</b> transmits for 1.5 s. Green = OK, red = error shown "
         "below."])
-s += tip("Kenwood TS-890 / TS-990: radio in <b>USB-DATA</b>, DATA audio source = USB Audio, <b>DATA VOX OFF</b>, "
-         "CAT PTT on the radio's virtual COM port at 115200 baud, source “Rear / Data”. The port must be free: close "
-         "ARCP or your logger, or go through OmniRig.", "Kenwood")
+s.append(P("Radio not in DATA before transmitting", "h2"))
+s.append(P("As soon as CAT is connected, HFImage reads the radio's mode before each transmission, <b>whatever the PTT "
+           "method</b> (CAT, RTS, DTR or VOX). If it is not in DATA, the setting “<b>Radio not in DATA before "
+           "transmitting</b>” (Settings, below the radio buttons) decides:"))
+s += B(["<b>Switch to DATA automatically (USB-DATA / LSB-DATA)</b>: the default. The radio goes to DATA <b>keeping "
+        "its sideband</b>: in LSB (40 and 80 m, as in EasyPal) it goes to <b>LSB-DATA</b>, in USB to <b>USB-DATA</b>. "
+        "The log shows it (“TS-890S switched to LSB-DATA1 by CAT”).",
+        "<b>Ask</b>: a window offers to switch to DATA, transmit anyway or cancel.",
+        "<b>Transmit without asking</b>: the radio stays in its mode; the log reminds you at each transmission."])
+s.append(P("Kenwood TS-990: a single command (LSB-D1 or USB-D1). TS-890, TS-590, TS-480: LSB or USB, then DATA. Other "
+           "radios: PKTLSB / PKTUSB (Hamlib), DIG-L / DIG-U (OmniRig), FLRig's DATA mode. With RTS, DTR or VOX PTT, a "
+           "failed switch to DATA is only reported in the log and does not block the transmission."))
+s += tip("Kenwood TS-890 / TS-990: DATA audio source = USB Audio, <b>DATA VOX OFF</b>, CAT PTT on the radio's virtual "
+         "COM port at 115200 baud, source “Rear / Data”. The radio switches to LSB-DATA or USB-DATA by itself. The "
+         "port must be free: close ARCP or your logger, or go through OmniRig. If the input and output of the USB codec "
+         "have the same name in Windows, HFImage always picks the right one.", "Kenwood")
+s.append(P("Layout: separate windows", "h2"))
+s.append(P("Menu <b>Windows</b>: tick an area to turn it into a <b>separate window</b>, placed and sized wherever you want, "
+           "even on another screen: <b>panel and buttons</b>, <b>waterfall</b>, <b>stations heard</b>, <b>Stations</b> tab and "
+           "<b>gallery</b>. The RX, TX and Simulation tabs and the log stay in the main window."))
+s += B(["Separate windows always stay <b>in front of</b> the main window and are minimised with it.",
+        "Untick the area, or close its window, to put it back. “Put everything back in the main window” gathers "
+        "everything; “Settings → Original window layout” too.",
+        "The layout is kept from one session to the next.",
+        "<b>Show the history</b> and <b>Show received messages</b> (RX tab) hide these lists: without both, the received "
+        "picture uses the whole width."])
 
 # ------------------------------------------------------------------ 4
 s.append(P("4. Receiving pictures", "h1"))
@@ -245,7 +274,7 @@ s += B(["<b>Status panel</b> (top left): callsign of the station received, radio
         "When a picture starts to arrive while the <b>TX tab</b> is displayed, HFImage switches to the <b>RX tab</b> "
         "so that you see it come in (except during your own transmissions).",
         "<b>Quick preview</b> (HFImage modes): a small picture arrives in ~20 s, then the full picture replaces it.",
-        "<b>History</b> on the right: click to show again, double-click for full size.",
+        "<b>History</b> on the right: click to show again, double-click for full size (can be hidden, menu Windows).",
         "<b>Zoom</b>: mouse wheel on the picture to enlarge / reduce around the pointer (up to ×16), hold the left "
         "button to move the enlarged picture, right-click to return to the whole picture.",
         "<b>Automatic BSR / ACK</b> (HFImage modes): if pieces are missing at the end, HFImage asks for them (BSR); "
@@ -362,13 +391,18 @@ s += B(["EasyPal received → mode <b>EasyPal</b>; when the picture is complete,
 s.append(P("7. Adding to your picture", "h1"))
 s.append(P("Correspondent's picture", "h2"))
 s.append(P("To answer as in EasyPal: right-click a picture in the <b>Gallery</b> → “Reply with this image (inserted into my TX image)”, or tick "
-           "<b>Correspondent's image</b> in the TX tab and click <b>…</b>. The correspondent's picture is inserted into "
-           "yours with the caption “from F4EMK — +12 dB”: the <b>report</b> is the SNR you measured when receiving it."))
-s += B(["Choose a <b>corner</b> and a <b>size</b> (small, medium, large) in the lists,",
-        "or <b>drag</b> the picture with the mouse in the preview to place it anywhere, and use the <b>mouse wheel</b> "
-        "to enlarge or reduce it (10 % to 90 % of the width). Position and size then show “Free”.",
-        "The setting is kept for the next transmissions; the picture transmitted is exactly the preview."])
-s.append(img("en_pip.png", 110, "Correspondent's picture placed and sized with the mouse."))
+           "<b>Correspondent's image</b> in the TX tab and click <b>…</b>. Received pictures are inserted into yours with "
+           "the caption “from F4EMK — +12 dB”: the <b>report</b> is the SNR you measured when receiving them. <b>Up to 4 "
+           "pictures</b> at once, for example to answer several stations together."))
+s += B(["<b>Inserted images</b> list: <b>Add an image</b> (it goes to a free corner) and <b>Remove</b>. The “Image "
+        "received” list changes the picture of the selected line.",
+        "Each picture has its own <b>position</b> and <b>size</b>: a corner and a size in the lists, or with the mouse "
+        "in the preview. <b>Click</b> a picture to select it (yellow frame), <b>drag</b> it to place it, the <b>mouse "
+        "wheel</b> enlarges or reduces it (10 % to 90 % of the width).",
+        "Gallery, right-click: “<b>Reply with this image</b>” replaces the insets with this picture only; “<b>Add this "
+        "image to my TX image</b>” adds it to the others.",
+        "The layout is kept; the picture transmitted is exactly the preview."])
+s.append(img("en_pip.png", 125, "Correspondent's image: three pictures inserted, ON4QZ's selected (yellow frame)."))
 s.append(P("My station info", "h2"))
 s.append(P("Tick <b>My station info</b> (TX tab) and click <b>…</b> next to it (or Images menu): a banner is inserted "
            "at the bottom or top of the transmitted picture, with your callsign, locator, QTH, radio (read by CAT if "
@@ -398,7 +432,8 @@ s.append(P("When a correspondent sends a message (text alone, or text attached t
            "received</b> window opens in front with a beep: callsign, UTC time, mode, SNR, the text in large print "
            "and the thumbnail of the picture if there is one (click = full size). The ◀ ▶ arrows browse the messages "
            "of the session. <b>Reply…</b> opens the text window pre-filled with “F1BAL de F4GOP: ”. The sender's "
-           "callsign is also written above each message in the “Received messages” frame."))
+           "callsign is also written above each message in the “Received messages” frame. That frame can be hidden "
+           "(menu Windows): messages still arrive in the “Message received” window."))
 s.append(P("<b>Did my correspondent receive my message?</b> As soon as a message is received, the correspondent's "
            "program sends an acknowledgement, over the air (ACK in DATAC0) and via the Internet (if the network is "
            "on). In the <b>Send Text</b> window, the list “Sent messages — received by” shows “✓ F1BAL (+8 dB)” in "
@@ -417,7 +452,8 @@ s += B(["In the list, <b>*</b> marks a station transmitting (red) and <b>HYB</b>
         "by HFImage stations.",
         "Click a station: the <b>station map</b> (like Digi-Sites), with path and distance; “Paste the map into the TX "
         "window” to send it as a picture.",
-        "Firewall blocking port 1883: try 8883 (encrypted) or 8000 (web)."])
+        "Firewall or Internet provider blocking port 1883: HFImage tries the other accesses of the same server by itself "
+        "(8883 encrypted, then 8884 and 8000 via the web); the log shows which one worked."])
 s.append(img("en_stations.png", 160, "Stations tab: BSR / FIX options, mode following, and the station log."))
 s.append(P("Hybrid mode (HFImage) and website", "h2"))
 s.append(P("In the HFImage modes, hybrid mode sends the picture through your <b>web hosting</b> (FTP); only the "
@@ -425,6 +461,16 @@ s.append(P("In the HFImage modes, hybrid mode sends the picture through your <b>
            "pictures and <b>animated GIFs</b>. Settings → Hybrid mode: FTP server, user name, password, folder and "
            "<b>public link</b> of this folder; “Test server” checks everything. Only the link goes over the air, never "
            "the password."))
+s.append(P("<b>Flash hybrid</b>: tick <b>Flash (5 s)</b> next to “Hybrid mode” (TX tab). The announcement no longer carries "
+           "the link, only the picture's <b>fingerprint</b> (shortened SHA-256), size and format: one <b>DATAC0</b> frame "
+           "(500 Hz) sent 5 times, <b>4.5 s</b> instead of 11 s. The link goes at the same time through the online-stations "
+           "server; the receiving station downloads the picture and checks it has <b>exactly the fingerprint received over "
+           "the air</b>. Simulated: fading −2 dB, 85 to 90 % of announcements received against 55 to 60 % for the normal "
+           "announcement. Both stations need “<b>Stations online</b>” (Settings → Internet) and version 0.71 or later; if "
+           "the server is unreachable, HFImage sends the normal announcement."))
+s.append(P("<b>Download safety</b>: an announcement received over the air can only fetch a file of <b>8 MB at most</b>, and "
+           "only from a public Internet address (never the computer itself or a machine on your home network). Received "
+           "pictures and files always stay in the reception folder, whatever the announced callsign."))
 s.append(P("Menu <b>Images → Website / Digi-Sites…</b>: as in EasyPal, each received picture is uploaded as "
            "<b>image1.jpg</b> (the previous ones move to image2, image3…), with callsign, date, mode and band; your "
            "transmitted pictures go to TX1.jpg … TX5.jpg, and a <b>hfimage.html</b> page shows them. Example with "
@@ -456,8 +502,12 @@ s.append(P("11. Common problems", "h1"))
 s.append(table([["Symptom", "Probable cause", "What to do"],
                 ["The radio does not transmit", "PTT badly set, COM port busy",
                  "Radio… → Test PTT; close the programs holding the port or use OmniRig"],
-                ["The radio transmits without power", "Radio not in USB-DATA, wrong audio source, level too low",
-                 "Mode “Data / Pkt”; source “Rear / Data”; raise the level (ALC must not move)"],
+                ["The radio transmits without power", "Radio not in DATA, wrong audio source, level too low",
+                 "“Switch to DATA automatically”; source “Rear / Data”; raise the level (ALC must not move)"],
+                ["“Radio not in DATA” and it does not switch", "Setting “Transmit without asking” or “Ask”",
+                 "Settings → “Radio not in DATA before transmitting” → “Switch to DATA automatically”"],
+                ["COM port missing from the list", "Driver not seen, or device unplugged",
+                 "Version 0.76 or later; type the port name (COM9); check Windows Device Manager"],
                 ["Nothing is received", "Wrong audio input, Windows volume muted",
                  "Settings → Audio; check that the waterfall moves; analyse a WAVE recording"],
                 ["Frames detected but lost", "Weak signal, QSB, QRM, clipping",
@@ -468,8 +518,10 @@ s.append(table([["Symptom", "Probable cause", "What to do"],
                  "Check “Send BSR” on your side and “answer BSR with a FIX” on the sender's side (Stations tab)"],
                 ["Pictures not sharp", "Slow mode or strong robustness, short duration",
                  "Auto robustness; 3 min duration; DATAC1X or EasyPal B/QAM16 if reports allow"],
-                ["No stations online", "Internet unticked or port 1883 blocked",
-                 "Settings → Internet; try port 8883 or 8000"],
+                ["No stations online", "Internet unticked or server blocked",
+                 "Settings → Internet; HFImage tries ports 8883, 8884, 8000 by itself; see the log"],
+                ["Flash hybrid: picture not downloaded", "“Stations online” off at the sender or receiver",
+                 "Enable Internet on both sides, or untick “Flash (5 s)”"],
                 ["Hybrid mode: FTP failure", "Credentials, folder or public link",
                  "Settings → Hybrid mode → Test server"]],
                [45, 55, 70]))

@@ -1318,6 +1318,7 @@ T = [
      "Einstellung „Ohne Nachfrage senden“: das Gerät bleibt in seiner Betriebsart. Für das automatische Umschalten auf DATA: Einstellungen → „Gerät vor dem Senden nicht in DATA“.",
      "Ajuste «Transmitir sin preguntar»: el equipo se queda en su modo. Para el paso automático a DATA: Ajustes → «Equipo no en DATA antes de transmitir».",
      "Impostazione «Trasmetti senza chiedere»: la radio resta nel suo modo. Per il passaggio automatico a DATA: Impostazioni → «Radio non in DATA prima di trasmettere»."),
+    ("Poste pas passé en DATA : vérifiez son mode si l'audio ne part pas.", "Radio not switched to DATA: check its mode if no audio goes out.", "Gerät nicht auf DATA geschaltet: prüfen Sie die Betriebsart, falls kein Audio gesendet wird.", "Equipo no pasado a DATA: compruebe su modo si el audio no sale.", "Radio non passata in DATA: controllate il modo se l'audio non esce."),
     ("Fenêtres", "Windows", "Fenster", "Ventanas", "Finestre"),
     ("Panneau et boutons", "Panel and buttons", "Anzeige und Tasten", "Panel y botones", "Pannello e pulsanti"),
     ("Stations entendues", "Stations heard", "Gehörte Stationen", "Estaciones oídas", "Stazioni ascoltate"),

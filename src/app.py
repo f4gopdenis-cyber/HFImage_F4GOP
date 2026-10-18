@@ -54,7 +54,7 @@ import random
 import wave
 
 APP = "HFImage F4GOP"
-VERSION = "0.79"
+VERSION = "0.80"
 CONF_PATH = os.path.join(os.path.expanduser("~"), ".hfimage.json")
 DEFAULT_OUT = os.path.join(os.path.expanduser("~"), "Documents", "HFImage")
 DEFAULTS = {
@@ -3693,7 +3693,9 @@ class App(tk.Tk):
                 if not ok:
                     return messagebox.askyesno(APP, msg + "\n\nÉmettre quand même ?")
                 return True
-            if cfg["ptt"] != "CAT" or cfg.get("tx_audio") != "rear":
+            # contrôle du mode DATA dès que le CAT est relié, quel que soit le PTT (CAT, RTS,
+            # DTR ou VOX) ; sauf « Avant / Micro » : le poste émet alors l'audio sans DATA
+            if cfg.get("tx_audio") == "front":
                 return True
             txt, ok = self._rig_status(r)
         except Exception as e:
@@ -3724,6 +3726,10 @@ class App(tk.Tk):
                     msg, ok2 = f"Passage en DATA impossible : {e}", False
                 self.log(msg)
                 if not ok2:
+                    if cfg["ptt"] != "CAT":
+                        # PTT par RTS / DTR / VOX : on n'empêche pas l'émission, on prévient
+                        self.log("Poste pas passé en DATA : vérifiez son mode si l'audio ne part pas.")
+                        return True
                     return messagebox.askyesno(APP, msg + "\n\nÉmettre quand même ?")
         return True
 

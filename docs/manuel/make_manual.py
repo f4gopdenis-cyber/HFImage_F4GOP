@@ -173,7 +173,9 @@ s += B(["Photo 800×600 nette en environ 2 minutes (mode rapide DATAC1X, 2,2 kHz
         "Mode <b>Auto</b> : le mode et la robustesse s'adaptent aux reports des stations.",
         "<b>Coupe-QRM</b> à la réception : porteuses, CW, RTTY et BLU voisines effacées.",
         "Liste des <b>stations en ligne</b>, <b>Rx Ok</b> avec reports en dB, <b>carte</b> des stations.",
-        "Mode <b>hybride</b> (image par Internet, lien par radio), GIF animés, carte <b>QSL</b>, texte dans le waterfall.",
+        "Mode <b>hybride</b> (image par Internet, lien par radio), dont l'<b>hybride éclair</b> : annonce radio de 4,5 s.",
+        "Jusqu'à <b>4 images de correspondants</b> incrustées dans la vôtre, GIF animés, carte <b>QSL</b>, texte dans le waterfall.",
+        "<b>Fenêtres séparées</b> : waterfall, galerie, liste des stations… placés où vous voulez, même sur un autre écran.",
         "Plus de 300 postes pilotés (Hamlib), Kenwood en direct, OmniRig, FLRig.",
         "<b>Galerie</b>, mise en ligne sur votre site (<b>Digi-Sites</b>), <b>analyseur</b> de réception.",
         "Mise à jour automatique, 5 langues."])
@@ -228,16 +230,43 @@ s += B(["<b>Poste</b> : tapez une partie du nom dans « Rechercher » (ex. 7300,
         "Autres postes : Hamlib, téléchargé une fois (bouton « Installer Hamlib », 3 Mo).",
         "<b>OmniRig</b> (Rig 1 / Rig 2) ou <b>FLRig</b> : pour partager le poste avec d'autres logiciels "
         "(logger, WSJT-X…).",
-        "<b>Port série</b> et vitesse ; paramètres avancés si besoin (bits, stop, contrôle de flux, DTR/RTS forcés).",
+        "<b>Port série</b> et vitesse ; paramètres avancés si besoin (bits, stop, contrôle de flux, DTR/RTS forcés). "
+        "La liste montre tous les ports actifs de Windows (Prolific, CH340, Silicon Labs, ports virtuels compris) ; "
+        "on peut aussi taper le nom du port, par exemple COM9.",
         "<b>Méthode PTT</b> : CAT (recommandé), DTR ou RTS (y compris sur le port d'une interface à côté du poste), "
         "ou VOX.",
-        "<b>Source audio en émission</b> : « Arrière / Data » (audio USB, ACC) ou « Avant / Micro ».",
-        "<b>Mode</b> : « Data / Pkt » met le poste en USB-DATA avant chaque émission.",
+        "<b>Source audio en émission</b> : « Arrière / Data » (audio USB, ACC) ou « Avant / Micro ». Choisissez "
+        "« Avant / Micro » si votre poste émet l'audio USB sans le mode DATA : HFImage ne touche alors pas à son mode.",
+        "<b>Mode</b> : « Data / Pkt » met le poste en DATA avant chaque émission, en gardant sa bande latérale "
+        "(LSB → LSB-DATA, USB → USB-DATA).",
         "<b>Tester le CAT</b> lit la fréquence ; <b>Tester le PTT</b> émet 1,5 s. Vert = OK, rouge = erreur "
         "affichée en dessous."])
-s += tip("Kenwood TS-890 / TS-990 : poste en <b>USB-DATA</b>, source audio DATA = USB Audio, <b>DATA VOX sur "
-         "OFF</b>, PTT CAT sur le port COM virtuel du poste à 115200 bauds, source « Arrière / Data ». "
-         "Le port doit être libre : fermez ARCP ou le logger, ou passez par OmniRig.", "Kenwood")
+s.append(P("Poste pas en DATA avant d'émettre", "h2"))
+s.append(P("Dès que le CAT est relié, HFImage lit le mode du poste avant chaque émission, <b>quelle que soit la méthode "
+           "PTT</b> (CAT, RTS, DTR ou VOX). S'il n'est pas en DATA, le réglage « <b>Poste pas en DATA avant d'émettre</b> » "
+           "(Réglages, sous les boutons du poste) décide :"))
+s += B(["<b>Passer en DATA automatiquement (USB-DATA / LSB-DATA)</b> : le réglage par défaut. Le poste passe en DATA "
+        "<b>en gardant sa bande latérale</b> : en LSB (40 et 80 m, comme EasyPal) il passe en <b>LSB-DATA</b>, en USB "
+        "en <b>USB-DATA</b>. Le journal l'indique (« TS-890S passé en LSB-DATA1 par CAT »).",
+        "<b>Demander</b> : une fenêtre propose de passer en DATA, d'émettre quand même ou d'annuler.",
+        "<b>Émettre sans rien dire</b> : le poste reste dans son mode ; le journal le rappelle à chaque émission."])
+s.append(P("Kenwood TS-990 : une seule commande (LSB-D1 ou USB-D1). TS-890, TS-590, TS-480 : LSB ou USB, puis DATA. "
+           "Autres postes : PKTLSB / PKTUSB (Hamlib), DIG-L / DIG-U (OmniRig), mode DATA de FLRig. Avec un PTT par RTS, "
+           "DTR ou VOX, un échec du passage en DATA est seulement signalé dans le journal, sans bloquer l'émission."))
+s += tip("Kenwood TS-890 / TS-990 : source audio DATA = USB Audio, <b>DATA VOX sur OFF</b>, PTT CAT sur le port COM "
+         "virtuel du poste à 115200 bauds, source « Arrière / Data ». Le poste passe tout seul en LSB-DATA ou USB-DATA. "
+         "Le port doit être libre : fermez ARCP ou le logger, ou passez par OmniRig. Si l'entrée et la sortie du codec "
+         "USB portent le même nom dans Windows, HFImage prend toujours la bonne.", "Kenwood")
+s.append(P("Disposition : fenêtres séparées", "h2"))
+s.append(P("Menu <b>Fenêtres</b> : cochez une zone pour en faire une <b>fenêtre séparée</b>, à placer et dimensionner où vous "
+           "voulez, même sur un autre écran : <b>panneau et boutons</b>, <b>waterfall</b>, <b>stations entendues</b>, onglet "
+           "<b>Stations</b> et <b>galerie</b>. Les onglets RX, TX, Simulation et le journal restent dans la fenêtre principale."))
+s += B(["Les fenêtres séparées restent <b>toujours devant</b> la fenêtre principale et se réduisent avec elle.",
+        "Décochez la zone, ou fermez sa fenêtre, pour la remettre à sa place. « Tout remettre dans la fenêtre "
+        "principale » rassemble tout ; « Réglages → Disposition d'origine des fenêtres » aussi.",
+        "La disposition est gardée d'une session à l'autre.",
+        "Les cases <b>Afficher l'historique</b> et <b>Afficher les messages reçus</b> (onglet RX) masquent ces listes : "
+        "sans les deux, l'image reçue prend toute la largeur."])
 
 # ------------------------------------------------------------------ 4
 s.append(PageBreak())
@@ -252,7 +281,7 @@ s += B(["<b>Panneau d'état</b> (en haut à gauche) : indicatif de la station re
         "<b>Aperçu rapide</b> (modes HFImage) : une petite image arrive en ~20 s, puis l'image complète la remplace.",
         "<b>Zoom</b> : molette de la souris sur l'image pour l'agrandir / la réduire autour du pointeur (jusqu'à ×16), "
         "clic gauche maintenu pour la déplacer, clic droit pour revenir à l'image entière.",
-        "<b>Historique</b> à droite : clic pour réafficher, double-clic pour le plein format.",
+        "<b>Historique</b> à droite : clic pour réafficher, double-clic pour le plein format (masquable par le menu Fenêtres).",
         "<b>BSR / ACK automatiques</b> : s'il manque des morceaux à la fin, HFImage les demande (BSR) ; "
         "l'émetteur ne renvoie que ce qui manque (FIX). Une fois l'image complète, un accusé (ACK) avec "
         "votre report part vers l'émetteur.",
@@ -314,14 +343,19 @@ s.append(P("Le cadre <b>Police et couleurs</b> permet de choisir la police (tout
            "de couleur au bord du bandeau. La liste <b>Modèles…</b> propose des réglages tout prêts."))
 s.append(P("Image du correspondant", "h2"))
 s.append(P("Pour répondre comme dans EasyPal : clic droit sur une image de la <b>Galerie</b> → « Répondre avec cette image », "
-           "ou case <b>Image du correspondant</b> (onglet TX) et bouton <b>…</b>. Son image est incrustée dans un coin de la "
-           "vôtre avec la légende « de F4EMK — +12 dB » : le <b>report</b> est le SNR que vous "
-           "avez mesuré en le recevant. Se combine avec « Mes conditions de trafic »."))
-s += B(["Choisissez un <b>coin</b> et une <b>taille</b> (petite, moyenne, grande) dans les listes,",
-        "ou, dans l'aperçu, <b>faites glisser</b> l'image du correspondant à la souris pour la placer où vous voulez, "
-        "et utilisez la <b>molette</b> pour l'agrandir ou la réduire (10 % à 90 % de la largeur). Position et taille "
-        "passent alors sur « Libre ».",
-        "Le réglage est gardé ; l'image émise est exactement celle de l'aperçu."])
+           "ou case <b>Image du correspondant</b> (onglet TX) et bouton <b>…</b>. Les images reçues sont incrustées dans la "
+           "vôtre avec la légende « de F4EMK — +12 dB » : le <b>report</b> est le SNR que vous avez mesuré en les recevant. "
+           "<b>Jusqu'à 4 images</b> à la fois, par exemple pour répondre à plusieurs stations d'un coup. Se combine avec "
+           "« Mes conditions de trafic »."))
+s += B(["Liste <b>Images incrustées</b> : <b>Ajouter une image</b> (elle se place dans un coin libre) et <b>Retirer</b>. "
+        "La liste « Image reçue » change l'image de la ligne choisie.",
+        "Chaque image a sa <b>position</b> et sa <b>taille</b> : un coin et une taille dans les listes, ou à la souris "
+        "dans l'aperçu. <b>Cliquez</b> sur une image pour la choisir (cadre jaune), <b>faites-la glisser</b> pour la "
+        "placer, la <b>molette</b> l'agrandit ou la réduit (10 % à 90 % de la largeur).",
+        "Galerie, clic droit : « <b>Répondre avec cette image</b> » remplace les incrustations par cette seule image ; "
+        "« <b>Ajouter cette image à mon image TX</b> » l'ajoute aux autres.",
+        "La disposition est gardée ; l'image émise est exactement celle de l'aperçu."])
+s.append(img("pip.png", 130, "Image du correspondant : trois images incrustées, celle d'ON4QZ choisie (cadre jaune)."))
 s.append(P("Messages reçus", "h2"))
 s.append(P("Quand un correspondant envoie un message (texte seul, ou texte joint à son image), la fenêtre <b>Message reçu</b> "
            "s'ouvre au premier plan avec un bip : indicatif, heure UTC, mode, SNR, le texte en grand et la vignette de "
@@ -329,7 +363,8 @@ s.append(P("Quand un correspondant envoie un message (texte seul, ou texte joint
            "<b>Répondre…</b> ouvre l'envoi de texte prérempli « F1BAL de F4GOP : ». L'indicatif de l'expéditeur est aussi "
            "écrit au-dessus de chaque message dans le cadre « Messages reçus ». Les cases du bas permettent de ne "
            "plus l'ouvrir automatiquement ou de couper le bip ; on la rouvre par Action → Messages reçus… ou par un "
-           "double-clic dans le cadre « Messages reçus »."))
+           "double-clic dans le cadre « Messages reçus ». Le cadre peut être masqué (menu Fenêtres) : les messages "
+           "arrivent toujours dans la fenêtre « Message reçu »."))
 s.append(P("<b>Le correspondant a-t-il reçu mon message ?</b>"))
 s.append(P("Dès qu'un message est bien reçu, le programme du correspondant renvoie un accusé de réception, par radio "
            "(ACK en DATAC0, si « ACK auto » est coché chez lui) et par Internet (si le réseau est actif). Dans la fenêtre "
@@ -351,7 +386,7 @@ s.append(P("Envoyer un fichier", "h2"))
 s.append(P("Bouton <b>Envoyer un fichier…</b> (onglet TX) ou menu Images : n'importe quel fichier (texte, PDF, ZIP, "
            "journal ADIF…). Il est compressé s'il y gagne, protégé par le même code fontaine que les images (BSR / FIX "
            "et ACK compris), et la durée d'émission est annoncée avant d'émettre. Avec le <b>mode hybride</b> coché, "
-           "le fichier passe par Internet et seul le lien passe par radio (~11 s) : idéal pour les gros fichiers. "
+           "le fichier passe par Internet et seul le lien passe par radio (~11 s, ou 4,5 s en éclair) : idéal pour les gros fichiers. "
            "À la réception, il est rangé sous son nom d'origine dans le sous-dossier <b>fichiers</b> du dossier des "
            "images reçues ; double-clic dans l'historique pour l'ouvrir."))
 s += tip("ordre de grandeur en DATAC1X : environ 8 ko par minute. Un fichier texte de 30 ko compressé à 9 ko "
@@ -446,7 +481,8 @@ s += B(["<b>Rx Ok</b> : les stations qui ont bien reçu l'image, avec leur <b>re
         "Elle montre en vert, avec un trait, les stations qui ont reçu <b>votre dernière image</b> ; la case "
         "« Aussi les autres stations (en jaune) » ajoute les stations en ligne ou entendues. "
         "« Coller la carte dans la fenêtre TX » pour l'envoyer en image.",
-        "Pare-feu qui bloque le port 1883 : essayez 8883 (chiffré) ou 8000 (web)."])
+        "Pare-feu ou fournisseur d'accès qui bloque le port 1883 : HFImage essaie tout seul les autres accès du même "
+        "serveur (8883 chiffré, puis 8884 et 8000 par le web) ; le journal indique celui qui a fonctionné."])
 s.append(img("carte_stations.png", 150, "La carte des stations qui ont reçu l'image."))
 
 # ------------------------------------------------------------------ 7
@@ -457,6 +493,25 @@ s.append(P("L'image passe par votre <b>hébergement web</b> (FTP) ; seul le <b>l
            "<b>GIF animés</b>. Réglages → Mode hybride : serveur FTP, identifiant, mot de passe, dossier et "
            "<b>lien public</b> de ce dossier ; « Tester le serveur » vérifie tout. Seul le lien passe par radio, "
            "jamais le mot de passe."))
+s.append(P("Hybride éclair", "h2"))
+s.append(P("Case <b>Éclair (5 s)</b>, à côté de « Mode hybride » (onglet TX). L'annonce radio ne porte plus le lien, seulement "
+           "l'<b>empreinte</b> de l'image (SHA-256 abrégé), sa taille et son format : une trame <b>DATAC0</b> de 500 Hz, émise "
+           "5 fois, soit <b>4,5 s</b> au lieu de 11 s. Le lien part en même temps par le serveur des stations en ligne ; la "
+           "station qui entend l'annonce télécharge l'image et vérifie qu'elle a <b>exactement l'empreinte reçue par radio</b>."))
+s.append(table([["Canal simulé", "S/B", "Annonce normale (11 s)", "Éclair (4,5 s)"],
+                ["Calme", "−4 dB", "100 %", "100 %"],
+                ["Fading moyen", "−2 dB", "60 %", "85 %"],
+                ["Fading moyen", "0 dB", "85 %", "100 %"],
+                ["Fading fort", "−2 dB", "55 %", "90 %"]], [45, 25, 50, 50]))
+s.append(Spacer(1, 4))
+s += B(["Les deux stations doivent avoir « <b>Stations en ligne</b> » activé (Réglages → Internet) et la version 0.71 ou plus récente.",
+        "Si le serveur n'est pas joignable au moment d'émettre, HFImage envoie l'annonce normale (DATAC3) et le note dans "
+        "le journal."])
+s.append(P("Sécurité des téléchargements", "h2"))
+s.append(P("Une annonce reçue par radio ne peut faire télécharger qu'un fichier de <b>8 Mo au plus</b>, et seulement depuis "
+           "une adresse Internet publique : l'ordinateur lui-même et les machines du réseau de la maison (box, NAS…) sont "
+           "refusés, y compris après une redirection. Le test de votre propre serveur dans les Réglages n'est pas concerné. "
+           "Les images et fichiers reçus restent toujours dans le dossier de réception, quel que soit l'indicatif annoncé."))
 s.append(P("Site web / Digi-Sites", "h2"))
 s.append(P("Menu <b>Images → Site web / Digi-Sites…</b> : comme EasyPal, chaque image reçue est mise en ligne "
            "sous le nom <b>image1.jpg</b> (les précédentes glissent : image2, image3…), avec indicatif, date, mode "
@@ -508,10 +563,17 @@ s.append(table([["Symptôme", "Cause probable", "Que faire"],
                  "Vérifier « envoyer un BSR » chez vous et « répondre aux BSR par un FIX » chez l'émetteur (onglet Stations)"],
                 ["Images peu nettes", "Mode lent ou robustesse forte, durée courte",
                  "Robustesse Auto ; durée 3 min ; DATAC1X si les reports le permettent"],
-                ["« Poste pas en mode DATA »", "Kenwood en USB avec audio arrière",
-                 "« Passer en USB-DATA » (mémorisable) ou source « Avant / Micro »"],
-                ["Pas de stations en ligne", "Internet décoché ou port 1883 bloqué",
-                 "Réglages → Internet ; essayer le port 8883 ou 8000"],
+                ["« Poste pas en mode DATA » et il ne bascule pas", "Réglage « Émettre sans rien dire » ou « Demander »",
+                 "Réglages → « Poste pas en DATA avant d'émettre » → « Passer en DATA automatiquement » ; "
+                 "le journal indique le réglage utilisé"],
+                ["Le poste passe en USB-DATA au lieu de LSB-DATA", "Poste en USB avant l'émission",
+                 "Mettre le poste en LSB : HFImage garde la bande latérale ; les deux stations doivent être sur la même"],
+                ["Port COM absent de la liste", "Pilote non vu par Windows ou appareil débranché",
+                 "Version 0.76 ou plus récente ; taper le nom du port (COM9) ; vérifier le Gestionnaire de périphériques"],
+                ["Pas de stations en ligne", "Internet décoché ou serveur bloqué",
+                 "Réglages → Internet ; HFImage essaie seul les ports 8883, 8884, 8000 ; voir le journal"],
+                ["Hybride éclair : image non téléchargée", "« Stations en ligne » désactivé chez l'émetteur ou le récepteur",
+                 "Activer Internet des deux côtés ; sinon décocher « Éclair (5 s) »"],
                 ["Mode hybride : échec FTP", "Identifiants, dossier ou lien public",
                  "Réglages → Mode hybride → Tester le serveur"]],
                [45, 55, 70]))

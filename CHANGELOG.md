@@ -1,5 +1,10 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 0.80 — contrôle DATA quel que soit le PTT, modes d'emploi à jour
+
+- **Mode DATA vérifié dès que le CAT est relié, quelle que soit la méthode PTT** (CAT, RTS, DTR ou VOX). Avant, le contrôle ne se faisait qu'avec le PTT par CAT : avec un PTT par RTS ou VOX, on pouvait émettre en LSB ou en USB sans DATA sans le savoir. Avec un PTT par RTS / DTR / VOX, un échec du passage en DATA est signalé dans le journal sans bloquer l'émission. Choisissez « Avant / Micro » comme source audio si votre poste émet l'audio sans le mode DATA : HFImage ne touche alors pas à son mode (ce choix est maintenant possible aussi avec un PTT par RTS / DTR / VOX).
+- **Modes d'emploi français et anglais mis à jour** (menu Infos) : passage automatique en LSB-DATA / USB-DATA, fenêtres séparées et menu Fenêtres, jusqu'à 4 images de correspondants (nouvelle capture), hybride éclair (avec les mesures), sécurité des téléchargements, ports COM, accès de secours au serveur des stations, problèmes fréquents complétés.
+
 ## Version 0.79 — sortie audio du TS-890 et journal du mode DATA
 
 - **Sortie audio** : quand l'entrée et la sortie du codec USB du poste portent exactement le même nom dans Windows (par ex. renommées « TS-890 »), HFImage prenait parfois l'**entrée** à la place de la sortie : erreur « Invalid number of channels », puis message « … ne fonctionne pas ; … utilisée à la place » avec deux fois le même nom. HFImage choisit maintenant toujours un appareil du bon sens (sortie pour l'émission, entrée pour la réception).
