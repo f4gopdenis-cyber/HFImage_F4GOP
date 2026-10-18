@@ -48,14 +48,30 @@ class Presence:
         self.call, self.info = None, {}
         self.client = None
         self.connected = False
+        self.ever = False
+        self._ports, self._try = [self.port], 0
         self._lock = threading.Lock()
         self.flash = {}           # empreinte -> (heure de réception, {call, url, size, crc, fmt, id})
 
     # ------------------------------------------------------------------ cycle de vie
+    FALLBACK_PORTS = (8883, 8884, 8000)       # serveur par défaut : autres accès si 1883 est bloqué
+    FALLBACK_S = 20                           # délai avant d'essayer l'accès suivant
+
     def start(self, call, info):
-        import paho.mqtt.client as mqtt
         self.call = (call or "").upper()
         self.info = dict(info)
+        self.ever = False
+        # serveur par défaut : si le port réglé est bloqué (pare-feu, fournisseur d'accès),
+        # on essaie tout seul les autres accès du même serveur, jusqu'à ce que l'un réponde
+        self._ports = [self.port]
+        if self.host == DEFAULT_HOST:
+            self._ports += [p for p in self.FALLBACK_PORTS if p != self.port]
+        self._try = 0
+        self._connect()
+
+    def _connect(self):
+        import paho.mqtt.client as mqtt
+        self.port = self._ports[self._try % len(self._ports)]
         cid = f"hfimage-{_topic_call(self.call)}-{random.randrange(1 << 30):x}"
         # 1883 : MQTT simple ; 8883 : chiffré (TLS) ; 8000 / 8884 : par le web (websockets),
         # utile si un pare-feu bloque le port 1883
@@ -74,6 +90,26 @@ class Presence:
         self.client = c
         c.connect_async(self.host, self.port, keepalive=60)
         c.loop_start()
+        if len(self._ports) > 1:
+            t = threading.Timer(self.FALLBACK_S, self._watchdog, args=(c,))
+            t.daemon = True
+            t.start()
+
+    def _watchdog(self, c):
+        """Pas de réponse sur ce port : on passe au suivant (tant qu'aucun n'a marché)."""
+        if self.client is not c or self.connected or self.ever:
+            return
+        old = self.port
+        self._try += 1
+        try:
+            c.loop_stop()
+            c.disconnect()
+        except Exception:
+            pass
+        self.client = None
+        nxt = self._ports[self._try % len(self._ports)]
+        self.log(f"Présence : pas de réponse du serveur sur le port {old}, essai du port {nxt}…")
+        self._connect()
 
     def stop(self):
         c, self.client = self.client, None
@@ -160,6 +196,9 @@ class Presence:
             self.on_state(False, str(reason))
             return
         self.connected = True
+        if not self.ever and self._try:
+            self.log(f"Présence : connecté par le port {self.port} (le port {self._ports[0]} semble bloqué).")
+        self.ever = True
         client.subscribe(f"{BASE}/st/+", qos=1)
         client.subscribe(f"{BASE}/rxok/{_topic_call(self.call)}", qos=1)
         client.subscribe(f"{BASE}/rxok/_", qos=1)

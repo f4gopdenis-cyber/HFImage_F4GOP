@@ -1,5 +1,11 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 0.76 — tous les ports COM, et stations en ligne derrière un pare-feu
+
+- **Ports COM manquants** (signalé par RK1AT, merci !) : certains ports présents dans le Gestionnaire de périphériques n'apparaissaient pas dans les listes **Port série** et **PTT** (convertisseurs Prolific, CH340, Silicon Labs, ports virtuels…). HFImage lit maintenant aussi la liste des ports actifs de Windows (celle qu'utilisent la plupart des logiciels radio) : tous les ports apparaissent, classés COM1, COM2, COM3…
+- On peut toujours **taper le nom d'un port** (ex. `COM9`) directement dans la case.
+- **Stations en ligne** : si le serveur ne répond pas sur le port habituel (1883, souvent bloqué par un pare-feu ou un fournisseur d'accès), HFImage essaie tout seul les autres accès du même serveur (8883 chiffré, puis 8884 et 8000 par le web). Le journal indique le port qui a fonctionné.
+
 ## Version 0.75 — Historique et Messages reçus : affichés ou masqués
 
 - Menu **Fenêtres** : **« Afficher l'historique (onglet RX) »** et **« Afficher les messages reçus (onglet RX) »**. Décochez-les pour masquer ces listes à droite de l'image reçue ; sans aucune des deux, l'**image reçue prend toute la largeur**. Le choix est gardé d'une session à l'autre.

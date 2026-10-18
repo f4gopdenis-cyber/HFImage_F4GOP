@@ -1,4 +1,7 @@
 """Audio carte son : rééchantillonnage 8 kHz <-> 48 kHz (numpy seul) et PTT CAT Kenwood."""
+import re
+import sys
+
 import numpy as np
 
 FS_MODEM = 8000
@@ -317,12 +320,48 @@ def play_8k(sd, device, chunks8k, level=0.5, stop_event=None, progress=None, log
     return _play_core(sd, device, gen(), stop_event, progress, log, peak=0.5 * level)
 
 
+def _registry_ports():
+    """Windows : ports série actifs d'après le registre (HARDWARE\\DEVICEMAP\\SERIALCOMM).
+    C'est la liste qu'utilisent la plupart des logiciels radio ; elle contient des ports que
+    pyserial ne voit pas avec certains pilotes (Prolific, CH340, convertisseurs USB d'anciens
+    modèles, ports virtuels…)."""
+    if not sys.platform.startswith("win"):
+        return []
+    out = []
+    try:
+        import winreg
+        with winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, r"HARDWARE\DEVICEMAP\SERIALCOMM") as k:
+            i = 0
+            while True:
+                try:
+                    name, val, _ = winreg.EnumValue(k, i)
+                except OSError:
+                    break
+                i += 1
+                if isinstance(val, str) and val.upper().startswith("COM"):
+                    out.append((val.strip(), name.rsplit("\\", 1)[-1]))
+    except OSError:
+        pass
+    return out
+
+
+def _port_key(p):
+    m = re.match(r"COM(\d+)$", p.upper())
+    return (0, int(m.group(1)), "") if m else (1, 0, p)
+
+
 def ports_list():
+    """Ports série -> [(port, description)], sans doublons, COM1, COM2… dans l'ordre."""
+    found = {}
     try:
         from serial.tools import list_ports
-        return [(p.device, p.description) for p in list_ports.comports()]
+        for p in list_ports.comports():
+            found[p.device.upper() if p.device.upper().startswith("COM") else p.device] = p.description
     except Exception:
-        return []
+        pass
+    for dev, desc in _registry_ports():
+        found.setdefault(dev.upper(), desc)
+    return [(d, found[d]) for d in sorted(found, key=_port_key)]
 
 
 KENWOOD_IDS = {"022": "TS-990S", "024": "TS-890S", "019": "TS-2000", "021": "TS-590S",
