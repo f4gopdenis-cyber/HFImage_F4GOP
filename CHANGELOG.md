@@ -1,5 +1,14 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 0.63 — l'émission suit le mode reçu
+
+- Quel que soit le mode choisi pour l'émission, HFImage **décode toujours les deux** : les images et messages EasyPal **et** ceux de HFImage (DATAC).
+- **Nouveau** : quand une image ou un message arrive dans l'autre mode, l'émission **passe automatiquement sur ce mode** pour répondre à la station dans le mode qu'elle écoute :
+  - réception EasyPal → mode **EasyPal**, avec le même mode A / B / E, la même largeur (2,2 / 2,4) et la même QAM que la station reçue (sauf hybride, toujours en E / QAM4) ;
+  - réception HFImage alors qu'on est en EasyPal → mode **Auto**.
+  Le changement est indiqué dans le journal. Option dans l'onglet **Stations** : « Passer en émission sur le mode reçu » (cochée par défaut). Rien ne change pendant une émission ni lors du décodage d'un fichier WAV.
+- La ligne des réglages EasyPal apparaît / disparaît correctement même si l'onglet Émission n'est pas affiché au moment du changement.
+
 ## Version 0.62 — EasyPal plus robuste dans le bruit
 
 - **Réception EasyPal** : le décodeur calcule maintenant la fiabilité de chaque bit de façon exacte (distances au carré) : environ **0,5 dB de mieux en QAM16**, identique en QAM4. Rien ne change pour les autres stations.

@@ -53,7 +53,7 @@ import random
 import wave
 
 APP = "HFImage F4GOP"
-VERSION = "0.62"
+VERSION = "0.63"
 CONF_PATH = os.path.join(os.path.expanduser("~"), ".hfimage.json")
 DEFAULT_OUT = os.path.join(os.path.expanduser("~"), "Documents", "HFImage")
 DEFAULTS = {
@@ -67,7 +67,7 @@ DEFAULTS = {
     "net_on": True, "net_host": presence.DEFAULT_HOST, "net_port": presence.DEFAULT_PORT,
     "update_check": True,
     "theme": "Vert EasyPal", "theme_color": "#3a8ee6", "font_family": "(par défaut)", "font_size": "9",
-    "locator": "", "bsr_auto": True, "fix_auto": True, "ack_auto": True, "listen_after": True,
+    "locator": "", "bsr_auto": True, "fix_auto": True, "ack_auto": True, "listen_after": True, "follow_mode": True,
     "cwid": False, "cat_freq": True, "lang": "",
     "drm_mode": "B", "drm_qam": "QAM16", "drm_bw": "2,4 kHz", "drm_prot": "Haute (HI)", "drm_rs": "RS2",
     "wav_volume": 5, "wft_font": "Arial", "wft_neg": False, "wft_text": "",
@@ -1193,15 +1193,17 @@ class App(tk.Tk):
         self.v_fix_auto = tk.BooleanVar(value=self.conf.get("fix_auto", True))
         self.v_ack_auto = tk.BooleanVar(value=self.conf.get("ack_auto", True))
         self.v_listen_after = tk.BooleanVar(value=self.conf.get("listen_after", True))
+        self.v_follow = tk.BooleanVar(value=self.conf.get("follow_mode", True))
         for i, (txt, v) in enumerate((
                 ("En réception : envoyer un BSR automatiquement si l'image est incomplète", self.v_bsr_auto),
                 ("En réception : envoyer un accusé (ACK) quand l'image est complète", self.v_ack_auto),
                 ("En émission : répondre automatiquement aux BSR par un FIX", self.v_fix_auto),
-                ("Écouter après chaque émission (pour recevoir BSR et ACK)", self.v_listen_after))):
+                ("Écouter après chaque émission (pour recevoir BSR et ACK)", self.v_listen_after),
+                ("Passer en émission sur le mode reçu (EasyPal ou HFImage)", self.v_follow))):
             ttk.Checkbutton(opt, text=txt, variable=v).grid(row=i, column=0, sticky="w")
         ttk.Label(opt, text="BSR et ACK partent en DATAC0 (~2 s) quand l'émetteur a fini ; "
                             "un FIX n'envoie que des symboles nouveaux, utiles à toutes les stations.",
-                  foreground="#555").grid(row=4, column=0, sticky="w", pady=(4, 0))
+                  foreground="#555").grid(row=5, column=0, sticky="w", pady=(4, 0))
         cols = ("heure", "call", "evt", "mode", "snr", "detail")
         self.tree = ttk.Treeview(t, columns=cols, show="headings", height=14)
         for c, title, w in zip(cols, (clocktz.label(tr("Heure")), "Indicatif", "Événement", "Mode", "SNR", "Détail"),
@@ -2312,7 +2314,7 @@ class App(tk.Tk):
                 preview=bool(self.v_prev.get()), locator=self.v_loc.get().strip().upper(),
                 bsr_auto=bool(self.v_bsr_auto.get()), fix_auto=bool(self.v_fix_auto.get()),
                 ack_auto=bool(self.v_ack_auto.get()), listen_after=bool(self.v_listen_after.get()),
-                cwid=bool(self.v_cwid.get()), lang=i18n.get_lang(),
+                follow_mode=bool(self.v_follow.get()), cwid=bool(self.v_cwid.get()), lang=i18n.get_lang(),
                 wav_volume=int(self.v_wavvol.get()), wft_font=self.v_wftfont.get(),
                 wft_neg=bool(self.v_wftneg.get()), wft_text=self.txt_wft.get("1.0", "end").strip(),
                 hyb_kb=float(self.v_hkb.get()), gif_kb=float(self.v_gifkb.get()),
@@ -2417,9 +2419,10 @@ class App(tk.Tk):
     def _drm_ui_update(self):
         """Mode EasyPal : affiche ses réglages, la robustesse (code fontaine) est sans objet."""
         drm = self.v_mode.get() == engine.DRM_MODE
-        if drm and not self.drm_row.winfo_ismapped():
+        shown = bool(self.drm_row.winfo_manager())     # (onglet Émission caché : pas « mapped »)
+        if drm and not shown:
             self.drm_row.pack(fill="x", pady=(4, 0))
-        elif not drm and self.drm_row.winfo_ismapped():
+        elif not drm and shown:
             self.drm_row.pack_forget()
         if not self.v_hyb.get():
             self._robust_widget.configure(state="disabled" if drm else "readonly")
@@ -4005,6 +4008,7 @@ class App(tk.Tk):
             return
         self.log(f"Décodage de {os.path.basename(p)}…")
         eng = self._new_engine()
+        eng.on_image = lambda *a: self.ui(self._got_image, *a, True)      # fichier : mode d'émission gardé
 
         def run():
             try:
@@ -4052,7 +4056,7 @@ class App(tk.Tk):
             self.v_rxstat.set(txt + f"\nImage en cours : {min(got, K)} / {K} symboles "
                                     f"({100 * min(got, K) // K} %)")
 
-    def _got_image(self, hdr, path, png, mode):
+    def _got_image(self, hdr, path, png, mode, from_file=False):
         self.pb_rx.configure(value=100)
         who = hdr["call"] if hdr["call"] != "?" else "(indicatif à venir)"
         if hdr.get("text"):
@@ -4084,6 +4088,8 @@ class App(tk.Tk):
             if hdr.get("hybrid"):
                 # l'annonce hybride est répétée 3 fois (~11 s) : on attend qu'elle soit finie
                 self.ack_pending[hdr["id"]]["wait_until"] = time.time() + 12
+        if not hdr.get("preview") and not from_file:
+            self._follow_mode(hdr, path, drm)
         if mode == engine.DRM_MODE:
             mode = f"EasyPal {hdr.get('drm', '')}".strip()
         self.log(f"{kind} {who} ({mode}, {hdr['size']} octets) : {os.path.basename(path)}")
@@ -4100,6 +4106,48 @@ class App(tk.Tk):
                 self._web_queue("rx", png, hdr.get("call"), mode, hdr.get("id"))
         self.hist.insert(0, (hdr, path, png, mode))
         self.lst.insert(0, f"{time.strftime('%H:%M')}  {hdr['call']:8s} {mode}  {hdr['size']} o")
+
+    def _follow_mode(self, hdr, path, drm):
+        """Image ou message reçu dans l'autre famille de modes (EasyPal / HFImage) :
+        l'émission passe sur ce mode, pour répondre à la station dans le mode qu'elle écoute.
+        EasyPal : on reprend aussi le mode A/B/E, la largeur et la QAM reçus (pas en hybride,
+        dont l'annonce est toujours en E/QAM4). HFImage : mode « Auto »."""
+        if not self.v_follow.get() or self.tx_busy or self.rx_stream is None:
+            return
+        if path and os.sep + "relecture" + os.sep in path:
+            return                                   # décodage d'un fichier WAV : pas de changement
+        cur = self.v_mode.get()
+        if drm:
+            changes = []
+            if cur != engine.DRM_MODE:
+                self.v_mode.set(engine.DRM_MODE)
+                changes.append("EasyPal")
+            ms = str(hdr.get("drm") or "").split("/")
+            if not hdr.get("hybrid") and len(ms) >= 4:
+                want = {"drm_mode": ms[0], "drm_bw": {"2.2": DRM_BWS[0], "2.4": DRM_BWS[1]}.get(ms[1]),
+                        "drm_qam": f"QAM{ms[3]}"}
+                allowed = {"drm_mode": DRM_MODES, "drm_bw": DRM_BWS, "drm_qam": DRM_QAMS}
+                for k, val in want.items():
+                    if val in allowed[k] and self.v_drm[k].get() != val:
+                        self.v_drm[k].set(val)
+                        self.conf[k] = val
+                        changes.append(val)
+                if changes:
+                    self._save_conf_file()
+            if not changes:
+                return
+            v = self.v_drm
+            what = f"EasyPal {v['drm_mode'].get()} / {v['drm_bw'].get()} / {v['drm_qam'].get()}"
+        else:
+            if cur != engine.DRM_MODE:
+                return                               # déjà en HFImage : réglage de l'utilisateur gardé
+            self.v_mode.set("Auto")
+            what = "Auto (HFImage)"
+        if cur != self.v_mode.get():
+            self._mode_changed()
+        else:
+            self.prepare()
+        self.log(tr("Émission passée sur le mode reçu :") + f" {what} ({hdr.get('call') or '?'})")
 
     def _show_rx(self, path, png):
         """Affiche une image reçue ; un GIF animé est joué en boucle.
