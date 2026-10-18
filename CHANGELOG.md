@@ -1,5 +1,11 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 0.57 — indicatif des messages texte plus fiable
+
+- **Messages texte** : la trame d'identification, qui porte l'indicatif de l'expéditeur, part maintenant **deux fois** à la fin du message. Avec un signal faible ou du QSB, le message passait souvent alors que cette unique trame était perdue, et la fenêtre « Message reçu » restait sur « (indicatif à venir) ». Au simulateur (QSB faible, 6 dB), l'indicatif manquait sur 7 messages sur 39 ; il ne manque plus que sur 1. Compatible avec les versions précédentes.
+- Si l'indicatif n'arrive vraiment pas, la fenêtre affiche « (indicatif non reçu) » au bout de 30 s au lieu d'attendre indéfiniment.
+- L'amélioration porte sur l'émission : elle profite pleinement quand l'expéditeur a aussi la version 0.57.
+
 ## Version 0.56 — correction des fermetures du programme en mode EasyPal
 
 - **Correction de fermetures brutales du programme** dues au modem EasyPal (code repris de QSSTV), trouvées en faisant écouter au modem 40 minutes de bruit et de signaux abîmés sous un détecteur d'erreurs mémoire :

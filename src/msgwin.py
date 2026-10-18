@@ -1,6 +1,7 @@
 """Fenêtre « Message reçu » : s'ouvre quand un correspondant envoie un message
 (texte seul, ou texte joint à une image), avec Répondre / Copier et l'historique de la session."""
 import os
+import time
 import sys
 import tkinter as tk
 from tkinter import ttk
@@ -91,8 +92,10 @@ class MessageWindow(tk.Toplevel):
                 it.update({k: v for k, v in item.items() if v not in (None, "?", "")})
                 self.show()
                 return
+        item.setdefault("t", time.time())       # heure d'arrivée (indicatif attendu ensuite)
         self.items.insert(0, item)
         del self.items[100:]
+        self.after(31000, lambda: self.winfo_exists() and self.show())
         self.pos = 0
         self.show()
         if popup and self.app.conf.get("msg_popup", True):
@@ -143,8 +146,11 @@ class MessageWindow(tk.Toplevel):
             return
         it = self.items[self.pos]
         call = it.get("call")
-        self.lb_call.configure(text=tr("Message de") + " " + (call if call not in (None, "", "?")
-                                                              else tr("(indicatif à venir)")))
+        if call in (None, "", "?"):
+            # l'indicatif arrive avec la trame d'identification de fin ; au-delà de 30 s, elle a été perdue
+            late = time.time() - it.get("t", time.time()) > 30
+            call = tr("(indicatif non reçu)") if late else tr("(indicatif à venir)")
+        self.lb_call.configure(text=tr("Message de") + " " + call)
         info = [f"{it['local']}  ({it['utc']} UTC)" if it.get("local") else it["utc"] + " UTC"]
         if it.get("mode"):
             info.append(it["mode"])

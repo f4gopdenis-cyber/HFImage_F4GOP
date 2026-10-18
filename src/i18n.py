@@ -817,6 +817,8 @@ T = [
     ("Texte reçu {0} ({1}, {2} octets) : {3}", "Text received {0} ({1}, {2} bytes): {3}",
      "Text empfangen {0} ({1}, {2} Byte): {3}", "Texto recibido {0} ({1}, {2} bytes): {3}",
      "Testo ricevuto {0} ({1}, {2} byte): {3}"),
+    ("(indicatif non reçu)", "(callsign not received)", "(Rufzeichen nicht empfangen)", "(indicativo no recibido)",
+     "(nominativo non ricevuto)"),
     ("(indicatif à venir)", "(callsign to come)", "(Rufzeichen folgt)", "(indicativo pendiente)",
      "(nominativo in arrivo)"),
     ("Identification : image envoyée par {0}", "Identification: image sent by {0}", "Kennung: Bild gesendet von {0}",

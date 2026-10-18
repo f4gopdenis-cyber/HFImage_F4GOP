@@ -165,6 +165,13 @@ class Transmission:
             self.psender = Sender(preview, fmt, callsign, self.modem.payload_bytes, pid, preview=True)
         self.preview_sent = False
 
+    def _hdr_repeat(self) -> bool:
+        """Message texte : la trame d'identification (indicatif) part deux fois à la fin.
+        Elle est seule à porter l'indicatif ; un message court passe souvent alors que
+        cette unique trame est perdue (« indicatif à venir » qui ne vient jamais).
+        Les anciennes versions ignorent simplement la deuxième."""
+        return self.fmt == "hft" and MODE_FPB[self.mode] == 1
+
     def frames(self, extra=None):
         fpb = MODE_FPB[self.mode]
         out = []
@@ -175,6 +182,8 @@ class Transmission:
             out += self.sender.frames(overhead=self.overhead, multiple=fpb)
         else:
             out += self.sender.frames(extra=extra, multiple=fpb)
+        if self._hdr_repeat():
+            out.append(self.sender.hdr)
         return out
 
     def audio(self, extra=None) -> np.ndarray:
@@ -202,9 +211,10 @@ class Transmission:
     def estimate_s(self, extra=None) -> float:
         """Durée d'une émission (initiale avec aperçu, ou complément de `extra`
         symboles), calculée exactement sans consommer de symboles."""
+        rep = 1 if self._hdr_repeat() else 0
         if extra is not None:
-            return self.modem.duration_s(self._bursts(self.sender.K, extra=extra))
-        b = self._bursts(self.sender.K, self.overhead)
+            return self.modem.duration_s(self._bursts(self.sender.K, extra=extra) + rep)
+        b = self._bursts(self.sender.K, self.overhead) + rep
         if self.psender is not None and not self.preview_sent:
             b += self._bursts(self.psender.K, 0.25)
         return self.modem.duration_s(b)
