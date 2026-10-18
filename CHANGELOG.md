@@ -1,5 +1,13 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 0.59 — mode EasyPal : signal plus fort, largeurs et Rx Ok
+
+- **Signal EasyPal plus fort de 4 dB** : à réglage égal, l'émission EasyPal partait 5,6 dB plus faible que les modes DATAC (signal OFDM aux crêtes très marquées) : trame à peine visible chez le correspondant, et l'image en mode B / QAM16 ne passait pas alors que l'annonce hybride (mode E, robuste) passait. Les crêtes rares sont maintenant écrêtées en douceur : l'image passe avec 4 à 5 dB de bruit en plus au simulateur, et le signal reste lu à l'identique par le récepteur de QSSTV dans les 9 modes. Pensez à revérifier le niveau d'émission (ALC) en mode EasyPal.
+- **Largeurs affichées comme dans EasyPal : 2,2 / 2,4 kHz** (QSSTV disait 2,3 / 2,5 ; c'est le même signal). Vos réglages sont convertis automatiquement.
+- **Waterfall** : les repères de bande suivent la largeur réelle du mode EasyPal reçu ou émis (A, B ou E ; 2,2 ou 2,4 kHz), mesurée sur le signal.
+- **Rx Ok en hybride EasyPal** : l'image déposée est maintenant reconnue comme la vôtre, et les stations HFImage qui la reçoivent apparaissent dans Rx Ok avec leur report.
+- **Hybride EasyPal : mode E automatique** : en cochant « Mode hybride » en mode EasyPal, les réglages passent sur E / QAM4 (ceux de l'annonce, comme EasyPal) ; ils reviennent à leurs valeurs précédentes quand on décoche.
+
 ## Version 0.58 — panneau d'état en mode EasyPal
 
 - **Panneau de gauche en réception EasyPal** : il affiche maintenant l'indicatif de la station, le S/B, le mode (« EP B/16 » = EasyPal mode B, QAM16), la largeur, le débit, le nombre de segments reçus et la progression, comme pour les modes DATAC. Les voyants Sync, Trame, Image et BSR suivent la réception EasyPal.

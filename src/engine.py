@@ -271,12 +271,36 @@ class ControlTransmission:
         return self.modem.duration_s(len(self._frames))
 
 
+def _drm_bandlimit(x):
+    X = np.fft.rfft(x)
+    f = np.fft.rfftfreq(len(x), 1 / 48000)
+    X[(f > 3000) | (f < 250)] = 0
+    return np.fft.irfft(X, len(x))
+
+
+def drm_clip(sig48, crest_db=8.0):
+    """Écrêtage doux du signal OFDM (crêtes rares) puis refiltrage dans la bande 250-3000 Hz.
+    Sans lui, à réglage égal, EasyPal partait 5,6 dB plus faible que les modes DATAC
+    (crête/efficace 13 dB contre 7,5). Mesuré au simulateur : l'image passe avec 4 à 5 dB de
+    bruit en plus, QAM64 compris ; le signal reste un HamDRM normal (lu par EasyPal / QSSTV)."""
+    x = np.asarray(sig48, np.float64)
+    a = x[np.abs(x) > 1e-9]
+    if len(a) == 0:
+        return x
+    lim = np.sqrt(np.mean(a ** 2)) * 10 ** (crest_db / 20)
+    y = np.clip(x, -lim, lim)
+    for _ in range(3):
+        y = np.clip(_drm_bandlimit(y), -lim, lim)
+    return _drm_bandlimit(y)
+
+
 def drm_to_8k(sig48, peak=16000) -> np.ndarray:
     """Signal HamDRM 48 kHz (float) -> int16 8 kHz pour la chaîne d'émission habituelle
     (play_8k le remonte à 48 kHz). Le signal HamDRM (350 à 2 800 Hz) passe intact
-    par le filtre 3,6 kHz. Crête ramenée au niveau du modem codec2."""
+    par le filtre 3,6 kHz. Écrêté (drm_clip), crête ramenée au niveau du modem codec2."""
     if sig48 is None or len(sig48) == 0:
         return None
+    sig48 = drm_clip(sig48)
     ds = audio.Downsampler()
     y = ds.process(np.concatenate([np.asarray(sig48, np.float32), np.zeros(240, np.float32)])).astype(np.float64)
     m = float(np.abs(y).max()) or 1.0

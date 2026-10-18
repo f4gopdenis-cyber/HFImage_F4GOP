@@ -109,16 +109,17 @@ def make_params(callsign, mode=1, bandwidth=1, qam=1, protection=0, interleaver=
 
 def describe(p: Params):
     """Ex. « B / 2,5 kHz / QAM16 / HI / Long / RS2 »."""
-    s = (f"{MODES[p.mode]} / {'2,3' if p.bandwidth == 0 else '2,5'} kHz / QAM{QAMS[p.qam]} / "
+    # largeurs affichées comme dans EasyPal : 2,2 / 2,4 kHz (QSSTV dit 2,3 / 2,5 ; même signal)
+    s = (f"{MODES[p.mode]} / {'2,2' if p.bandwidth == 0 else '2,4'} kHz / QAM{QAMS[p.qam]} / "
          f"{'HI' if p.protection == 0 else 'LO'} / {'Long' if p.interleaver == 0 else 'Court'}")
     return s + (f" / RS{p.rs}" if p.rs else "")
 
 
 def mode_string(code):
-    """Code de mode reçu -> texte façon EasyPal, ex. « B/2.5/Hi/16/Long »."""
+    """Code de mode reçu -> texte façon EasyPal, ex. « B/2.4/Hi/16/Long »."""
     buf = ctypes.create_string_buffer(32)
     lib.hamdrm_mode_string(code, buf, 32)
-    return buf.value.decode()
+    return buf.value.decode().replace("/2.3/", "/2.2/").replace("/2.5/", "/2.4/")
 
 
 def _bytes_arg(data: bytes):

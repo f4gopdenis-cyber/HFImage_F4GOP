@@ -19,6 +19,19 @@ WINDOW = np.hanning(NFFT)
 # bandes occupées mesurées sur le signal codec2 (Hz)
 MODE_BANDS = {"DATAC1X": (420, 2580, "#f06292"), "DATAC1": (670, 2330, "#4fc3f7"), "DATAC3": (1190, 1800, "#81c784"),
               "DATAC4": (1340, 1600, "#ffb74d"), "EasyPal": (350, 2800, "#ce93d8")}
+# bandes EasyPal mesurées sur le signal (mode A / B / E, largeur 2,2 / 2,4 kHz) : affichées
+# pour le mode reçu ou émis, sans ajouter un trait par variante dans l'échelle
+EASYPAL_BANDS = {}
+for _m, _bw, _lo, _hi in (("A", "2,2", 375, 2654), ("B", "2,2", 340, 2520), ("E", "2,2", 387, 2561),
+                          ("A", "2,4", 381, 2824), ("B", "2,4", 340, 2801), ("E", "2,4", 387, 2713)):
+    EASYPAL_BANDS[f"EasyPal {_m} {_bw}"] = (_lo, _hi, "#ce93d8")
+
+
+def easypal_band_key(mode_idx, bw_idx):
+    """Clé de bande pour mark_mode : mode 0/1/2 (A/B/E), largeur 0/1 (2,2/2,4 kHz)."""
+    if not (0 <= mode_idx <= 2) or bw_idx not in (0, 1):
+        return "EasyPal"
+    return f"EasyPal {'ABE'[mode_idx]} {'2,2' if bw_idx == 0 else '2,4'}"
 
 
 def _palette():
@@ -175,8 +188,9 @@ class Waterfall(tk.Canvas):
         for i, (mode, (lo, hi, col)) in enumerate(MODE_BANDS.items()):
             y = y0 + SCALE_H - 2 - i * 2
             self.create_line(self._x(lo), y, self._x(hi), y, fill=col, width=1, tags="scale")
-        if self.mode_mark in MODE_BANDS:
-            lo, hi, col = MODE_BANDS[self.mode_mark]
+        band = MODE_BANDS.get(self.mode_mark) or EASYPAL_BANDS.get(self.mode_mark)
+        if band:
+            lo, hi, col = band
             for f in (lo, hi):
                 self.create_line(self._x(f), self.top, self._x(f), self.top + self.h,
                                  fill=col, dash=(3, 4), tags="band")

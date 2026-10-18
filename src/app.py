@@ -46,13 +46,14 @@ import qsl
 import shutil
 import wavtext
 from panel import LED_AMBER, LED_GREEN, LED_OFF, LED_RED, ImageView, StatusPanel
+import waterfall
 from waterfall import RowMaker, Waterfall
 from modem import MODE_BPS, MODE_BW, MODE_FPB
 import random
 import wave
 
 APP = "HFImage F4GOP"
-VERSION = "0.58"
+VERSION = "0.59"
 CONF_PATH = os.path.join(os.path.expanduser("~"), ".hfimage.json")
 DEFAULT_OUT = os.path.join(os.path.expanduser("~"), "Documents", "HFImage")
 DEFAULTS = {
@@ -68,14 +69,14 @@ DEFAULTS = {
     "theme": "Vert EasyPal", "theme_color": "#3a8ee6", "font_family": "(par défaut)", "font_size": "9",
     "locator": "", "bsr_auto": True, "fix_auto": True, "ack_auto": True, "listen_after": True,
     "cwid": False, "cat_freq": True, "lang": "",
-    "drm_mode": "B", "drm_qam": "QAM16", "drm_bw": "2,5 kHz", "drm_prot": "Haute (HI)", "drm_rs": "Aucun",
+    "drm_mode": "B", "drm_qam": "QAM16", "drm_bw": "2,4 kHz", "drm_prot": "Haute (HI)", "drm_rs": "Aucun",
     "wav_volume": 5, "wft_font": "Arial", "wft_neg": False, "wft_text": "",
 }
 TX_MODES = ["Auto", "DATAC1X", "DATAC1", "DATAC3", "DATAC4"] + (["EasyPal"] if hamdrm.AVAILABLE else [])
 # mode EasyPal (HamDRM) : réglages proposés, comme dans EasyPal
 DRM_MODES = ["A", "B", "E"]
 DRM_QAMS = ["QAM4", "QAM16", "QAM64"]
-DRM_BWS = ["2,3 kHz", "2,5 kHz"]
+DRM_BWS = ["2,2 kHz", "2,4 kHz"]          # comme EasyPal (QSSTV : 2,3 / 2,5, même signal)
 DRM_PROTS = ["Haute (HI)", "Normale (LO)"]
 DRM_RSS = ["Aucun", "RS1", "RS2", "RS3", "RS4"]
 # formats lisibles par EasyPal / QSSTV : JPEG 2000 et JPEG (pas d'AVIF ni de WebP)
@@ -681,7 +682,26 @@ class App(tk.Tk):
         self.v_hyb.set(not self.v_hyb.get())
         self._toggle_hyb_ui()
 
+    def _drm_hyb_mode(self):
+        """Hybride EasyPal : réglages EasyPal mis sur E / QAM4 (ceux de l'annonce, comme EasyPal) ;
+        ils reviennent à leurs valeurs précédentes quand on décoche « Mode hybride »."""
+        v = getattr(self, "v_drm", None)
+        if not v:
+            return
+        hyb = bool(self.v_hyb.get()) and self.v_mode.get() == engine.DRM_MODE
+        saved = getattr(self, "_drm_before_hyb", None)
+        if hyb and saved is None:
+            self._drm_before_hyb = {k: v[k].get() for k in ("drm_mode", "drm_qam")}
+            v["drm_mode"].set("E")
+            v["drm_qam"].set("QAM4")
+            self.log("Hybride EasyPal : mode E / QAM4 (annonce robuste, comme EasyPal).")
+        elif not hyb and saved is not None:
+            for k, val in saved.items():
+                v[k].set(val)
+            self._drm_before_hyb = None
+
     def _toggle_hyb_ui(self):
+        self._drm_hyb_mode()
         self._btn_on("hyb", self.v_hyb.get())
         side = "hyb" if self.v_hyb.get() else "radio"
         if side != self._fmt_side:
@@ -841,6 +861,9 @@ class App(tk.Tk):
         drm_widgets = [("drm_mode", "Mode EasyPal", DRM_MODES, 4), ("drm_qam", "QAM", DRM_QAMS, 7),
                        ("drm_bw", "Largeur", DRM_BWS, 8), ("drm_prot", "Erreur", DRM_PROTS, 12),
                        ("drm_rs", "Reed-Solomon", DRM_RSS, 7)]
+        old_bw = {"2,3 kHz": "2,2 kHz", "2,5 kHz": "2,4 kHz"}      # réglages d'avant la 0.59
+        if self.conf.get("drm_bw") in old_bw:
+            self.conf["drm_bw"] = old_bw[self.conf["drm_bw"]]
         for key, lab, vals, w in drm_widgets:
             v = tk.StringVar(value=self.conf.get(key) if self.conf.get(key) in vals else DEFAULTS[key])
             self.v_drm[key] = v
@@ -1891,7 +1914,8 @@ class App(tk.Tk):
         if mode == engine.DRM_MODE:
             p = getattr(tx, "params", None) or self._drm_params()
             self.panel.set_cell("Mode", "TX", f"EP {'ABE'[p.mode]}/{(4, 16, 64)[p.qam]}")
-            self.panel.set_cell("Bande kHz", "TX", "2.30" if p.bandwidth == 0 else "2.50")
+            self.panel.set_cell("Bande kHz", "TX", "2.20" if p.bandwidth == 0 else "2.40")
+            self.wf.mark_mode(waterfall.easypal_band_key(p.mode, p.bandwidth))
             rate = self._drm_rate(p.mode, p.bandwidth, p.qam, p.protection)
             self.panel.set_cell("Débit b/s", "TX", str(rate) if rate else "—")
         sender = getattr(tx, "sender", None)       # (une émission EasyPal n'en a pas)
@@ -2123,7 +2147,8 @@ class App(tk.Tk):
         # cellule de 7 caractères : « EP B/16 » (EP = EasyPal)
         mode_txt = "EP " + ("ABE"[m] if 0 <= m <= 2 else "?") + (f"/{qam}" if qam else "")
         P.set_cell("Mode", "RX", mode_txt)
-        P.set_cell("Bande kHz", "RX", "2.30" if bw == 0 else "2.50")
+        P.set_cell("Bande kHz", "RX", "2.20" if bw == 0 else "2.40")
+        self.wf.mark_mode(waterfall.easypal_band_key(m, bw))
         rate = self._drm_rate(m, bw, {4: 0, 16: 1, 64: 2}.get(qam, 1), 1 if prot == 1 else 0) \
             if 0 <= m <= 2 else None
         P.set_cell("Débit b/s", "RX", str(rate) if rate else "—")
@@ -2374,6 +2399,7 @@ class App(tk.Tk):
         return {"jpg": "jpeg"}.get(f, f)
 
     def _mode_changed(self, _e=None):
+        self._drm_hyb_mode()
         self.v_sec.set(MODE_SEC.get(self.v_mode.get(), 120))
         self._drm_ui_update()
         self.prepare()
@@ -3400,6 +3426,11 @@ class App(tk.Tk):
                                       progress=lambda f: self.ui(self.pb_tx.configure, {"value": 100 * f}))
                 self.ui(self.log, "Hybride EasyPal : image déposée.")
                 tx.drm_announce = (name, blob)
+                # même identifiant que chez les stations qui la téléchargent : Rx Ok
+                iid = zlib.crc32(tx.data + b"hamdrm") & 0xFFFF
+                self.my_ids.add(iid)
+                self.ui(self._rxok_show, iid)
+                self.ui(setattr, self, "last_tx_id", iid)
             name, blob = tx.drm_announce
             stem, ext = os.path.splitext(name)
             drm_audio = engine.drm_to_8k(hamdrm.tx_file(blob, stem, ext.lstrip("."),
@@ -3996,7 +4027,8 @@ class App(tk.Tk):
         threading.Thread(target=run, daemon=True).start()
 
     def _rx_status(self, st):
-        self.wf.mark_mode(st["mode"])
+        if st["mode"] != engine.DRM_MODE:            # EasyPal : bande exacte posée par le panneau
+            self.wf.mark_mode(st["mode"])
         if st.get("call") and st["mode"] != "DATAC0":
             self.panel.set_call(st["call"])
         prog = st.get("progress")
