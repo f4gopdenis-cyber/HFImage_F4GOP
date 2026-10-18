@@ -1,5 +1,12 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 0.70 — plusieurs images de correspondants dans l'image émise
+
+- **Image du correspondant : jusqu'à 4 images reçues** incrustées dans votre image, par exemple pour répondre à plusieurs stations d'un coup ou montrer les images d'un QSO à plusieurs.
+- Fenêtre **Image du correspondant…** : liste **Images incrustées** avec les boutons **Ajouter une image** et **Retirer**. Chaque image a sa propre **position** et sa propre **taille** (coin, ou libre à la souris et à la molette). **Cliquez** sur une image dans l'aperçu pour la choisir (cadre jaune), faites-la glisser, la molette l'agrandit ou la réduit.
+- Une nouvelle image se place d'elle-même dans un **coin libre**. La disposition de chaque image est gardée pour les émissions suivantes.
+- **Galerie** (clic droit sur une image reçue) : nouveau choix **« Ajouter cette image à mon image TX »**, qui s'ajoute aux images déjà incrustées. « Répondre avec cette image » remplace toujours les incrustations par cette seule image, comme avant.
+
 ## Version 0.69 — réception plus sûre
 
 - **Correction de sécurité : indicatif reçu dans le nom des fichiers.** L'indicatif d'une station (reçu par radio, en HFImage comme en EasyPal) sert à nommer l'image ou le fichier enregistré. Un indicatif piégé, contenant par exemple `\..\..\`, pouvait faire enregistrer un fichier **en dehors** du dossier de réception (dans Documents ou plus haut), avec une extension choisie par l'émetteur pour les fichiers. Seuls les lettres, chiffres et « - » de l'indicatif sont maintenant gardés (« / » devient « - » comme avant), et chaque fichier reçu est vérifié avant d'être écrit : il doit rester dans le dossier de réception. Les noms de fichiers ne changent pas pour les indicatifs normaux.

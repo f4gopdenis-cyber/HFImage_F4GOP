@@ -282,6 +282,8 @@ class GalleryView(tk.Frame):
         if e.get("dir") == "rx":
             m.add_command(label=self.tr("Répondre avec cette image (incrustée dans mon image TX)"),
                           command=lambda: self.app.set_pip(e))
+            m.add_command(label=self.tr("Ajouter cette image à mon image TX (plusieurs incrustations)"),
+                          command=lambda: self.app.set_pip(e, add=True))
         if e.get("dir") == "rx" and e.get("call") not in (None, "", "?"):
             m.add_command(label=self.tr(f"Voir {e['call']} sur la carte"), command=lambda: self.app.show_map(e["call"]))
         m.add_separator()

@@ -53,7 +53,7 @@ import random
 import wave
 
 APP = "HFImage F4GOP"
-VERSION = "0.69"
+VERSION = "0.70"
 CONF_PATH = os.path.join(os.path.expanduser("~"), ".hfimage.json")
 DEFAULT_OUT = os.path.join(os.path.expanduser("~"), "Documents", "HFImage")
 DEFAULTS = {
@@ -235,6 +235,7 @@ class App(tk.Tk):
         self.rx_engine = None
         self.audio_q = queue.Queue()
         self._photos = {}
+        self.pips = []              # images des correspondants incrustées dans l'image TX
 
         self.sent_images = {}       # id -> Transmission émise (pour répondre aux BSR)
         self.my_ids = set()         # id de nos images (normales et annonces hybrides)
@@ -852,7 +853,7 @@ class App(tk.Tk):
         def _pip_toggle():
             self.conf["pip_on"] = bool(self.v_pipon.get())
             self._save_conf_file()
-            if self.conf["pip_on"] and not getattr(self, "pip", None):
+            if self.conf["pip_on"] and not self.pips:
                 self.pip_dialog()
             else:
                 self.prepare()
@@ -2469,7 +2470,15 @@ class App(tk.Tk):
         self._tc_cache = (key, im)
         return im
 
-    # ------------------------------------------------------------- image du correspondant
+    # ------------------------------------------------------------- images des correspondants
+    # Jusqu'à PIP_MAX_N images reçues incrustées dans l'image émise, chacune avec sa
+    # position et sa taille. self.pips = [{path, call, snr, corner, size, pos, scale}, …].
+    # La disposition de chaque emplacement est gardée dans les réglages : l'emplacement 1
+    # garde les anciennes clés (pip_corner, pip_size, pip_pos, pip_scale), les suivants
+    # sont dans « pip_more ».
+    PIP_MAX_N = 4
+    PIP_CORNERS = ("haut-droite", "haut-gauche", "bas-droite", "bas-gauche")
+
     def _pip_caption(self, p):
         rep = p.get("snr")
         cap = tr("de") + f" {p.get('call') or '?'}"
@@ -2477,25 +2486,78 @@ class App(tk.Tk):
             cap += f"  —  {rep:+.0f} dB"
         return cap
 
+    def _pip_slot_layout(self, i):
+        """Disposition gardée pour l'emplacement i (0 = premier)."""
+        if i == 0:
+            return {"corner": self.conf.get("pip_corner", "haut-droite"), "size": self.conf.get("pip_size", "moyenne"),
+                    "pos": self.conf.get("pip_pos"), "scale": self.conf.get("pip_scale")}
+        more = self.conf.get("pip_more") or []
+        if i - 1 < len(more) and isinstance(more[i - 1], dict):
+            d = more[i - 1]
+            return {"corner": d.get("corner", "haut-gauche"), "size": d.get("size", "petite"),
+                    "pos": d.get("pos"), "scale": d.get("scale")}
+        used = {p.get("corner") for p in getattr(self, "pips", [])[:i] if not p.get("pos")}
+        corner = next((c for c in self.PIP_CORNERS if c not in used), self.PIP_CORNERS[i % 4])
+        return {"corner": corner, "size": "petite", "pos": None, "scale": None}
+
+    def _pip_save_layouts(self):
+        """Garde la disposition de chaque image incrustée (dans l'ordre de la liste)."""
+        for i, p in enumerate(self.pips):
+            lay = {k: p.get(k) for k in ("corner", "size", "pos", "scale")}
+            if i == 0:
+                self.conf.update(pip_corner=lay["corner"], pip_size=lay["size"], pip_pos=lay["pos"],
+                                 pip_scale=lay["scale"])
+            else:
+                more = list(self.conf.get("pip_more") or [])
+                while len(more) < i:
+                    more.append({})
+                more[i - 1] = lay
+                self.conf["pip_more"] = more[:self.PIP_MAX_N - 1]
+        # emplacements libérés (image retirée) : une prochaine image prendra un coin libre
+        self.conf["pip_more"] = (self.conf.get("pip_more") or [])[:max(0, len(self.pips) - 1)]
+
+    def _pip_new(self, cand, i=None):
+        """Nouvelle incrustation à partir d'une image reçue {path, call, snr}."""
+        i = len(self.pips) if i is None else i
+        return dict(cand, **self._pip_slot_layout(i))
+
+    def _pip_thumb(self, path):
+        cache = self.__dict__.setdefault("_pip_thumbs", {})
+        if path not in cache:
+            with Image.open(path) as t:
+                t.seek(0)
+                cache[path] = t.convert("RGB")
+            for k in [k for k in cache if k not in {p["path"] for p in self.pips} | {path}]:
+                del cache[k]
+        return cache[path]
+
+    def _pip_compose(self, base):
+        """base + les images incrustées -> (image, [rectangle (x, y, W, H) ou None par incrustation])."""
+        im, rects = base, []
+        for p in self.pips:
+            try:
+                th = self._pip_thumb(p["path"])
+                cap = self._pip_caption(p)
+                rects.append(trafic.pip_layout(im.size, th.size, cap, p.get("corner", "haut-droite"),
+                                               p.get("size", "moyenne"), p.get("pos"), p.get("scale"))[:4])
+                im = trafic.pip(im, th, cap, p.get("corner", "haut-droite"), p.get("size", "moyenne"),
+                                p.get("pos"), p.get("scale"))
+            except Exception as e:
+                self.log(f"Image du correspondant illisible : {e}")
+                rects.append(None)
+        return im, rects
+
     def _pip_source(self):
-        """Image ouverte, avec l'image du correspondant incrustée si la case est cochée."""
-        p = getattr(self, "pip", None)
-        if self.src_img is None or not self.conf.get("pip_on") or not p:
+        """Image ouverte, avec les images des correspondants incrustées si la case est cochée."""
+        if self.src_img is None or not self.conf.get("pip_on") or not self.pips:
             return self.src_img
-        key = (id(self.src_img), p.get("path"), self._pip_caption(p), self.conf.get("pip_corner"),
-               self.conf.get("pip_size"), tuple(self.conf.get("pip_pos") or ()), self.conf.get("pip_scale"))
+        key = (id(self.src_img), self.conf.get("pip_report", True),
+               tuple((p["path"], self._pip_caption(p), p.get("corner"), p.get("size"), tuple(p.get("pos") or ()),
+                      p.get("scale")) for p in self.pips))
         c = getattr(self, "_pip_cache", None)
         if c and c[0] == key:
             return c[1]
-        try:
-            thumb = Image.open(p["path"])
-            thumb.seek(0)
-            im = trafic.pip(self.src_img, thumb, self._pip_caption(p), self.conf.get("pip_corner", "haut-droite"),
-                            self.conf.get("pip_size", "moyenne"), self.conf.get("pip_pos"),
-                            self.conf.get("pip_scale"))
-        except Exception as e:
-            self.log(f"Image du correspondant illisible : {e}")
-            return self.src_img
+        im = self._pip_compose(self.src_img)[0]
         self._pip_cache = (key, im)
         return im
 
@@ -2514,14 +2576,25 @@ class App(tk.Tk):
             out.append((lab, {"path": src, "call": call, "snr": snr}))
         return out
 
-    def set_pip(self, entry):
-        """Galerie → « Répondre avec cette image » : l'image du correspondant passe dans l'image TX."""
+    def set_pip(self, entry, add=False):
+        """Galerie → « Répondre avec cette image » (elle remplace les incrustations) ou
+        « Ajouter cette image à mon image TX » (elle s'ajoute, 4 au maximum)."""
         src = entry.get("png") or entry.get("file")
         call = entry.get("call") or "?"
         snr = entry.get("snr")
         if snr is None and call in self.heard:
             snr = self.heard[call].get("snr")
-        self.pip = {"path": src, "call": call, "snr": snr}
+        cand = {"path": src, "call": call, "snr": snr}
+        if add and any(p["path"] == src for p in self.pips):
+            pass                                            # déjà incrustée
+        elif add and len(self.pips) >= self.PIP_MAX_N:
+            messagebox.showinfo(APP, tr("4 images au maximum dans l'image TX. Retirez-en une dans "
+                                        "« Image du correspondant… »."))
+            return
+        elif add:
+            self.pips.append(self._pip_new(cand))
+        else:
+            self.pips = [self._pip_new(cand, 0)]
         self.conf["pip_on"] = True
         if hasattr(self, "v_pipon"):
             self.v_pipon.set(True)
@@ -2543,61 +2616,107 @@ class App(tk.Tk):
         f = ttk.Frame(w, padding=12)
         f.pack(fill="both", expand=True)
         cands = self._pip_candidates()
-        if not cands:
+        if not cands and not self.pips:
             ttk.Label(f, text="Aucune image reçue pour l'instant.").pack()
             self._translate_ui(w)
             return
+        # les images déjà incrustées restent proposées même si elles ont quitté la galerie
+        known = {p["path"] for _, p in cands}
+        for p in self.pips:
+            if p["path"] not in known and os.path.exists(p["path"]):
+                cands.append((f"{p.get('call') or '?'}  ({os.path.basename(p['path'])})",
+                              {k: p.get(k) for k in ("path", "call", "snr")}))
         labels = [c[0] for c in cands]
-        cur = getattr(self, "pip", None)
-        v_img = tk.StringVar(value=next((l for l, p in cands if cur and p["path"] == cur.get("path")), labels[0]))
+        if not self.pips and cands:
+            self.pips = [self._pip_new(cands[0][1], 0)]
         corners = {"haut-droite": tr("En haut à droite"), "haut-gauche": tr("En haut à gauche"),
                    "bas-droite": tr("En bas à droite"), "bas-gauche": tr("En bas à gauche"),
                    "libre": tr("Libre (à la souris)")}
         sizes = {"petite": tr("Petite"), "moyenne": tr("Moyenne"), "grande": tr("Grande"),
                  "libre": tr("Libre (molette)")}
-        v_c = tk.StringVar(value=corners["libre"] if self.conf.get("pip_pos") else
-                           corners.get(self.conf.get("pip_corner", "haut-droite")))
-        v_s = tk.StringVar(value=sizes["libre"] if self.conf.get("pip_scale") else
-                           sizes.get(self.conf.get("pip_size", "moyenne")))
+        v_img, v_c, v_s = tk.StringVar(), tk.StringVar(), tk.StringVar()
         v_rep = tk.BooleanVar(value=bool(self.conf.get("pip_report", True)))
         v_on = tk.BooleanVar(value=bool(self.conf.get("pip_on")))
-        ttk.Checkbutton(f, text="Incruster l'image du correspondant dans mon image", variable=v_on).grid(
+        sel = [0]                      # incrustation choisie (réglée par les listes et la souris)
+        busy = [False]                 # pas de recalcul pendant qu'on change nous-mêmes les listes
+        geo = {}                       # aperçu : échelle, décalage, taille de l'image, places des incrustations
+
+        ttk.Checkbutton(f, text="Incruster les images des correspondants dans mon image", variable=v_on).grid(
             row=0, column=0, columnspan=2, sticky="w")
-        ttk.Label(f, text="Image reçue").grid(row=1, column=0, sticky="w", pady=2)
-        ttk.Combobox(f, textvariable=v_img, values=labels, width=34, state="readonly").grid(
-            row=1, column=1, sticky="w", padx=6)
-        ttk.Label(f, text="Position").grid(row=2, column=0, sticky="w", pady=2)
-        ttk.Combobox(f, textvariable=v_c, values=list(corners.values()), width=20, state="readonly").grid(
-            row=2, column=1, sticky="w", padx=6)
-        ttk.Label(f, text="Taille").grid(row=3, column=0, sticky="w", pady=2)
-        ttk.Combobox(f, textvariable=v_s, values=list(sizes.values()), width=12, state="readonly").grid(
-            row=3, column=1, sticky="w", padx=6)
-        ttk.Checkbutton(f, text="Afficher le report (dB)", variable=v_rep).grid(row=4, column=1, sticky="w", padx=6)
+        ttk.Label(f, text="Images incrustées").grid(row=1, column=0, sticky="nw", pady=2)
+        lf = ttk.Frame(f)
+        lf.grid(row=1, column=1, sticky="w", padx=6, pady=2)
+        lb = tk.Listbox(lf, height=self.PIP_MAX_N, width=36, exportselection=False, activestyle="none")
+        lb.pack(side="left")
+        bf = ttk.Frame(lf)
+        bf.pack(side="left", padx=(6, 0), anchor="n")
+        b_add = ttk.Button(bf, text="Ajouter une image", command=lambda: add())
+        b_add.pack(fill="x")
+        b_del = ttk.Button(bf, text="Retirer", command=lambda: remove())
+        b_del.pack(fill="x", pady=(4, 0))
+        ttk.Label(f, text="Image reçue").grid(row=2, column=0, sticky="w", pady=2)
+        cb_img = ttk.Combobox(f, textvariable=v_img, values=labels, width=34, state="readonly")
+        cb_img.grid(row=2, column=1, sticky="w", padx=6)
+        ttk.Label(f, text="Position").grid(row=3, column=0, sticky="w", pady=2)
+        cb_c = ttk.Combobox(f, textvariable=v_c, values=list(corners.values()), width=20, state="readonly")
+        cb_c.grid(row=3, column=1, sticky="w", padx=6)
+        ttk.Label(f, text="Taille").grid(row=4, column=0, sticky="w", pady=2)
+        cb_s = ttk.Combobox(f, textvariable=v_s, values=list(sizes.values()), width=18, state="readonly")
+        cb_s.grid(row=4, column=1, sticky="w", padx=6)
+        ttk.Checkbutton(f, text="Afficher le report (dB)", variable=v_rep).grid(row=5, column=1, sticky="w", padx=6)
         cv = tk.Canvas(f, bg="black", width=480, height=360, highlightthickness=0, cursor="fleur")
         cv._no_theme = True
-        cv.grid(row=5, column=0, columnspan=2, pady=(10, 0))
-        ttk.Label(f, text="Souris : faites glisser l'image du correspondant pour la placer, "
+        cv.grid(row=6, column=0, columnspan=2, pady=(10, 0))
+        ttk.Label(f, text="Souris : cliquez sur une image pour la choisir, faites-la glisser pour la placer, "
                           "molette pour l'agrandir ou la réduire.", foreground="#555").grid(
-            row=6, column=0, columnspan=2, sticky="w", pady=(4, 0))
-        geo = {}                       # aperçu : échelle, décalage, taille de l'image, place de l'incrustation
-        busy = [False]                 # pas de recalcul pendant qu'on change nous-mêmes les listes
+            row=7, column=0, columnspan=2, sticky="w", pady=(4, 0))
+
+        def label_of(p):
+            return next((l for l, c in cands if c["path"] == p["path"]), p.get("call") or "?")
+
+        def refresh_list():
+            """Liste, boutons et listes déroulantes d'après self.pips et l'incrustation choisie."""
+            busy[0] = True
+            try:
+                lb.delete(0, "end")
+                for i, p in enumerate(self.pips, 1):
+                    lb.insert("end", f"{i}.  {label_of(p)}")
+                if self.pips:
+                    sel[0] = min(sel[0], len(self.pips) - 1)
+                    lb.selection_clear(0, "end")
+                    lb.selection_set(sel[0])
+                    p = self.pips[sel[0]]
+                    v_img.set(label_of(p))
+                    v_c.set(corners["libre"] if p.get("pos") else corners.get(p.get("corner"), corners["haut-droite"]))
+                    v_s.set(sizes["libre"] if p.get("scale") else sizes.get(p.get("size"), sizes["moyenne"]))
+                st = "readonly" if self.pips else "disabled"
+                for c in (cb_img, cb_c, cb_s):
+                    c.configure(state=st)
+                b_add.state(["!disabled"] if len(self.pips) < self.PIP_MAX_N and cands else ["disabled"])
+                b_del.state(["!disabled"] if self.pips else ["disabled"])
+            finally:
+                busy[0] = False
 
         def store():
-            self.pip = dict(cands[labels.index(v_img.get())][1])
-            ck = next(k for k, n in corners.items() if n == v_c.get())
-            sk = next(k for k, n in sizes.items() if n == v_s.get())
+            """Listes déroulantes -> incrustation choisie, puis réglages."""
             self.conf.update(pip_on=bool(v_on.get()), pip_report=bool(v_rep.get()))
-            if ck == "libre":
-                self.conf.setdefault("pip_pos", None)
-                if not self.conf.get("pip_pos"):
-                    self.conf["pip_pos"] = [1.0, 0.0]
-            else:
-                self.conf["pip_corner"], self.conf["pip_pos"] = ck, None
-            if sk == "libre":
-                if not self.conf.get("pip_scale"):
-                    self.conf["pip_scale"] = trafic.PIP_SCALE.get(self.conf.get("pip_size", "moyenne"), 0.34)
-            else:
-                self.conf["pip_size"], self.conf["pip_scale"] = sk, None
+            if self.pips:
+                p = self.pips[sel[0]]
+                if v_img.get() in labels:
+                    p.update(cands[labels.index(v_img.get())][1])
+                ck = next((k for k, n in corners.items() if n == v_c.get()), "haut-droite")
+                sk = next((k for k, n in sizes.items() if n == v_s.get()), "moyenne")
+                if ck == "libre":
+                    if not p.get("pos"):
+                        p["pos"] = [1.0, 0.0]
+                else:
+                    p["corner"], p["pos"] = ck, None
+                if sk == "libre":
+                    if not p.get("scale"):
+                        p["scale"] = trafic.PIP_SCALE.get(p.get("size", "moyenne"), 0.34)
+                else:
+                    p["size"], p["scale"] = sk, None
+                self._pip_save_layouts()
             if hasattr(self, "v_pipon"):
                 self.v_pipon.set(bool(v_on.get()))
             self._save_conf_file()
@@ -2606,62 +2725,96 @@ class App(tk.Tk):
             if busy[0]:
                 return
             store()
-            on = self.conf.get("pip_on")
-            self.conf["pip_on"] = True
             real = self.src_img
             if real is None:
                 real = geo.setdefault("blank", Image.new("RGB", (640, 480), (40, 90, 140)))
             if geo.get("src_id") != id(real):
                 # aperçu sur une copie réduite : rapide même avec une photo de 12 Mpx
-                # (position et taille sont en fractions de l'image : même résultat)
+                # (positions et tailles sont en fractions de l'image : même résultat)
                 small = real.copy()
                 small.thumbnail((960, 720))
                 geo["src_id"], geo["small"] = id(real), small
-            saved_src, saved_cache = self.src_img, getattr(self, "_pip_cache", None)
-            self.src_img = base = geo["small"]
-            im = self._pip_source().copy()
-            try:
-                with Image.open(self.pip["path"]) as t:
-                    tsize = t.size
-                geo["rect"] = trafic.pip_layout(base.size, tsize, self._pip_caption(self.pip),
-                                                self.conf.get("pip_corner", "haut-droite"),
-                                                self.conf.get("pip_size", "moyenne"),
-                                                self.conf.get("pip_pos"), self.conf.get("pip_scale"))[:4]
-            except Exception:
-                geo["rect"] = None
-            self.src_img, self._pip_cache = saved_src, saved_cache
-            self.conf["pip_on"] = on
+            im, geo["rects"] = self._pip_compose(geo["small"])
             geo["size"] = im.size
+            im = im.copy()
             im.thumbnail((480, 360))
-            geo["k"] = im.width / geo["size"][0]
-            geo["off"] = ((480 - im.width) // 2, (360 - im.height) // 2)
+            k = geo["k"] = im.width / geo["size"][0]
+            ox, oy = geo["off"] = ((480 - im.width) // 2, (360 - im.height) // 2)
             self._photos["pip"] = ImageTk.PhotoImage(im)
             cv.delete("all")
-            cv.create_image(geo["off"][0], geo["off"][1], image=self._photos["pip"], anchor="nw")
+            cv.create_image(ox, oy, image=self._photos["pip"], anchor="nw")
+            r = cur_rect()
+            if r and len(self.pips) > 1:                      # cadre sur l'incrustation choisie
+                x, y, W, H = r
+                cv.create_rectangle(ox + x * k - 2, oy + y * k - 2, ox + (x + W) * k + 1, oy + (y + H) * k + 1,
+                                    outline="#ffcc00", width=2, dash=(4, 2))
+            self._pip_cache = None
+
+        def select(i):
+            if 0 <= i < len(self.pips) and i != sel[0]:
+                sel[0] = i
+                refresh_list()
+                preview()
+
+        def add():
+            if len(self.pips) >= self.PIP_MAX_N or not cands:
+                return
+            used = {p["path"] for p in self.pips}
+            cand = next((c for _, c in cands if c["path"] not in used), cands[0][1])
+            self.pips.append(self._pip_new(cand))
+            sel[0] = len(self.pips) - 1
+            v_on.set(True)
+            refresh_list()
+            preview()
+
+        def remove():
+            if not self.pips:
+                return
+            del self.pips[sel[0]]
+            sel[0] = max(0, sel[0] - 1)
+            self._pip_save_layouts()
+            refresh_list()
+            preview()
 
         def set_free(pos=None, scale=None):
-            """Glisser / molette : position et taille deviennent « Libre »."""
+            """Glisser / molette : position et taille de l'incrustation choisie deviennent « Libre »."""
+            p = self.pips[sel[0]]
             busy[0] = True
             try:
                 if pos is not None:
-                    self.conf["pip_pos"] = [round(min(1.0, max(0.0, v)), 4) for v in pos]
+                    p["pos"] = [round(min(1.0, max(0.0, v)), 4) for v in pos]
                     v_c.set(corners["libre"])
                 if scale is not None:
-                    self.conf["pip_scale"] = round(scale, 4)
+                    p["scale"] = round(scale, 4)
                     v_s.set(sizes["libre"])
             finally:
                 busy[0] = False
             preview()
 
         def cur_rect():
-            r = geo.get("rect")
-            return r if r and geo.get("k") else None
+            rs = geo.get("rects") or []
+            return rs[sel[0]] if self.pips and sel[0] < len(rs) and geo.get("k") else None
+
+        def hit(e):
+            """Incrustation sous la souris (la plus haute) -> indice, ou None."""
+            k, (ox, oy) = geo.get("k"), geo.get("off", (0, 0))
+            if not k:
+                return None
+            ix, iy = (e.x - ox) / k, (e.y - oy) / k
+            for i in range(len(geo.get("rects") or []) - 1, -1, -1):
+                r = geo["rects"][i]
+                if r and r[0] <= ix <= r[0] + r[2] and r[1] <= iy <= r[1] + r[3]:
+                    return i
+            return None
 
         def pos_for(x, y, W, H):
             iw, ih = geo["size"]
             return (x / (iw - W) if iw > W else 0.0, y / (ih - H) if ih > H else 0.0)
 
         def press(e):
+            i = hit(e)
+            if i is not None:
+                select(i)
             r = cur_rect()
             if not r:
                 return
@@ -2669,7 +2822,7 @@ class App(tk.Tk):
             ix, iy = (e.x - ox) / k, (e.y - oy) / k
             x, y, W, H = r
             # clic sur l'incrustation : on la saisit là ; ailleurs : elle vient se centrer sous la souris
-            geo["grab"] = (ix - x, iy - y) if x <= ix <= x + W and y <= iy <= y + H else (W / 2, H / 2)
+            geo["grab"] = (ix - x, iy - y) if i is not None else (W / 2, H / 2)
             drag(e)
 
         def drag(e):
@@ -2682,18 +2835,26 @@ class App(tk.Tk):
             set_free(pos=pos_for((e.x - ox) / k - gx, (e.y - oy) / k - gy, W, H))
 
         def wheel(e, step):
+            i = hit(e)
+            if i is not None:
+                select(i)
             r = cur_rect()
             if not r:
                 return
+            p = self.pips[sel[0]]
             x, y, W, H = r
             cx, cy = x + W / 2, y + H / 2                     # le centre ne bouge pas
-            cur = self.conf.get("pip_scale") or trafic.PIP_SCALE.get(self.conf.get("pip_size", "moyenne"), 0.34)
+            cur = p.get("scale") or trafic.PIP_SCALE.get(p.get("size", "moyenne"), 0.34)
             new = min(trafic.PIP_MAX, max(trafic.PIP_MIN, cur * (1.1 if step > 0 else 1 / 1.1)))
-            iw, ih = geo["size"]
             nW, nH = W * new / cur, H * new / cur
-            self.conf["pip_scale"] = new
             set_free(pos=pos_for(cx - nW / 2, cy - nH / 2, nW, nH), scale=new)
 
+        def on_list(_e):
+            s = lb.curselection()
+            if s:
+                select(s[0])
+
+        lb.bind("<<ListboxSelect>>", on_list)
         cv.bind("<ButtonPress-1>", press)
         cv.bind("<B1-Motion>", drag)
         cv.bind("<ButtonRelease-1>", lambda e: geo.pop("grab", None))
@@ -2701,10 +2862,15 @@ class App(tk.Tk):
         cv.bind("<Button-4>", lambda e: wheel(e, 1))
         cv.bind("<Button-5>", lambda e: wheel(e, -1))
 
+        def changed(*_):
+            if not busy[0]:
+                self.after_idle(lambda: (preview(), refresh_list()))
+
         for var in (v_img, v_c, v_s, v_rep, v_on):
-            var.trace_add("write", lambda *a: self.after_idle(preview))
+            var.trace_add("write", changed)
         ttk.Button(f, text="OK", command=lambda: (store(), w.destroy(), self.prepare())).grid(
-            row=7, column=1, sticky="e", pady=(10, 0))
+            row=8, column=1, sticky="e", pady=(10, 0))
+        refresh_list()
         preview()
         self._translate_ui(w)
 
