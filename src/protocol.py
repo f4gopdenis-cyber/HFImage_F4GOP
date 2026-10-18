@@ -13,6 +13,7 @@ décoder sans avoir reçu d'en-tête (T se déduit de la taille de trame du mode
 Le HDR n'est émis qu'une fois, en fin d'émission : il donne l'indicatif
 (identification de la station) et le format.
 """
+import hashlib
 import math
 import struct
 import zlib
@@ -22,6 +23,7 @@ from fountain import Decoder, Encoder
 VERSION = 2
 T_HDR, T_DATA, T_NACK, T_ACK, T_HYB, T_PDATA = 1, 2, 3, 4, 5, 6   # T_PDATA = DATA d'un aperçu
 T_QRV = 7                         # présence : « je suis à l'écoute avec HFImage »
+T_HYB0 = 8                        # annonce hybride éclair (DATAC0) : le lien passe par Internet
 MY_LOCATOR = ""                   # locator de la station (réglé par l'interface) : HDR, ACK
 FORMATS = {"avif": 1, "webp": 2, "jpeg": 3, "txt": 4, "hft": 5, "svg": 6, "png": 7, "gif": 8, "file": 9}
 FORMATS_INV = {v: k for k, v in FORMATS.items()}
@@ -252,6 +254,38 @@ def parse_hybrid(payload: bytes):
         return None
     return {"id": iid, "call": call.decode(errors="replace").strip(), "size": size, "crc": crc,
             "fmt": FORMATS_INV.get(fmt, "bin"), "url": u.decode("utf-8", errors="replace")}
+
+
+# ---------------------------------------------------------------- hybride éclair
+# Une seule trame DATAC0 (14 octets utiles) : empreinte de l'image, taille, format, ID.
+# Le lien de téléchargement part en même temps par le serveur de présence (MQTT), rangé
+# sous cette empreinte. L'image téléchargée doit avoir exactement cette empreinte
+# (SHA-256, 48 premiers bits) : une fausse annonce Internet ne peut pas la remplacer.
+FLASH_FMT = ">B6s3sBH"          # 13 octets
+FLASH_LEN = struct.calcsize(FLASH_FMT)
+
+
+def flash_key(data: bytes) -> str:
+    """Empreinte de l'image pour l'hybride éclair (12 caractères hexadécimaux)."""
+    return hashlib.sha256(data).digest()[:6].hex()
+
+
+def flash_frame(image_id: int, data: bytes, fmt: str) -> bytes:
+    if len(data) >= 1 << 24:
+        raise ValueError("image trop grande pour l'hybride éclair")
+    return struct.pack(FLASH_FMT, (T_HYB0 << 4) | VERSION, bytes.fromhex(flash_key(data)),
+                       len(data).to_bytes(3, "big"), FORMATS.get(fmt, 0), image_id & 0xFFFF)
+
+
+def parse_flash(payload: bytes):
+    """Trame éclair -> {id, key, size, fmt}, ou None."""
+    if len(payload) < FLASH_LEN or payload[0] != ((T_HYB0 << 4) | VERSION):
+        return None
+    _, key, size, fmt, iid = struct.unpack(FLASH_FMT, payload[:FLASH_LEN])
+    size = int.from_bytes(size, "big")
+    if size <= 0:
+        return None
+    return {"id": iid, "key": key.hex(), "size": size, "fmt": FORMATS_INV.get(fmt, "bin")}
 
 
 _LOC_RADIX = (18, 18, 10, 10, 25, 25)

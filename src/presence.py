@@ -12,6 +12,9 @@ voient donc immédiatement les autres, avec leur fréquence, sans rien émettre 
 - hfimage/v1/rxok/_           : « j'ai bien reçu l'image n° … » diffusé à tous : l'émetteur
                                  se reconnaît au numéro de l'image, et les autres stations
                                  qui ont reçu la même image voient aussi les reports
+- hfimage/v1/hyb/<EMPREINTE>  : hybride éclair : lien de l'image dont l'empreinte (SHA-256
+                                 abrégé) part par radio en DATAC0 ; publié juste avant chaque
+                                 annonce radio (non retenu) et gardé 1 h par les stations
 
 Aucune donnée personnelle autre que ce qui passe déjà sur l'air (indicatif, locator,
 fréquence). Aucun mot de passe.
@@ -26,6 +29,9 @@ BASE = "hfimage/v1"
 DEFAULT_HOST = "broker.hivemq.com"
 DEFAULT_PORT = 1883
 STALE_S = 5 * 60          # une présence non rafraîchie depuis 5 min est considérée hors ligne
+FLASH_KEEP_S = 3600       # hybride éclair : liens gardés 1 h
+FLASH_MAX = 300           # et au plus 300 (les plus récents)
+MAX_SIZE = 8 * 1024 * 1024
 
 
 def _topic_call(call):
@@ -43,6 +49,7 @@ class Presence:
         self.client = None
         self.connected = False
         self._lock = threading.Lock()
+        self.flash = {}           # empreinte -> (heure de réception, {call, url, size, crc, fmt, id})
 
     # ------------------------------------------------------------------ cycle de vie
     def start(self, call, info):
@@ -108,6 +115,44 @@ class Presence:
         self.client.publish(f"{BASE}/rxok/_", json.dumps(msg).encode(), qos=1)
         return True
 
+    def publish_flash(self, key, call, url, size, crc, fmt, image_id):
+        """Hybride éclair : publie le lien de l'image annoncée par radio sous son empreinte."""
+        if self.client is None or not self.connected:
+            return False
+        msg = {"call": self.call or str(call).upper(), "url": url, "size": int(size), "crc": int(crc),
+               "fmt": fmt, "id": int(image_id), "t": int(time.time())}
+        self.client.publish(f"{BASE}/hyb/{key}", json.dumps(msg).encode(), qos=1)
+        return True
+
+    def get_flash(self, key):
+        """Lien reçu pour cette empreinte -> dict, ou None."""
+        with self._lock:
+            e = self.flash.get(key)
+        return dict(e[1]) if e and time.time() - e[0] < FLASH_KEEP_S else None
+
+    def _store_flash(self, key, d):
+        """Garde un lien d'hybride éclair après contrôle de chaque champ."""
+        if not re.fullmatch(r"[0-9a-f]{12}", key or "") or not isinstance(d, dict):
+            return
+        url = d.get("url")
+        if not isinstance(url, str) or len(url) > 1000 or not re.match(r"https?://", url, re.I):
+            return
+        try:
+            rec = {"call": re.sub(r"[^A-Z0-9/-]", "", str(d.get("call") or "?").upper())[:16] or "?",
+                   "url": url, "size": int(d["size"]), "crc": int(d["crc"]) & 0xFFFFFFFF,
+                   "fmt": re.sub(r"[^a-z0-9]", "", str(d.get("fmt") or "bin").lower())[:8] or "bin",
+                   "id": int(d.get("id", 0)) & 0xFFFF}
+        except (KeyError, TypeError, ValueError):
+            return
+        if not 0 < rec["size"] <= MAX_SIZE:
+            return
+        now = time.time()
+        with self._lock:
+            self.flash[key] = (now, rec)
+            if len(self.flash) > FLASH_MAX:
+                for k, _ in sorted(self.flash.items(), key=lambda kv: kv[1][0])[:len(self.flash) - FLASH_MAX]:
+                    del self.flash[k]
+
     # ------------------------------------------------------------------ rappels MQTT
     def _on_connect(self, client, userdata, flags, reason, props=None):
         if getattr(reason, "is_failure", False):
@@ -118,6 +163,7 @@ class Presence:
         client.subscribe(f"{BASE}/st/+", qos=1)
         client.subscribe(f"{BASE}/rxok/{_topic_call(self.call)}", qos=1)
         client.subscribe(f"{BASE}/rxok/_", qos=1)
+        client.subscribe(f"{BASE}/hyb/+", qos=1)
         self.on_state(True, "")
         self.update()
 
@@ -142,6 +188,9 @@ class Presence:
                 if time.time() - float(d.get("t", 0)) > STALE_S:
                     return                                     # présence ancienne (programme planté)
                 self.on_station(call_t, d)                     # clé = indicatif du sujet
+            elif msg.topic.startswith(f"{BASE}/hyb/"):
+                if len(msg.payload) <= 2048:
+                    self._store_flash(msg.topic.rsplit("/", 1)[1], json.loads(msg.payload.decode("utf-8")))
             elif msg.topic.startswith(f"{BASE}/rxok/"):
                 d = json.loads(msg.payload.decode("utf-8"))
                 if isinstance(d, dict) and d.get("from") and str(d["from"]).upper() != self.call:

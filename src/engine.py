@@ -22,7 +22,8 @@ from modem import MODE_FPB, Modem
 import qrmfilter
 import protocol
 from protocol import (T_ACK, T_HDR, T_NACK, T_QRV, Receiver, Sender, detect_format, hybrid_frame,
-                      parse_control, parse_hybrid, unpack_text)
+                      T_HYB0, flash_frame, flash_key, parse_control, parse_flash, parse_hybrid,
+                      unpack_text)
 
 RX_MODES = ("DATAC1X", "DATAC1", "DATAC3", "DATAC4", "DATAC0")   # DATAC0 : BSR / ACK
 DRM_MODE = "EasyPal"      # nom du mode HamDRM dans le programme (images d'EasyPal / QSSTV)
@@ -256,13 +257,18 @@ class Transmission:
 
 class HybridTransmission:
     """Annonce hybride : la trame HYB est émise 3 fois en rafales indépendantes
-    (DATAC3 ; DATAC1 si le lien est trop long) ; une seule copie suffit."""
+    (DATAC3 ; DATAC1 si le lien est trop long) ; une seule copie suffit.
+    flash=True : hybride éclair, une trame DATAC0 sans le lien (il passe par Internet)."""
 
-    def __init__(self, data: bytes, fmt: str, callsign: str, url: str):
-        self.data, self.fmt, self.url = data, fmt, url
+    def __init__(self, data: bytes, fmt: str, callsign: str, url: str, flash=False):
+        self.data, self.fmt, self.url, self.flash = data, fmt, url, flash
         self.image_id = zlib.crc32(data + url.encode()) & 0xFFFF
-        self.frame = hybrid_frame(self.image_id, callsign, data, fmt, url)
-        for mode in ("DATAC3", "DATAC1"):
+        self.key = flash_key(data)
+        if flash:
+            self.frame = flash_frame(self.image_id, data, fmt)
+        else:
+            self.frame = hybrid_frame(self.image_id, callsign, data, fmt, url)
+        for mode in (("DATAC0",) if flash else ("DATAC3", "DATAC1")):
             m = Modem(mode, MODE_FPB[mode])
             if len(self.frame) <= m.payload_bytes:
                 self.mode, self.modem = mode, m
@@ -484,6 +490,14 @@ class RxEngine:
                     ctl = parse_control(payload)
                     if ctl:
                         self.on_control(ctl[0], ctl[1], ctl[2], ctl[3], snr)
+                    continue
+                if typ == T_HYB0:                          # hybride éclair (lien par Internet)
+                    fl = parse_flash(payload)
+                    if fl is not None:
+                        self.on_status(dict(self.last, id=iid, progress=None, call=None))
+                        if ("flash", fl["key"]) not in self.hyb_seen:
+                            self.hyb_seen.add(("flash", fl["key"]))
+                            self.on_hybrid(dict(fl, flash=True, call="?", crc=None, url=None), mode)
                     continue
                 hyb = parse_hybrid(payload)
                 if hyb is not None:

@@ -1,5 +1,13 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 0.71 — hybride éclair : annonce radio en 3 secondes
+
+- **Nouveau : « Éclair (3 s) »**, à côté de « Mode hybride » dans l'onglet TX. L'annonce radio ne porte plus le lien de l'image, seulement son **empreinte** (SHA-256 abrégé), sa taille et son format : elle tient dans **une seule trame DATAC0** (500 Hz de large). Durée sur l'air : **3 s au lieu de 11 s**.
+- Le lien part en même temps par le serveur des **stations en ligne**. La station qui entend l'annonce récupère le lien, télécharge l'image et vérifie qu'elle a **exactement l'empreinte reçue par radio** : un faux lien publié sur Internet ne peut pas faire passer une autre image.
+- Robustesse mesurée au simulateur (20 essais par point, au moins une des 3 copies décodée) : comparable à l'annonce normale. Canal calme : 100 % dès −2 dB (normale : dès −4 dB). Fading moyen : 70 % à −2 dB et 85 % à 0 dB (normale : 60 % et 85 %).
+- **Conditions** : les deux stations doivent avoir **« Stations en ligne »** activé et la version 0.71. Les versions précédentes ignorent simplement la trame. Si le serveur n'est pas joignable au moment d'émettre, HFImage envoie l'annonce normale (DATAC3) et le signale dans le journal.
+- L'hybride normal et l'hybride EasyPal ne changent pas.
+
 ## Version 0.70 — plusieurs images de correspondants dans l'image émise
 
 - **Image du correspondant : jusqu'à 4 images reçues** incrustées dans votre image, par exemple pour répondre à plusieurs stations d'un coup ou montrer les images d'un QSO à plusieurs.

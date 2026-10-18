@@ -96,6 +96,7 @@ annonce décodée jusqu'à −2 dB (canal calme) et 0 dB (fading CCIR moderate).
 | DATA | type/version, ID, taille u24, CRC32, SBN+ESI, symbole fontaine |
 | HDR | identification de fin : indicatif, format, taille, CRC32 |
 | HYB | annonce hybride : ID, indicatif, taille u32, CRC32, format, lien (≤ 255 car.) |
+| HYB0 | DATAC0, hybride éclair : empreinte SHA-256 (48 bits), taille u24, format, ID. Le lien est publié sur `hfimage/v1/hyb/<empreinte>` (MQTT) |
 | PDATA | comme DATA, pour l'aperçu rapide |
 | NACK (BSR) / ACK | DATAC0 : ID image, indicatif, nombre de symboles demandés (BSR) ou report en dB (ACK) |
 | QRV | DATAC0 : présence, indicatif + locator |

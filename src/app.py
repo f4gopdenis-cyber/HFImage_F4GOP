@@ -53,7 +53,7 @@ import random
 import wave
 
 APP = "HFImage F4GOP"
-VERSION = "0.70"
+VERSION = "0.71"
 CONF_PATH = os.path.join(os.path.expanduser("~"), ".hfimage.json")
 DEFAULT_OUT = os.path.join(os.path.expanduser("~"), "Documents", "HFImage")
 DEFAULTS = {
@@ -835,7 +835,19 @@ class App(tk.Tk):
         ttk.Checkbutton(r2, text="Aperçu rapide d'abord (> 2 min)", variable=self.v_prev,
                         command=self.prepare).pack(side="left")
         ttk.Checkbutton(r2, text="Mode hybride", variable=self.v_hyb,
-                        command=self._toggle_hyb_ui).pack(side="left", padx=12)
+                        command=self._toggle_hyb_ui).pack(side="left", padx=(12, 0))
+        self.v_flash = tk.BooleanVar(value=bool(self.conf.get("hyb_flash")))
+
+        def _flash_toggle():
+            self.conf["hyb_flash"] = bool(self.v_flash.get())
+            self._save_conf_file()
+            if self.v_flash.get() and not self.v_hyb.get():
+                self.v_hyb.set(True)
+                self._toggle_hyb_ui()
+            else:
+                self.prepare()
+        ttk.Checkbutton(r2, text="Éclair (3 s)", variable=self.v_flash,
+                        command=_flash_toggle).pack(side="left", padx=(6, 12))
         ttk.Checkbutton(r2, text="Texte inclus", variable=self.v_txtinc,
                         command=lambda: (self._btn_on("txtinc", self.v_txtinc.get()), self.prepare())).pack(side="left")
         ttk.Checkbutton(r2, text="ID morse en fin d'émission", variable=self.v_cwid).pack(side="left", padx=12)
@@ -2311,7 +2323,8 @@ class App(tk.Tk):
                 out_dev=self.v_out.get(), in_dev=self.v_in.get(), level=int(self.v_lvl.get()),
                 radio=self.radio_cfg,
                 folder=self.v_folder.get(),
-                hyb_on=bool(self.v_hyb.get()), hyb_host=self.v_hhost.get().strip(),
+                hyb_on=bool(self.v_hyb.get()), hyb_flash=bool(self.v_flash.get()),
+                hyb_host=self.v_hhost.get().strip(),
                 hyb_port=int(self.v_hport.get() or 21), hyb_user=self.v_huser.get().strip(),
                 hyb_pass=hybrid.protect(self.v_hpass.get()), hyb_dir=self.v_hdir.get().strip(),
                 hyb_tls=bool(self.v_htls.get()), hyb_url=self.v_hurl.get().strip(),
@@ -3319,7 +3332,8 @@ class App(tk.Tk):
             return
         srv = self.v_hurl.get().strip() or "(lien public non réglé)"
         self.v_txinfo.set(f"Mode hybride\nImage déposée par FTP sur :\n{srv}\n"
-                          f"Annonce radio : ~11 s (DATAC3)")
+                          + ("Annonce radio : ~3 s (DATAC0, éclair : lien par Internet)"
+                             if self.v_flash.get() else "Annonce radio : ~11 s (DATAC3)"))
         self._update_comp()
 
     def _update_comp(self):
@@ -3429,6 +3443,7 @@ class App(tk.Tk):
             job.update(drm_bsr=self.drm_pending_bsr["bsr"], drm_need=self.drm_pending_bsr["need"])
         if isinstance(tx, HybridJob):
             job["kind"] = "hybrid"
+            job["flash"] = bool(self.v_flash.get())
             if complement and tx.announce is None and not getattr(tx, "drm", False):
                 messagebox.showinfo(APP, "Rien à répéter : émettez d'abord l'image.")
                 return False
@@ -3727,6 +3742,11 @@ class App(tk.Tk):
             what = f"annonce hybride EasyPal {name}"
             modem = frames = None
         elif kind == "hybrid":
+            want_flash = bool(job.get("flash"))
+            if want_flash and not (self.net is not None and self.net.connected):
+                self.ui(self.log, "Hybride éclair : serveur des stations en ligne non connecté, "
+                                  "annonce normale (DATAC3) à la place.")
+                want_flash = False
             if not job["complement"]:
                 cfg = job["cfg"]
                 name = hybrid.remote_name(tx.call, imgfmt.ext_for(tx.fmt))
@@ -3738,10 +3758,18 @@ class App(tk.Tk):
                 if base.rstrip("/") != cfg["url"].rstrip("/"):
                     self.ui(self._fix_public_url, base)
                 self.ui(self.log, f"Hybride : image en ligne et vérifiée : {url}")
-                tx.announce = engine.HybridTransmission(tx.data, tx.fmt, tx.call, url)
+                tx.announce = engine.HybridTransmission(tx.data, tx.fmt, tx.call, url, flash=want_flash)
                 self.my_ids.add(tx.announce.image_id)
                 self.ui(self._rxok_show, tx.announce.image_id)
                 self.ui(setattr, self, "last_tx_id", tx.announce.image_id)
+            elif tx.announce.flash != want_flash:      # « Répéter l'annonce » après avoir changé d'avis
+                tx.announce = engine.HybridTransmission(tx.data, tx.fmt, tx.call, tx.announce.url, flash=want_flash)
+            if tx.announce.flash:
+                # le lien part par Internet juste avant la trame radio qui porte l'empreinte
+                self.net.publish_flash(tx.announce.key, tx.call, tx.announce.url, len(tx.data),
+                                       zlib.crc32(tx.data), tx.fmt, tx.announce.image_id)
+                self.ui(self.log, f"Hybride éclair : lien publié (empreinte {tx.announce.key}).")
+            tx.mode = tx.announce.mode
             modem, frames, mode = tx.announce.modem, tx.announce.frames(), tx.announce.mode
             dur, what = tx.announce.estimate_s(), f"annonce hybride {mode}"
         else:
@@ -4160,7 +4188,48 @@ class App(tk.Tk):
 
         threading.Thread(target=run, daemon=True).start()
 
+    def _flash_announce(self, eng, fl, mode):
+        """Hybride éclair : la trame radio porte l'empreinte de l'image ; le lien arrive par
+        Internet (serveur des stations en ligne). L'image doit avoir exactement cette empreinte."""
+        snr = eng.last.get("snr")
+        self.log(f"Annonce hybride éclair ({mode}) : empreinte {fl['key']}, {fl['size']} octets")
+        if not self.v_hauto.get():
+            self.log("Téléchargement automatique désactivé (Réglages).")
+            return
+        if self.net is None:
+            self.log("Hybride éclair : activez « Stations en ligne » (Réglages) pour recevoir le lien.")
+            return
+        net = self.net
+
+        def run():
+            try:
+                rec = None
+                for _ in range(60):                      # le lien arrive en principe avant la trame
+                    rec = net.get_flash(fl["key"])
+                    if rec is not None:
+                        break
+                    time.sleep(0.5)
+                if rec is None:
+                    raise RuntimeError("lien non reçu par Internet dans les 30 s")
+                if rec["size"] != fl["size"]:
+                    raise RuntimeError("le lien reçu par Internet ne correspond pas à l'annonce radio")
+                self.ui(self._heard, rec["call"], snr, "Annonce hybride éclair")
+                self.ui(self.log, f"Hybride éclair de {rec['call']} : {rec['url']}")
+                data = hybrid.download_retry(rec["url"], fl["size"], rec["crc"],
+                                             log=lambda m: self.ui(self.log, m))
+                if protocol.flash_key(data) != fl["key"]:
+                    raise RuntimeError("image refusée : son empreinte n'est pas celle annoncée par radio")
+                hyb = {"id": fl["id"], "call": rec["call"], "crc": rec["crc"], "fmt": fl["fmt"],
+                       "url": rec["url"], "size": fl["size"]}
+                eng.save_hybrid(hyb, data, mode)
+            except Exception as e:
+                self.ui(self.log_exc, "Hybride éclair", e)
+
+        threading.Thread(target=run, daemon=True).start()
+
     def _hybrid_announce(self, eng, hyb, mode):
+        if hyb.get("flash"):
+            return self._flash_announce(eng, hyb, mode)
         self._heard(hyb.get("call"), eng.last.get("snr"), "Annonce hybride")
         self.log(f"Annonce hybride de {hyb['call']} ({mode}) : {hyb['url']} "
                  f"({hyb['size']} octets)")
