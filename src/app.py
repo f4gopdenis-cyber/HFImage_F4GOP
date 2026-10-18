@@ -44,6 +44,7 @@ import updater
 from i18n import tr
 import protocol
 import qsl
+import rxclean
 import shutil
 import webbrowser
 import wavtext
@@ -55,7 +56,7 @@ import random
 import wave
 
 APP = "HFImage F4GOP"
-VERSION = "0.83"
+VERSION = "0.84"
 CONF_PATH = os.path.join(os.path.expanduser("~"), ".hfimage.json")
 DEFAULT_OUT = os.path.join(os.path.expanduser("~"), "Documents", "HFImage")
 DEFAULTS = {
@@ -299,6 +300,7 @@ class App(tk.Tk):
         self.after(400, self._restore_layout)
         self.after(1500, self._restore_layout)     # une 2e fois, une fois tout affiché
         self.after(1700, lambda: self.dock.restore(self.conf.get("detached")))   # fenêtres séparées
+        self.after(20000, self._auto_clean)        # anciennes images (puis toutes les 6 h)
         self.protocol("WM_DELETE_WINDOW", self._quit)
         self.journal_devices()
         self.log(f"{APP} {VERSION} prêt. Images reçues : {self.conf['folder']}")
@@ -1964,8 +1966,20 @@ class App(tk.Tk):
         d = ttk.LabelFrame(colR, text="Dossier des images reçues", padding=8)
         d.pack(fill="x", pady=10)
         self.v_folder = tk.StringVar(value=self.conf["folder"])
-        ttk.Entry(d, textvariable=self.v_folder, width=40).pack(side="left")
-        ttk.Button(d, text="…", width=3, command=self._pick_folder).pack(side="left", padx=4)
+        df = ttk.Frame(d)
+        df.pack(fill="x")
+        ttk.Entry(df, textvariable=self.v_folder, width=40).pack(side="left")
+        ttk.Button(df, text="…", width=3, command=self._pick_folder).pack(side="left", padx=4)
+        cf = ttk.Frame(d)
+        cf.pack(fill="x", pady=(6, 0))
+        self.v_clean = tk.BooleanVar(value=bool(self.conf.get("rx_clean", True)))
+        self.v_clean_days = tk.IntVar(value=int(self.conf.get("rx_clean_days", rxclean.DEFAULT_DAYS)))
+        ttk.Checkbutton(cf, text="Effacer les images de plus de", variable=self.v_clean).pack(side="left")
+        ttk.Spinbox(cf, from_=1, to=3650, width=5, textvariable=self.v_clean_days).pack(side="left", padx=4)
+        ttk.Label(cf, text="jours").pack(side="left")
+        ttk.Label(d, text="Images rangées par jour (AAAA-MM-JJ). Seuls ces dossiers sont effacés ;\n"
+                          "les fichiers reçus et les anciennes images ne sont jamais touchés.",
+                  foreground="#555", justify="left").pack(anchor="w", pady=(4, 0))
 
         bb = ttk.Frame(colR)
         bb.pack(fill="x")
@@ -2416,6 +2430,30 @@ class App(tk.Tk):
             pass
         return int(idx)
 
+    def _clean_days(self):
+        try:
+            return max(1, min(3650, int(self.v_clean_days.get())))
+        except (tk.TclError, ValueError):
+            return rxclean.DEFAULT_DAYS
+
+    def _auto_clean(self):
+        """Efface les sous-dossiers par jour plus anciens que le nombre de jours choisi."""
+        self.after(6 * 3600 * 1000, self._auto_clean)
+        if not self.v_clean.get():
+            return
+        folder, days = self.v_folder.get() or DEFAULT_OUT, self._clean_days()
+
+        def run():
+            try:
+                n, freed = rxclean.clean(folder, days)
+                if n:
+                    self.ui(self.log, f"Nettoyage : {n} dossier(s) d'images de plus de {days} jours effacé(s) "
+                                      f"({freed / 1e6:.1f} Mo libérés).")
+            except Exception as e:
+                self.ui(self.log_exc, "Nettoyage des anciennes images", e)
+
+        threading.Thread(target=run, daemon=True).start()
+
     def _pick_folder(self):
         p = filedialog.askdirectory(initialdir=self.v_folder.get())
         if p:
@@ -2439,6 +2477,7 @@ class App(tk.Tk):
                 radio=self.radio_cfg,
                 folder=self.v_folder.get(),
                 hyb_on=bool(self.v_hyb.get()), hyb_flash=bool(self.v_flash.get()),
+                rx_clean=bool(self.v_clean.get()), rx_clean_days=self._clean_days(),
                 hyb_host=self.v_hhost.get().strip(),
                 hyb_port=int(self.v_hport.get() or 21), hyb_user=self.v_huser.get().strip(),
                 hyb_pass=hybrid.protect(self.v_hpass.get()), hyb_dir=self.v_hdir.get().strip(),
@@ -4984,6 +5023,7 @@ class App(tk.Tk):
             target = path                              # la visionneuse joue l'animation
         if not target or not os.path.exists(target):
             return
+        target = imgfmt.viewable(target)               # AVIF / JPEG 2000 : copie PNG temporaire
         if sys.platform.startswith("win"):
             os.startfile(target)
         else:
@@ -5024,7 +5064,7 @@ class App(tk.Tk):
             fmt = protocol.detect_format(data)
             if fmt in ("hft", "txt", "file", "bin"):
                 return
-            d = os.path.join(self.gal_store.folder, gallery.SENT_DIR)
+            d = os.path.join(self.gal_store.folder, gallery.SENT_DIR, time.strftime("%Y-%m-%d"))
             os.makedirs(d, exist_ok=True)
             call = self.v_call.get().strip().upper().replace("/", "-") or "NOCALL"
             mode_n = (mode or "") + ("-HYB" if job["kind"] == "hybrid" and "HYB" not in (mode or "") else "")
@@ -5173,7 +5213,7 @@ class App(tk.Tk):
         if not (p and os.path.exists(p) and (p.lower().endswith(".gif") or p.lower().endswith(".jpg"))):
             p = self._gallery_src(e)
         if p and os.path.exists(p):
-            self._open_path(p)
+            self._open_path(imgfmt.viewable(p))
 
     def gallery_to_tx(self, e):
         p = e.get("file")

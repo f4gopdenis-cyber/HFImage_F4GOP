@@ -20,6 +20,7 @@ INDEX = "galerie.json"
 SENT_DIR = "envoyees"
 KEEP = 300                       # entrées gardées dans l'index (par sens)
 IMG_EXT = (".avif", ".webp", ".jpg", ".jpeg", ".png", ".gif", ".svg")
+DAY_DIR = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 NAME_RX = re.compile(r"^(\d{8})_(\d{6})_([A-Za-z0-9]+(?:-HYB)?)(_apercu)?(?:_(.+?))?$")
 
 
@@ -56,9 +57,18 @@ class GalleryStore:
             pass
 
     def scan(self):
-        """Images déjà présentes (reçues avant cette version, et envoyées)."""
+        """Images déjà présentes (reçues avant cette version, et envoyées), y compris dans les
+        sous-dossiers par jour (AAAA-MM-JJ) des versions 0.84 et suivantes."""
         out = []
-        for d, direction in ((self.folder, "rx"), (os.path.join(self.folder, SENT_DIR), "tx")):
+        dirs = []
+        for top, direction in ((self.folder, "rx"), (os.path.join(self.folder, SENT_DIR), "tx")):
+            dirs.append((top, direction))
+            try:
+                dirs += [(os.path.join(top, n), direction) for n in sorted(os.listdir(top))
+                         if DAY_DIR.match(n) and os.path.isdir(os.path.join(top, n))]
+            except OSError:
+                pass
+        for d, direction in dirs:
             try:
                 names = os.listdir(d)
             except OSError:

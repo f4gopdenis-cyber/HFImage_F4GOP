@@ -285,8 +285,12 @@ s += B(["<b>Panneau d'état</b> (en haut à gauche) : indicatif de la station re
         "<b>BSR / ACK automatiques</b> : s'il manque des morceaux à la fin, HFImage les demande (BSR) ; "
         "l'émetteur ne renvoie que ce qui manque (FIX). Une fois l'image complète, un accusé (ACK) avec "
         "votre report part vers l'émetteur.",
-        "Les images sont rangées dans le dossier choisi (Réglages → Dossier des images reçues), bouton "
-        "<b>Dossier</b> pour l'ouvrir.",
+        "Les images sont rangées dans le dossier choisi (Réglages → Dossier des images reçues), dans un "
+        "<b>sous-dossier par jour</b> (2026-10-18…), <b>une seule copie par image</b> (le fichier reçu, AVIF, JPEG…). "
+        "Bouton <b>Dossier</b> pour l'ouvrir. Les fichiers reçus restent dans le sous-dossier « fichiers ».",
+        "<b>Nettoyage automatique</b> (Réglages, sous le dossier) : les sous-dossiers par jour de plus de <b>30 jours</b> "
+        "(réglable) sont effacés, images envoyées comprises. Rien d'autre n'est jamais effacé : ni les fichiers reçus, "
+        "ni les enregistrements, ni les images des versions précédentes. Décochez la case pour tout garder.",
         "<b>Relire RX</b> : redécode les 15 dernières minutes (si une image a été manquée)."])
 s.append(P("Galerie", "h2"))
 s.append(P("Onglet <b>Galerie</b> : les 30, 60 ou 100 dernières images reçues (« de F4EMK ») ou envoyées. Clic : "

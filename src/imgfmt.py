@@ -9,6 +9,8 @@ import gzip
 import io
 import os
 import re
+import sys
+import tempfile
 
 from PIL import Image
 
@@ -121,27 +123,66 @@ def ext_for(fmt: str) -> str:
     return EXT.get(fmt, fmt or "bin")
 
 
+PREVIEW_DIR = "apercus"      # rendus PNG des dessins SVG (dossier caché, à côté des images)
+
+
+def _hide(folder):
+    """Windows : dossier caché (attribut « caché »)."""
+    if sys.platform.startswith("win"):
+        try:
+            import ctypes
+            ctypes.windll.kernel32.SetFileAttributesW(str(folder), 0x02)
+        except Exception:
+            pass
+
+
 def save_received(base: str, fmt: str, data: bytes):
-    """Enregistre un fichier reçu -> (chemin, png pour l'affichage ou None)."""
+    """Enregistre un fichier reçu -> (chemin, image affichable ou None).
+
+    Depuis la version 0.84, une seule copie : l'original (AVIF, JPEG, WebP, JPEG 2000…),
+    que le programme affiche directement. Seul un dessin SVG a besoin d'un rendu PNG,
+    rangé à part dans le sous-dossier caché « apercus »."""
     if fmt == "svg":
         path = base + ".svg"
         with open(path, "wb") as f:
             f.write(svg_text(data))
         try:
-            render_svg(data).save(base + ".png")
-            return path, base + ".png"
+            d = os.path.join(os.path.dirname(base), PREVIEW_DIR)
+            new = not os.path.isdir(d)
+            os.makedirs(d, exist_ok=True)
+            if new:
+                _hide(d)
+            png = os.path.join(d, os.path.basename(base) + ".png")
+            render_svg(data).save(png)
+            return path, png
         except Exception:
             return path, None
     path = f"{base}.{ext_for(fmt)}"
     with open(path, "wb") as f:
         f.write(data)
-    if path.endswith(".png"):
-        return path, path
     try:
-        Image.open(io.BytesIO(data)).save(base + ".png")
-        return path, base + ".png"
+        with Image.open(io.BytesIO(data)) as im:
+            im.size                         # lisible par le programme : affiché tel quel
+        return path, path
     except Exception:
         return path, None
+
+
+def viewable(path):
+    """Fichier à ouvrir dans la visionneuse de Windows : l'original, ou une copie PNG
+    temporaire pour les formats que Windows n'affiche pas toujours (AVIF, JPEG 2000)."""
+    if not path or not path.lower().endswith((".avif", ".jp2", ".j2k")):
+        return path
+    try:
+        d = os.path.join(tempfile.gettempdir(), "HFImage_apercus")
+        os.makedirs(d, exist_ok=True)
+        out = os.path.join(d, os.path.splitext(os.path.basename(path))[0] + ".png")
+        if not os.path.exists(out) or os.path.getmtime(out) < os.path.getmtime(path):
+            with Image.open(path) as im:
+                im.save(out)
+        return out
+    except Exception:
+        return path
 
 
 def describe(kind: str) -> str:

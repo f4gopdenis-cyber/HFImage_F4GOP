@@ -280,7 +280,12 @@ s += B(["<b>Status panel</b> (top left): callsign of the station received, radio
         "<b>Automatic BSR / ACK</b> (HFImage modes): if pieces are missing at the end, HFImage asks for them (BSR); "
         "the sender sends only what is missing (FIX). Once the picture is complete, an acknowledgement (ACK) with "
         "your report goes back to the sender.",
-        "Pictures are stored in the chosen folder (Settings → Received images folder); <b>Folder</b> button to open it.",
+        "Pictures are stored in the chosen folder (Settings → Received images folder), in a <b>sub-folder per day</b> "
+        "(2026-10-18…), <b>one copy per picture</b> (the received AVIF, JPEG… file); <b>Folder</b> button to open it. "
+        "Received files stay in the “fichiers” sub-folder.",
+        "<b>Automatic cleaning</b> (Settings, below the folder): day folders older than <b>30 days</b> (adjustable) are "
+        "deleted, sent pictures included. Nothing else is ever deleted: received files, recordings and pictures from "
+        "older versions are kept. Untick the box to keep everything.",
         "<b>Replay RX</b>: decodes the last 15 minutes again (if a picture was missed)."])
 s.append(P("Gallery", "h2"))
 s.append(P("<b>Gallery</b> tab: the last 30, 60 or 100 pictures received (“from F4EMK”) or sent. Click: show; "

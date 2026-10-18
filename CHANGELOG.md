@@ -1,5 +1,11 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 0.84 — dossier des images rangé : une copie par image, un dossier par jour, nettoyage
+
+- **Une seule copie par image** : HFImage enregistrait chaque image reçue deux fois, l'original (AVIF, JPEG, WebP…) et une copie PNG pour l'afficher, souvent 5 à 10 fois plus lourde. Il affiche maintenant directement l'original : **deux fois moins de fichiers**, et beaucoup moins de place. Seuls les dessins SVG gardent un rendu PNG, rangé à part dans un sous-dossier caché « apercus ». Pour le plein format (double-clic), une image AVIF ou JPEG 2000 est convertie à la volée pour la visionneuse de Windows.
+- **Un sous-dossier par jour** : les images et messages reçus vont dans `2026-10-18`, `2026-10-19`… (même chose pour les images envoyées, dans « envoyees »). Les fichiers reçus restent dans « fichiers ». La galerie et l'historique fonctionnent comme avant.
+- **Nettoyage automatique** (Réglages, sous « Dossier des images reçues ») : les sous-dossiers par jour de plus de **30 jours** (réglable de 1 à 3650) sont effacés au démarrage puis toutes les 6 heures, avec une ligne dans le journal. Rien d'autre n'est jamais effacé : ni les fichiers reçus, ni les enregistrements, ni les images rangées à plat par les versions précédentes. Décochez la case pour tout garder.
+
 ## Version 0.83 — licence GNU GPL v3
 
 - HFImage F4GOP est maintenant officiellement un **logiciel libre et gratuit**, sous licence **GNU GPL v3** (© 2026 Denis F4GOP) : chacun peut l'utiliser, le copier, le partager et le modifier ; une version modifiée distribuée doit rester sous la même licence, avec ses sources. C'est aussi la licence du modem EasyPal repris de QSSTV.

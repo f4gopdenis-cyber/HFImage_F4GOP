@@ -581,7 +581,7 @@ class RxEngine:
             iid = zlib.crc32(data + b"hamdrm") & 0xFFFF
             stamp = time.strftime("%Y%m%d_%H%M%S")
             suffix = call_suffix(call)
-            path = inside(self.outdir, os.path.join(self.outdir, f"{stamp}_{DRM_MODE}_texte{suffix}.txt"))
+            path = inside(self.outdir, os.path.join(self.day_dir(), f"{stamp}_{DRM_MODE}_texte{suffix}.txt"))
             with open(path, "w", encoding="utf-8") as fh:
                 fh.write(text + "\n")
             info = {"id": iid, "call": call, "size": len(data), "fmt": "txt", "text": text,
@@ -607,7 +607,7 @@ class RxEngine:
             self.saved[iid] = [path, None, base, call != "?"]
             self.on_image(dict(info, fmt="file", filename=name), path, None, DRM_MODE)
             return
-        base = inside(self.outdir, os.path.join(self.outdir, f"{stamp}_{DRM_MODE}{suffix}"))
+        base = inside(self.outdir, os.path.join(self.day_dir(), f"{stamp}_{DRM_MODE}{suffix}"))
         path, png = imgfmt.save_received(base, fmt, data)
         self.saved[iid] = [path, png, base, call != "?"]
         self.on_image(info, path, png, DRM_MODE)
@@ -619,6 +619,13 @@ class RxEngine:
         if hyb.get("snr") is not None:
             info["snr"] = hyb["snr"]           # hybride EasyPal : S/B mesuré sur l'annonce (report Rx Ok)
         self._save((info, data), mode + "-HYB")
+
+    def day_dir(self):
+        """Images et textes reçus : un sous-dossier par jour (AAAA-MM-JJ) dans le dossier de réception.
+        Les fichiers reçus restent dans « fichiers »."""
+        d = os.path.join(self.outdir, time.strftime("%Y-%m-%d"))
+        os.makedirs(d, exist_ok=True)
+        return d
 
     def incomplete(self):
         """Images en cours mais incomplètes : [(id, reçus, K, fin_vue, âge_s, mode, indicatif)]."""
@@ -639,7 +646,7 @@ class RxEngine:
             info["text"] = text            # gardé aussi pour l'identification de fin
             stamp = time.strftime("%Y%m%d_%H%M%S")
             call = info["call"]
-            tbase = inside(self.outdir, os.path.join(self.outdir, f"{stamp}_{mode}_texte" + call_suffix(call)))
+            tbase = inside(self.outdir, os.path.join(self.day_dir(), f"{stamp}_{mode}_texte" + call_suffix(call)))
             with open(tbase + ".txt", "w", encoding="utf-8") as f:
                 f.write(text)
             if not img:                               # message texte seul
@@ -668,7 +675,7 @@ class RxEngine:
             return
         stamp = time.strftime("%Y%m%d_%H%M%S")
         call = info["call"]
-        base = os.path.join(self.outdir, f"{stamp}_{mode}" + ("_apercu" if info.get("preview") else ""))
+        base = os.path.join(self.day_dir(), f"{stamp}_{mode}" + ("_apercu" if info.get("preview") else ""))
         base = inside(self.outdir, base + call_suffix(call))
         path, png = imgfmt.save_received(base, info["fmt"], data)
         self.saved[info["id"]] = [path, png, base, call != "?"]
@@ -688,9 +695,10 @@ class RxEngine:
             path = new_path
             if same:
                 png = path
-            elif png:
-                os.replace(png, nb + ".png")
-                png = nb + ".png"
+            elif png:                        # rendu d'un SVG (dossier « apercus ») ou ancienne copie PNG
+                new_png = os.path.join(os.path.dirname(png), os.path.basename(nb) + ".png")
+                os.replace(png, new_png)
+                png = new_png
         except (OSError, ValueError):
             if not path.startswith(nb):
                 nb = base                    # fichier laissé sous son nom d'origine
