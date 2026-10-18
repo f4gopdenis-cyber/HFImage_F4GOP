@@ -53,7 +53,7 @@ import random
 import wave
 
 APP = "HFImage F4GOP"
-VERSION = "0.66"
+VERSION = "0.67"
 CONF_PATH = os.path.join(os.path.expanduser("~"), ".hfimage.json")
 DEFAULT_OUT = os.path.join(os.path.expanduser("~"), "Documents", "HFImage")
 DEFAULTS = {
@@ -2482,7 +2482,7 @@ class App(tk.Tk):
         if self.src_img is None or not self.conf.get("pip_on") or not p:
             return self.src_img
         key = (id(self.src_img), p.get("path"), self._pip_caption(p), self.conf.get("pip_corner"),
-               self.conf.get("pip_size"))
+               self.conf.get("pip_size"), tuple(self.conf.get("pip_pos") or ()), self.conf.get("pip_scale"))
         c = getattr(self, "_pip_cache", None)
         if c and c[0] == key:
             return c[1]
@@ -2490,7 +2490,8 @@ class App(tk.Tk):
             thumb = Image.open(p["path"])
             thumb.seek(0)
             im = trafic.pip(self.src_img, thumb, self._pip_caption(p), self.conf.get("pip_corner", "haut-droite"),
-                            self.conf.get("pip_size", "moyenne"))
+                            self.conf.get("pip_size", "moyenne"), self.conf.get("pip_pos"),
+                            self.conf.get("pip_scale"))
         except Exception as e:
             self.log(f"Image du correspondant illisible : {e}")
             return self.src_img
@@ -2549,10 +2550,14 @@ class App(tk.Tk):
         cur = getattr(self, "pip", None)
         v_img = tk.StringVar(value=next((l for l, p in cands if cur and p["path"] == cur.get("path")), labels[0]))
         corners = {"haut-droite": tr("En haut à droite"), "haut-gauche": tr("En haut à gauche"),
-                   "bas-droite": tr("En bas à droite"), "bas-gauche": tr("En bas à gauche")}
-        sizes = {"petite": tr("Petite"), "moyenne": tr("Moyenne"), "grande": tr("Grande")}
-        v_c = tk.StringVar(value=corners.get(self.conf.get("pip_corner", "haut-droite")))
-        v_s = tk.StringVar(value=sizes.get(self.conf.get("pip_size", "moyenne")))
+                   "bas-droite": tr("En bas à droite"), "bas-gauche": tr("En bas à gauche"),
+                   "libre": tr("Libre (à la souris)")}
+        sizes = {"petite": tr("Petite"), "moyenne": tr("Moyenne"), "grande": tr("Grande"),
+                 "libre": tr("Libre (molette)")}
+        v_c = tk.StringVar(value=corners["libre"] if self.conf.get("pip_pos") else
+                           corners.get(self.conf.get("pip_corner", "haut-droite")))
+        v_s = tk.StringVar(value=sizes["libre"] if self.conf.get("pip_scale") else
+                           sizes.get(self.conf.get("pip_size", "moyenne")))
         v_rep = tk.BooleanVar(value=bool(self.conf.get("pip_report", True)))
         v_on = tk.BooleanVar(value=bool(self.conf.get("pip_on")))
         ttk.Checkbutton(f, text="Incruster l'image du correspondant dans mon image", variable=v_on).grid(
@@ -2567,38 +2572,139 @@ class App(tk.Tk):
         ttk.Combobox(f, textvariable=v_s, values=list(sizes.values()), width=12, state="readonly").grid(
             row=3, column=1, sticky="w", padx=6)
         ttk.Checkbutton(f, text="Afficher le report (dB)", variable=v_rep).grid(row=4, column=1, sticky="w", padx=6)
-        lb = tk.Label(f, bg="black")
-        lb._no_theme = True
-        lb.grid(row=5, column=0, columnspan=2, pady=(10, 0))
+        cv = tk.Canvas(f, bg="black", width=480, height=360, highlightthickness=0, cursor="fleur")
+        cv._no_theme = True
+        cv.grid(row=5, column=0, columnspan=2, pady=(10, 0))
+        ttk.Label(f, text="Souris : faites glisser l'image du correspondant pour la placer, "
+                          "molette pour l'agrandir ou la réduire.", foreground="#555").grid(
+            row=6, column=0, columnspan=2, sticky="w", pady=(4, 0))
+        geo = {}                       # aperçu : échelle, décalage, taille de l'image, place de l'incrustation
+        busy = [False]                 # pas de recalcul pendant qu'on change nous-mêmes les listes
 
         def store():
             self.pip = dict(cands[labels.index(v_img.get())][1])
-            self.conf.update(pip_on=bool(v_on.get()), pip_report=bool(v_rep.get()),
-                             pip_corner=next(k for k, n in corners.items() if n == v_c.get()),
-                             pip_size=next(k for k, n in sizes.items() if n == v_s.get()))
+            ck = next(k for k, n in corners.items() if n == v_c.get())
+            sk = next(k for k, n in sizes.items() if n == v_s.get())
+            self.conf.update(pip_on=bool(v_on.get()), pip_report=bool(v_rep.get()))
+            if ck == "libre":
+                self.conf.setdefault("pip_pos", None)
+                if not self.conf.get("pip_pos"):
+                    self.conf["pip_pos"] = [1.0, 0.0]
+            else:
+                self.conf["pip_corner"], self.conf["pip_pos"] = ck, None
+            if sk == "libre":
+                if not self.conf.get("pip_scale"):
+                    self.conf["pip_scale"] = trafic.PIP_SCALE.get(self.conf.get("pip_size", "moyenne"), 0.34)
+            else:
+                self.conf["pip_size"], self.conf["pip_scale"] = sk, None
             if hasattr(self, "v_pipon"):
                 self.v_pipon.set(bool(v_on.get()))
             self._save_conf_file()
 
         def preview(*_):
+            if busy[0]:
+                return
             store()
             on = self.conf.get("pip_on")
             self.conf["pip_on"] = True
-            tmp = self.src_img is None
-            if tmp:
-                self.src_img = Image.new("RGB", (640, 480), (40, 90, 140))
+            real = self.src_img
+            if real is None:
+                real = geo.setdefault("blank", Image.new("RGB", (640, 480), (40, 90, 140)))
+            if geo.get("src_id") != id(real):
+                # aperçu sur une copie réduite : rapide même avec une photo de 12 Mpx
+                # (position et taille sont en fractions de l'image : même résultat)
+                small = real.copy()
+                small.thumbnail((960, 720))
+                geo["src_id"], geo["small"] = id(real), small
+            tmp = True
+            saved_src, saved_cache = self.src_img, getattr(self, "_pip_cache", None)
+            self.src_img = base = geo["small"]
             im = self._pip_source().copy()
-            if tmp:
-                self.src_img = None
+            try:
+                with Image.open(self.pip["path"]) as t:
+                    tsize = t.size
+                geo["rect"] = trafic.pip_layout(base.size, tsize, self._pip_caption(self.pip),
+                                                self.conf.get("pip_corner", "haut-droite"),
+                                                self.conf.get("pip_size", "moyenne"),
+                                                self.conf.get("pip_pos"), self.conf.get("pip_scale"))[:4]
+            except Exception:
+                geo["rect"] = None
+            self.src_img, self._pip_cache = saved_src, saved_cache
             self.conf["pip_on"] = on
+            geo["size"] = im.size
             im.thumbnail((480, 360))
+            geo["k"] = im.width / geo["size"][0]
+            geo["off"] = ((480 - im.width) // 2, (360 - im.height) // 2)
             self._photos["pip"] = ImageTk.PhotoImage(im)
-            lb.configure(image=self._photos["pip"])
+            cv.delete("all")
+            cv.create_image(geo["off"][0], geo["off"][1], image=self._photos["pip"], anchor="nw")
+
+        def set_free(pos=None, scale=None):
+            """Glisser / molette : position et taille deviennent « Libre »."""
+            busy[0] = True
+            try:
+                if pos is not None:
+                    self.conf["pip_pos"] = [round(min(1.0, max(0.0, v)), 4) for v in pos]
+                    v_c.set(corners["libre"])
+                if scale is not None:
+                    self.conf["pip_scale"] = round(scale, 4)
+                    v_s.set(sizes["libre"])
+            finally:
+                busy[0] = False
+            preview()
+
+        def cur_rect():
+            r = geo.get("rect")
+            return r if r and geo.get("k") else None
+
+        def pos_for(x, y, W, H):
+            iw, ih = geo["size"]
+            return (x / (iw - W) if iw > W else 0.0, y / (ih - H) if ih > H else 0.0)
+
+        def press(e):
+            r = cur_rect()
+            if not r:
+                return
+            k, (ox, oy) = geo["k"], geo["off"]
+            ix, iy = (e.x - ox) / k, (e.y - oy) / k
+            x, y, W, H = r
+            # clic sur l'incrustation : on la saisit là ; ailleurs : elle vient se centrer sous la souris
+            geo["grab"] = (ix - x, iy - y) if x <= ix <= x + W and y <= iy <= y + H else (W / 2, H / 2)
+            drag(e)
+
+        def drag(e):
+            r = cur_rect()
+            if not r or "grab" not in geo:
+                return
+            k, (ox, oy) = geo["k"], geo["off"]
+            x, y, W, H = r
+            gx, gy = geo["grab"]
+            set_free(pos=pos_for((e.x - ox) / k - gx, (e.y - oy) / k - gy, W, H))
+
+        def wheel(e, step):
+            r = cur_rect()
+            if not r:
+                return
+            x, y, W, H = r
+            cx, cy = x + W / 2, y + H / 2                     # le centre ne bouge pas
+            cur = self.conf.get("pip_scale") or trafic.PIP_SCALE.get(self.conf.get("pip_size", "moyenne"), 0.34)
+            new = min(trafic.PIP_MAX, max(trafic.PIP_MIN, cur * (1.1 if step > 0 else 1 / 1.1)))
+            iw, ih = geo["size"]
+            nW, nH = W * new / cur, H * new / cur
+            self.conf["pip_scale"] = new
+            set_free(pos=pos_for(cx - nW / 2, cy - nH / 2, nW, nH), scale=new)
+
+        cv.bind("<ButtonPress-1>", press)
+        cv.bind("<B1-Motion>", drag)
+        cv.bind("<ButtonRelease-1>", lambda e: geo.pop("grab", None))
+        cv.bind("<MouseWheel>", lambda e: wheel(e, 1 if e.delta > 0 else -1))
+        cv.bind("<Button-4>", lambda e: wheel(e, 1))
+        cv.bind("<Button-5>", lambda e: wheel(e, -1))
 
         for var in (v_img, v_c, v_s, v_rep, v_on):
             var.trace_add("write", lambda *a: self.after_idle(preview))
         ttk.Button(f, text="OK", command=lambda: (store(), w.destroy(), self.prepare())).grid(
-            row=6, column=1, sticky="e", pady=(10, 0))
+            row=7, column=1, sticky="e", pady=(10, 0))
         preview()
         self._translate_ui(w)
 

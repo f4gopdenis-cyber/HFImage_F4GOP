@@ -1,5 +1,10 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 0.67 — image du correspondant placée et dimensionnée à la souris
+
+- Fenêtre **Image du correspondant** : dans l'aperçu, **faites glisser** l'image du correspondant pour la placer **où vous voulez** dans votre image, et utilisez la **molette** pour l'**agrandir ou la réduire** (de 10 % à 90 % de la largeur). Position et taille passent alors sur « Libre » ; choisir un coin ou une taille dans les listes revient aux réglages habituels.
+- Le réglage est gardé pour les émissions suivantes, et l'image émise est exactement celle de l'aperçu.
+
 ## Version 0.66 — zoom à la souris sur les images
 
 - **Molette de la souris** sur l'image reçue (et sur l'image à émettre) : agrandit ou réduit autour du pointeur, jusqu'à ×16.

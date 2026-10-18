@@ -203,17 +203,42 @@ def overlay(img, items, pos="bas", size="normale", style=None, call=""):
 PIP_SCALE = {"petite": 0.26, "moyenne": 0.34, "grande": 0.45}
 
 
-def pip(img, thumb, caption="", corner="haut-droite", size="moyenne"):
-    """Image du correspondant incrustée dans un coin (cadre blanc, légende « de F4EMK — +12 dB »)."""
-    im = img.convert("RGB").copy()
-    th = thumb.convert("RGB")
-    tw = max(60, int(im.width * PIP_SCALE.get(size, 0.34)))
-    th = th.resize((tw, max(1, round(th.height * tw / th.width))), Image.LANCZOS)
+PIP_MIN, PIP_MAX = 0.10, 0.90      # taille libre : fraction de la largeur de l'image
+
+
+def pip_layout(img_size, thumb_size, caption="", corner="haut-droite", size="moyenne", pos=None, scale=None):
+    """Place de l'incrustation -> (x, y, W, H, tw, b, fs, cap_h).
+    pos = (fx, fy) entre 0 et 1 : position libre (0 = bord gauche / haut, 1 = bord droit / bas) ;
+    scale = largeur libre en fraction de la largeur de l'image."""
+    iw, ih = img_size
+    frac = min(PIP_MAX, max(PIP_MIN, float(scale))) if scale else PIP_SCALE.get(size, 0.34)
+    tw = max(40, int(iw * frac))
+    th_h = max(1, round(thumb_size[1] * tw / max(1, thumb_size[0])))
     b = max(2, tw // 60)                                   # cadre
     fs = max(11, tw // 13)
-    font = _font(fs)
     cap_h = int(fs * 1.45) if caption else 0
-    W, H = th.width + 2 * b, th.height + 2 * b + cap_h
+    W, H = tw + 2 * b, th_h + 2 * b + cap_h
+    if H > ih:                                             # très haute : on réduit pour qu'elle tienne
+        k = ih / H
+        return pip_layout(img_size, thumb_size, caption, corner, size, pos, max(PIP_MIN, frac * k * 0.98))
+    if pos is not None:
+        fx, fy = (min(1.0, max(0.0, float(v))) for v in pos)
+        x, y = round(fx * max(0, iw - W)), round(fy * max(0, ih - H))
+    else:
+        m = max(6, iw // 60)                               # marge au bord
+        x = m if "gauche" in corner else iw - W - m
+        y = m if "haut" in corner else ih - H - m
+    return x, y, W, H, tw, b, fs, cap_h
+
+
+def pip(img, thumb, caption="", corner="haut-droite", size="moyenne", pos=None, scale=None):
+    """Image du correspondant incrustée dans un coin, ou à l'endroit et à la taille choisis
+    à la souris (cadre blanc, légende « de F4EMK — +12 dB »)."""
+    im = img.convert("RGB").copy()
+    th = thumb.convert("RGB")
+    x, y, W, H, tw, b, fs, cap_h = pip_layout(im.size, th.size, caption, corner, size, pos, scale)
+    th = th.resize((tw, H - 2 * b - cap_h), Image.LANCZOS)
+    font = _font(fs)
     box = Image.new("RGB", (W, H), (255, 255, 255))
     box.paste(th, (b, b))
     if caption:
@@ -221,12 +246,9 @@ def pip(img, thumb, caption="", corner="haut-droite", size="moyenne"):
         d.rectangle((0, th.height + 2 * b, W, H), fill=(20, 20, 20))
         w = d.textlength(caption, font=font)
         d.text(((W - w) / 2, th.height + 2 * b + (cap_h - fs) / 2 - 1), caption, font=font, fill=(255, 230, 90))
-    m = max(6, im.width // 60)                             # marge au bord
-    x = m if "gauche" in corner else im.width - W - m
-    y = m if "haut" in corner else im.height - H - m
     # ombre
     sh = Image.new("RGBA", (W, H), (0, 0, 0, 110))
     base = im.convert("RGBA")
-    base.alpha_composite(sh, (min(im.width - W, x + b * 2), min(im.height - H, y + b * 2)))
+    base.alpha_composite(sh, (max(0, min(im.width - W, x + b * 2)), max(0, min(im.height - H, y + b * 2))))
     base.paste(box, (x, y))
     return base.convert("RGB")
