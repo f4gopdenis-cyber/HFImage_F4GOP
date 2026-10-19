@@ -1,5 +1,13 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 1.01 — changer de fréquence d'un clic (idée d'Allan G7VQV)
+
+- **Clic sur la fréquence** affichée (panneau en haut à gauche, ou barre d'état en bas) : menu des fréquences image **3,733 – 7,058 – 14,233 – 21,340 – 28,680 MHz** ; un clic et le poste y va par CAT, comme dans WSJT-X. La fréquence actuelle est marquée d'un ●.
+- **Bande latérale** de chaque fréquence (LSB en dessous de 10 MHz, USB au-dessus, modifiable) : le poste passe dessus, et s'il était en DATA il y reste (LSB-DATA / USB-DATA).
+- **Action → Aller sur une fréquence** : le même menu, avec **Autre fréquence…** (saisie en MHz) et **Modifier la liste…** (une ligne par fréquence, ex. « 7.058 LSB », bouton « Liste d'origine »).
+- **Clic droit dans la liste des stations → Aller sur la fréquence de cette station.**
+- Tous les types de liaison CAT : Kenwood en direct (commande FA), Hamlib, FLRig, OmniRig. Jamais pendant une émission ; sans liaison CAT, le programme explique comment la régler. HFImage vérifie que le poste est bien arrivé sur la fréquence demandée.
+
 ## Version 1.00 — liste des stations toujours lisible
 
 - **Liste des stations et Rx Ok** : le début des indicatifs pouvait être coupé (« 4FR79 » pour « 14FR79 », « A0041SWL » pour « PA0041SWL ») : un glisser à la souris décalait la liste vers la droite et elle restait décalée. Les deux listes reviennent maintenant toujours au début de la ligne, et le glisser ne les fait plus défiler sur le côté.

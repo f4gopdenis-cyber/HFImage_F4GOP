@@ -280,6 +280,13 @@ s += B(["Les fenêtres séparées restent <b>toujours devant</b> la fenêtre pri
 
 # ------------------------------------------------------------------ 4
 s.append(PageBreak())
+s.append(P("Changer de fréquence", "h2"))
+s.append(P("Avec une liaison CAT, un <b>clic sur la fréquence</b> affichée (panneau en haut à gauche, ou barre d'état en "
+           "bas) ouvre le menu des fréquences image : <b>3,733 – 7,058 – 14,233 – 21,340 – 28,680 MHz</b>. Un clic, et le "
+           "poste y va, avec la bande latérale de la fréquence (LSB en dessous de 10 MHz, USB au-dessus) ; s'il était en "
+           "DATA, il y reste. Même menu dans <b>Action → Aller sur une fréquence</b>, avec « Autre fréquence… » et "
+           "« Modifier la liste… » (une ligne par fréquence, ex. « 7.058 LSB »). Clic droit dans la liste des stations : "
+           "<b>Aller sur la fréquence de cette station</b>. Jamais pendant une émission. (Idée d'Allan G7VQV.)"))
 s.append(P("4. Recevoir des images", "h1"))
 s.append(P("L'écoute démarre toute seule si l'entrée audio est réglée (bouton <b>Écoute</b> pour arrêter / "
            "reprendre). Rien à choisir : <b>tous les modes</b> sont décodés en même temps — DATAC1X, DATAC1, DATAC3, "

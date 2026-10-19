@@ -179,6 +179,34 @@ class RigBase:
         m = (mode or "").upper().replace(" ", "")
         return "LSB" in m or m in ("DIG-L", "DIGL", "PKT-L", "DATA-L", "D-L")
 
+    def set_freq(self, hz):
+        """Change la fréquence du poste (Hz)."""
+        raise RuntimeError("ce pilote ne change pas la fréquence")
+
+    def set_sideband(self, side):
+        """« LSB » ou « USB » (sans DATA)."""
+        raise RuntimeError("ce pilote ne change pas la bande latérale")
+
+    def qsy(self, hz, side=None):
+        """Va sur la fréquence `hz`. side (« LSB » / « USB ») : bande latérale voulue sur cette
+        fréquence ; si le poste était en DATA, il y reste (LSB-DATA / USB-DATA). -> texte."""
+        hz = int(hz)
+        was = self.mode() or ""
+        self.set_freq(hz)
+        time.sleep(0.3)
+        msg = ""
+        if side and (self.is_lsb(self.mode()) != (side == "LSB")):
+            data = self.is_data(was)
+            self.set_sideband(side)
+            time.sleep(0.3)
+            if data:
+                self.set_mode("data")
+            msg = f", {self.mode() or side}"
+        got = self.freq()
+        if got and abs(got - hz) > 100:
+            raise RuntimeError(f"le poste est resté sur {got / 1e6:.3f} MHz")
+        return f"{self.model or 'poste'} : {hz / 1e6:.3f} MHz{msg}"
+
     def _side(self):
         """Bande latérale actuelle du poste : « LSB » ou « USB » (USB si inconnue)."""
         try:
@@ -224,6 +252,16 @@ class KenwoodRig(RigBase):
 
     def mode(self):
         return audio._mode_of(self.model, self.query)[0]
+
+    def set_freq(self, hz):
+        self.write(f"FA{int(hz):011d};")
+
+    def set_sideband(self, side):
+        lsb = side == "LSB"
+        if self.model in ("TS-990S", "TS-890S"):
+            self.write("OM01;" if lsb else "OM02;")
+        else:
+            self.write("MD1;" if lsb else "MD2;")
 
     def ptt(self, on, rear=True):
         if on:
@@ -337,6 +375,14 @@ class RigctlRig(RigBase):
     def mode(self):
         r = self.cmd("m", 2)
         return r[0] if r and not r[0].startswith("RPRT") else None
+
+    def set_freq(self, hz):
+        if not self._ok(f"F {int(hz)}"):
+            raise RuntimeError("Hamlib refuse le changement de fréquence")
+
+    def set_sideband(self, side):
+        if not self._ok(f"M {side} -1"):
+            raise RuntimeError(f"Hamlib refuse le passage en {side}")
 
     def ptt(self, on, rear=True):
         if not on:
@@ -537,6 +583,14 @@ class FlrigRig(RigBase):
         with self.lock:
             return str(self.srv.rig.get_mode())
 
+    def set_freq(self, hz):
+        with self.lock:
+            self.srv.rig.set_vfo(float(int(hz)))
+
+    def set_sideband(self, side):
+        with self.lock:
+            self.srv.rig.set_mode(side)
+
     def ptt(self, on, rear=True):
         with self.lock:
             self.srv.rig.set_ptt(1 if on else 0)
@@ -601,6 +655,17 @@ class OmniRigRig(RigBase):
     def mode(self):
         m = self._call(lambda: int(self.rig.Mode))
         return self.MODES.get(m, f"0x{m:x}")
+
+    def set_freq(self, hz):
+        def go():
+            try:
+                self.rig.SetSimplexMode(int(hz))       # VFO A, simplex
+            except Exception:
+                self.rig.FreqA = int(hz)
+        self._call(go)
+
+    def set_sideband(self, side):
+        self._call(lambda: setattr(self.rig, "Mode", 0x4000000 if side == "LSB" else self.PM_SSB_U))
 
     def ptt(self, on, rear=True):
         self._call(lambda: setattr(self.rig, "Tx", self.PM_TX if on else self.PM_RX))

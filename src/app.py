@@ -58,7 +58,7 @@ import random
 import wave
 
 APP = "HFImage F4GOP"
-VERSION = "1.00"
+VERSION = "1.01"
 CONF_PATH = os.path.join(os.path.expanduser("~"), ".hfimage.json")
 DEFAULT_OUT = os.path.join(os.path.expanduser("~"), "Documents", "HFImage")
 DEFAULTS = {
@@ -74,6 +74,7 @@ DEFAULTS = {
     "theme": "Vert EasyPal", "theme_color": "#3a8ee6", "font_family": "(par défaut)", "font_size": "9",
     "locator": "", "bsr_auto": True, "fix_auto": True, "ack_auto": True, "listen_after": True, "follow_mode": True,
     "cwid": False, "cat_freq": True, "lang": "", "msg_translate": True, "wait_free": True, "hyb_flash": True,
+    "freq_presets": [[3733000, "LSB"], [7058000, "LSB"], [14233000, "USB"], [21340000, "USB"], [28680000, "USB"]],
     "drm_mode": "B", "drm_qam": "QAM16", "drm_bw": "2,4 kHz", "drm_prot": "Haute (HI)", "drm_rs": "RS2",
     "wav_volume": 5, "wft_font": "Arial", "wft_neg": False, "wft_text": "",
 }
@@ -409,6 +410,10 @@ class App(tk.Tk):
         self.lb_clock.pack(side="right", padx=6)
         self.lb_clock.bind("<Button-1>", lambda e: self._clock_cycle())
         self.lb_freq = tk.Label(bar, text="", bg=GREEN_DARK, fg="#ffe066", font=("TkDefaultFont", 9, "bold"))
+        # clic sur la fréquence (barre d'état ou panneau) : menu des fréquences image (CAT)
+        for w in (self.lb_freq, self.panel.freq):
+            w.configure(cursor="hand2")
+            w.bind("<Button-1>", self._freq_menu)
         self.lb_freq.pack(side="right", padx=12)
 
         self._tab_conf()            # fenêtres Réglages et Texte (cachées)
@@ -658,6 +663,8 @@ class App(tk.Tk):
         a.add_separator()
         a.add_command(label="Signaler ma présence (QRV)", command=self.send_qrv)
         a.add_command(label="Carte des stations…", command=self.show_map)
+        self.qsy_menu = tk.Menu(a, tearoff=0, postcommand=lambda: self._fill_qsy_menu(self.qsy_menu))
+        a.add_cascade(label="Aller sur une fréquence", menu=self.qsy_menu)
         m.add_cascade(label="Action", menu=a)
         i = tk.Menu(m, tearoff=0)
         i.add_command(label="Ouvrir une image…", command=self.open_image)
@@ -1633,6 +1640,7 @@ class App(tk.Tk):
         menu = tk.Menu(self, tearoff=0)
         menu.add_command(label="Carte des stations…", command=self.show_map)
         menu.add_command(label="Signaler ma présence (QRV)", command=self.send_qrv)
+        menu.add_command(label="Aller sur la fréquence de cette station", command=self._qsy_station)
         menu.add_command(label="Vider la liste des stations", command=self._heard_clear)
         for w in (self.lst_heard, self.lst_rxok, self.lb_heard):
             w.bind("<Button-3>", lambda e, m=menu: m.tk_popup(e.x_root, e.y_root))
@@ -1890,6 +1898,141 @@ class App(tk.Tk):
             self.rxok_by_id.pop(iid, None)
         self.rxok_ctx = None
         self._rxok_show(iid)
+
+    # ------------------------------------------------- changer de fréquence par CAT (idée de G7VQV)
+    def _freq_presets(self):
+        out = []
+        for item in self.conf.get("freq_presets") or DEFAULTS["freq_presets"]:
+            try:
+                hz, side = int(item[0]), str(item[1]).upper()
+                out.append((hz, side if side in ("LSB", "USB") else ("LSB" if hz < 10_000_000 else "USB")))
+            except (TypeError, ValueError, IndexError):
+                continue
+        return out
+
+    def _fill_qsy_menu(self, m):
+        m.delete(0, "end")
+        for hz, side in self._freq_presets():
+            band = audio.band_of(hz) or ""
+            mark = "● " if self.rig_freq and abs(int(self.rig_freq) - hz) < 1500 else "   "
+            m.add_command(label=f"{mark}{hz / 1e6:.3f} MHz   {band}  {side}",
+                          command=lambda h=hz, s=side: self._qsy(h, s))
+        m.add_separator()
+        m.add_command(label=tr("Autre fréquence…"), command=self._qsy_ask)
+        m.add_command(label=tr("Modifier la liste…"), command=self._qsy_edit)
+
+    def _freq_menu(self, event=None):
+        """Clic sur la fréquence affichée : menu des fréquences image."""
+        m = tk.Menu(self, tearoff=0)
+        self._fill_qsy_menu(m)
+        x, y = (event.x_root, event.y_root) if event else (self.winfo_pointerx(), self.winfo_pointery())
+        m.tk_popup(x, y)
+
+    def _qsy(self, hz, side=None):
+        """Envoie le poste sur `hz` (Hz) par CAT, en tâche de fond."""
+        if self.tx_busy:
+            messagebox.showinfo(APP, tr("Émission en cours : changez de fréquence après."))
+            return
+        if radio.rig_entry(self.radio_cfg["rig"])["kind"] == "none":
+            messagebox.showinfo(APP, tr("Pas de liaison CAT : choisissez d'abord le poste (Réglages → Poste "
+                                        "radio…) pour que HFImage puisse changer la fréquence."))
+            return
+        side = side or ("LSB" if hz < 10_000_000 else "USB")
+        self.log(tr("Changement de fréquence :") + f" {hz / 1e6:.3f} MHz {side}…")
+
+        def run():
+            try:
+                with self.rig_lock:
+                    r = self._rig_open()
+                    msg = r.qsy(hz, side)
+                self.ui(self.log, msg)
+            except Exception as e:
+                self.ui(self.log_exc, "Changement de fréquence", e)
+                self.ui(messagebox.showerror, APP, tr("Changement de fréquence impossible :") + f"\n{e}")
+            self._rig_kick.set()                  # relecture tout de suite (fréquence, mode, bande)
+        threading.Thread(target=run, daemon=True).start()
+
+    @staticmethod
+    def _parse_mhz(txt):
+        """« 7.058 », « 7,058 », « 7058 » (kHz) ou « 7058000 » (Hz) -> Hz, sinon None."""
+        t = str(txt or "").strip().lower().replace(",", ".").replace("mhz", "").replace("khz", "").strip()
+        try:
+            v = float(t)
+        except ValueError:
+            return None
+        hz = v * 1e6 if v < 1000 else (v * 1e3 if v < 1e6 else v)
+        return int(round(hz)) if 1_000_000 <= hz <= 470_000_000 else None
+
+    def _qsy_ask(self):
+        from tkinter import simpledialog
+        cur = f"{self.rig_freq / 1e6:.3f}" if self.rig_freq else ""
+        t = simpledialog.askstring(APP, tr("Fréquence (MHz), ex. 7.058 :"), initialvalue=cur, parent=self)
+        if t is None:
+            return
+        hz = self._parse_mhz(t)
+        if hz is None:
+            messagebox.showerror(APP, tr("Fréquence illisible :") + f" {t}")
+            return
+        self._qsy(hz)
+
+    def _qsy_edit(self):
+        """Liste des fréquences du menu, une par ligne : « 7.058 LSB »."""
+        w = tk.Toplevel(self)
+        w.title(tr("Fréquences du menu"))
+        w.transient(self)
+        f = ttk.Frame(w, padding=10)
+        f.pack(fill="both", expand=True)
+        ttk.Label(f, text=tr("Une fréquence par ligne, en MHz, suivie de LSB ou USB (ex. « 7.058 LSB »)."),
+                  wraplength=380, justify="left").pack(anchor="w")
+        t = tk.Text(f, width=28, height=10, font=("TkFixedFont", 10))
+        t.pack(fill="both", expand=True, pady=6)
+        t.insert("1.0", "\n".join(f"{hz / 1e6:.3f} {side}" for hz, side in self._freq_presets()))
+        b = ttk.Frame(f)
+        b.pack(fill="x")
+
+        def save():
+            out, bad = [], []
+            for line in t.get("1.0", "end").splitlines():
+                parts = line.split()
+                if not parts:
+                    continue
+                hz = self._parse_mhz(parts[0])
+                side = parts[1].upper() if len(parts) > 1 else ""
+                if hz is None or side not in ("", "LSB", "USB"):
+                    bad.append(line.strip())
+                    continue
+                out.append([hz, side or ("LSB" if hz < 10_000_000 else "USB")])
+            if bad:
+                messagebox.showerror(APP, tr("Lignes illisibles :") + "\n" + "\n".join(bad), parent=w)
+                return
+            self.conf["freq_presets"] = sorted(out)
+            self._save_conf_file()
+            w.destroy()
+
+        def reset():
+            t.delete("1.0", "end")
+            t.insert("1.0", "\n".join(f"{hz / 1e6:.3f} {side}" for hz, side in DEFAULTS["freq_presets"]))
+        ttk.Button(b, text=tr("Enregistrer"), command=save).pack(side="right")
+        ttk.Button(b, text=tr("Annuler"), command=w.destroy).pack(side="right", padx=6)
+        ttk.Button(b, text=tr("Liste d'origine"), command=reset).pack(side="left")
+
+    def _qsy_station(self):
+        """Clic droit dans la liste des stations : aller sur la fréquence de la station choisie."""
+        lst = self.lst_heard
+        sel = lst.curselection()
+        if not sel:
+            messagebox.showinfo(APP, tr("Choisissez d'abord une station dans la liste."))
+            return
+        call = self._heard_names[sel[0]]
+        on = {str(d["call"]).upper(): d for d in self.online.values()}
+        hz = (on.get(call) or {}).get("freq") or self.heard.get(call, {}).get("freq")
+        if not hz:
+            messagebox.showinfo(APP, tr("Fréquence de cette station inconnue."))
+            return
+        hz = int(hz)
+        side = next((s for f, s in self._freq_presets() if abs(f - hz) < 50_000), None)
+        if messagebox.askyesno(APP, tr("Aller sur") + f" {hz / 1e6:.3f} MHz ({call}) ?"):
+            self._qsy(hz, side)
 
     def _heard_clear(self):
         self.heard.clear()
