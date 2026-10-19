@@ -308,7 +308,11 @@ s += N(["Onglet <b>TX</b> → <b>Ouvrir une image…</b> (JPG, PNG, GIF, WebP, A
         "(auto), le <b>Format</b> (avif conseillé) et la <b>Robustesse</b> (Auto conseillé).",
         "HFImage calcule tout seul la taille et la qualité qui tiennent dans la durée : l'image compressée "
         "s'affiche avec sa taille et sa qualité.",
-        "<b>▶ Émettre</b> (ou bouton ÉMISSION). La barre de progression suit l'émission.",
+        "<b>▶ Émettre</b> (ou bouton ÉMISSION). La barre de progression suit l'émission. Si une autre station "
+        "émet déjà (signal reçu, ou station en ligne en émission sur votre fréquence), le bouton devient "
+        "<b>ATTENTE…</b> et l'émission part toute seule 2 à 6 s après la fin de l'autre (case <b>Attendre "
+        "fréquence libre</b> sous les boutons, cochée par défaut). Clic sur ÉMISSION : annuler ; clic droit : "
+        "émettre tout de suite. Les réponses automatiques (ACK, BSR, FIX) n'attendent pas.",
         "Si des stations demandent des morceaux (BSR), <b>+ Compléter</b> / FIX envoie seulement ce qui manque."])
 s.append(img("tx.png", 165, "L'onglet TX : mode Auto, robustesse, image compressée et durée d'émission."))
 s.append(P("Mode Auto et robustesse", "h2"))

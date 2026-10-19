@@ -57,7 +57,7 @@ import random
 import wave
 
 APP = "HFImage F4GOP"
-VERSION = "0.94"
+VERSION = "0.95"
 CONF_PATH = os.path.join(os.path.expanduser("~"), ".hfimage.json")
 DEFAULT_OUT = os.path.join(os.path.expanduser("~"), "Documents", "HFImage")
 DEFAULTS = {
@@ -72,7 +72,7 @@ DEFAULTS = {
     "update_check": True,
     "theme": "Vert EasyPal", "theme_color": "#3a8ee6", "font_family": "(par défaut)", "font_size": "9",
     "locator": "", "bsr_auto": True, "fix_auto": True, "ack_auto": True, "listen_after": True, "follow_mode": True,
-    "cwid": False, "cat_freq": True, "lang": "", "msg_translate": True,
+    "cwid": False, "cat_freq": True, "lang": "", "msg_translate": True, "wait_free": True,
     "drm_mode": "B", "drm_qam": "QAM16", "drm_bw": "2,4 kHz", "drm_prot": "Haute (HI)", "drm_rs": "RS2",
     "wav_volume": 5, "wft_font": "Arial", "wft_neg": False, "wft_text": "",
 }
@@ -627,7 +627,7 @@ class App(tk.Tk):
         h.add_command(label="Réglages du serveur…", command=self.show_settings)
         m.add_cascade(label="Hybride", menu=h)
         a = tk.Menu(m, tearoff=0)
-        a.add_command(label="Émettre", command=self.transmit)
+        a.add_command(label="Émettre", command=lambda: self._tx_when_free(self.transmit, tr("image")))
         a.add_command(label="FIX / Compléter", command=self.send_fix)
         a.add_command(label="Arrêter l'émission", command=lambda: self.stop_tx.set())
         a.add_separator()
@@ -813,6 +813,13 @@ class App(tk.Tk):
             self.gbtn[key] = b
         for c in range(4):
             g.columnconfigure(c, weight=1, uniform="b")
+        self.gbtn["tx"].bind("<Button-3>", self._btn_emission_force)
+        self.v_waitfree = tk.BooleanVar(value=self.conf.get("wait_free", True))
+        tk.Checkbutton(parent, text="Attendre fréquence libre", variable=self.v_waitfree, bg=GREEN,
+                       activebackground=GREEN, font=("TkDefaultFont", 8), anchor="w",
+                       command=lambda: (self.conf.__setitem__("wait_free", bool(self.v_waitfree.get())),
+                                        self._save_conf_file())
+                       ).pack(fill="x")
         # compatibilité avec le reste du code
         self.btn_listen = self.gbtn["ecoute"]
         self.btn_bsr = self.gbtn["bsr"]
@@ -822,9 +829,111 @@ class App(tk.Tk):
         self.gbtn[key].configure(bg=BTN_ON if on else "white", relief="sunken" if on else "raised")
 
     def _btn_emission(self):
-        if self.tx_busy:
+        if getattr(self, "_wait_job", None):
+            self._wait_cancel()                    # second clic pendant l'attente : annulée
+        elif self.tx_busy:
             self.stop_tx.set()
         else:
+            self._tx_when_free(self.transmit, tr("image"))
+
+    # ---------------------------------------------------------------- attendre la fréquence libre
+    WAIT_MAX_S = 300           # au-delà, on demande s'il faut émettre quand même
+    WAIT_HOLD_S = 3.0          # fin d'un signal : la fréquence est « occupée » encore ce temps
+
+    def _freq_busy(self):
+        """Fréquence occupée par une autre station ? -> texte (qui / quoi) ou None.
+        Par radio (signal DATAC ou EasyPal en cours de décodage, si l'écoute est active) et par
+        Internet (station en ligne en émission sur notre fréquence, à 3 kHz près)."""
+        now = time.time()
+        r = self.rx_engine
+        if r is not None and self.rx_stream is not None:
+            for mode, m in r.modems.items():
+                if m.sync or now - m.last_ok < self.WAIT_HOLD_S:
+                    return f"signal {mode}"
+            if r.drm is not None and now - r.drm_t < self.WAIT_HOLD_S:
+                return "signal EasyPal"
+        if self.rig_freq:
+            mine = self.v_call.get().strip().upper()
+            for d in self.online.values():
+                if d.get("state") != "TX" or now - float(d.get("seen") or d.get("t") or 0) > 120:
+                    continue
+                call = str(d.get("call") or "").upper()
+                try:
+                    near = abs(int(d.get("freq")) - int(self.rig_freq)) <= 3000
+                except (TypeError, ValueError):
+                    near = False
+                if call and call != mine and near:
+                    return call
+        return None
+
+    def _tx_when_free(self, fn, what=""):
+        """Émission lancée à la main : tout de suite si la fréquence est libre (ou si la case
+        « Attendre fréquence libre » est décochée), sinon dès qu'elle se libère."""
+        if getattr(self, "_wait_job", None):
+            return None                            # une émission attend déjà
+        if not self.v_waitfree.get() or self.tx_busy:
+            return fn()
+        who = self._freq_busy()
+        if who is None:
+            return fn()
+        import random
+        self._wait_job = {"fn": fn, "what": what, "t0": time.time(), "free": None,
+                          "delay": random.uniform(2.0, 6.0), "who": who}
+        self._set_text(self.gbtn["tx"], "ATTENTE…")
+        self.gbtn["tx"].configure(bg="#ffb84d", activebackground="#ffc870")
+        self.log(tr("Fréquence occupée") + f" ({who}) : " + tr("émission en attente") + f" ({what}). "
+                 + tr("Clic sur ÉMISSION : annuler ; clic droit : émettre tout de suite."))
+        self._wait_tick()
+
+    def _wait_tick(self):
+        j = getattr(self, "_wait_job", None)
+        if not j:
+            return
+        now = time.time()
+        who = self._freq_busy()
+        if who:
+            j["free"], j["who"] = None, who
+            self.v_state.set(tr("En attente : fréquence occupée") + f" ({who})")
+        else:
+            j["free"] = j["free"] or now
+            left = j["delay"] - (now - j["free"])
+            self.v_state.set(tr("Fréquence libre : émission dans") + f" {max(0, left):.0f} s")
+            if left <= 0:
+                self._wait_go()
+                return
+        if now - j["t0"] > self.WAIT_MAX_S:
+            self._wait_clear()
+            if messagebox.askyesno(APP, tr("La fréquence est occupée depuis 5 minutes") + f" ({who}).\n\n"
+                                   + tr("Émettre quand même ?")):
+                j["fn"]()
+            else:
+                self.log(tr("Émission en attente annulée."))
+            return
+        self.after(500, self._wait_tick)
+
+    def _wait_clear(self):
+        self._wait_job = None
+        if not self.tx_busy:
+            self._set_text(self.gbtn["tx"], "ÉMISSION")
+            self.gbtn["tx"].configure(bg="white", activebackground="#e6ffe6")
+            self.v_state.set("RÉCEPTION" if self.rx_stream is not None else "")
+
+    def _wait_go(self):
+        j = self._wait_job
+        self._wait_clear()
+        if j:
+            self.log(tr("Fréquence libre : départ de l'émission en attente."))
+            j["fn"]()
+
+    def _wait_cancel(self):
+        self._wait_clear()
+        self.log(tr("Émission en attente annulée."))
+
+    def _btn_emission_force(self, event=None):
+        """Clic droit sur ÉMISSION : émettre tout de suite, sans attendre."""
+        if getattr(self, "_wait_job", None):
+            self._wait_go()
+        elif not self.tx_busy:
             self.transmit()
 
     def _toggle_txtinc(self):
@@ -1079,7 +1188,7 @@ class App(tk.Tk):
         self.pb_tx.pack(side="top", fill="x", pady=(0, 3))
         bt = tk.Frame(bb, bg=GREEN)
         bt.pack(side="top", fill="x")
-        ttk.Button(bt, text="▶ Émettre", command=self.transmit).pack(side="left")
+        ttk.Button(bt, text="▶ Émettre", command=lambda: self._tx_when_free(self.transmit, tr("image"))).pack(side="left")
         self.btn_comp = ttk.Button(bt, text="+ Compléter", command=lambda: self.transmit(complement=True))
         self.btn_comp.pack(side="left", padx=4)
         ttk.Button(bt, text="■ Arrêter", command=lambda: self.stop_tx.set()).pack(side="left")
@@ -1110,7 +1219,7 @@ class App(tk.Tk):
         ttk.Checkbutton(b, text="Inclure ce texte avec l'image", variable=self.v_txtinc,
                         command=lambda: (self._btn_on("txtinc", self.v_txtinc.get()), self.prepare())).pack(side="left")
         ttk.Button(b, text="Fermer", command=lambda: (w.withdraw(), self.prepare())).pack(side="right")
-        ttk.Button(b, text="Envoyer le texte seul", command=self.send_text).pack(side="right", padx=6)
+        ttk.Button(b, text="Envoyer le texte seul", command=lambda: self._tx_when_free(self.send_text, tr("texte"))).pack(side="right", padx=6)
         sf = ttk.LabelFrame(f, text="Messages envoyés — reçus par", padding=4)
         sf.pack(fill="both", expand=True, pady=(8, 0))
         self.tv_sent = ttk.Treeview(sf, columns=("h", "txt", "st"), show="headings", height=5)

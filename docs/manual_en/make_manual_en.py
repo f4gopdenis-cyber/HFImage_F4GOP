@@ -303,7 +303,11 @@ s += N(["<b>TX</b> tab → <b>Open image…</b> (JPG, PNG, GIF, WebP, AVIF, SVG,
         "<b>Format</b> (avif recommended) and <b>Robustness</b> (Auto recommended).",
         "HFImage computes the size and quality that fit in the duration: the compressed picture is shown with its "
         "size and quality.",
-        "<b>▶ Transmit</b> (or TRANSMIT button). The progress bar follows the transmission.",
+        "<b>▶ Transmit</b> (or TRANSMIT button). The progress bar follows the transmission. If another station is "
+        "already transmitting (signal being received, or online station transmitting on your frequency), the button "
+        "turns to <b>WAITING…</b> and the transmission starts by itself 2 to 6 s after the other one ends (box "
+        "<b>Wait for clear frequency</b> under the buttons, ticked by default). Click TRANSMIT: cancel; right-click: "
+        "transmit now. Automatic replies (ACK, BSR, FIX) do not wait.",
         "If stations ask for missing pieces (BSR), <b>FIX</b> sends only what is missing (automatically by default)."])
 s.append(P("Auto mode and robustness", "h2"))
 s.append(P("In <b>Auto</b> mode, HFImage chooses the mode from the <b>weakest report</b> of the stations that "

@@ -1,5 +1,15 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 0.95 — attendre que la fréquence soit libre
+
+- Nouvelle case **Attendre fréquence libre** sous les boutons, **cochée par défaut**. Si une autre station émet déjà quand vous cliquez sur ÉMISSION (ou ▶ Émettre, ou « Envoyer le texte seul »), HFImage n'émet pas par-dessus : le bouton devient **ATTENTE…** (orange), la barre d'état indique qui occupe la fréquence, et l'émission **part toute seule** dès que la fréquence se libère, après un petit délai tiré au hasard (2 à 6 s) pour que deux stations en attente ne repartent pas ensemble.
+- La fréquence est considérée occupée :
+  - **par radio** (écoute active) : un signal DATAC ou EasyPal est en cours de décodage, et encore 3 s après sa fin ;
+  - **par Internet** : une station en ligne est en émission sur votre fréquence, à 3 kHz près (fréquence du poste lue par CAT).
+- Pendant l'attente : **clic sur ÉMISSION** = annuler, **clic droit sur ÉMISSION** = émettre tout de suite.
+- Au bout de **5 minutes** d'attente, HFImage demande s'il faut émettre quand même.
+- Les **réponses automatiques** (ACK, BSR, FIX) n'attendent pas : elles sont courtes et partent juste après la fin de l'émission du correspondant.
+
 ## Version 0.94 — bouton « Répondre… » de retour
 
 - Fenêtre **Message reçu** : depuis l'ajout de la case « Traduire » (0.91), la rangée du bas était trop longue et le bouton **Répondre…** sortait de la fenêtre. Les cases (Ouvrir à chaque message reçu, Bip, Traduire) sont maintenant sur une rangée et les boutons (**Répondre…**, Copier, Fermer) sur la rangée du dessous : tout reste visible, même fenêtre réduite au minimum.
