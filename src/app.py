@@ -57,7 +57,7 @@ import random
 import wave
 
 APP = "HFImage F4GOP"
-VERSION = "0.96"
+VERSION = "0.97"
 CONF_PATH = os.path.join(os.path.expanduser("~"), ".hfimage.json")
 DEFAULT_OUT = os.path.join(os.path.expanduser("~"), "Documents", "HFImage")
 DEFAULTS = {
@@ -657,22 +657,27 @@ class App(tk.Tk):
         m.add_cascade(label="Images", menu=i)
         f = tk.Menu(m, tearoff=0)
         f.add_command(label="Enregistrer l'émission en WAV…", command=self.save_wav)
-        f.add_command(label="Décoder un fichier WAV…", command=self.decode_wav)
-        f.add_command(label="Analyser un enregistrement WAV…", command=self.analyze_wav)
+        f.add_command(label="Décoder et analyser un fichier WAV…", command=self.decode_wav)
         f.add_command(label="Relire RX (15 dernières min)", command=self.replay_rx)
         f.add_command(label="Fichiers WAV (begin / end)…", command=self.show_wav)
         f.add_command(label="Enregistrement WAVE marche / arrêt", command=self.toggle_record)
         f.add_separator()
         f.add_command(label="Journal des stations (CSV)",
                       command=lambda: self._open_path(os.path.join(DEFAULT_OUT, "stations.csv")))
-        m.add_cascade(label="Fichiers", menu=f)
-        e = tk.Menu(m, tearoff=0)
+        f.add_separator()
+        # 0.97 : l'onglet Simulation (outil d'essai) n'est plus affiché d'office
+        self.v_simtab = tk.BooleanVar(value=bool(self.conf.get("show_sim", False)))
+        f.add_checkbutton(label="Onglet Simulation (canal HF simulé)", variable=self.v_simtab,
+                          command=self._sim_tab_toggle)
+        e = tk.Menu(f, tearoff=0)
         e.add_command(label="Historique des images", command=self._clear_hist)
         e.add_command(label="Messages reçus", command=lambda: self._clear_text(self.msgbox))
         e.add_command(label="Journal des stations", command=lambda: self.tree.delete(*self.tree.get_children()))
         e.add_command(label="Waterfall", command=lambda: self.wf.clear())
         e.add_command(label="Journal à l'écran", command=lambda: self._clear_text(self.logbox))
-        m.add_cascade(label="Effacer", menu=e)
+        f.add_cascade(label="Effacer", menu=e)          # 0.97 : sous-menu de Fichiers
+        m.add_cascade(label="Fichiers", menu=f)
+        self._sim_tab_toggle(save=False)
         n = tk.Menu(m, tearoff=0)
         n.add_command(label="Mode d'emploi (PDF)", command=self.open_manual)
         n.add_command(label="Mode d'emploi en anglais (PDF)",
@@ -685,6 +690,24 @@ class App(tk.Tk):
         n.add_command(label="Licence (GNU GPL v3)", command=self._license)
         m.add_cascade(label="Infos", menu=n)
         self.config(menu=m)
+
+    def _sim_tab_toggle(self, save=True):
+        """Onglet Simulation affiché ou caché (menu Fichiers)."""
+        on = bool(self.v_simtab.get())
+        try:
+            if on:
+                self.nb.add(self.tab_sim)                 # réaffiche l'onglet caché, à sa place
+                if save:
+                    self.nb.select(self.tab_sim)
+            else:
+                if self.nb.select() == str(self.tab_sim):
+                    self.nb.select(self.tab_rx)
+                self.nb.hide(self.tab_sim)
+        except tk.TclError:
+            pass
+        if save:
+            self.conf["show_sim"] = on
+            self._save_conf_file()
 
     def _about(self):
         messagebox.showinfo(APP, f"{APP} {VERSION}" + (" (Windows 7 / 8)" if updater.LEGACY else "")
@@ -4901,10 +4924,17 @@ class App(tk.Tk):
             import anadlg
             anadlg.AnalyzerWindow(self, path)
 
-    def decode_wav(self):
-        p = filedialog.askopenfilename(filetypes=[("WAV", "*.wav"), ("Tous", "*.*")])
+    def decode_wav(self, p=None, analyze=True):
+        """Fichiers → Décoder et analyser un fichier WAV : les images du fichier arrivent comme en
+        réception, et la fenêtre d'analyse (niveau, QRM, trames, SNR, mode conseillé) s'ouvre."""
+        if p is None:
+            last = getattr(self, "rec_path", None)
+            p = filedialog.askopenfilename(filetypes=[("WAV", "*.wav"), ("Tous", "*.*")],
+                                           initialdir=os.path.dirname(last) if last else self.v_folder.get())
         if not p:
             return
+        if analyze:
+            self.analyze_wav(p)
         self.log(f"Décodage de {os.path.basename(p)}…")
         eng = self._new_engine()
         eng.on_image = lambda *a: self.ui(self._got_image, *a, True)      # fichier : mode d'émission gardé

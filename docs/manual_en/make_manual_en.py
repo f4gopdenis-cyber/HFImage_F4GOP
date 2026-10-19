@@ -258,7 +258,7 @@ s += tip("Kenwood TS-890 / TS-990: DATA audio source = USB Audio, <b>DATA VOX OF
 s.append(P("Layout: separate windows", "h2"))
 s.append(P("Menu <b>Windows</b>: tick an area to turn it into a <b>separate window</b>, placed and sized wherever you want, "
            "even on another screen: <b>panel and buttons</b>, <b>waterfall</b>, <b>stations heard</b>, <b>Stations</b> tab and "
-           "<b>gallery</b>. The RX, TX and Simulation tabs and the log stay in the main window."))
+           "<b>gallery</b>. The RX and TX tabs and the log stay in the main window. The <b>Simulation</b> tab (simulated HF channel, to try without a radio) is shown with Files → Simulation tab."))
 s += B(["Separate windows always stay <b>in front of</b> the main window and are minimised with it.",
         "Untick the area, or close its window, to put it back. “Put everything back in the main window” gathers "
         "everything; “Settings → Original window layout” too.",
@@ -507,10 +507,10 @@ s += B(["<b>Noise and QSB</b> (HFImage modes): Auto mode + Auto robustness. If l
         "move the frequency."])
 s.append(P("Reception analyser", "h2"))
 s.append(P("To understand a failed reception: <b>WAVE</b> button → <b>● Record RX</b> during the reception, then "
-           "<b>Files → Analyse a WAV recording…</b>. HFImage reports the input level (clipping, too low), narrow "
+           "<b>Files → Decode and analyse a WAV file…</b> (the pictures in the file are decoded and the report opens). HFImage reports the input level (clipping, too low), narrow "
            "interference and its frequency, the frames received / lost in each mode, SNR, frequency offset between "
            "the radios, the type of losses (QSB or isolated), what the QRM cutter saved, and the recommended mode. "
-           "A recording can also be decoded again with <b>Files → Decode a WAV file</b> (HFImage and EasyPal)."))
+           "The same command decodes HFImage and EasyPal pictures."))
 s.append(img("analyse.png", 150, "The analyser: plain-language diagnosis and SNR of each frame "
                                   "(screenshot of the French interface)."))
 

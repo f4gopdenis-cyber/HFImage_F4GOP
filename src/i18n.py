@@ -1375,6 +1375,8 @@ T = [
     ("Bip", "Beep", "Piepton", "Pitido", "Bip"),
     ("Traduire", "Translate", "Übersetzen", "Traducir", "Tradurre"),
     ("DATAC13 : annonce hybride éclair (l'image passe par Internet).", "DATAC13: flash hybrid announcement (the picture goes via the Internet).", "DATAC13: Blitz-Hybrid-Ansage (das Bild kommt über das Internet).", "DATAC13: anuncio híbrido relámpago (la imagen pasa por Internet).", "DATAC13: annuncio ibrido lampo (l'immagine passa via Internet)."),
+    ("Décoder et analyser un fichier WAV…", "Decode and analyse a WAV file…", "WAV-Datei dekodieren und analysieren…", "Decodificar y analizar un WAV…", "Decodifica e analizza un file WAV…"),
+    ("Onglet Simulation (canal HF simulé)", "Simulation tab (simulated HF channel)", "Registerkarte Simulation (simulierter KW-Kanal)", "Pestaña Simulación (canal HF simulado)", "Scheda Simulazione (canale HF simulato)"),
     ("Attendre fréquence libre", "Wait for clear frequency", "Auf freie Frequenz warten", "Esperar frecuencia libre", "Attendere frequenza libera"),
     ("ATTENTE…", "WAITING…", "WARTEN…", "ESPERA…", "ATTESA…"),
     ("image", "picture", "Bild", "imagen", "immagine"),

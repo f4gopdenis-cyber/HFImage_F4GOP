@@ -1,5 +1,11 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 0.97 — menus et onglets rangés (rien n'est supprimé)
+
+- **Onglet Simulation** : c'est un outil d'essai (canal HF simulé), pas de trafic. Il n'est plus affiché d'office : **Fichiers → Onglet Simulation (canal HF simulé)** l'affiche ou le cache (le choix est gardé). Il reste donc RX, TX, Stations et Galerie.
+- **Menu Effacer** : déplacé en sous-menu de **Fichiers → Effacer** (mêmes commandes : historique des images, messages reçus, journal des stations, waterfall, journal à l'écran).
+- **Fichiers → Décoder et analyser un fichier WAV…** remplace « Décoder un fichier WAV… » et « Analyser un enregistrement WAV… » : on choisit le fichier une seule fois, ses images sont décodées comme en réception et la fenêtre d'analyse (niveau, QRM, trames, SNR, mode conseillé) s'ouvre en même temps.
+
 ## Version 0.96 — le waterfall et l'analyseur connaissent le DATAC13
 
 - **Waterfall** : la bande du **DATAC13** (annonce hybride éclair, 200 Hz autour de 1 500 Hz) a son repère dans l'échelle, et elle est encadrée en rose quand une annonce éclair est reçue, comme les autres modes.

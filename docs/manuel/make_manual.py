@@ -262,7 +262,7 @@ s += tip("Kenwood TS-890 / TS-990 : source audio DATA = USB Audio, <b>DATA VOX s
 s.append(P("Disposition : fenêtres séparées", "h2"))
 s.append(P("Menu <b>Fenêtres</b> : cochez une zone pour en faire une <b>fenêtre séparée</b>, à placer et dimensionner où vous "
            "voulez, même sur un autre écran : <b>panneau et boutons</b>, <b>waterfall</b>, <b>stations entendues</b>, onglet "
-           "<b>Stations</b> et <b>galerie</b>. Les onglets RX, TX, Simulation et le journal restent dans la fenêtre principale."))
+           "<b>Stations</b> et <b>galerie</b>. Les onglets RX, TX et le journal restent dans la fenêtre principale. L'onglet <b>Simulation</b> (canal HF simulé, pour essayer sans poste) s'affiche par Fichiers → Onglet Simulation."))
 s += B(["Les fenêtres séparées restent <b>toujours devant</b> la fenêtre principale et se réduisent avec elle.",
         "Décochez la zone, ou fermez sa fenêtre, pour la remettre à sa place. « Tout remettre dans la fenêtre "
         "principale » rassemble tout ; « Réglages → Disposition d'origine des fenêtres » aussi.",
@@ -559,7 +559,7 @@ s += B(["<b>Bruit et QSB</b> : mode Auto + robustesse Auto. Si les pertes vienne
 s.append(P("Analyseur de réception", "h2"))
 s.append(P("Pour comprendre une réception ratée : bouton <b>WAVE</b> → <b>● Enregistrer RX</b> (ou menu "
            "Fichiers → Enregistrement WAVE marche / arrêt) pendant la réception, puis "
-           "<b>Fichiers → Analyser un enregistrement WAV…</b>. HFImage indique le niveau d'entrée (écrêtage, trop "
+           "<b>Fichiers → Décoder et analyser un fichier WAV…</b> (les images du fichier sont décodées et le rapport s'ouvre). HFImage indique le niveau d'entrée (écrêtage, trop "
            "faible), le brouillage étroit et sa fréquence, pour chaque mode les trames justes / perdues, le SNR, "
            "le décalage de fréquence entre les postes, le type de pertes (QSB ou isolées), ce que le coupe-QRM a "
            "sauvé, et le mode conseillé. « Copier le rapport » pour l'envoyer par message."))
