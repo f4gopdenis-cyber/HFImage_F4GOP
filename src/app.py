@@ -56,7 +56,7 @@ import random
 import wave
 
 APP = "HFImage F4GOP"
-VERSION = "0.87"
+VERSION = "0.88"
 CONF_PATH = os.path.join(os.path.expanduser("~"), ".hfimage.json")
 DEFAULT_OUT = os.path.join(os.path.expanduser("~"), "Documents", "HFImage")
 DEFAULTS = {
@@ -193,6 +193,14 @@ def easypal_hybrid_params(cfg_call):
     """Annonce hybride EasyPal : toujours en mode E, QAM4, protection haute, entrelacement long
     (réglages imposés par EasyPal / QSSTV pour ce petit fichier)."""
     return hamdrm.make_params(cfg_call or "NOCALL", mode=2, bandwidth=1, qam=0, protection=0, interleaver=0, rs=0)
+
+
+class _NeedCompute(Exception):
+    """Préparation en tâche de fond : ce calcul n'est pas encore fait."""
+
+    def __init__(self, key, obj, fn, args, kw):
+        super().__init__(key[0])
+        self.key, self.obj, self.fn, self.args, self.kw = key, obj, fn, args, kw
 
 
 class HybridJob:
@@ -1924,7 +1932,9 @@ class App(tk.Tk):
         ttk.Scale(g, variable=self.v_lvl, from_=1, to=100, length=260).grid(row=2, column=1, sticky="w", padx=6)
         bf = ttk.Frame(g)
         bf.grid(row=3, column=0, columnspan=2, sticky="w", pady=(4, 0))
-        ttk.Button(bf, text="Actualiser", command=self._fill_devices).pack(side="left")
+        ttk.Button(bf, text="Actualiser", command=lambda: self._rescan_audio(manual=True)).pack(side="left")
+        self.cb_in.bind("<<ComboboxSelected>>", lambda e: self._in_changed())
+        self.cb_out.bind("<<ComboboxSelected>>", lambda e: self.save_conf(quiet=True))
         ttk.Button(bf, text="Tester la sortie (1 kHz)", command=self.test_audio).pack(side="left", padx=6)
         ttk.Label(g, text="Kenwood : « Haut-parleurs (USB Audio CODEC) » et\n"
                           "« Microphone (USB Audio CODEC) », de préférence en [MME].\n"
@@ -2204,7 +2214,45 @@ class App(tk.Tk):
         if radio.cat_signature(old) != radio.cat_signature(cfg):
             self._rig_close()
             self._rig_kick.set()
+        # autre poste : son codec USB vient souvent d'être branché -> cartes son relues
+        self.after(300, lambda: self._rescan_audio(manual=False))
 
+    def _in_changed(self):
+        """Nouvelle entrée audio choisie : l'écoute repart tout de suite sur elle
+        (plus besoin de redémarrer le programme)."""
+        self.save_conf(quiet=True)
+        if self.tx_busy:
+            return                                     # l'écoute reprendra après l'émission, sur la nouvelle entrée
+        if self.rx_stream is not None:
+            self.toggle_listen(quiet=True)             # arrêt
+        if self.v_in.get():
+            self.toggle_listen(quiet=True)             # reprise sur la nouvelle entrée
+            if self.rx_stream is not None:
+                self.log(f"Réception sur : {self.v_in.get()}")
+
+    def _rescan_audio(self, manual=False):
+        """Relit la liste des cartes son de Windows (un poste branché ou rallumé après le
+        démarrage du programme n'apparaissait qu'après un redémarrage), puis relance l'écoute."""
+        if self.tx_busy:
+            if manual:
+                messagebox.showinfo(APP, "Attendez la fin de l'émission pour actualiser les cartes son.")
+            return
+        listening = self.rx_stream is not None
+        if listening:
+            self.toggle_listen(quiet=True)
+        try:
+            S = sd()
+            S._terminate()
+            S._initialize()
+        except Exception as e:
+            self.log(f"Audio : relecture des cartes son impossible ({e})")
+        self._fill_devices()
+        n_in = len(self.cb_in["values"] or ())
+        n_out = len(self.cb_out["values"] or ())
+        if manual or listening:
+            self.log(f"Cartes son relues : {n_out} sortie(s), {n_in} entrée(s).")
+        if (listening or manual) and self.v_in.get() and self.rx_stream is None:
+            self.toggle_listen(quiet=True)
     def _rig_close(self):
         with self.rig_lock:
             r, self.rig = self.rig, None
@@ -3393,7 +3441,87 @@ class App(tk.Tk):
                    if src == "reports" else f"stations entendues, la plus faible à {snr:+.0f} dB")
         return (mode, why) if explain else mode
 
-    def prepare(self):
+    # ------------------------------------------------------------- préparation en tâche de fond
+    def _cz(self, fn, *args, **kw):
+        """Appel lourd de la préparation (compression…) : résultat gardé en mémoire. Pendant une
+        préparation en tâche de fond, un calcul absent lève _NeedCompute : il est fait dans un
+        autre fil, puis la préparation recommence et le trouve tout prêt."""
+        obj = args[0]
+        key = (getattr(fn, "__name__", str(fn)), id(obj), getattr(obj, "size", None), args[1:],
+               tuple(sorted(kw.items())))
+        cache = self.__dict__.setdefault("_cz_cache", {})
+        hit = cache.get(key)
+        if hit is not None and hit[0] is obj:
+            return hit[1]
+        if getattr(self, "_cz_async", False):
+            raise _NeedCompute(key, obj, fn, args, kw)
+        res = fn(*args, **kw)
+        self._cz_put(key, obj, res)
+        return res
+
+    def _cz_put(self, key, obj, res):
+        cache = self.__dict__.setdefault("_cz_cache", {})
+        cache[key] = (obj, res)
+        while len(cache) > 40:
+            cache.pop(next(iter(cache)))
+
+    def prepare(self, sync=False):
+        """Prépare l'image à émettre sans figer la fenêtre : les compressions longues sont
+        faites en tâche de fond (« Calcul de l'image… »), un nouveau réglage relance le calcul.
+        sync=True : tout de suite (au moment d'émettre)."""
+        if sync:
+            self._cz_async = False
+            self._prep_waiting = False
+            return self._prepare_sync()
+        self._cz_async = True
+        try:
+            self._prepare_sync()
+            self._prep_waiting = False
+            self._prep_show_busy(False)
+        except _NeedCompute as nc:
+            self._prep_waiting = True
+            self._prep_show_busy(True)
+            self._prep_start(nc)
+        finally:
+            self._cz_async = False
+
+    def _prep_start(self, nc):
+        if getattr(self, "_prep_thread_busy", False):
+            self._prep_again = True                    # un calcul tourne : on refera la préparation après
+            return
+        self._prep_thread_busy, self._prep_again = True, False
+
+        def run():
+            try:
+                res = nc.fn(*nc.args, **nc.kw)
+                self.ui(self._cz_put, nc.key, nc.obj, res)
+            except Exception as e:
+                self.ui(self.log_exc, "Préparation de l'image", e)
+                self.ui(self._prep_failed, nc)
+                return
+            finally:
+                self.ui(setattr, self, "_prep_thread_busy", False)
+            self.ui(self.prepare)
+
+        threading.Thread(target=run, daemon=True).start()
+
+    def _prep_failed(self, nc):
+        self._prep_waiting = False
+        self._prep_show_busy(False)
+
+    def _prep_show_busy(self, busy):
+        if busy == getattr(self, "_prep_busy_shown", False):
+            return
+        self._prep_busy_shown = busy
+        if busy:
+            self.v_txinfo.set(tr("Calcul de l'image…"))
+            self._set_text(self.lb_cmp_info, tr("Calcul de l'image…"))
+        try:
+            self.lb_cmp.configure(cursor="watch" if busy else "")
+        except tk.TclError:
+            pass
+
+    def _prepare_sync(self):
         """Fait tenir l'image dans la durée demandée : calcule le budget en octets
         pour le mode et la redondance, puis la taille/qualité qui y entrent."""
         hyb = bool(self.v_hyb.get())
@@ -3421,23 +3549,18 @@ class App(tk.Tk):
         preview = None
         if self.v_prev.get() and seconds >= PREVIEW_MIN_S:
             w = {"DATAC1X": 200, "DATAC1": 160, "DATAC3": 128, "DATAC4": 96}[mode]
-            preview = engine.compress(src, w, PREVIEW_BYTES[mode], pfmt)[0]
+            preview = self._cz(engine.compress, src, w, PREVIEW_BYTES[mode], pfmt)[0]
             seconds_main = seconds - engine.Transmission(preview, pfmt, "X", mode, 0.25).estimate_s() + 0.7
         else:
             seconds_main = seconds
         budget = engine.max_bytes_for(mode, seconds_main, over)
-        self.config(cursor="watch")
-        self.update_idletasks()
-        try:
-            if fmt == "original":
-                data, fmt = self._payload(fmt)
-                q, size = None, (self.src_img.width, self.src_img.height)
-            elif width == "auto":
-                data, q, size = engine.compress_auto(src, budget, fmt)
-            else:
-                data, q, size = engine.compress(src, width, budget, fmt)
-        finally:
-            self.config(cursor="")
+        if fmt == "original":
+            data, fmt = self._payload(fmt)
+            q, size = None, (self.src_img.width, self.src_img.height)
+        elif width == "auto":
+            data, q, size = self._cz(engine.compress_auto, src, budget, fmt)
+        else:
+            data, q, size = self._cz(engine.compress, src, width, budget, fmt)
         if len(data) > budget:
             mini = seconds
             while engine.max_bytes_for(mode, mini, over) < len(data) and mini < 7200:
@@ -3486,7 +3609,7 @@ class App(tk.Tk):
             lines.append(f"Aperçu reçu après ~{self.tx.preview_s():.0f} s")
         if q is not None and q < 35:
             # combien de temps pour une qualité correcte à cette taille ?
-            need = engine.bytes_for_quality(src, size[0], 45, fmt)
+            need = self._cz(engine.bytes_for_quality, src, size[0], 45, fmt)
             t_need = seconds
             while engine.max_bytes_for(mode, t_need, over) < need and t_need < 7200:
                 t_need += 15
@@ -3506,15 +3629,11 @@ class App(tk.Tk):
         else:
             fmt = DRM_FORMATS.get(fmt, "jp2")
             budget = engine.drm_budget(seconds, params)
-            self.config(cursor="watch")
-            self.update_idletasks()
-            try:
-                if width == "auto":
-                    data, q, size = engine.compress_auto(src, budget, fmt, widths=(800, 640, 480, 400, 320, 240, 160))
-                else:
-                    data, q, size = engine.compress(src, width, budget, fmt)
-            finally:
-                self.config(cursor="")
+            if width == "auto":
+                data, q, size = self._cz(engine.compress_auto, src, budget, fmt,
+                                         widths=(800, 640, 480, 400, 320, 240, 160))
+            else:
+                data, q, size = self._cz(engine.compress, src, width, budget, fmt)
             if len(data) > budget:
                 mini = seconds
                 while engine.drm_budget(mini, params) < len(data) and mini < 7200:
@@ -3565,15 +3684,7 @@ class App(tk.Tk):
                 limit = int(float(self.v_gifkb.get()) * 1000)
             except (tk.TclError, ValueError):
                 limit = 2_000_000
-            ck = (id(self.src_raw), limit)
-            if ck not in self._gif_cache:
-                self.config(cursor="watch")
-                self.update_idletasks()
-                try:
-                    self._gif_cache = {ck: imgfmt.gif_shrink(self.src_raw, limit)}
-                finally:
-                    self.config(cursor="")
-            data, how = self._gif_cache[ck]
+            data, how = self._cz(imgfmt.gif_shrink, self.src_raw, limit)
             fmt, q = "gif", None
             im0 = Image.open(io.BytesIO(data))
             size = im0.size
@@ -3581,7 +3692,7 @@ class App(tk.Tk):
             data, fmt = self._payload(fmt, hybrid=True)
             q, size = None, (self.src_img.width, self.src_img.height)
         else:
-            data, q, size = engine.compress(src, width, int(kb * 1000), fmt)
+            data, q, size = self._cz(engine.compress, src, width, int(kb * 1000), fmt)
         call = self.v_call.get().strip().upper() or "NOCALL"
         key = ("hyb", data, fmt, call)
         if self.tx is None or getattr(self.tx, "key", None) != key:
@@ -3693,9 +3804,12 @@ class App(tk.Tk):
         return True
 
     def transmit(self, complement=False, extra=None, tx=None, quiet=False):
+        if tx is None and getattr(self, "_prep_waiting", False) and not self.tx_busy:
+            self.prepare(sync=True)       # calcul de l'image encore en cours : on le termine maintenant
+            self._prep_show_busy(False)
         if tx is None and self.tx is not None and isinstance(self.tx, HybridJob) != bool(self.v_hyb.get()):
             self.tx = None
-            self.prepare()                # l'image prête était pour l'autre mode
+            self.prepare(sync=True)       # l'image prête était pour l'autre mode
         tx = tx or self.tx
         if not tx or self.tx_busy:
             if not tx and not quiet:
@@ -3709,7 +3823,7 @@ class App(tk.Tk):
                      or abs(tx.overhead - self._robust_pct(self._tx_mode()) / 100) > 1e-6)):
             # les reports ont changé depuis la préparation : image refaite pour le nouveau mode
             old = tx.mode
-            self.prepare()
+            self.prepare(sync=True)
             if self.tx is None:
                 return False
             tx = self.tx

@@ -1,5 +1,13 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 0.88 — interface plus réactive, changement de poste sans redémarrer
+
+- **Onglet TX plus fluide** : la recherche de la taille et de la qualité de l'image (à l'ouverture d'une image et à chaque changement de Mode, Durée, Largeur, Format, incrustation…) se fait maintenant **en tâche de fond**. La fenêtre ne se fige plus : mesuré avec une photo de 12 Mpx, 0,3 s au pire au lieu de 2,5 à 3,3 s à chaque réglage. Pendant le calcul, l'onglet TX affiche « Calcul de l'image… » ; plusieurs réglages changés à la suite ne s'additionnent plus. Les résultats déjà calculés sont gardés : revenir à un réglage précédent est immédiat. « Émettre » pendant un calcul attend simplement qu'il se termine.
+- **Changement de poste sans redémarrer** :
+  - choisir une autre **Entrée (depuis le poste)** dans les Réglages relance tout de suite l'écoute sur cette entrée (avant, il fallait redémarrer le programme pour voir la réception) ;
+  - **Actualiser** relit vraiment la liste des cartes son de Windows : un poste branché ou allumé après le démarrage de HFImage apparaît maintenant sans redémarrer ;
+  - valider la fenêtre **Poste radio** relit aussi les cartes son (le codec USB d'un autre poste vient souvent d'être branché).
+
 ## Version 0.87 — indicatif du correspondant dans le panneau
 
 - **L'indicatif de l'ancien correspondant restait affiché** : le panneau était rafraîchi avec l'indicatif de la dernière image DATAC, qui écrasait celui d'une annonce hybride ou d'une image EasyPal plus récente. Maintenant, **la réception la plus récente gagne**.

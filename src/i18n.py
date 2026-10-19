@@ -1336,6 +1336,8 @@ T = [
      "Il programma è gratuito. Prima del primo utilizzo, leggete la licenza (riassunto in inglese alla fine) e cliccate «Accetto» per continuare."),
     ("J'accepte", "I accept", "Ich akzeptiere", "Acepto", "Accetto"),
     ("Je refuse", "I decline", "Ich lehne ab", "Rechazo", "Rifiuto"),
+    ("Calcul de l'image…", "Computing the picture…", "Bild wird berechnet…", "Calculando la imagen…", "Calcolo dell'immagine…"),
+    ("Attendez la fin de l'émission pour actualiser les cartes son.", "Wait for the end of the transmission to refresh the sound cards.", "Warten Sie das Ende der Sendung ab, um die Soundkarten zu aktualisieren.", "Espere al final de la emisión para actualizar las tarjetas de sonido.", "Attendete la fine della trasmissione per aggiornare le schede audio."),
     ("Fenêtres", "Windows", "Fenster", "Ventanas", "Finestre"),
     ("Panneau et boutons", "Panel and buttons", "Anzeige und Tasten", "Panel y botones", "Pannello e pulsanti"),
     ("Stations entendues", "Stations heard", "Gehörte Stationen", "Estaciones oídas", "Stazioni ascoltate"),
