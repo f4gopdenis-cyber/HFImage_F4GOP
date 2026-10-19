@@ -56,7 +56,7 @@ import random
 import wave
 
 APP = "HFImage F4GOP"
-VERSION = "0.86"
+VERSION = "0.87"
 CONF_PATH = os.path.join(os.path.expanduser("~"), ".hfimage.json")
 DEFAULT_OUT = os.path.join(os.path.expanduser("~"), "Documents", "HFImage")
 DEFAULTS = {
@@ -2406,8 +2406,8 @@ class App(tk.Tk):
         rate = self._drm_rate(m, bw, {4: 0, 16: 1, 64: 2}.get(qam, 1), 1 if prot == 1 else 0) \
             if 0 <= m <= 2 else None
         P.set_cell("Débit b/s", "RX", str(rate) if rate else "—")
-        if good.get("callsign") or st.get("callsign"):
-            P.set_call(st.get("callsign") or good.get("callsign"))
+        if st.get("callsign") or good.get("callsign"):
+            self._rx_call(st.get("callsign") or good.get("callsign"), eng.drm_t)
         got, K = st.get("seg_received", 0), st.get("seg_total", 0)
         if K > 0:
             self._rx_tab_auto(("easypal", K, st.get("callsign") or good.get("callsign")))
@@ -2459,7 +2459,15 @@ class App(tk.Tk):
             P.set_cell("Bande kHz", "RX", f"{MODE_BW.get(mode, 0):.2f}")
             P.set_cell("Débit b/s", "RX", str(MODE_BPS.get(mode, "—")))
             if s:
-                P.set_call(s["info"]["call"] if s["info"]["call"] != "?" else P.call.cget("text"))
+                c = s["info"]["call"]
+                if c and c != "?":
+                    self._rx_call(c, act["t"])
+                elif act["t"] >= self.__dict__.get("_pcall", (0.0,))[0] and now - act["t"] < 20:
+                    # image en cours, indicatif pas encore reçu (il arrive en fin d'émission) :
+                    # pas l'indicatif de la station précédente ; celle qui émet sur notre
+                    # fréquence d'après les stations en ligne, sinon « — »
+                    g = self._guess_tx_call()
+                    self._rx_call(g, act["t"], guess=bool(g))
                 prog = eng.rcv.progress(iid)
                 if prog:
                     got, K = prog
@@ -4493,6 +4501,7 @@ class App(tk.Tk):
                 if rec["size"] != fl["size"]:
                     raise RuntimeError("le lien reçu par Internet ne correspond pas à l'annonce radio")
                 self.ui(self._heard, rec["call"], snr, "Annonce hybride éclair")
+                self.ui(self._rx_call, rec["call"])
                 self.ui(self.log, f"Hybride éclair de {rec['call']} : {rec['url']}")
                 data = hybrid.download_retry(rec["url"], fl["size"], rec["crc"],
                                              log=lambda m: self.ui(self.log, m))
@@ -4664,11 +4673,44 @@ class App(tk.Tk):
 
         threading.Thread(target=run, daemon=True).start()
 
+    # ------------------------------------------------------------- indicatif du panneau
+    def _rx_call(self, call, t=None, guess=False):
+        """Indicatif de la station reçue dans le panneau : la réception la plus récente gagne
+        (une ancienne image DATAC n'écrase plus une annonce hybride ou une image EasyPal).
+        guess : indicatif déduit des stations en ligne (affiché avec « ? »)."""
+        t = time.time() if t is None else t
+        cur = self.__dict__.setdefault("_pcall", (0.0, None, False))
+        if t < cur[0] or (t == cur[0] and guess and not cur[2] and cur[1]):
+            return
+        self._pcall = (t, call, guess)
+        self.panel.set_call(f"{call} ?" if guess and call else call)
+
+    def _guess_tx_call(self):
+        """Station en ligne actuellement en émission sur notre fréquence (à 3 kHz près),
+        s'il n'y en a qu'une -> indicatif, sinon None."""
+        mine = self.v_call.get().strip().upper()
+        cands = set()
+        for d in self.online.values():
+            if d.get("state") != "TX" or time.time() - float(d.get("seen") or d.get("t") or 0) > 300:
+                continue
+            call = str(d.get("call") or "").upper()
+            if not call or call == mine:
+                continue
+            f = d.get("freq")
+            if self.rig_freq and f:
+                try:
+                    if abs(int(f) - int(self.rig_freq)) > 3000:
+                        continue
+                except (TypeError, ValueError):
+                    continue
+            cands.add(call)
+        return cands.pop() if len(cands) == 1 else None
+
     def _rx_status(self, st):
         if st["mode"] != engine.DRM_MODE:            # EasyPal : bande exacte posée par le panneau
             self.wf.mark_mode(st["mode"])
         if st.get("call") and st["mode"] != "DATAC0":
-            self.panel.set_call(st["call"])
+            self._rx_call(st["call"])
         prog = st.get("progress")
         txt = f"Mode {st['mode']}  —  SNR {st['snr']:.1f} dB\nTrames valides : {st['frames']}"
         if st.get("call"):

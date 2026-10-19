@@ -1,5 +1,11 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 0.87 — indicatif du correspondant dans le panneau
+
+- **L'indicatif de l'ancien correspondant restait affiché** : le panneau était rafraîchi avec l'indicatif de la dernière image DATAC, qui écrasait celui d'une annonce hybride ou d'une image EasyPal plus récente. Maintenant, **la réception la plus récente gagne**.
+- **Pendant une image DATAC, l'indicatif n'arrive qu'en fin d'émission** (trame d'identification). En attendant, le panneau n'affiche plus l'indicatif précédent : s'il n'y a **qu'une seule station en ligne en émission sur votre fréquence** (à 3 kHz près), son indicatif est affiché tout de suite, suivi de « ? » (ex. « M0JGM ? ») ; sinon « — ». Le « ? » disparaît dès que l'identification est reçue.
+- **Hybride éclair** : l'indicatif, reçu par Internet avec le lien, s'affiche maintenant dans le panneau.
+
 ## Version 0.86 — fenêtre Réglages utilisable sur les écrans moyens
 
 - **Réglages** : sur un écran moyen (par exemple 1366×768), la fenêtre dépassait en bas de l'écran et l'on ne pouvait plus atteindre « Enregistrer les réglages » ni « Fermer ». La fenêtre s'ouvre maintenant à la taille de l'écran, son contenu **défile** (barre de défilement et molette de la souris), et les boutons **Enregistrer les réglages / Ouvrir le journal / Fermer** restent toujours visibles en bas.
