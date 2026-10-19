@@ -45,6 +45,7 @@ from i18n import tr
 import protocol
 import qsl
 import rxclean
+import translate
 import shutil
 import webbrowser
 import wavtext
@@ -56,7 +57,7 @@ import random
 import wave
 
 APP = "HFImage F4GOP"
-VERSION = "0.90"
+VERSION = "0.91"
 CONF_PATH = os.path.join(os.path.expanduser("~"), ".hfimage.json")
 DEFAULT_OUT = os.path.join(os.path.expanduser("~"), "Documents", "HFImage")
 DEFAULTS = {
@@ -71,7 +72,7 @@ DEFAULTS = {
     "update_check": True,
     "theme": "Vert EasyPal", "theme_color": "#3a8ee6", "font_family": "(par défaut)", "font_size": "9",
     "locator": "", "bsr_auto": True, "fix_auto": True, "ack_auto": True, "listen_after": True, "follow_mode": True,
-    "cwid": False, "cat_freq": True, "lang": "",
+    "cwid": False, "cat_freq": True, "lang": "", "msg_translate": True,
     "drm_mode": "B", "drm_qam": "QAM16", "drm_bw": "2,4 kHz", "drm_prot": "Haute (HI)", "drm_rs": "RS2",
     "wav_volume": 5, "wft_font": "Arial", "wft_neg": False, "wft_text": "",
 }
@@ -4867,6 +4868,7 @@ class App(tk.Tk):
             self._msg_popup(dict(id=hdr.get("id"), call=hdr.get("call"), text=hdr["text"], mode=mode, snr=snr0,
                                  utc=time.strftime("%H:%M", time.gmtime()), local=time.strftime("%H:%M"),
                                  image=img))
+            self._translate_msg(hdr.get("id"), hdr["text"])
         kind = "Aperçu reçu" if hdr.get("preview") else ("Texte reçu" if hdr.get("fmt") == "txt" else
                                                          ("Fichier reçu" if hdr.get("fmt") == "file" else "Image reçue"))
         if hdr.get("fmt") == "file":
@@ -5023,6 +5025,26 @@ class App(tk.Tk):
         tv.tag_configure("ok", foreground="#1c7f1c")
         tv.tag_configure("none", foreground="#b00000")
         tv.tag_configure("wait", foreground="#b06000")
+
+    def _translate_msg(self, iid, text):
+        """Traduit un message reçu dans la langue du programme (en tâche de fond, par Internet).
+        Le message d'origine reste affiché ; la traduction s'ajoute quand elle arrive."""
+        if not self.conf.get("msg_translate", True):
+            return
+        target = i18n.get_lang()
+        translate.translate_async(text, target,
+                                  lambda res: res and self.ui(self._show_translation, iid, text, target, res))
+
+    def _show_translation(self, iid, text, target, res):
+        out, src = res
+        pair = f"{(src or '?').upper()} → {target.upper()}"
+        self.msgbox.configure(state="normal")
+        self.msgbox.insert("1.0", "   ↳ " + tr("traduction") + f" ({pair}) : {out}\n", "trad")
+        self.msgbox.tag_configure("trad", foreground="#1f4fa8")
+        self.msgbox.configure(state="disabled")
+        self.log(tr("Traduction du message") + f" ({pair}) : {out[:80]}")
+        if getattr(self, "msgwin", None) is not None and self.msgwin.winfo_exists():
+            self.msgwin.set_translation(iid, text, out, pair)
 
     def _msg_popup(self, item):
         """Fenêtre « Message reçu » (ouverte automatiquement si l'option est cochée)."""

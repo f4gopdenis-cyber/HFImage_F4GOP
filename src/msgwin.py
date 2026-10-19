@@ -73,6 +73,8 @@ class MessageWindow(tk.Toplevel):
         ttk.Checkbutton(bot, text="Ouvrir à chaque message reçu", variable=self.v_auto,
                         command=self._store).pack(side="left")
         ttk.Checkbutton(bot, text="Bip", variable=self.v_bell, command=self._store).pack(side="left", padx=(10, 0))
+        self.v_trad = tk.BooleanVar(value=app.conf.get("msg_translate", True))
+        ttk.Checkbutton(bot, text="Traduire", variable=self.v_trad, command=self._store).pack(side="left", padx=(10, 0))
         ttk.Button(bot, text="Fermer", command=self.withdraw).pack(side="right")
         ttk.Button(bot, text="Copier", command=self.copy).pack(side="right", padx=4)
         ttk.Button(bot, text="Répondre…", command=self.reply).pack(side="right")
@@ -83,6 +85,7 @@ class MessageWindow(tk.Toplevel):
     def _store(self):
         self.app.conf["msg_popup"] = bool(self.v_auto.get())
         self.app.conf["msg_bell"] = bool(self.v_bell.get())
+        self.app.conf["msg_translate"] = bool(self.v_trad.get())
         self.app._save_conf_file()
 
     # ------------------------------------------------------------------ données
@@ -105,6 +108,13 @@ class MessageWindow(tk.Toplevel):
         for it in self.items:
             if it.get("id") == iid and it.get("call") in (None, "", "?"):
                 it["call"] = call
+        self.show()
+
+    def set_translation(self, iid, text, out, pair):
+        """Traduction arrivée (par Internet) pour le message « iid »."""
+        for it in self.items:
+            if it.get("id") == iid and it["text"] == text:
+                it["trans"], it["pair"] = out, pair
         self.show()
 
     def set_image(self, iid, path):
@@ -159,7 +169,14 @@ class MessageWindow(tk.Toplevel):
         if it.get("image"):
             info.append(tr("avec une image"))
         self.lb_info.configure(text="   •   ".join(info))
-        self.txt.insert("1.0", it["text"])
+        if it.get("trans") and self.app.conf.get("msg_translate", True):
+            self.txt.insert("end", it["trans"])
+            self.txt.insert("end", "\n\n" + tr("Original") + f" ({it.get('pair', '')}) :\n", "orig_t")
+            self.txt.insert("end", it["text"], "orig")
+            self.txt.tag_configure("orig_t", foreground="#888", font=("TkDefaultFont", 9))
+            self.txt.tag_configure("orig", foreground="#666", font=("TkDefaultFont", 11, "italic"))
+        else:
+            self.txt.insert("1.0", it["text"])
         self.lb_nav.configure(text=f"{n - self.pos} / {n}")
         self.bt_prev.state(["!disabled" if self.pos < n - 1 else "disabled"])
         self.bt_next.state(["!disabled" if self.pos > 0 else "disabled"])

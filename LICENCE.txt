@@ -81,6 +81,9 @@ réglages, et seulement pour les fonctions que vous utilisez :
     FTP sont transmis par radio, simplement brouillés : toute station qui reçoit l'annonce
     peut les lire. Utilisez un compte FTP dédié, limité à un seul dossier.
   - Site web / Digi-Sites : les images reçues et envoyées sont déposées sur VOTRE serveur.
+  - Traduction des messages reçus (case « Traduire » à décocher) : le texte d'un message reçu
+    dans une autre langue est envoyé à un service de traduction en ligne gratuit (Google
+    Traduction, ou MyMemory en secours) pour être affiché dans votre langue.
   - Mises à jour : le programme consulte la page des versions du site officiel (GitHub).
   - Hamlib : téléchargé à votre demande depuis les publications officielles de Hamlib.
 Tout ce que vous émettez par radio (images, textes, indicatif) est, par nature, reçu par
@@ -136,6 +139,9 @@ Public License version 3 (full text: LICENSE).
     frequency, mode and Rx Ok reports on a public MQTT server (can be disabled). Hybrid
     pictures go to YOUR FTP server; in EasyPal hybrid mode the FTP login is sent over the
     air, only scrambled, as in EasyPal: use a dedicated FTP account.
+  - Received messages in another language are sent to a free online translation service
+    (Google Translate, or MyMemory as a fallback) to be shown in your language ("Translate"
+    box, can be unticked).
   - Third-party components remain under their own licences (section 8; QSSTV GPL v3,
     codec2 LGPL 2.1…).
   - Governed by French law, without prejudice to the GNU GPL v3.

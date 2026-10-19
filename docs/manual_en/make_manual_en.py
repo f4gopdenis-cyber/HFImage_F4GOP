@@ -441,6 +441,12 @@ s.append(P("When a correspondent sends a message (text alone, or text attached t
            "of the session. <b>Reply…</b> opens the text window pre-filled with “F1BAL de F4GOP: ”. The sender's "
            "callsign is also written above each message in the “Received messages” frame. That frame can be hidden "
            "(menu Windows): messages still arrive in the “Message received” window."))
+s.append(P("<b>Automatic translation</b>: a message written in another language than the program's is translated "
+           "on arrival (via the Internet, free service). The translation is shown first, the original below in grey; "
+           "in the “Received messages” frame a blue line “↳ translation (FR → EN)” is added. The message goes over the "
+           "air exactly as it was written: everyone reads it translated into their own language. Without Internet, "
+           "the message is simply shown as is. The <b>Translate</b> box in the “Message received” window turns "
+           "translation off."))
 s.append(P("<b>Did my correspondent receive my message?</b> As soon as a message is received, the correspondent's "
            "program sends an acknowledgement, over the air (ACK in DATAC0) and via the Internet (if the network is "
            "on). In the <b>Send Text</b> window, the list “Sent messages — received by” shows “✓ F1BAL (+8 dB)” in "

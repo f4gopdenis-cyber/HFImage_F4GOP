@@ -371,6 +371,12 @@ s.append(P("Quand un correspondant envoie un message (texte seul, ou texte joint
            "plus l'ouvrir automatiquement ou de couper le bip ; on la rouvre par Action → Messages reçus… ou par un "
            "double-clic dans le cadre « Messages reçus ». Le cadre peut être masqué (menu Fenêtres) : les messages "
            "arrivent toujours dans la fenêtre « Message reçu »."))
+s.append(P("<b>Traduction automatique</b> : un message écrit dans une autre langue que celle du programme est "
+           "traduit à l'arrivée (par Internet, service gratuit). La traduction s'affiche en premier, l'original en "
+           "dessous, en gris ; dans le cadre « Messages reçus », une ligne bleue « ↳ traduction (EN → FR) » s'ajoute. "
+           "Le message part par radio tel que vous l'avez écrit : chacun le lit traduit dans sa propre langue. "
+           "Sans Internet, le message s'affiche simplement tel quel. La case <b>Traduire</b> de la fenêtre "
+           "« Message reçu » coupe la traduction."))
 s.append(P("<b>Le correspondant a-t-il reçu mon message ?</b>"))
 s.append(P("Dès qu'un message est bien reçu, le programme du correspondant renvoie un accusé de réception, par radio "
            "(ACK en DATAC0, si « ACK auto » est coché chez lui) et par Internet (si le réseau est actif). Dans la fenêtre "

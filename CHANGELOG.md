@@ -1,5 +1,13 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 0.91 — traduction des messages reçus
+
+- **Traduction automatique** : un message reçu écrit dans une autre langue que celle choisie dans le programme est traduit à l'arrivée, par Internet (Google Traduction, MyMemory en secours ; service gratuit). Exemple : F4GOP écrit en français, M0JGM lit le message en anglais, et inversement.
+  - Le message part par radio **tel qu'il a été écrit** : seule la station qui le reçoit le traduit, pour elle.
+  - Fenêtre **Message reçu** : la traduction en premier, l'**original** en dessous, en gris. Cadre **Messages reçus** : une ligne bleue « ↳ traduction (EN → FR) : … ».
+  - Sans Internet, ou si le service ne répond pas, le message s'affiche simplement tel quel. Les messages très courts (« 73 », un indicatif) ne sont pas envoyés au traducteur.
+  - Nouvelle case **Traduire** dans la fenêtre « Message reçu » pour couper la traduction.
+
 ## Version 0.90 — retour du waterfall d'origine
 
 - Le plancher du waterfall ajouté en 0.89 est retiré : le waterfall fonctionne exactement comme en 0.88. Tout le reste est inchangé.
