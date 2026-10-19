@@ -27,7 +27,8 @@ Programme Windows de F4GOP (Denis, IN98QR) pour envoyer et recevoir des photos p
 - **Aperçu rapide** : une petite image arrive en ~20 s, puis l'image complète la remplace.
 - **BSR / FIX** : une station à qui il manque des morceaux le demande, l'émetteur ne renvoie que ce qui manque.
 - **Mode hybride** : l'image passe par votre hébergement web (FTP), seul le lien passe par radio (~11 s). Fonctionne aussi pour les **GIF animés**.
-- **Mode EasyPal** (expérimental) : échange d'images avec les stations **EasyPal** et **QSSTV** dans leur mode image (HamDRM, JPEG 2000, Reed-Solomon, BSR / FIX). Les images EasyPal sont reçues automatiquement, en même temps que les modes DATAC.
+- **Hybride éclair** (par défaut) : l'annonce radio part en **DATAC13** (200 Hz), qui passe dans le bruit et le QRM jusqu'à **−7 dB** ; le lien passe par Internet.
+- **Mode EasyPal** : échange d'images avec les stations **EasyPal** et **QSSTV** dans leur mode image (HamDRM, JPEG 2000, Reed-Solomon, BSR / FIX). Les images EasyPal sont reçues automatiquement, en même temps que les modes DATAC.
 - **Hybride EasyPal** : en mode EasyPal, le mode hybride est celui d'EasyPal et de QSSTV (image déposée dans `HybridFiles1`, annonce en HamDRM). Les images hybrides des stations EasyPal sont téléchargées automatiquement. Comme dans EasyPal, l'accès FTP part dans l'annonce : utilisez un compte FTP dédié.
 
 ### Comme dans EasyPal
@@ -40,10 +41,18 @@ Programme Windows de F4GOP (Denis, IN98QR) pour envoyer et recevoir des photos p
 - **Texte dans le waterfall** (begin.wav / end.wav), envoi de texte, texte inclus avec l'image.
 - **Carte QSL** : photo de fond, indicatif, locator, report rempli automatiquement, police et couleurs au choix.
 
+### Trafic
+- **Attendre fréquence libre** : si une autre station émet, HFImage attend la fin de son émission et part tout seul (signal reçu par radio, ou station en ligne en émission sur votre fréquence).
+- **Changer de fréquence d'un clic** (comme WSJT-X) : clic sur la fréquence affichée → 3,733 / 7,058 / 14,233 / 21,340 / 28,680 MHz, liste modifiable ; ou clic droit sur une station → sa fréquence.
+- **Traduction automatique** des messages reçus dans la langue du programme (l'original reste affiché).
+- **Écouteurs (SWL)** bienvenus : avec un identifiant d'écouteur (PA0041SWL, F-12345…), HFImage reçoit tout et envoie les reports par Internet, sans jamais émettre.
+
 ### Station
 - **Plus de 300 postes** reconnus (Icom, Yaesu, Kenwood, Elecraft, Xiegu, Flex…), réglés comme dans WSJT-X : Kenwood en direct, **Hamlib**, **OmniRig**, **FLRig**.
 - PTT par CAT, DTR, RTS (y compris sur une interface à côté du poste, sur un autre port COM) ou VOX. Fréquence du poste affichée et notée.
 - **Kenwood TS-890 / TS-990** : codec audio USB, PTT par CAT (audio arrière / data).
+- **Passage automatique en DATA** en gardant la bande latérale (LSB-DATA / USB-DATA) ; **installation de Hamlib** proposée d'un clic si votre poste en a besoin.
+- **Assistant de démarrage** au premier lancement : indicatif, carte son, poste.
 - 5 langues (français, English, Deutsch, Español, Italiano).
 - Couleurs (dont un thème **Nuit**), police et zones de la fenêtre réglables.
 
@@ -61,7 +70,7 @@ Programme Windows de F4GOP (Denis, IN98QR) pour envoyer et recevoir des photos p
 ## Démarrage rapide (Kenwood TS-890 / TS-990)
 
 1. Poste en **USB-DATA**, source audio de DATA SEND = **USB Audio**, **DATA VOX sur OFF**.
-2. Lancez `HFImage_F4GOP.exe`, ouvrez **Réglages** :
+2. Lancez `HFImage_F4GOP.exe` : l'**assistant de démarrage** guide les trois réglages essentiels. Pour le détail, ouvrez **Réglages** :
    - indicatif et locator ;
    - sortie « Haut-parleurs (USB Audio CODEC) [MME] », entrée « Microphone (USB Audio CODEC) [MME] » ;
    - **Poste radio…** : poste « Kenwood TS-890S » ou « TS-990S », port COM virtuel du poste, 115200 bauds, PTT **CAT**, source audio **Arrière / Data** (DATA SEND, poste en USB-DATA), ou **Avant / Micro** si votre poste est réglé pour émettre l'audio USB sans le mode DATA ;
@@ -75,7 +84,7 @@ Détails (réglages du poste, mode hybride, protocole, débits) : **[docs/TECHNI
 
 ## Important
 
-- **Les deux stations doivent utiliser HFImage**, de préférence la même version. Le mode DATAC1X n'existe que dans HFImage.
+- Les modes **DATAC** (dont DATAC1X) et l'hybride HFImage demandent HFImage des deux côtés, de préférence à jour. Pour échanger avec **EasyPal** ou **QSSTV**, choisissez le **mode EasyPal**.
 - La liste des stations en ligne passe par un serveur MQTT public (`broker.hivemq.com`). Elle ne partage que l'indicatif, le locator, la fréquence et l'état émission / réception. On peut la désactiver dans les Réglages.
 - Diagnostic : `HFImage_F4GOP.exe --selftest rapport.txt` (modems, carte, accès Internet, cartes son, ports COM).
 
@@ -124,4 +133,4 @@ F4GOP — Denis — f4gop.denis@gmail.com
 
 ---
 
-*English: HFImage F4GOP is a Windows program for sending digital images over HF radio, EasyPal-style but based on codec2 OFDM data modes (including a faster custom mode, DATAC1X) with fountain-code error correction, BSR/FIX repair, a hybrid mode (image via FTP, link over the air), an online station list and Rx Ok reports over MQTT, a station map and QSL card maker. The interface is available in English (Settings → Language).*
+*English: HFImage F4GOP is a free Windows program for sending digital images over HF radio, EasyPal-style but based on codec2 OFDM data modes (including a faster custom mode, DATAC1X) with fountain-code error correction, BSR/FIX repair, a hybrid mode (image via FTP, link over the air, robust DATAC13 "flash" announcement down to −7 dB), EasyPal / QSSTV compatibility (HamDRM), an online station list and Rx Ok reports over MQTT, a station map, QSL card maker, automatic translation of received messages, "wait for clear frequency", one-click frequency change by CAT, and SWL support. The interface is available in English (Settings → Language); English manual: Infos → Manual in English.*
