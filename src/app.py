@@ -57,7 +57,7 @@ import random
 import wave
 
 APP = "HFImage F4GOP"
-VERSION = "0.91"
+VERSION = "0.92"
 CONF_PATH = os.path.join(os.path.expanduser("~"), ".hfimage.json")
 DEFAULT_OUT = os.path.join(os.path.expanduser("~"), "Documents", "HFImage")
 DEFAULTS = {
@@ -3970,6 +3970,43 @@ class App(tk.Tk):
             return txt + " (DATA : OK).", True
         return txt + " — le poste n'est pas en mode DATA : l'audio USB / arrière risque de ne pas partir.", False
 
+    def _offer_hamlib(self):
+        """Hamlib manque pour piloter le poste : proposer de l'installer tout de suite."""
+        if getattr(self, "_hamlib_busy", False):
+            messagebox.showinfo(APP, tr("Installation de Hamlib en cours… Relancez l'émission dans quelques secondes."))
+            return
+        if not messagebox.askyesno(APP, tr("Hamlib n'est pas installé : il est nécessaire pour piloter ce poste "
+                                           "(PTT par CAT).") + "\n\n" +
+                                   tr("L'installer maintenant ? Téléchargement depuis le site officiel de Hamlib, "
+                                      "quelques secondes.")):
+            return
+        self._hamlib_busy = True
+        self.log(tr("Installation de Hamlib…"))
+
+        def run():
+            try:
+                d = radio.install_hamlib()
+                self.ui(self._hamlib_installed, d, None)
+            except Exception as e:
+                self.ui(self._hamlib_installed, None, e)
+        threading.Thread(target=run, daemon=True).start()
+
+    def _hamlib_installed(self, d, err):
+        self._hamlib_busy = False
+        if err:
+            self.log_exc("Installation de Hamlib", err)
+            messagebox.showerror(APP, tr("Installation de Hamlib impossible :") + f"\n{err}\n\n" +
+                                 tr("Vérifiez la connexion Internet. Si votre antivirus a bloqué rigctld.exe, "
+                                    "ajoutez-le à ses exceptions, puis réessayez."))
+            return
+        self.log(f"Hamlib {radio.HAMLIB_VERSION} installé dans {d}")
+        if radio.find_rigctld():
+            messagebox.showinfo(APP, tr("Hamlib est installé. Vous pouvez relancer l'émission."))
+        else:
+            messagebox.showerror(APP, tr("Hamlib a été installé, mais rigctld.exe a disparu : votre antivirus l'a "
+                                         "probablement mis en quarantaine. Restaurez-le ou ajoutez-le à ses "
+                                         "exceptions."))
+
     def _check_rig_before_tx(self, cfg):
         """Avant d'émettre : liaison CAT, mode du poste (réglage « Mode », ou contrôle du mode DATA)."""
         kind = radio.rig_entry(cfg["rig"])["kind"]
@@ -3994,6 +4031,12 @@ class App(tk.Tk):
             if cfg.get("tx_audio") == "front":
                 return True
             txt, ok = self._rig_status(r)
+        except radio.HamlibMissing as e:
+            self.log(str(e))
+            if cfg["ptt"] != "CAT":
+                return True                          # PTT sans CAT : on émet quand même
+            self._offer_hamlib()
+            return False
         except Exception as e:
             self.log_exc("Poste (CAT)", e)
             if cfg["ptt"] != "CAT":

@@ -1,5 +1,10 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 0.92 — installation de Hamlib proposée au moment d'émettre
+
+- **« PTT par CAT impossible : Hamlib n'est pas installé »** : au lieu d'un simple message d'erreur, HFImage propose maintenant **« L'installer maintenant ? »**. Oui : Hamlib est téléchargé depuis son site officiel (empreinte vérifiée, comme avec le bouton des réglages du poste) ; il suffit ensuite de relancer l'émission.
+- Si `rigctld.exe` disparaît juste après l'installation, le programme indique que l'**antivirus** l'a probablement mis en quarantaine (cause fréquente quand Hamlib « disparaît » alors qu'il marchait avant).
+
 ## Version 0.91 — traduction des messages reçus
 
 - **Traduction automatique** : un message reçu écrit dans une autre langue que celle choisie dans le programme est traduit à l'arrivée, par Internet (Google Traduction, MyMemory en secours ; service gratuit). Exemple : F4GOP écrit en français, M0JGM lit le message en anglais, et inversement.
