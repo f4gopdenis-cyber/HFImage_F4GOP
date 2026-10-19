@@ -6,7 +6,8 @@ from tkinter import filedialog, messagebox, ttk
 
 import wavanalyze
 
-COLORS = {"DATAC1X": "#1f6fd1", "DATAC1": "#1c8f1c", "DATAC3": "#c27c00", "DATAC4": "#8a3fc2", "DATAC0": "#666666"}
+COLORS = {"DATAC1X": "#1f6fd1", "DATAC1": "#1c8f1c", "DATAC3": "#c27c00", "DATAC4": "#8a3fc2", "DATAC0": "#666666",
+          "DATAC13": "#d0006f"}
 SEV = {"ok": ("#1c6f1c", "✓"), "info": ("#1f4f9f", "•"), "warn": ("#b06000", "!"), "bad": ("#b00000", "✗")}
 
 
@@ -121,7 +122,7 @@ class AnalyzerWindow(tk.Toplevel):
                 cv.create_line(x - 4, y - 4, x + 4, y + 4, fill="#d00000", width=2)
                 cv.create_line(x - 4, y + 4, x + 4, y - 4, fill="#d00000", width=2)
         x = L
-        for m in ("DATAC1X", "DATAC1", "DATAC3", "DATAC4", "DATAC0"):
+        for m in ("DATAC1X", "DATAC1", "DATAC3", "DATAC4", "DATAC0", "DATAC13"):
             if rep["modes"][m]["events"]:
                 cv.create_oval(x, H - 14, x + 8, H - 6, fill=COLORS[m], outline="")
                 cv.create_text(x + 12, H - 10, anchor="w", text=m, font=("TkDefaultFont", 8))

@@ -18,7 +18,8 @@ WINDOW = np.hanning(NFFT)
 
 # bandes occupées mesurées sur le signal codec2 (Hz)
 MODE_BANDS = {"DATAC1X": (420, 2580, "#f06292"), "DATAC1": (670, 2330, "#4fc3f7"), "DATAC3": (1190, 1800, "#81c784"),
-              "DATAC4": (1340, 1600, "#ffb74d"), "EasyPal": (350, 2800, "#ce93d8")}
+              "DATAC4": (1340, 1600, "#ffb74d"), "DATAC13": (1390, 1610, "#f48fb1"),
+              "EasyPal": (350, 2800, "#ce93d8")}
 # bandes EasyPal mesurées sur le signal (mode A / B / E, largeur 2,2 / 2,4 kHz) : affichées
 # pour le mode reçu ou émis, sans ajouter un trait par variante dans l'échelle
 EASYPAL_BANDS = {}

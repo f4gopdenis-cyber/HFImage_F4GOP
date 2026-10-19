@@ -1374,6 +1374,7 @@ T = [
     ("Ouvrir à chaque message reçu", "Open for every message received", "Bei jeder Nachricht öffnen", "Abrir con cada mensaje recibido", "Aprire a ogni messaggio ricevuto"),
     ("Bip", "Beep", "Piepton", "Pitido", "Bip"),
     ("Traduire", "Translate", "Übersetzen", "Traducir", "Tradurre"),
+    ("DATAC13 : annonce hybride éclair (l'image passe par Internet).", "DATAC13: flash hybrid announcement (the picture goes via the Internet).", "DATAC13: Blitz-Hybrid-Ansage (das Bild kommt über das Internet).", "DATAC13: anuncio híbrido relámpago (la imagen pasa por Internet).", "DATAC13: annuncio ibrido lampo (l'immagine passa via Internet)."),
     ("Attendre fréquence libre", "Wait for clear frequency", "Auf freie Frequenz warten", "Esperar frecuencia libre", "Attendere frequenza libera"),
     ("ATTENTE…", "WAITING…", "WARTEN…", "ESPERA…", "ATTESA…"),
     ("image", "picture", "Bild", "imagen", "immagine"),

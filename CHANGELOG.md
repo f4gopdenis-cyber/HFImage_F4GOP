@@ -1,5 +1,10 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 0.96 — le waterfall et l'analyseur connaissent le DATAC13
+
+- **Waterfall** : la bande du **DATAC13** (annonce hybride éclair, 200 Hz autour de 1 500 Hz) a son repère dans l'échelle, et elle est encadrée en rose quand une annonce éclair est reçue, comme les autres modes.
+- **Analyseur de fichiers WAV** : les trames DATAC13 sont reconnues et comptées (rond ou croix dans le graphique, couleur propre dans la légende), avec la mention « DATAC13 : annonce hybride éclair ». Le conseil de mode ne tient compte que des modes d'image (DATAC1X à DATAC4).
+
 ## Version 0.95 — attendre que la fréquence soit libre
 
 - Nouvelle case **Attendre fréquence libre** sous les boutons, **cochée par défaut**. Si une autre station émet déjà quand vous cliquez sur ÉMISSION (ou ▶ Émettre, ou « Envoyer le texte seul »), HFImage n'émet pas par-dessus : le bouton devient **ATTENTE…** (orange), la barre d'état indique qui occupe la fréquence, et l'émission **part toute seule** dès que la fréquence se libère, après un petit délai tiré au hasard (2 à 6 s) pour que deux stations en attente ne repartent pas ensemble.

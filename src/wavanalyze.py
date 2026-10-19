@@ -19,8 +19,8 @@ import engine
 import modem as M
 import qrmfilter
 
-MODES = ("DATAC1X", "DATAC1", "DATAC3", "DATAC4", "DATAC0")
-THR = {"DATAC1X": 9, "DATAC1": 5, "DATAC3": 0, "DATAC4": -4, "DATAC0": 0}   # SNR réel (comme le mode Auto)
+MODES = ("DATAC1X", "DATAC1", "DATAC3", "DATAC4", "DATAC0", "DATAC13")   # DATAC13 : annonce éclair
+THR = {"DATAC1X": 9, "DATAC1": 5, "DATAC3": 0, "DATAC4": -4, "DATAC0": 0, "DATAC13": -7}   # SNR réel (comme le mode Auto)
 
 
 class _Stats(ctypes.Structure):
@@ -241,6 +241,11 @@ def diagnose(rep):
                                 f"désactiver (Réglages → Audio) pour ce type de signal."))
     # conseil de mode : d'après les pertes réelles et la marge de SNR
     order = ["DATAC1X", "DATAC1", "DATAC3", "DATAC4"]
+    if "DATAC13" in data:
+        out.append(("info", "DATAC13 : annonce hybride éclair (l'image passe par Internet)."))
+    data = [m for m in data if m in order]            # conseil de mode : modes d'image seulement
+    if not data:
+        return out
     best = max(data, key=lambda m: sums[m]["ok"] + sums[m]["bad"])
     s = sums[best]
     snr, loss = s["snr_med"], s["bad"] / max(1, s["ok"] + s["bad"])

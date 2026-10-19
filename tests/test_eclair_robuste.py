@@ -72,5 +72,27 @@ class EclairRobuste(unittest.TestCase):
         self.assertIn(b"0123456789abcd", ok)
 
 
+    def test_analyseur_wav(self):
+        """0.96 : l'analyseur de fichiers WAV reconnaît l'annonce éclair DATAC13."""
+        import wave
+        import wavanalyze
+        p = os.path.join(tempfile.mkdtemp(), "eclair.wav")
+        with wave.open(p, "wb") as w:
+            w.setnchannels(1)
+            w.setsampwidth(2)
+            w.setframerate(8000)
+            w.writeframes(np.concatenate([np.zeros(8000, np.int16), self.h.audio(),
+                                          np.zeros(16000, np.int16)]).tobytes())
+        rep = wavanalyze.analyze(p)
+        ok13 = sum(1 for e in rep["modes"]["DATAC13"]["events"] if e[1])
+        self.assertEqual(ok13, 3)
+        self.assertTrue(any("annonce hybride éclair" in t for _, t in rep["diag"]))
+
+    def test_waterfall_connait_datac13(self):
+        import waterfall
+        lo, hi, _ = waterfall.MODE_BANDS["DATAC13"]
+        self.assertLess(hi - lo, 300)
+
+
 if __name__ == "__main__":
     unittest.main()
