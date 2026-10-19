@@ -214,6 +214,10 @@ s.append(P("Au premier démarrage, l'<b>assistant de démarrage</b> s'ouvre tout
            "locator, carte son du poste (sortie et entrée, avec un essai à 1 kHz sans émettre), puis poste radio "
            "(CAT / PTT, avec l'installation de Hamlib si besoin). On le retrouve par <b>Réglages → Assistant de "
            "démarrage…</b>. Ensuite, tout se règle dans <b>Réglages</b>."))
+s.append(P("<b>Écouteurs (SWL)</b> : mettez votre identifiant d'écouteur à la place de l'indicatif (ex. "
+           "<b>F-12345</b>, <b>PA0041SWL</b>, <b>14VD274</b>). HFImage reçoit tout normalement et envoie vos "
+           "reports <b>par Internet</b> (Rx Ok, carte des stations), mais n'émet <b>jamais</b> : ni image, ni accusé "
+           "(ACK), ni BSR par radio."))
 s.append(P("Ouvrez <b>Réglages</b> (bouton ou menu). Les réglages sont enregistrés automatiquement."))
 s.append(img("reglages.png", 165, "La fenêtre des réglages."))
 s.append(P("Station", "h2"))

@@ -58,7 +58,7 @@ import random
 import wave
 
 APP = "HFImage F4GOP"
-VERSION = "0.98"
+VERSION = "0.99"
 CONF_PATH = os.path.join(os.path.expanduser("~"), ".hfimage.json")
 DEFAULT_OUT = os.path.join(os.path.expanduser("~"), "Documents", "HFImage")
 DEFAULTS = {
@@ -142,6 +142,14 @@ class TrVar(tk.StringVar):
 
     def retranslate(self):
         super().set(tr(getattr(self, "_fr", "")))
+
+
+def is_swl(call):
+    """Indicatif d'écouteur (SWL) : PA0041SWL, F-12345, 14VD274 (identifiants 14…), ONL1234.
+    Ces stations reçoivent et envoient leurs reports par Internet, mais n'émettent jamais."""
+    c = str(call or "").strip().upper()
+    return bool(c) and (c.endswith("SWL") or "-" in c or c[:2].isdigit()
+                        or (c.startswith("ONL") and c[3:].isdigit()))
 
 
 def load_conf():
@@ -3931,6 +3939,17 @@ class App(tk.Tk):
         quiet=True : déclenchée automatiquement, pas de boîte de dialogue."""
         if self.tx_busy:
             return False
+        if is_swl(self.v_call.get()):
+            # station d'écoute : jamais d'émission radio (ni ACK / BSR automatiques) ;
+            # les reports partent par Internet (Rx Ok)
+            if not quiet:
+                messagebox.showinfo(APP, tr("Indicatif d'écouteur (SWL) : HFImage n'émet pas. Vos reports de "
+                                            "réception partent par Internet (Rx Ok)."))
+            elif not getattr(self, "_swl_noted", False):
+                self._swl_noted = True
+                self.log(tr("Indicatif d'écouteur (SWL) : pas d'accusé ni de BSR par radio, "
+                            "reports par Internet (Rx Ok)."))
+            return False
         if not self.v_out.get():
             if not quiet:
                 messagebox.showinfo(APP, "Choisissez la sortie audio dans l'onglet Réglages.")
@@ -4594,9 +4613,22 @@ class App(tk.Tk):
         eng.on_drm_hybrid = lambda h: self.ui(self._drm_hybrid_announce, eng, h)
         return eng
 
+    def _full_call(self, call):
+        """Les trames radio portent 8 caractères d'indicatif : « PA0041SWL » arrive en « PA0041SW ».
+        S'il n'y a qu'une station en ligne (ou entendue) dont l'indicatif complet commence ainsi,
+        on reprend son indicatif complet."""
+        c = str(call or "").strip().upper()
+        if len(c) != 8:
+            return call
+        found = {str(d.get("call") or "").upper() for d in self.online.values()}
+        found |= {str(k).upper() for k in getattr(self, "heard", {}) or {}}
+        longer = {f for f in found if len(f) > 8 and f.startswith(c)}
+        return longer.pop() if len(longer) == 1 else call
+
     def _on_control(self, kind, iid, call, need, snr):
         """BSR (NACK), ACK ou présence (QRV) entendu (chaque trame est émise 2 fois :
         on dédoublonne)."""
+        call = self._full_call(call)
         key, now = (kind, iid, call), time.time()
         if now - self.ctl_seen.get(key, 0) < 8:
             return
@@ -4834,6 +4866,8 @@ class App(tk.Tk):
         threading.Thread(target=run, daemon=True).start()
 
     def _hybrid_announce(self, eng, hyb, mode):
+        if hyb.get("call"):
+            hyb["call"] = self._full_call(hyb["call"])
         if hyb.get("flash"):
             return self._flash_announce(eng, hyb, mode)
         self._heard(hyb.get("call"), eng.last.get("snr"), "Annonce hybride")
@@ -5069,6 +5103,8 @@ class App(tk.Tk):
             pass
 
     def _got_image(self, hdr, path, png, mode, from_file=False):
+        if hdr.get("call"):
+            hdr["call"] = self._full_call(hdr["call"])
         self.pb_rx.configure(value=100)
         who = hdr["call"] if hdr["call"] != "?" else "(indicatif à venir)"
         if hdr.get("text"):
@@ -5270,6 +5306,8 @@ class App(tk.Tk):
         self.msgwin.lift()
 
     def _got_ident(self, info, path, png):
+        if info.get("call"):
+            info["call"] = self._full_call(info["call"])
         """L'indicatif est arrivé (trame d'identification de fin) : mise à jour."""
         if info["id"] in self.ack_pending:
             self.ack_pending[info["id"]]["call"] = info["call"]

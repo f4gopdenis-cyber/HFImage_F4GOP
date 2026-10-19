@@ -10,7 +10,8 @@ from tkinter import messagebox, ttk
 
 from i18n import tr
 
-CALL_RE = re.compile(r"^[A-Z0-9]{1,3}[0-9][A-Z0-9]{0,4}(/[A-Z0-9]{1,4})?$")
+# indicatif radioamateur (F4GOP, F4GOP/P) ou identifiant d'écouteur (PA0041SWL, F-12345, 14VD274)
+CALL_RE = re.compile(r"^(?=.*[0-9])[A-Z0-9][A-Z0-9/-]{2,11}$")
 LOC_RE = re.compile(r"^[A-R]{2}[0-9]{2}([A-X]{2})?$", re.I)
 
 
@@ -70,7 +71,8 @@ class SetupWizard(tk.Toplevel):
     def _page0(self):
         self.lb_title.configure(text=tr("Votre station"))
         self._text("Bienvenue dans HFImage ! Indiquez votre indicatif et votre locator : ils partent avec vos "
-                   "images et apparaissent sur la carte des stations.")
+                   "images et apparaissent sur la carte des stations. Écouteur (SWL) : mettez votre identifiant "
+                   "(ex. F-12345, PA0041SWL) ; HFImage n'émettra pas, vos reports partiront par Internet.")
         g = ttk.Frame(self.body)
         g.pack(anchor="w")
         ttk.Label(g, text=tr("Indicatif")).grid(row=0, column=0, sticky="w", pady=4)
@@ -124,7 +126,7 @@ class SetupWizard(tk.Toplevel):
             call = self.app.v_call.get().strip().upper()
             self.app.v_call.set(call)
             if not CALL_RE.match(call):
-                messagebox.showwarning(self.title(), tr("Indiquez votre indicatif (ex. F4GOP)."), parent=self)
+                messagebox.showwarning(self.title(), tr("Indiquez votre indicatif (ex. F4GOP) ou votre identifiant d'écouteur (ex. F-12345)."), parent=self)
                 return False
             loc = self.app.v_loc.get().strip()
             if loc and not LOC_RE.match(loc):

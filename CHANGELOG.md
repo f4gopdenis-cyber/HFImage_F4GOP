@@ -1,5 +1,11 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 0.99 — écouteurs (SWL)
+
+- **Identifiants d'écouteurs acceptés** dans l'assistant de démarrage : **PA0041SWL**, **F-12345**, **14VD274**, **ONL1234**… (la 0.98 n'acceptait que les indicatifs radioamateurs).
+- **Un écouteur n'émet jamais** : avec un identifiant d'écouteur (se terminant par SWL, avec un tiret, commençant par deux chiffres, ou ONL + chiffres), HFImage reçoit tout normalement et envoie ses **reports par Internet** (Rx Ok, carte), mais ne passe jamais en émission : ni image, ni accusé (ACK), ni BSR automatiques par radio. Un clic sur ÉMISSION l'explique.
+- **Indicatifs longs reçus par radio** : les trames radio ne portent que 8 caractères (« PA0041SWL » arrivait en « PA0041SW »). S'il n'y a qu'une station en ligne ou entendue dont l'indicatif complet commence ainsi, HFImage affiche l'indicatif complet.
+
 ## Version 0.98 — éclair par défaut, assistant de démarrage, moins de fausses alertes
 
 - **Hybride éclair coché par défaut** : depuis la 0.93 l'annonce éclair (DATAC13) passe jusqu'à −7 dB, bien plus bas que l'annonce normale (DATAC3, vers 0 dB). La case **Éclair (9 s)** est donc cochée d'office (une seule fois à la mise à jour : si vous la décochez ensuite, votre choix est gardé). Elle ne change rien tant que le mode hybride n'est pas activé, et si le serveur des stations en ligne n'est pas joignable au moment d'émettre, l'annonce normale part toujours à la place.

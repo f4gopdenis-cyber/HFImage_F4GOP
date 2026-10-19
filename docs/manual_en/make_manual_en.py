@@ -210,6 +210,9 @@ s.append(P("On first start, the <b>setup assistant</b> opens by itself, in 3 ste
            "sound card (output and input, with a 1 kHz test without transmitting), then the radio (CAT / PTT, with "
            "Hamlib installation if needed). It is also in <b>Settings → Setup assistant…</b>. Everything else is in "
            "<b>Settings</b>."))
+s.append(P("<b>Listeners (SWL)</b>: enter your listener ID instead of a callsign (e.g. <b>F-12345</b>, "
+           "<b>PA0041SWL</b>, <b>14VD274</b>). HFImage receives everything as usual and sends your reports <b>via the "
+           "Internet</b> (Rx Ok, station map), but <b>never</b> transmits: no picture, no ACK, no BSR over the air."))
 s.append(P("Open <b>Settings</b> (button or menu). Settings are saved automatically."))
 s.append(img("en_settings.png", 165, "The Settings window."))
 s.append(P("Station", "h2"))
