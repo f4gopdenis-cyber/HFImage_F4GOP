@@ -1,5 +1,9 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 0.94 — bouton « Répondre… » de retour
+
+- Fenêtre **Message reçu** : depuis l'ajout de la case « Traduire » (0.91), la rangée du bas était trop longue et le bouton **Répondre…** sortait de la fenêtre. Les cases (Ouvrir à chaque message reçu, Bip, Traduire) sont maintenant sur une rangée et les boutons (**Répondre…**, Copier, Fermer) sur la rangée du dessous : tout reste visible, même fenêtre réduite au minimum.
+
 ## Version 0.93 — hybride éclair robuste (DATAC13) : passe dans le bruit et le QRM
 
 - **Annonce hybride éclair en DATAC13** : la trame d'annonce (empreinte de l'image, 14 octets ; le lien passe par Internet) part maintenant **3 fois en DATAC13**, un mode codec2 très étroit (**200 Hz** au lieu de 500) fait pour les signaux faibles, puis 2 fois en DATAC0 pour les stations qui ont une version plus ancienne. Annonce de **9 s** au lieu de 4,5 s (case « Éclair (9 s) »).

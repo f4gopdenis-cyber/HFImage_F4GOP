@@ -81,6 +81,15 @@ class Fenetre(unittest.TestCase):
         self.assertTrue(shown.startswith("Bonjour Denis, belle image"))
         self.assertIn("Original (EN → FR) :", shown)
         self.assertIn("Hello Denis, nice picture", shown)
+        # 0.94 : le bouton « Répondre… » reste visible, même fenêtre réduite au minimum
+        w.deiconify()
+        w.geometry("460x280")
+        for _ in range(5):
+            w.update()
+        shown_btns = [c.cget("text") for f in w.winfo_children() for c in f.winfo_children()
+                      if c.winfo_class() == "TButton" and c.winfo_ismapped()]
+        self.assertIn("Répondre…", shown_btns)
+        self.assertIn("Fermer", shown_btns)
         root.conf["msg_translate"] = False
         w.show()
         self.assertEqual(w.txt.get("1.0", "end").strip(), "Hello Denis, nice picture")
