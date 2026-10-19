@@ -30,7 +30,7 @@ def make(app, online=None, modems=None, waitfree=True):
     for n in ("_freq_busy", "_tx_when_free", "_wait_tick", "_wait_clear", "_wait_go", "_wait_cancel",
               "_btn_emission", "_btn_emission_force"):
         setattr(s, n, getattr(app.App, n).__get__(s))
-    s.WAIT_MAX_S, s.WAIT_HOLD_S = app.App.WAIT_MAX_S, app.App.WAIT_HOLD_S
+    s.WAIT_MAX_S, s.WAIT_HOLD_S, s.WAIT_SYNC_S = app.App.WAIT_MAX_S, app.App.WAIT_HOLD_S, app.App.WAIT_SYNC_S
     s.v_waitfree, s.v_state, s.v_call = Var(waitfree), Var(""), Var("F4GOP")
     s.tx_busy, s.rig_freq, s.online = False, 7058000, online or {}
     s.rx_engine = types.SimpleNamespace(modems=modems or {}, drm=None, drm_t=0) if modems is not None else None

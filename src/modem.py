@@ -138,6 +138,7 @@ class Modem:
         self.n_max = lib.freedv_get_n_max_modem_samples(self.f)
         self._rxbuf = np.zeros(0, dtype=np.int16)
         self.sync = 0           # 1 = démodulateur synchronisé
+        self.sync_since = 0.0   # heure du début de la synchronisation en cours
         self.crc_fail = 0       # trames démodulées mais fausses
         self.ok = 0             # trames justes
         self.last_ok = 0.0      # heure de la dernière trame juste
@@ -218,7 +219,10 @@ class Modem:
             chunk = np.ascontiguousarray(buf[pos:pos + nin])
             n = lib.freedv_rawdatarx(self.f, out, chunk.ctypes.data_as(_sp))
             pos += nin
-            self.sync = lib.freedv_get_sync(self.f)
+            now_sync = lib.freedv_get_sync(self.f)
+            if now_sync and not self.sync:
+                self.sync_since = time.time()
+            self.sync = now_sync
             if n:
                 frame = bytes(out)[:n]
                 payload, rx_crc = frame[:-2], (frame[-2] << 8) | frame[-1]

@@ -206,6 +206,10 @@ s += tip("after an update, if Windows Explorer still shows the old icon, restart
 
 # ------------------------------------------------------------------ 3
 s.append(P("3. First setup", "h1"))
+s.append(P("On first start, the <b>setup assistant</b> opens by itself, in 3 steps: callsign and locator, radio "
+           "sound card (output and input, with a 1 kHz test without transmitting), then the radio (CAT / PTT, with "
+           "Hamlib installation if needed). It is also in <b>Settings → Setup assistant…</b>. Everything else is in "
+           "<b>Settings</b>."))
 s.append(P("Open <b>Settings</b> (button or menu). Settings are saved automatically."))
 s.append(img("en_settings.png", 165, "The Settings window."))
 s.append(P("Station", "h2"))
@@ -478,7 +482,7 @@ s.append(P("In the HFImage modes, hybrid mode sends the picture through your <b>
            "pictures and <b>animated GIFs</b>. Settings → Hybrid mode: FTP server, user name, password, folder and "
            "<b>public link</b> of this folder; “Test server” checks everything. Only the link goes over the air, never "
            "the password."))
-s.append(P("<b>Flash hybrid</b>: tick <b>Flash (9 s)</b> next to “Hybrid mode” (TX tab). The announcement no longer carries "
+s.append(P("<b>Flash hybrid</b>: tick <b>Flash (9 s)</b> next to “Hybrid mode” (TX tab), <b>ticked by default</b> since 0.98. The announcement no longer carries "
            "the link, only the picture's <b>fingerprint</b> (shortened SHA-256), size and format, in a 14-byte frame. Since "
            "version 0.93 it is sent <b>3 times in DATAC13</b> (a very narrow 200 Hz mode made to get through noise and QRM), "
            "then twice in DATAC0 (500 Hz) for stations with an older version: 9 s in all. The link goes at the same time through the online-stations "

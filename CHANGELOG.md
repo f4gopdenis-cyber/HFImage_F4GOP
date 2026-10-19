@@ -1,5 +1,11 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 0.98 — éclair par défaut, assistant de démarrage, moins de fausses alertes
+
+- **Hybride éclair coché par défaut** : depuis la 0.93 l'annonce éclair (DATAC13) passe jusqu'à −7 dB, bien plus bas que l'annonce normale (DATAC3, vers 0 dB). La case **Éclair (9 s)** est donc cochée d'office (une seule fois à la mise à jour : si vous la décochez ensuite, votre choix est gardé). Elle ne change rien tant que le mode hybride n'est pas activé, et si le serveur des stations en ligne n'est pas joignable au moment d'émettre, l'annonce normale part toujours à la place.
+- **Assistant de démarrage** : au premier lancement, une fenêtre en 3 étapes guide le réglage — **indicatif et locator**, **carte son du poste** (sortie / entrée, essai 1 kHz sans émettre), **poste radio** (CAT / PTT, installation de Hamlib proposée si besoin). On le retrouve par **Réglages → Assistant de démarrage…**. Une nouvelle installation n'a plus « F4GOP » comme indicatif par défaut : le champ est vide tant que l'utilisateur n'a pas mis le sien.
+- **Attendre fréquence libre** : sur le bruit seul, le démodulateur croit parfois accrocher un signal pendant un instant (un bloc de 0,5 s, jamais plus dans nos mesures). Une accroche n'est maintenant prise en compte qu'au-delà de 0,7 s ; une trame décodée compte toujours tout de suite.
+
 ## Version 0.97 — menus et onglets rangés (rien n'est supprimé)
 
 - **Onglet Simulation** : c'est un outil d'essai (canal HF simulé), pas de trafic. Il n'est plus affiché d'office : **Fichiers → Onglet Simulation (canal HF simulé)** l'affiche ou le cache (le choix est gardé). Il reste donc RX, TX, Stations et Galerie.

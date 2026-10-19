@@ -210,6 +210,10 @@ s += tip("après une mise à jour, si l'explorateur Windows affiche encore l'anc
 
 # ------------------------------------------------------------------ 3
 s.append(P("3. Premier réglage", "h1"))
+s.append(P("Au premier démarrage, l'<b>assistant de démarrage</b> s'ouvre tout seul, en 3 étapes : indicatif et "
+           "locator, carte son du poste (sortie et entrée, avec un essai à 1 kHz sans émettre), puis poste radio "
+           "(CAT / PTT, avec l'installation de Hamlib si besoin). On le retrouve par <b>Réglages → Assistant de "
+           "démarrage…</b>. Ensuite, tout se règle dans <b>Réglages</b>."))
 s.append(P("Ouvrez <b>Réglages</b> (bouton ou menu). Les réglages sont enregistrés automatiquement."))
 s.append(img("reglages.png", 165, "La fenêtre des réglages."))
 s.append(P("Station", "h2"))
@@ -510,7 +514,7 @@ s.append(P("L'image passe par votre <b>hébergement web</b> (FTP) ; seul le <b>l
            "<b>lien public</b> de ce dossier ; « Tester le serveur » vérifie tout. Seul le lien passe par radio, "
            "jamais le mot de passe."))
 s.append(P("Hybride éclair", "h2"))
-s.append(P("Case <b>Éclair (9 s)</b>, à côté de « Mode hybride » (onglet TX). L'annonce radio ne porte plus le lien, seulement "
+s.append(P("Case <b>Éclair (9 s)</b>, à côté de « Mode hybride » (onglet TX), <b>cochée par défaut</b> depuis la 0.98. L'annonce radio ne porte plus le lien, seulement "
            "l'<b>empreinte</b> de l'image (SHA-256 abrégé), sa taille et son format, dans une trame de 14 octets. Depuis la "
            "version 0.93, cette trame part <b>3 fois en DATAC13</b> (mode très étroit de 200 Hz, fait pour passer dans le "
            "bruit et le QRM), puis 2 fois en DATAC0 (500 Hz) pour les stations qui ont une version plus ancienne : 9 s en tout. "

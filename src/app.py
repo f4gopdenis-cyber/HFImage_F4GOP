@@ -45,6 +45,7 @@ from i18n import tr
 import protocol
 import qsl
 import rxclean
+import setupwiz
 import translate
 import shutil
 import webbrowser
@@ -57,11 +58,11 @@ import random
 import wave
 
 APP = "HFImage F4GOP"
-VERSION = "0.97"
+VERSION = "0.98"
 CONF_PATH = os.path.join(os.path.expanduser("~"), ".hfimage.json")
 DEFAULT_OUT = os.path.join(os.path.expanduser("~"), "Documents", "HFImage")
 DEFAULTS = {
-    "callsign": "F4GOP", "mode": "Auto", "width": "auto", "seconds": 120, "fmt": "avif",
+    "callsign": "", "mode": "Auto", "width": "auto", "seconds": 120, "fmt": "avif",
     "overhead": "auto", "out_dev": "", "in_dev": "", "level": 50,
     "ptt": "VOX", "cat_port": "", "cat_baud": 115200, "cat_cmd": "TX1;",
     "folder": DEFAULT_OUT,
@@ -72,7 +73,7 @@ DEFAULTS = {
     "update_check": True,
     "theme": "Vert EasyPal", "theme_color": "#3a8ee6", "font_family": "(par défaut)", "font_size": "9",
     "locator": "", "bsr_auto": True, "fix_auto": True, "ack_auto": True, "listen_after": True, "follow_mode": True,
-    "cwid": False, "cat_freq": True, "lang": "", "msg_translate": True, "wait_free": True,
+    "cwid": False, "cat_freq": True, "lang": "", "msg_translate": True, "wait_free": True, "hyb_flash": True,
     "drm_mode": "B", "drm_qam": "QAM16", "drm_bw": "2,4 kHz", "drm_prot": "Haute (HI)", "drm_rs": "RS2",
     "wav_volume": 5, "wft_font": "Arial", "wft_neg": False, "wft_text": "",
 }
@@ -169,6 +170,11 @@ def load_conf():
         if saved.get("conf_v", 0) < 62 and c.get("drm_rs") == "Aucun":
             # v0.62 : Reed-Solomon RS2 par défaut en EasyPal (image complète malgré le QSB)
             c["drm_rs"] = "RS2"
+        if saved.get("conf_v", 0) < 63:
+            # v0.98 : hybride éclair (DATAC13, passe jusqu'à -7 dB) par défaut, une fois ; sans serveur
+            # des stations en ligne au moment d'émettre, l'annonce normale (DATAC3) part à la place
+            c["hyb_flash"] = True
+            c["conf_v"] = 63
         if c.get("fmt") not in FORMATS_TX:
             c["fmt"] = {"jpeg": "jpg"}.get(c.get("fmt"), "avif")
     except Exception:
@@ -223,6 +229,7 @@ class App(tk.Tk):
         super().__init__()
         self.title(f"{APP} {VERSION}")
         self._set_icon()
+        self.first_run = not os.path.exists(CONF_PATH)    # aucun réglage enregistré : premier démarrage
         self.conf = load_conf()
         clocktz.MODE = self.conf.get("clock", "local")
         self.v_fbold = tk.BooleanVar(value=bool(self.conf.get("font_bold")))       # menu Police / Réglages
@@ -306,7 +313,7 @@ class App(tk.Tk):
             self.after(ms, self._update_cleanup)      # programme met parfois quelques s à se fermer)
         if self.conf.get("update_check", True):
             self.after(5000, lambda: self.update_check(quiet=True))
-        self.after(300, self._licence_first_run)   # licence au premier démarrage
+        self.after(300, self._startup_dialogs)     # licence, puis assistant au premier démarrage
         self.after(400, self._restore_layout)
         self.after(1500, self._restore_layout)     # une 2e fois, une fois tout affiché
         self.after(1700, lambda: self.dock.restore(self.conf.get("detached")))   # fenêtres séparées
@@ -585,6 +592,7 @@ class App(tk.Tk):
         m = tk.Menu(self)
         r = tk.Menu(m, tearoff=0)
         r.add_command(label="Réglages…", command=self.show_settings)
+        r.add_command(label="Assistant de démarrage…", command=self.setup_wizard)
         r.add_separator()
         r.add_command(label="Tester la sortie audio (1 kHz)", command=self.test_audio)
         r.add_command(label="Poste radio…", command=self.radio_dialog)
@@ -725,6 +733,23 @@ class App(tk.Tk):
 
     LICENCE_VERSION = "1.0"
 
+    def _startup_dialogs(self):
+        self._licence_first_run()
+        try:
+            if self.winfo_exists() and (self.first_run or not self.v_call.get().strip()):
+                self.setup_wizard()               # premier démarrage : indicatif, carte son, poste
+        except tk.TclError:
+            pass
+
+    def setup_wizard(self):
+        """Réglages → Assistant de démarrage… (3 étapes)."""
+        w = getattr(self, "_wiz", None)
+        if w is not None and w.winfo_exists():
+            w.lift()
+            return
+        self._wiz = setupwiz.SetupWizard(self)
+        self._translate_ui(self._wiz)
+
     def _licence_first_run(self):
         """Premier démarrage (ou nouvelle version de la licence) : la licence s'affiche,
         « J'accepte » pour continuer, « Je refuse » ferme le programme."""
@@ -862,6 +887,8 @@ class App(tk.Tk):
     # ---------------------------------------------------------------- attendre la fréquence libre
     WAIT_MAX_S = 300           # au-delà, on demande s'il faut émettre quand même
     WAIT_HOLD_S = 3.0          # fin d'un signal : la fréquence est « occupée » encore ce temps
+    WAIT_SYNC_S = 0.7          # accroche du démodulateur prise en compte au-delà de ce temps (sur le
+                               # bruit seul, une fausse accroche dure un bloc de 0,5 s, jamais plus)
 
     def _freq_busy(self):
         """Fréquence occupée par une autre station ? -> texte (qui / quoi) ou None.
@@ -871,7 +898,8 @@ class App(tk.Tk):
         r = self.rx_engine
         if r is not None and self.rx_stream is not None:
             for mode, m in r.modems.items():
-                if m.sync or now - m.last_ok < self.WAIT_HOLD_S:
+                held = m.sync and now - getattr(m, "sync_since", 0.0) >= self.WAIT_SYNC_S
+                if held or now - m.last_ok < self.WAIT_HOLD_S:
                     return f"signal {mode}"
             if r.drm is not None and now - r.drm_t < self.WAIT_HOLD_S:
                 return "signal EasyPal"
@@ -2776,7 +2804,7 @@ class App(tk.Tk):
                 width=self.v_width.get(), seconds=int(self.v_sec.get()),
                 fmt=self._fmt_mem["radio"] if self._fmt_side == "hyb" else self.v_fmt.get(),
                 hyb_fmt=self.v_fmt.get() if self._fmt_side == "hyb" else self._fmt_mem["hyb"],
-                overhead=self._robust_conf(), conf_v=62,
+                overhead=self._robust_conf(), conf_v=63,
                 out_dev=self.v_out.get(), in_dev=self.v_in.get(), level=int(self.v_lvl.get()),
                 radio=self.radio_cfg,
                 folder=self.v_folder.get(),
