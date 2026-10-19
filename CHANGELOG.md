@@ -1,5 +1,9 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 0.90 — retour du waterfall d'origine
+
+- Le plancher du waterfall ajouté en 0.89 est retiré : le waterfall fonctionne exactement comme en 0.88. Tout le reste est inchangé.
+
 ## Version 0.89 — waterfall noir quand le poste est éteint
 
 - **Waterfall** : poste éteint, le codec USB reste alimenté mais ne reçoit plus rien ; le réglage automatique du waterfall amplifiait alors son tout petit bruit et le ronflement secteur (raies verticales, peigne de pics dans le spectre). Un plancher a été ajouté : sous environ −76 dBFS de bruit d'entrée, le waterfall reste noir. En réception normale, rien ne change.
