@@ -159,6 +159,10 @@ s.append(PageBreak())
 
 # ------------------------------------------------------------------ 1
 s.append(P("1. Présentation", "h1"))
+s.append(P("<i>Programme dédié à Erik Sundstrup VK4AES (SK), créateur d'EasyPal, en hommage à son travail. "
+           "HFImage a été conçu par Denis F4GOP, qui en a choisi chaque fonction, l'a testé sur l'air et l'a fait évoluer "
+           "avec les retours des utilisateurs ; le code a été écrit en grande partie avec l'aide de l'intelligence "
+           "artificielle Claude (Anthropic).</i>"))
 s.append(P("HFImage F4GOP envoie et reçoit des <b>photos numériques par radio en HF</b>, comme EasyPal, mais avec "
            "un modem moderne (OFDM de codec2) et une correction d'erreurs par <b>code fontaine</b>. L'image reçue est "
            "<b>identique bit à bit</b> à l'image envoyée, ou elle n'est pas affichée : jamais d'image abîmée."))

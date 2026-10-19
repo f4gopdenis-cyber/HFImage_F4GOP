@@ -159,6 +159,9 @@ s.append(PageBreak())
 
 # ------------------------------------------------------------------ 1
 s.append(P("1. Overview", "h1"))
+s.append(P("<i>Dedicated to Erik Sundstrup VK4AES (SK), creator of EasyPal, in tribute to his work. HFImage was designed "
+           "by Denis F4GOP, who chose each of its features, tested it on the air and improved it with users' feedback; "
+           "the code was written largely with the help of the artificial intelligence Claude (Anthropic).</i>"))
 s.append(P("HFImage F4GOP sends and receives <b>digital pictures over HF radio</b>. One program covers two families "
            "of modes, and it <b>always listens to both at the same time</b>:"))
 s += B(["<b>HFImage modes (DATAC)</b>: a modern OFDM modem (codec2) with <b>fountain-code</b> error correction. "

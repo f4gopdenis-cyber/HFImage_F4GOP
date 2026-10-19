@@ -117,6 +117,12 @@ pyinstaller --noconfirm HFImage.spec
 | `CHANGELOG.md` | Historique des versions |
 | `THIRD_PARTY.md` | Composants utilisés et leurs licences |
 
+## Auteur, dédicace et intelligence artificielle
+
+Programme **dédié à Erik Sundstrup VK4AES (SK)**, créateur d'EasyPal, en hommage à son travail.
+
+HFImage a été conçu par Denis F4GOP, qui en a choisi chaque fonction, l'a testé sur l'air avec sa station et l'a fait évoluer avec les retours des utilisateurs. Le code a été écrit en grande partie avec l'aide de l'**intelligence artificielle Claude** (Anthropic).
+
 ## Licence
 
 HFImage F4GOP — © 2026 Denis F4GOP.

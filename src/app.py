@@ -58,7 +58,7 @@ import random
 import wave
 
 APP = "HFImage F4GOP"
-VERSION = "1.01"
+VERSION = "1.02"
 CONF_PATH = os.path.join(os.path.expanduser("~"), ".hfimage.json")
 DEFAULT_OUT = os.path.join(os.path.expanduser("~"), "Documents", "HFImage")
 DEFAULTS = {
@@ -744,7 +744,10 @@ class App(tk.Tk):
                                  "doit rester sous la même licence, avec ses sources, sans reprendre le nom "
                                  "HFImage F4GOP (fichier LICENCE.txt).\n"
                                  "Sources et licence : github.com/f4gopdenis-cyber/HFImage_F4GOP\n"
-                                 "Modem EasyPal d'après QSSTV (ON4QZ), modems DATAC : codec2 (VK5DGR).")
+                                 "Modem EasyPal d'après QSSTV (ON4QZ), modems DATAC : codec2 (VK5DGR)."
+                            + "\n\nConçu, choisi et testé sur l'air par Denis F4GOP ; code écrit en grande partie "
+                              "avec l'aide de l'intelligence artificielle Claude (Anthropic).\n"
+                              "Programme dédié à Erik VK4AES (SK), créateur d'EasyPal.")
 
     LICENCE_VERSION = "1.0"
 

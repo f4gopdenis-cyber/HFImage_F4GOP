@@ -1,5 +1,10 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 1.02 — dédicace et transparence
+
+- **Infos → À propos…**, mode d'emploi (français et anglais) et page GitHub : le programme est **dédié à Erik Sundstrup VK4AES (SK)**, créateur d'EasyPal, en hommage à son travail.
+- Par honnêteté, ces mêmes endroits indiquent que HFImage a été conçu, choisi et testé sur l'air par Denis F4GOP, et que son code a été écrit en grande partie avec l'aide de l'**intelligence artificielle Claude** (Anthropic).
+
 ## Version 1.01 — changer de fréquence d'un clic (idée d'Allan G7VQV)
 
 - **Clic sur la fréquence** affichée (panneau en haut à gauche, ou barre d'état en bas) : menu des fréquences image **3,733 – 7,058 – 14,233 – 21,340 – 28,680 MHz** ; un clic et le poste y va par CAT, comme dans WSJT-X. La fréquence actuelle est marquée d'un ●.
