@@ -1,5 +1,22 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 0.93 — hybride éclair robuste (DATAC13) : passe dans le bruit et le QRM
+
+- **Annonce hybride éclair en DATAC13** : la trame d'annonce (empreinte de l'image, 14 octets ; le lien passe par Internet) part maintenant **3 fois en DATAC13**, un mode codec2 très étroit (**200 Hz** au lieu de 500) fait pour les signaux faibles, puis 2 fois en DATAC0 pour les stations qui ont une version plus ancienne. Annonce de **9 s** au lieu de 4,5 s (case « Éclair (9 s) »).
+- Mesuré au simulateur, part des annonces reçues :
+
+  | Canal | S/B | Éclair DATAC0 (avant) | Éclair DATAC13 (0.93) |
+  |---|---|---|---|
+  | Calme | −5 dB | 15 % | 100 % |
+  | Calme | −7 dB | 0 % | 100 % |
+  | Fading moyen | −5 dB | 50 % | 100 % |
+  | Fading moyen | −7 dB | 20 % | 80 % |
+  | Fading fort | −5 dB | 35 % | 100 % |
+  | Fading fort | −7 dB | 5 % | 90 % |
+
+- HFImage **écoute le DATAC13 en permanence** (en plus des autres modes) ; une annonce reçue dans les deux modes n'est comptée qu'une fois.
+- **Coupe-QRM** : son niveau de référence est maintenant pris sur les porteuses du mode seulement. Pour un mode aussi étroit que le DATAC13, l'ancien calcul prenait les porteuses du signal lui-même pour du QRM à fort S/B. Les autres modes ne changent pas (vérifié au simulateur).
+
 ## Version 0.92 — installation de Hamlib proposée au moment d'émettre
 
 - **« PTT par CAT impossible : Hamlib n'est pas installé »** : au lieu d'un simple message d'erreur, HFImage propose maintenant **« L'installer maintenant ? »**. Oui : Hamlib est téléchargé depuis son site officiel (empreinte vérifiée, comme avec le bouton des réglages du poste) ; il suffit ensuite de relancer l'émission.

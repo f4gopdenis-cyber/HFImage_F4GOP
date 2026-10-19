@@ -1,4 +1,4 @@
-"""Wrapper ctypes autour des modes data OFDM de codec2 (DATAC0/1/3/4).
+"""Wrapper ctypes autour des modes data OFDM de codec2 (DATAC0/1/3/4/13).
 
 Le modem transporte des trames de taille fixe. Les 2 derniers octets de
 chaque trame sont un CRC16 (calculé ici), le reste est la charge utile
@@ -10,17 +10,17 @@ import ctypes.util
 import os
 import numpy as np
 
-MODES = {"DATAC0": 14, "DATAC1": 10, "DATAC3": 12, "DATAC4": 18}
+MODES = {"DATAC0": 14, "DATAC1": 10, "DATAC3": 12, "DATAC4": 18, "DATAC13": 19}
 # modes ajoutés à libcodec2 par HFImage (hfi_modes.c, FREEDV_MODE_DATA_CUSTOM)
 CUSTOM = {"DATAC1X": b"datac1x"}
 # trames par rafale : doit être identique à l'émission et à la réception
 # Une trame par rafale : chaque trame a son préambule et se resynchronise seule
 # (robuste aux micro-coupures de carte son et aux évanouissements ; ~4 % de durée)
-MODE_FPB = {"DATAC0": 1, "DATAC1": 1, "DATAC3": 1, "DATAC4": 1, "DATAC1X": 1}
+MODE_FPB = {"DATAC0": 1, "DATAC1": 1, "DATAC3": 1, "DATAC4": 1, "DATAC13": 1, "DATAC1X": 1}
 # débit utile approximatif (bit/s), pour l'affichage
-MODE_BPS = {"DATAC0": 290, "DATAC1": 980, "DATAC3": 320, "DATAC4": 85, "DATAC1X": 1520}
+MODE_BPS = {"DATAC0": 290, "DATAC1": 980, "DATAC3": 320, "DATAC4": 85, "DATAC13": 64, "DATAC1X": 1520}
 # largeur de bande occupée (kHz), pour l'affichage
-MODE_BW = {"DATAC0": 0.6, "DATAC1": 1.7, "DATAC3": 0.6, "DATAC4": 0.25, "DATAC1X": 2.2}
+MODE_BW = {"DATAC0": 0.6, "DATAC1": 1.7, "DATAC3": 0.6, "DATAC4": 0.25, "DATAC13": 0.2, "DATAC1X": 2.2}
 
 
 # Étalonnage du SNR : l'estimation de codec2 est comprimée (12 dB réels -> ~8,5 dB
@@ -36,13 +36,15 @@ SNR_CAL = {
                (18, 7.46), (21, 7.72), (24, 7.79)],
     "DATAC4": [(-6, -5.35), (-3, -3.57), (0, -0.69), (3, 2.35), (6, 5.34), (9, 7.99), (12, 10.25),
                (15, 12.43), (18, 13.77), (21, 14.77), (24, 15.54)],
+    "DATAC13": [(-6, -6.21), (-3, -3.62), (0, -0.63), (3, 2.42), (6, 5.36), (9, 8.19), (12, 10.91),
+                (15, 13.16), (18, 15.02), (21, 16.42), (24, 17.28)],
     "DATAC0": [(-3, -2.48), (0, -0.85), (3, 1.10), (6, 3.00), (9, 4.69), (12, 6.39), (15, 7.44), (18, 8.06),
                (21, 8.20), (24, 8.48)],
 }
 SNR_MAX = 25.0
 # au-delà, l'estimation du mode sature (une petite variation donnerait des écarts énormes) :
 # on plafonne au dernier point fiable (affiché « +15 dB » = 15 dB ou plus)
-SNR_CAP = {"DATAC1X": 21.0, "DATAC1": 21.0, "DATAC3": 15.0, "DATAC4": 21.0, "DATAC0": 15.0}
+SNR_CAP = {"DATAC1X": 21.0, "DATAC1": 21.0, "DATAC3": 15.0, "DATAC4": 21.0, "DATAC0": 15.0, "DATAC13": 21.0}
 
 
 def true_snr(mode, est):

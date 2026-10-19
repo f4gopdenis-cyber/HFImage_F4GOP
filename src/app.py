@@ -57,7 +57,7 @@ import random
 import wave
 
 APP = "HFImage F4GOP"
-VERSION = "0.92"
+VERSION = "0.93"
 CONF_PATH = os.path.join(os.path.expanduser("~"), ".hfimage.json")
 DEFAULT_OUT = os.path.join(os.path.expanduser("~"), "Documents", "HFImage")
 DEFAULTS = {
@@ -1022,7 +1022,7 @@ class App(tk.Tk):
                 self._toggle_hyb_ui()
             else:
                 self.prepare()
-        ttk.Checkbutton(r2, text="Éclair (5 s)", variable=self.v_flash,
+        ttk.Checkbutton(r2, text="Éclair (9 s)", variable=self.v_flash,
                         command=_flash_toggle).pack(side="left", padx=(6, 12))
         ttk.Checkbutton(r2, text="Texte inclus", variable=self.v_txtinc,
                         command=lambda: (self._btn_on("txtinc", self.v_txtinc.get()), self.prepare())).pack(side="left")
@@ -3721,7 +3721,7 @@ class App(tk.Tk):
             return
         srv = self.v_hurl.get().strip() or "(lien public non réglé)"
         self.v_txinfo.set(f"Mode hybride\nImage déposée par FTP sur :\n{srv}\n"
-                          + ("Annonce radio : ~4,5 s (DATAC0, éclair : lien par Internet)"
+                          + ("Annonce radio : ~9 s (DATAC13 robuste + DATAC0, éclair : lien par Internet)"
                              if self.v_flash.get() else "Annonce radio : ~11 s (DATAC3)"))
         self._update_comp()
 
@@ -4214,7 +4214,7 @@ class App(tk.Tk):
                                        zlib.crc32(tx.data), tx.fmt, tx.announce.image_id)
                 self.ui(self.log, f"Hybride éclair : lien publié (empreinte {tx.announce.key}).")
             tx.mode = tx.announce.mode
-            modem, frames, mode = tx.announce.modem, tx.announce.frames(), tx.announce.mode
+            modem, frames, mode = tx.announce, tx.announce.frames(), tx.announce.mode
             dur, what = tx.announce.estimate_s(), f"annonce hybride {mode}"
         else:
             extra = job.get("extra")

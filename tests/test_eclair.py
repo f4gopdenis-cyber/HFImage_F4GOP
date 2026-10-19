@@ -80,16 +80,16 @@ class Modem(unittest.TestCase):
         except RuntimeError as e:
             self.skipTest(str(e))
         tx = engine.HybridTransmission(DATA, "avif", "F4GOP", URL, flash=True)
-        self.assertEqual(tx.mode, "DATAC0")
+        self.assertEqual(tx.mode, "DATAC13")                 # 0.93 : 3 x DATAC13 + 2 x DATAC0
         self.assertEqual(len(tx.frames()), 5)
-        self.assertLess(tx.estimate_s(), 5.0)
+        self.assertLess(tx.estimate_s(), 10.0)
         a = np.concatenate([np.zeros(4000, np.float32), tx.audio().astype(np.float32), np.zeros(8000, np.float32)])
         for i in range(0, len(a), 800):
             rx.process(a[i:i + 800])
         self.assertEqual(len(rx_holder), 1)                  # 5 copies, une seule annonce
         h, mode = rx_holder[0]
         self.assertTrue(h["flash"])
-        self.assertEqual((h["key"], h["size"], h["id"], mode), (tx.key, len(DATA), tx.image_id, "DATAC0"))
+        self.assertEqual((h["key"], h["size"], h["id"], mode), (tx.key, len(DATA), tx.image_id, "DATAC13"))
 
 
 if __name__ == "__main__":

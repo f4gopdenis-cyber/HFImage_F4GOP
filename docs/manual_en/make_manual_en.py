@@ -175,7 +175,7 @@ s += B(["Sharp 800×600 photo in about 2 minutes (fast DATAC1X mode, 2.2 kHz wid
         "Transmission <b>follows the received mode</b>: answer each station in the mode it uses.",
         "<b>QRM cutter</b> on receive: carriers, CW, RTTY and adjacent SSB signals removed.",
         "<b>Stations online</b> list, <b>Rx Ok</b> with reports in dB, <b>map</b> of stations.",
-        "<b>Hybrid</b> mode (picture via the Internet, link over the air), including <b>flash hybrid</b>: a 4.5 s "
+        "<b>Hybrid</b> mode (picture via the Internet, link over the air), including <b>flash hybrid</b>: a robust 9 s "
         "announcement over the air.",
         "Up to <b>4 correspondents' pictures</b> inserted into yours, animated GIFs, <b>QSL</b> card, text in the waterfall.",
         "<b>Separate windows</b>: waterfall, gallery, station list… placed where you want, even on another screen.",
@@ -474,12 +474,13 @@ s.append(P("In the HFImage modes, hybrid mode sends the picture through your <b>
            "pictures and <b>animated GIFs</b>. Settings → Hybrid mode: FTP server, user name, password, folder and "
            "<b>public link</b> of this folder; “Test server” checks everything. Only the link goes over the air, never "
            "the password."))
-s.append(P("<b>Flash hybrid</b>: tick <b>Flash (5 s)</b> next to “Hybrid mode” (TX tab). The announcement no longer carries "
-           "the link, only the picture's <b>fingerprint</b> (shortened SHA-256), size and format: one <b>DATAC0</b> frame "
-           "(500 Hz) sent 5 times, <b>4.5 s</b> instead of 11 s. The link goes at the same time through the online-stations "
+s.append(P("<b>Flash hybrid</b>: tick <b>Flash (9 s)</b> next to “Hybrid mode” (TX tab). The announcement no longer carries "
+           "the link, only the picture's <b>fingerprint</b> (shortened SHA-256), size and format, in a 14-byte frame. Since "
+           "version 0.93 it is sent <b>3 times in DATAC13</b> (a very narrow 200 Hz mode made to get through noise and QRM), "
+           "then twice in DATAC0 (500 Hz) for stations with an older version: 9 s in all. The link goes at the same time through the online-stations "
            "server; the receiving station downloads the picture and checks it has <b>exactly the fingerprint received over "
-           "the air</b>. Simulated: fading −2 dB, 85 to 90 % of announcements received against 55 to 60 % for the normal "
-           "announcement. Both stations need “<b>Stations online</b>” (Settings → Internet) and version 0.71 or later; if "
+           "the air</b>. Simulated at −5 dB: 100 % of DATAC13 announcements received (calm, moderate or strong fading) "
+           "against 15 to 50 % for the DATAC0 flash announcement; at −7 dB, 80 to 100 % against 0 to 20 %. Both stations need “<b>Stations online</b>” (Settings → Internet) and version 0.71 or later; if "
            "the server is unreachable, HFImage sends the normal announcement."))
 s.append(P("<b>Download safety</b>: an announcement received over the air can only fetch a file of <b>8 MB at most</b>, and "
            "only from a public Internet address (never the computer itself or a machine on your home network). Received "

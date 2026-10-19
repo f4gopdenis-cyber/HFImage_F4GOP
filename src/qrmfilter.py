@@ -14,7 +14,7 @@ Traitement par blocs de 0,5 s avec 0,25 s de contexte de chaque côté (retard ~
 """
 import numpy as np
 
-NC = {"DATAC1X": 35, "DATAC1": 27, "DATAC3": 9, "DATAC4": 4, "DATAC0": 9}
+NC = {"DATAC1X": 35, "DATAC1": 27, "DATAC3": 9, "DATAC4": 4, "DATAC0": 9, "DATAC13": 3}
 RS = 62.5           # espacement des porteuses (Hz) des modes datac
 CENTRE = 1500.0
 N, HOP = 512, 128
@@ -66,7 +66,12 @@ def clean(x, mode, fs=8000, thr_db=THR_DB):
     sub = S[:, inb]
     P = sub.real ** 2 + sub.imag ** 2
     Pt = _box(P, SMOOTH, 0)
-    base = np.median(Pt, axis=1, keepdims=True)
+    # niveau de référence : médiane sur les porteuses du mode seulement (sans la marge) ;
+    # sinon, pour un mode étroit (DATAC13 : 3 porteuses), la marge de bruit fait baisser la
+    # médiane et les porteuses du signal lui-même seraient prises pour du QRM
+    h = (NC.get(mode, 35) + 1) * RS / 2
+    core = np.abs(f[inb] - CENTRE) <= h
+    base = np.median(Pt[:, core] if core.sum() >= 3 else Pt, axis=1, keepdims=True)
     bad = Pt > base * 10 ** (thr_db / 10)
     if bad.any():
         bad = _dilate(bad, 2, 2)

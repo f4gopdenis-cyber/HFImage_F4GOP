@@ -25,7 +25,8 @@ from protocol import (T_ACK, T_HDR, T_NACK, T_QRV, Receiver, Sender, detect_form
                       T_HYB0, flash_frame, flash_key, parse_control, parse_flash, parse_hybrid,
                       unpack_text)
 
-RX_MODES = ("DATAC1X", "DATAC1", "DATAC3", "DATAC4", "DATAC0")   # DATAC0 : BSR / ACK
+RX_MODES = ("DATAC1X", "DATAC1", "DATAC3", "DATAC4", "DATAC0", "DATAC13")   # DATAC0 : BSR / ACK ;
+# DATAC13 : annonce hybride éclair robuste (200 Hz, passe jusqu'à ~-7 dB)
 DRM_MODE = "EasyPal"      # nom du mode HamDRM dans le programme (images d'EasyPal / QSSTV)
 
 
@@ -258,39 +259,56 @@ class Transmission:
 class HybridTransmission:
     """Annonce hybride : la trame HYB est émise 3 fois en rafales indépendantes
     (DATAC3 ; DATAC1 si le lien est trop long) ; une seule copie suffit.
-    flash=True : hybride éclair, une trame DATAC0 sans le lien (il passe par Internet)."""
+    flash=True : hybride éclair, une trame de 14 octets sans le lien (il passe par Internet) :
+    3 copies en DATAC13 (200 Hz, très robuste : passe dans le bruit et le QRM), puis 2 copies
+    en DATAC0 pour les versions de HFImage antérieures à la 0.93 (qui n'écoutent pas le DATAC13)."""
+
+    COPIES = 3
+    FLASH_PARTS = (("DATAC13", 3), ("DATAC0", 2))
 
     def __init__(self, data: bytes, fmt: str, callsign: str, url: str, flash=False):
         self.data, self.fmt, self.url, self.flash = data, fmt, url, flash
-        # éclair : 5 copies de la trame DATAC0 (4,5 s) ; il suffit d'en recevoir une
-        self.COPIES = self.FLASH_COPIES if flash else HybridTransmission.COPIES
         self.image_id = zlib.crc32(data + url.encode()) & 0xFFFF
         self.key = flash_key(data)
+        self.parts = []                   # [(modem, nombre de copies)]
         if flash:
             self.frame = flash_frame(self.image_id, data, fmt)
+            for mode, n in self.FLASH_PARTS:
+                m = Modem(mode, MODE_FPB[mode])
+                if len(self.frame) > m.payload_bytes:
+                    raise ValueError("trame éclair trop longue")
+                self.parts.append((m, n))
         else:
             self.frame = hybrid_frame(self.image_id, callsign, data, fmt, url)
-        for mode in (("DATAC0",) if flash else ("DATAC3", "DATAC1")):
-            m = Modem(mode, MODE_FPB[mode])
-            if len(self.frame) <= m.payload_bytes:
-                self.mode, self.modem = mode, m
-                break
-            m.close()
-        else:
-            raise ValueError("lien trop long pour une trame radio")
-
-    COPIES = 3
-    FLASH_COPIES = 5
+            for mode in ("DATAC3", "DATAC1"):
+                m = Modem(mode, MODE_FPB[mode])
+                if len(self.frame) <= m.payload_bytes:
+                    self.parts.append((m, self.COPIES))
+                    break
+                m.close()
+            else:
+                raise ValueError("lien trop long pour une trame radio")
+        self.modem = self.parts[0][0]
+        self.mode = self.modem.mode
+        self.COPIES = sum(n for _, n in self.parts)
 
     def frames(self):
-        return [self.frame] * (self.COPIES if self.modem.fpb == 1 else self.modem.fpb)
+        return [self.frame] * self.COPIES
+
+    def modulate_iter(self, frames=None):
+        """Rafales audio de l'annonce (DATAC13 puis DATAC0 en éclair), sans silence
+        de fin / de début entre les deux modes."""
+        last = len(self.parts) - 1
+        for i, (m, n) in enumerate(self.parts):
+            chunks = list(m.modulate_iter([self.frame] * n))
+            yield from chunks[(1 if i else 0):(len(chunks) if i == last else -1)]
 
     def audio(self) -> np.ndarray:
-        return self.modem.modulate(self.frames())
+        return np.concatenate(list(self.modulate_iter()))
 
     def estimate_s(self) -> float:
-        n = self.COPIES if self.modem.fpb == 1 else 1
-        return self.modem.duration_s(n)
+        skip = (len(self.parts) - 1) * (Modem.LEAD_S + Modem.TAIL_S)
+        return sum(m.duration_s(n) for m, n in self.parts) - skip
 
 
 class ControlTransmission:

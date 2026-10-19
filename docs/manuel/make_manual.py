@@ -173,7 +173,7 @@ s += B(["Photo 800×600 nette en environ 2 minutes (mode rapide DATAC1X, 2,2 kHz
         "Mode <b>Auto</b> : le mode et la robustesse s'adaptent aux reports des stations.",
         "<b>Coupe-QRM</b> à la réception : porteuses, CW, RTTY et BLU voisines effacées.",
         "Liste des <b>stations en ligne</b>, <b>Rx Ok</b> avec reports en dB, <b>carte</b> des stations.",
-        "Mode <b>hybride</b> (image par Internet, lien par radio), dont l'<b>hybride éclair</b> : annonce radio de 4,5 s.",
+        "Mode <b>hybride</b> (image par Internet, lien par radio), dont l'<b>hybride éclair</b> : annonce radio robuste de 9 s (DATAC13, passe jusqu'à −7 dB).",
         "Jusqu'à <b>4 images de correspondants</b> incrustées dans la vôtre, GIF animés, carte <b>QSL</b>, texte dans le waterfall.",
         "<b>Fenêtres séparées</b> : waterfall, galerie, liste des stations… placés où vous voulez, même sur un autre écran.",
         "Plus de 300 postes pilotés (Hamlib), Kenwood en direct, OmniRig, FLRig.",
@@ -398,7 +398,7 @@ s.append(P("Envoyer un fichier", "h2"))
 s.append(P("Bouton <b>Envoyer un fichier…</b> (onglet TX) ou menu Images : n'importe quel fichier (texte, PDF, ZIP, "
            "journal ADIF…). Il est compressé s'il y gagne, protégé par le même code fontaine que les images (BSR / FIX "
            "et ACK compris), et la durée d'émission est annoncée avant d'émettre. Avec le <b>mode hybride</b> coché, "
-           "le fichier passe par Internet et seul le lien passe par radio (~11 s, ou 4,5 s en éclair) : idéal pour les gros fichiers. "
+           "le fichier passe par Internet et seul le lien passe par radio (~11 s, ou 9 s en éclair) : idéal pour les gros fichiers. "
            "À la réception, il est rangé sous son nom d'origine dans le sous-dossier <b>fichiers</b> du dossier des "
            "images reçues ; double-clic dans l'historique pour l'ouvrir."))
 s += tip("ordre de grandeur en DATAC1X : environ 8 ko par minute. Un fichier texte de 30 ko compressé à 9 ko "
@@ -506,15 +506,19 @@ s.append(P("L'image passe par votre <b>hébergement web</b> (FTP) ; seul le <b>l
            "<b>lien public</b> de ce dossier ; « Tester le serveur » vérifie tout. Seul le lien passe par radio, "
            "jamais le mot de passe."))
 s.append(P("Hybride éclair", "h2"))
-s.append(P("Case <b>Éclair (5 s)</b>, à côté de « Mode hybride » (onglet TX). L'annonce radio ne porte plus le lien, seulement "
-           "l'<b>empreinte</b> de l'image (SHA-256 abrégé), sa taille et son format : une trame <b>DATAC0</b> de 500 Hz, émise "
-           "5 fois, soit <b>4,5 s</b> au lieu de 11 s. Le lien part en même temps par le serveur des stations en ligne ; la "
-           "station qui entend l'annonce télécharge l'image et vérifie qu'elle a <b>exactement l'empreinte reçue par radio</b>."))
-s.append(table([["Canal simulé", "S/B", "Annonce normale (11 s)", "Éclair (4,5 s)"],
-                ["Calme", "−4 dB", "100 %", "100 %"],
-                ["Fading moyen", "−2 dB", "60 %", "85 %"],
-                ["Fading moyen", "0 dB", "85 %", "100 %"],
-                ["Fading fort", "−2 dB", "55 %", "90 %"]], [45, 25, 50, 50]))
+s.append(P("Case <b>Éclair (9 s)</b>, à côté de « Mode hybride » (onglet TX). L'annonce radio ne porte plus le lien, seulement "
+           "l'<b>empreinte</b> de l'image (SHA-256 abrégé), sa taille et son format, dans une trame de 14 octets. Depuis la "
+           "version 0.93, cette trame part <b>3 fois en DATAC13</b> (mode très étroit de 200 Hz, fait pour passer dans le "
+           "bruit et le QRM), puis 2 fois en DATAC0 (500 Hz) pour les stations qui ont une version plus ancienne : 9 s en tout. "
+           "Le lien part en même temps par le serveur des stations en ligne ; la station qui entend l'annonce télécharge "
+           "l'image et vérifie qu'elle a <b>exactement l'empreinte reçue par radio</b>."))
+s.append(table([["Canal simulé", "S/B", "Éclair DATAC0 (avant 0.93)", "Éclair DATAC13 (0.93)"],
+                ["Calme", "−5 dB", "15 %", "100 %"],
+                ["Calme", "−7 dB", "0 %", "100 %"],
+                ["Fading moyen", "−5 dB", "50 %", "100 %"],
+                ["Fading moyen", "−7 dB", "20 %", "80 %"],
+                ["Fading fort", "−5 dB", "35 %", "100 %"],
+                ["Fading fort", "−7 dB", "5 %", "90 %"]], [40, 22, 55, 55]))
 s.append(Spacer(1, 4))
 s += B(["Les deux stations doivent avoir « <b>Stations en ligne</b> » activé (Réglages → Internet) et la version 0.71 ou plus récente.",
         "Si le serveur n'est pas joignable au moment d'émettre, HFImage envoie l'annonce normale (DATAC3) et le note dans "
