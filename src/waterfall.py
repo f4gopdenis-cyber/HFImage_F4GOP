@@ -66,6 +66,10 @@ class RowMaker:
 
 
 SPEC_H = 46                 # hauteur du spectre au-dessus de l'échelle
+# plancher absolu du réglage automatique : un bruit d'entrée sous ~-76 dBFS (poste éteint,
+# codec USB qui ne reçoit rien) reste noir au lieu d'être amplifié (ronflement, résidus du codec).
+# Ligne de spectre en dB ≈ niveau d'un bruit blanc en dBFS + 24.
+ABS_LO_DB = -52.0
 
 
 class Waterfall(tk.Canvas):
@@ -119,7 +123,7 @@ class Waterfall(tk.Canvas):
             self.floor = 0.9 * self.floor + 0.1 * med
             self.peak = max(pk, 0.95 * self.peak + 0.05 * pk)
         # échelle calée sur le bruit (réception) sans saturer un signal propre (émission)
-        lo = max(self.floor - 5, self.peak - 70)
+        lo = max(self.floor - 5, self.peak - 70, ABS_LO_DB)
         hi = max(lo + self.range_db, self.peak + 3)
         v = np.clip((arr - lo) / (hi - lo) * 255, 0, 255).astype(np.uint8)
         n = len(v)
