@@ -55,5 +55,34 @@ class Swl(unittest.TestCase):
         self.assertEqual(app.App._full_call(s, "PA0041SW"), "PA0041SW")
 
 
+    def test_liste_lisible(self):
+        """1.00 : indicatifs longs alignés, liste jamais décalée vers la droite."""
+        app = _app()
+        import tkinter as tk
+        try:
+            root = tk.Tk()
+        except tk.TclError as e:
+            self.skipTest(str(e))
+        lb, rx = tk.Listbox(root, width=10), tk.Listbox(root, width=8)
+        lb.pack()
+        rx.pack()
+        now = __import__("time").time()
+        s = types.SimpleNamespace(
+            heard={}, rxok={"PA0041SWL": (-1, now)}, lst_heard=lb, lst_rxok=rx, rig_freq=None, map_win=None,
+            online={"a": {"call": "PA0041SWL", "t": now, "state": "RX"}, "b": {"call": "F4EEH", "t": now,
+                                                                              "state": "RX", "freq": 7058000}},
+            lb_heard=tk.Label(root), lb_rxok=tk.Label(root), _net_status=lambda: None,
+            _set_text=lambda w, t: None, _c=lambda c: c, _mhz=app.App._mhz.__get__(object()) if False else
+            (lambda f: f"{f / 1e6:.3f}" if f else "—"), _is_hyb=lambda c, on=None: False)
+        lb.insert("end", "x" * 80)
+        lb.xview_moveto(0.5)
+        app.App._heard_refresh(s)
+        root.update()
+        self.assertEqual(lb.xview()[0], 0.0)
+        rows = lb.get(0, "end")
+        self.assertEqual(len(rows[0].rstrip()), len(rows[1].rstrip()))   # colonnes alignées
+        root.destroy()
+
+
 if __name__ == "__main__":
     unittest.main()

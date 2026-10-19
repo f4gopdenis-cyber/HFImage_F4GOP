@@ -58,7 +58,7 @@ import random
 import wave
 
 APP = "HFImage F4GOP"
-VERSION = "0.99"
+VERSION = "1.00"
 CONF_PATH = os.path.join(os.path.expanduser("~"), ".hfimage.json")
 DEFAULT_OUT = os.path.join(os.path.expanduser("~"), "Documents", "HFImage")
 DEFAULTS = {
@@ -1625,6 +1625,9 @@ class App(tk.Tk):
         self.lst_rxok = tk.Listbox(rbody, height=7, width=14, font=mono, activestyle="none",
                                    bg="white", fg="#062e06", selectbackground="#2f9e2f")
         self.lst_rxok.pack(side="left", fill="both", expand=True)
+        for lb in (self.lst_heard, self.lst_rxok):
+            lb.bind("<ButtonRelease-1>", lambda e: e.widget.xview_moveto(0), add="+")
+            lb.bind("<B1-Leave>", lambda e: "break")       # pas de défilement horizontal en glissant
         self.lst_heard.bind("<Double-Button-1>", lambda e: self._heard_detail())
         self.lst_rxok.bind("<Double-Button-1>", lambda e: self._heard_detail(self.lst_rxok))
         menu = tk.Menu(self, tearoff=0)
@@ -1901,6 +1904,8 @@ class App(tk.Tk):
         # stations en ligne (Internet, avec LEUR fréquence) + stations entendues par radio
         on = {str(d["call"]).upper(): d for d in self.online.values()}
         self._heard_names = sorted(set(on) | set(self.heard))
+        # colonne de l'indicatif à la largeur du plus long (PA0041SWL, F4FRC/P…) : colonnes alignées
+        cw = max([7] + [len(c) for c in self._heard_names])
         self.lst_heard.delete(0, "end")
         for c in self._heard_names:
             hyb = self._is_hyb(c, on)
@@ -1911,19 +1916,24 @@ class App(tk.Tk):
                 mark = "*" if d.get("state") == "TX" else " "        # * = en émission
                 # fréquence publiée par la station ; sinon celle où on l'a entendue par radio
                 fq = d.get("freq") or h.get("freq")
-                self.lst_heard.insert("end", f"{c:<7}{mark}{self._mhz(fq):>6}{tag}")
+                self.lst_heard.insert("end", f"{c:<{cw}}{mark}{self._mhz(fq):>6}{tag}")
                 self.lst_heard.itemconfigure("end", fg=self._c("#c01818" if d.get("state") == "TX" else
                                                                ("#1f4fbf" if hyb else "#062e06")))
             else:
-                self.lst_heard.insert("end", f"{c:<7} {self._mhz(h.get('freq')):>6}{tag}")
+                self.lst_heard.insert("end", f"{c:<{cw}} {self._mhz(h.get('freq')):>6}{tag}")
                 # entendue par radio seulement (pas en ligne) : en gris-vert (bleu pâle si hybride)
                 self.lst_heard.itemconfigure("end", fg=self._c(("#5a78b8" if hyb else "#4a7a4a")
                                                                if now - h["t"] < 1800 else "#8a9a8a"))
         self._rxok_names = sorted(self.rxok)
         self.lst_rxok.delete(0, "end")
+        rw = max([7] + [len(c) for c in self._rxok_names])
         for c in self._rxok_names:
             rep = self.rxok[c][0]
-            self.lst_rxok.insert("end", f"{c:<7}{'' if rep is None else f'{rep:+d} dB':>7}")
+            self.lst_rxok.insert("end", f"{c:<{rw}}{'' if rep is None else f'{rep:+d} dB':>7}")
+        # toujours affichées depuis le début de la ligne : un glisser à la souris décalait la liste
+        # vers la droite et coupait le début des indicatifs (« 4FR79 » pour « 14FR79 »)
+        self.lst_heard.xview_moveto(0)
+        self.lst_rxok.xview_moveto(0)
         fr = f" - {self._mhz(self.rig_freq)}" if self.rig_freq else ""
         self._set_text(self.lb_heard, tr(f"Stations ({len(self._heard_names)})") + fr)
         self._net_status()

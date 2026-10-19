@@ -1,5 +1,11 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 1.00 — liste des stations toujours lisible
+
+- **Liste des stations et Rx Ok** : le début des indicatifs pouvait être coupé (« 4FR79 » pour « 14FR79 », « A0041SWL » pour « PA0041SWL ») : un glisser à la souris décalait la liste vers la droite et elle restait décalée. Les deux listes reviennent maintenant toujours au début de la ligne, et le glisser ne les fait plus défiler sur le côté.
+- **Indicatifs longs** (PA0041SWL, F4FRC/P…) : la colonne de l'indicatif prend la largeur du plus long, la fréquence et « HYB » restent alignés.
+- Version **1.00** : merci à tous les utilisateurs pour leurs essais et leurs retours.
+
 ## Version 0.99 — écouteurs (SWL)
 
 - **Identifiants d'écouteurs acceptés** dans l'assistant de démarrage : **PA0041SWL**, **F-12345**, **14VD274**, **ONL1234**… (la 0.98 n'acceptait que les indicatifs radioamateurs).
