@@ -113,8 +113,9 @@ class Listes(unittest.TestCase):
         self.assertTrue(rows[1].endswith("Pierre-Ma."), rows)
         self.assertTrue(rows[2].startswith("F4GOP    +5 dB") and rows[2].endswith("Denis"), rows)
         st = lb.get(0, "end")
-        self.assertIn("7.058 HYB  Marc", st[1])
-        self.assertEqual(st[1].index("Marc"), st[2].index("Pierre"))   # prénoms alignés
+        # 1.16 : le prénom n'est plus dans la liste Stations (place), seulement dans Rx Ok
+        self.assertTrue(st[1].rstrip().endswith("7.058 HYB"), st)
+        self.assertNotIn("Pierre", " ".join(st))
         root.destroy()
 
 

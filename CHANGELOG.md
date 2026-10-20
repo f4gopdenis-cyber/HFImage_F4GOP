@@ -1,5 +1,9 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 1.16 — prénom dans Rx Ok seulement
+
+- Le prénom n'est plus affiché dans la liste **Stations** (il prenait trop de place) ; il reste dans la liste **Rx Ok**, après le report. Le prénom complet s'affiche toujours dans le journal en cliquant sur une station.
+
 ## Version 1.15 — ménage sur le serveur (demande de RK1AT)
 
 - Nouveau réglage **« Mes images gardées sur le serveur »** (Réglages → Mode hybride) : **les 3 dernières** (par défaut), **la dernière seulement** ou **toutes** (comme avant). Après chaque dépôt réussi, les anciennes images sont effacées du serveur FTP, en hybride HFImage comme en hybride EasyPal.

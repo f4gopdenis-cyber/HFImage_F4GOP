@@ -60,7 +60,7 @@ import random
 import wave
 
 APP = "HFImage F4GOP"
-VERSION = "1.15"
+VERSION = "1.16"
 
 
 def _take_profile(argv):
@@ -2240,11 +2240,11 @@ class App(tk.Tk):
                 mark = "*" if d.get("state") == "TX" else " "        # * = en émission
                 # fréquence publiée par la station ; sinon celle où on l'a entendue par radio
                 fq = d.get("freq") or h.get("freq")
-                self.lst_heard.insert("end", f"{c:<{cw}}{mark}{self._mhz(fq):>6}{tag}{self._name_tail(c, tag)}")
+                self.lst_heard.insert("end", f"{c:<{cw}}{mark}{self._mhz(fq):>6}{tag}")
                 self.lst_heard.itemconfigure("end", fg=self._c("#c01818" if d.get("state") == "TX" else
                                                                ("#1f4fbf" if hyb else "#062e06")))
             else:
-                self.lst_heard.insert("end", f"{c:<{cw}} {self._mhz(h.get('freq')):>6}{tag}{self._name_tail(c, tag)}")
+                self.lst_heard.insert("end", f"{c:<{cw}} {self._mhz(h.get('freq')):>6}{tag}")
                 # entendue par radio seulement (pas en ligne) : en gris-vert (bleu pâle si hybride)
                 self.lst_heard.itemconfigure("end", fg=self._c(("#5a78b8" if hyb else "#4a7a4a")
                                                                if now - h["t"] < 1800 else "#8a9a8a"))
