@@ -45,6 +45,7 @@ Programme Windows de F4GOP (Denis, IN98QR) pour envoyer et recevoir des photos p
 - **Attendre fréquence libre** : si une autre station émet, HFImage attend la fin de son émission et part tout seul (signal reçu par radio, ou station en ligne en émission sur votre fréquence).
 - **Changer de fréquence d'un clic** (comme WSJT-X) : clic sur la fréquence affichée → 3,733 / 7,058 / 14,233 / 21,340 / 28,680 MHz, liste modifiable ; ou clic droit sur une station → sa fréquence.
 - **Traduction automatique** des messages reçus dans la langue du programme (l'original reste affiché).
+- **Plusieurs fréquences à la fois** : un HFImage par fréquence, chacun avec ses réglages (Réglages → Ouvrir une autre instance, ou `HFImage_F4GOP.exe --profil 20m`), par exemple avec un SDR multi-bandes.
 - **Écouteurs (SWL)** bienvenus : avec un identifiant d'écouteur (PA0041SWL, F-12345…), HFImage reçoit tout et envoie les reports par Internet, sans jamais émettre.
 
 ### Station

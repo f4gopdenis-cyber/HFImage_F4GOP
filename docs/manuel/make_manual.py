@@ -291,6 +291,15 @@ s.append(P("Avec une liaison CAT, un <b>clic sur la fréquence</b> affichée (pa
            "DATA, il y reste. Même menu dans <b>Action → Aller sur une fréquence</b>, avec « Autre fréquence… » et "
            "« Modifier la liste… » (une ligne par fréquence, ex. « 7.058 LSB »). Clic droit dans la liste des stations : "
            "<b>Aller sur la fréquence de cette station</b>. Jamais pendant une émission. (Idée d'Allan G7VQV.)"))
+s.append(P("Plusieurs fréquences à la fois (profils)", "h2"))
+s.append(P("Un HFImage écoute une fréquence (une entrée audio). Pour surveiller par exemple le 40 m, le 20 m et le "
+           "28,680 MHz en même temps, il faut un récepteur par fréquence (souvent un <b>SDR</b> avec plusieurs bandes, "
+           "chacune envoyée vers un câble audio virtuel comme VB-Cable) et un HFImage par fréquence : <b>Réglages → "
+           "Ouvrir une autre instance (profil)…</b>, donnez un nom (ex. « 20m »). Chaque profil a ses <b>propres "
+           "réglages</b> (entrée audio, poste, dossier des images, dans Documents\\HFImage\\20m) ; au premier "
+           "lancement, il part des réglages habituels et l'assistant permet de choisir son entrée audio. HFImage "
+           "propose de créer un raccourci sur le Bureau (« HFImage 20m »), qui lance <b>HFImage_F4GOP.exe --profil "
+           "20m</b>. Le nom du profil s'affiche dans le titre de la fenêtre."))
 s.append(P("4. Recevoir des images", "h1"))
 s.append(P("L'écoute démarre toute seule si l'entrée audio est réglée (bouton <b>Écoute</b> pour arrêter / "
            "reprendre). Rien à choisir : <b>tous les modes</b> sont décodés en même temps — DATAC1X, DATAC1, DATAC3, "

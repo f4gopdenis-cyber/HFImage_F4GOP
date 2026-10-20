@@ -58,9 +58,32 @@ import random
 import wave
 
 APP = "HFImage F4GOP"
-VERSION = "1.04"
-CONF_PATH = os.path.join(os.path.expanduser("~"), ".hfimage.json")
+VERSION = "1.05"
+
+
+def _take_profile(argv):
+    """« --profil 20m » (ou --profile) : plusieurs HFImage ouverts en même temps, chacun avec ses
+    propres réglages (entrée audio, poste, dossier). Retiré de argv ; -> nom nettoyé ou ""."""
+    for i, a in enumerate(argv[1:], 1):
+        low = a.lower()
+        name = None
+        if low in ("--profil", "--profile") and i + 1 < len(argv):
+            name = argv[i + 1]
+            del argv[i:i + 2]
+        elif low.startswith(("--profil=", "--profile=")):
+            name = a.split("=", 1)[1]
+            del argv[i]
+        if name is not None:
+            return re.sub(r"[^A-Za-z0-9_-]", "", name)[:16]
+    return ""
+
+
+PROFILE = _take_profile(sys.argv)
+CONF_MAIN = os.path.join(os.path.expanduser("~"), ".hfimage.json")
+CONF_PATH = os.path.join(os.path.expanduser("~"), f".hfimage_{PROFILE}.json") if PROFILE else CONF_MAIN
 DEFAULT_OUT = os.path.join(os.path.expanduser("~"), "Documents", "HFImage")
+if PROFILE:
+    DEFAULT_OUT = os.path.join(DEFAULT_OUT, PROFILE)
 DEFAULTS = {
     "callsign": "", "mode": "Auto", "width": "auto", "seconds": 120, "fmt": "avif",
     "overhead": "auto", "out_dev": "", "in_dev": "", "level": 50,
@@ -157,8 +180,14 @@ def is_swl(call):
 def load_conf():
     c = dict(DEFAULTS)
     try:
-        with open(CONF_PATH, encoding="utf-8") as f:
+        path = CONF_PATH
+        new_profile = PROFILE and not os.path.exists(CONF_PATH) and os.path.exists(CONF_MAIN)
+        if new_profile:
+            path = CONF_MAIN              # nouveau profil : part des réglages habituels (indicatif, poste…)
+        with open(path, encoding="utf-8") as f:
             saved = json.load(f)
+        if new_profile:
+            saved["folder"] = DEFAULT_OUT       # mais ses images dans son propre dossier
         c.update(saved)
         if "ptt" not in saved:                       # réglages de la v0.3
             c["ptt"] = "CAT" if saved.get("cat_on") else "VOX"
@@ -247,7 +276,7 @@ def sd():
 class App(tk.Tk):
     def __init__(self):
         super().__init__()
-        self.title(f"{APP} {VERSION}")
+        self.title(f"{APP} {VERSION}" + (f" — {PROFILE}" if PROFILE else ""))
         self._set_icon()
         self.first_run = not os.path.exists(CONF_PATH)    # aucun réglage enregistré : premier démarrage
         self.conf = load_conf()
@@ -609,7 +638,8 @@ class App(tk.Tk):
         self.log("Langue changée.")
 
     def _set_title(self):
-        self.title(f"{APP} {VERSION} — {self.v_call.get().strip().upper() or 'NOCALL'}")
+        self.title(f"{APP} {VERSION} — {self.v_call.get().strip().upper() or 'NOCALL'}"
+                   + (f" — {PROFILE}" if PROFILE else ""))
 
     # ---------------------------------------------------------------- menus
     def _menus(self):
@@ -617,6 +647,7 @@ class App(tk.Tk):
         r = tk.Menu(m, tearoff=0)
         r.add_command(label="Réglages…", command=self.show_settings)
         r.add_command(label="Assistant de démarrage…", command=self.setup_wizard)
+        r.add_command(label="Ouvrir une autre instance (profil)…", command=self.new_instance)
         r.add_separator()
         r.add_command(label="Tester la sortie audio (1 kHz)", command=self.test_audio)
         r.add_command(label="Poste radio…", command=self.radio_dialog)
@@ -761,6 +792,56 @@ class App(tk.Tk):
                               "Programme dédié à Erik VK4AES (SK), créateur d'EasyPal.")
 
     LICENCE_VERSION = "1.0"
+
+    @staticmethod
+    def _launch_cmd(profile):
+        """Commande qui lance HFImage avec ce profil (exe, ou python app.py depuis les sources)."""
+        if getattr(sys, "frozen", False):
+            return [sys.executable, "--profil", profile]
+        return [sys.executable, os.path.abspath(__file__), "--profil", profile]
+
+    def new_instance(self):
+        """Réglages → Ouvrir une autre instance : un autre HFImage avec ses propres réglages
+        (par ex. un récepteur sur 20 m pendant que celui-ci écoute le 40 m)."""
+        from tkinter import simpledialog
+        name = simpledialog.askstring(
+            APP, tr("Nom du profil (ex. 20m, 28MHz) : chaque profil garde ses propres réglages "
+                    "(entrée audio, poste, dossier des images)."), parent=self)
+        if name is None:
+            return
+        prof = re.sub(r"[^A-Za-z0-9_-]", "", name)[:16]
+        if not prof:
+            messagebox.showerror(APP, tr("Nom de profil vide : lettres, chiffres, - ou _."))
+            return
+        if prof == PROFILE:
+            messagebox.showinfo(APP, tr("Ce profil est déjà celui de cette fenêtre."))
+            return
+        cmd = self._launch_cmd(prof)
+        try:
+            subprocess.Popen(cmd, close_fds=True)
+        except OSError as e:
+            messagebox.showerror(APP, tr("Lancement impossible :") + f" {e}")
+            return
+        self.log(tr("Instance lancée :") + f" {prof}")
+        if sys.platform.startswith("win") and messagebox.askyesno(
+                APP, tr("Créer un raccourci sur le Bureau pour ouvrir directement ce profil ?")):
+            try:
+                self._desktop_shortcut(prof, cmd)
+            except Exception as e:
+                self.log_exc("Raccourci du profil", e)
+                messagebox.showerror(APP, tr("Raccourci impossible :") + f" {e}")
+
+    @staticmethod
+    def _desktop_shortcut(prof, cmd):
+        import comtypes.client
+        shell = comtypes.client.CreateObject("WScript.Shell", dynamic=True)
+        desk = shell.SpecialFolders("Desktop")
+        lnk = shell.CreateShortcut(os.path.join(desk, f"HFImage {prof}.lnk"))
+        lnk.TargetPath = cmd[0]
+        lnk.Arguments = subprocess.list2cmdline(cmd[1:])
+        lnk.WorkingDirectory = os.path.dirname(cmd[0])
+        lnk.Description = f"HFImage F4GOP — {prof}"
+        lnk.Save()
 
     def _startup_dialogs(self):
         self._licence_first_run()
@@ -1679,6 +1760,7 @@ class App(tk.Tk):
             on_state=lambda ok, why: self.ui(self._net_state, ok, why),
             log=lambda m: self.ui(self.log, m))
         self._net_st = None
+        self.net.tag = PROFILE                   # plusieurs instances : une présence chacune
         try:
             self.net.start(call, {"loc": self.v_loc.get().strip(), "freq": self.rig_freq,
                                   "mode": self.rig_mode, "state": "RX", "ver": VERSION, "app": "HFImage",

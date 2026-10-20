@@ -284,6 +284,14 @@ s.append(P("With a CAT link, <b>click the frequency</b> shown (panel at the top 
            "Same menu in <b>Action → Go to a frequency</b>, with “Other frequency…” and “Edit the list…” (one line per "
            "frequency, e.g. “7.058 LSB”). Right-click in the station list: <b>Go to this station's frequency</b>. "
            "Never during a transmission. (Idea from Allan G7VQV.)"))
+s.append(P("Several frequencies at once (profiles)", "h2"))
+s.append(P("One HFImage listens to one frequency (one audio input). To monitor e.g. 40 m, 20 m and 28.680 MHz at the "
+           "same time, you need one receiver per frequency (often an <b>SDR</b> with several bands, each sent to a "
+           "virtual audio cable such as VB-Cable) and one HFImage per frequency: <b>Settings → Open another instance "
+           "(profile)…</b>, give a name (e.g. “20m”). Each profile has its <b>own settings</b> (audio input, radio, "
+           "picture folder, in Documents\\HFImage\\20m); on first start it copies your usual settings and the setup "
+           "assistant lets you choose its audio input. HFImage offers to create a desktop shortcut (“HFImage 20m”) that "
+           "runs <b>HFImage_F4GOP.exe --profil 20m</b>. The profile name is shown in the window title."))
 s.append(P("4. Receiving pictures", "h1"))
 s.append(P("Listening starts by itself when the audio input is set (<b>Receive</b> button to stop / resume). "
            "Nothing to choose: <b>all modes are decoded at the same time</b> — DATAC1X, DATAC1, DATAC3, DATAC4 "

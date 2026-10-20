@@ -1,5 +1,12 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 1.05 — plusieurs fréquences à la fois (profils)
+
+- **Plusieurs HFImage ouverts en même temps**, chacun avec **ses propres réglages** : par exemple un sur 40 m, un sur 20 m et un sur 28,680 MHz, chacun branché sur son récepteur ou sur une bande d'un SDR (câbles audio virtuels type VB-Cable).
+- **Réglages → Ouvrir une autre instance (profil)…** : on donne un nom (ex. « 20m ») ; HFImage le lance et propose un **raccourci sur le Bureau** (« HFImage 20m »). En ligne de commande : `HFImage_F4GOP.exe --profil 20m`.
+- Chaque profil a son fichier de réglages, son dossier d'images (Documents\HFImage\20m) et son nom dans le titre de la fenêtre. Au premier lancement, il part des réglages habituels (indicatif, licence…) et l'assistant de démarrage permet de choisir son entrée audio.
+- Stations en ligne : chaque instance a sa propre présence, avec sa fréquence.
+
 ## Version 1.04 — hybride en pleine qualité
 
 - **Mode hybride** : l'image passe par Internet, il n'y a donc aucune raison de la dégrader. Elle part maintenant **en pleine qualité** par défaut : format **original** (le fichier tel quel, sans réduction ni recompression) et largeur **originale**. Avant, les réglages par défaut (640 px, 60 ko) rendaient l'image floue.

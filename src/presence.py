@@ -46,6 +46,7 @@ class Presence:
         self.host, self.port = host or DEFAULT_HOST, int(port or DEFAULT_PORT)
         self.on_station, self.on_rxok, self.on_state, self.log = on_station, on_rxok, on_state, log
         self.call, self.info = None, {}
+        self.tag = ""             # profil (plusieurs HFImage ouverts) : une présence par instance
         self.client = None
         self.connected = False
         self.ever = False
@@ -127,8 +128,12 @@ class Presence:
             pass
         self.connected = False
 
+    def _st_key(self):
+        tag = re.sub(r"[^A-Z0-9]", "", (self.tag or "").upper())[:8]
+        return _topic_call(self.call) + (f"~{tag}" if tag else "")
+
     def _st_topic(self, call=None):
-        return f"{BASE}/st/{_topic_call(call or self.call)}"
+        return f"{BASE}/st/" + (_topic_call(call) if call else self._st_key())
 
     # ------------------------------------------------------------------ publication
     def update(self, **info):
@@ -216,7 +221,7 @@ class Presence:
         try:
             if msg.topic.startswith(f"{BASE}/st/"):
                 call_t = msg.topic.rsplit("/", 1)[1]
-                if call_t == _topic_call(self.call):
+                if call_t == self._st_key():
                     return
                 if not msg.payload:
                     self.on_station(call_t, None)             # station partie
