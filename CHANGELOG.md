@@ -1,5 +1,9 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 1.19 — « Envoyer la page maintenant » renvoie aussi les images
+
+- Site web / Digi-Sites : le bouton **« Envoyer la page maintenant »** remet aussi en ligne les dernières images reçues (image1.jpg…) et émises (TX1.jpg…), prises dans la galerie. Après un changement de dossier ou de serveur, Digi-Sites trouve tout de suite les images, sans attendre la prochaine réception.
+
 ## Version 1.18 — bouton « Fréquence ▾ »
 
 - Beaucoup d'utilisateurs ne trouvaient pas comment changer de fréquence (il fallait cliquer sur la fréquence affichée). Nouveau bouton **« Fréquence ▾ »** bien visible, à droite de « Attendre fréquence libre » : il ouvre le menu des fréquences image (3,733 – 7,058 – 14,233…).

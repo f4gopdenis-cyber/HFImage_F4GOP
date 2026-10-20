@@ -118,6 +118,12 @@ class WebSync:
     def page(self, cfg):
         self.q.put(("page", dict(cfg), None, None, None))
 
+    def resync(self, cfg, rx, tx):
+        """Remet en ligne d'un coup les dernières images (« Envoyer la page maintenant ») :
+        rx / tx = [(chemin, légende)], de la plus récente à la plus ancienne. Utile après un
+        changement de dossier : pas besoin d'attendre la prochaine image reçue."""
+        self.q.put(("sync", dict(cfg), None, (list(rx), list(tx)), None))
+
     # ------------------------------------------------------------------ fil d'envoi
     def _run(self):
         while True:
@@ -133,8 +139,25 @@ class WebSync:
         if what == "img":
             data, _size = label_image(path, caption)
         ftp = hybrid._ftp_connect(cfg)
+        done = {"rx": 0, "tx": 0}
         try:
             hybrid._ftp_cd(ftp, cfg.get("dir"))
+            if what == "sync":
+                for kind, items, prefix, keep in (("rx", path[0], "image", n), ("tx", path[1], "TX", TX_KEEP)):
+                    lst = []
+                    for src, cap in items:
+                        if len(lst) >= keep:
+                            break
+                        try:
+                            blob, _size = label_image(src, cap)
+                        except Exception:
+                            continue                              # fichier effacé ou illisible
+                        ftp.storbinary(f"STOR {prefix}{len(lst) + 1}.jpg", io.BytesIO(blob))
+                        lst.append({"caption": cap, "t": time.time()})
+                    if lst:
+                        self.state[kind] = lst
+                        done[kind] = len(lst)
+                self._save()
             if what == "img":
                 prefix, keep = ("image", n) if kind == "rx" else ("TX", TX_KEEP)
                 self._rotate(ftp, prefix, keep)
@@ -155,6 +178,8 @@ class WebSync:
                 ftp.close()
         if what == "img":
             self.log(f"Site web : {'image reçue' if kind == 'rx' else 'image émise'} mise en ligne ({caption})")
+        elif what == "sync":
+            self.log(f"Site web : page et images remises en ligne ({done['rx']} reçue(s), {done['tx']} émise(s)).")
         else:
             self.log("Site web : page mise en ligne.")
 

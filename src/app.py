@@ -60,7 +60,7 @@ import random
 import wave
 
 APP = "HFImage F4GOP"
-VERSION = "1.18"
+VERSION = "1.19"
 
 
 def _take_profile(argv):
@@ -6409,6 +6409,29 @@ class App(tk.Tk):
                  call=self.mycall() or "NOCALL")
         return c
 
+    def _web_recent(self):
+        """Dernières images de la galerie à remettre en ligne : ([(chemin, légende)] reçues,
+        [(chemin, légende)] émises), de la plus récente à la plus ancienne."""
+        rx, tx = [], []
+        if self.gal_store is None:
+            return rx, tx
+        skip = {c.strip().upper() for c in str(self.conf.get("web_block", "")).replace(";", ",").split(",")}
+        for e in list(self.gal_store.items):
+            src = self._gallery_src(e)
+            if not src or not os.path.exists(src):
+                continue
+            mode = str(e.get("mode") or "")
+            if " aperçu" in mode:
+                continue
+            when = clocktz.fmt("%Y-%m-%d %H:%M", e.get("t"))
+            call = str(e.get("call") or "?")
+            if e.get("dir") == "rx" and call.upper() not in skip:
+                rx.append((src, "  ".join([call, when, mode.split()[0] if mode else ""]).strip()))
+            elif e.get("dir") == "tx" and self.conf.get("web_tx", True):
+                tx.append((src, "  ".join([tr("émise par") + " " + call, when,
+                                           mode.split()[0] if mode else ""]).strip()))
+        return rx, tx
+
     def _web_caption(self, call, mode):
         band = audio.band_of(self.rig_freq) if self.rig_freq else ""
         parts = [call or "?", clocktz.fmt("%Y-%m-%d %H:%M"), (mode or "").split()[0]]
@@ -6504,7 +6527,10 @@ class App(tk.Tk):
             if not self._hyb_cfg()["host"]:
                 messagebox.showerror(APP, "Réglez d'abord le serveur FTP (Réglages → Mode hybride).", parent=w)
                 return
-            self.web.page(self._web_cfg())
+            # la page ET les dernières images (après un changement de dossier, Digi-Sites trouve
+            # tout de suite image1.jpg, sans attendre la prochaine image reçue)
+            rx, tx = self._web_recent()
+            self.web.resync(self._web_cfg(), rx, tx)
             lb.configure(text=tr("Envoi de la page en cours… (résultat dans le journal)"))
 
         b = ttk.Frame(f)
