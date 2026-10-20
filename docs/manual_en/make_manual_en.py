@@ -528,6 +528,11 @@ s.append(P("<b>Flash hybrid</b>: tick <b>Flash (9 s)</b> next to “Hybrid mode�
            "the air</b>. Simulated at −5 dB: 100 % of DATAC13 announcements received (calm, moderate or strong fading) "
            "against 15 to 50 % for the DATAC0 flash announcement; at −7 dB, 80 to 100 % against 0 to 20 %. Both stations need “<b>Stations online</b>” (Settings → Internet) and version 0.71 or later; if "
            "the server is unreachable, HFImage sends the normal announcement."))
+s.append(P("<b>My pictures on the server</b>: each picture sent in hybrid mode is uploaded to your FTP server under a "
+           "new name. Settings → Hybrid mode → “<b>My images kept on the server</b>”: <b>the last 3</b> (default), <b>the last "
+           "one only</b> or <b>all</b>. After each upload, the older ones are deleted. Only the files uploaded by HFImage "
+           "with your callsign are concerned (HFImage hybrid and EasyPal hybrid): the other files of your site are never "
+           "touched. With “the last one only”, a station still downloading the previous picture will no longer find it."))
 s.append(P("<b>Download safety</b>: an announcement received over the air can only fetch a file up to the <b>maximum size you chose</b> (Settings → Hybrid mode → “Received hybrid files: max size”, 200 MB by default, or no limit), and "
            "only from a public Internet address (never the computer itself or a machine on your home network). Received "
            "pictures and files always stay in the reception folder, whatever the announced callsign."))

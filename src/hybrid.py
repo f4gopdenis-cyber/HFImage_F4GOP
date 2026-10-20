@@ -8,6 +8,7 @@ Aucun identifiant de serveur n'est transmis par radio.
 import base64
 import ftplib
 import io
+import re
 import ipaddress
 import socket
 import ssl
@@ -162,8 +163,42 @@ def test_ftp(cfg):
             ftp.close()
 
 
-def upload(cfg, name: str, data: bytes, progress=None) -> str:
-    """Dépose `data` sous `name` et retourne le lien public."""
+def prune(ftp, pattern, keep, order=None, log=None):
+    """Efface du dossier courant nos anciennes images : ne garde que les `keep` plus récentes
+    parmi les fichiers dont le nom suit `pattern` (expression régulière : seulement les fichiers
+    déposés par HFImage avec notre indicatif ; les autres fichiers du site ne sont jamais touchés).
+    order(nom) -> clé de tri (du plus ancien au plus récent ; par défaut le nom). keep <= 0 : rien."""
+    if not keep or keep <= 0:
+        return []
+    try:
+        names = ftp.nlst()
+    except ftplib.all_errors:
+        return []
+    rx = re.compile(pattern)
+    mine = sorted({n.rsplit("/", 1)[-1] for n in names if rx.fullmatch(n.rsplit("/", 1)[-1])},
+                  key=order or (lambda n: n))
+    gone = []
+    for n in mine[:-keep]:
+        try:
+            ftp.delete(n)
+            gone.append(n)
+        except ftplib.all_errors as e:
+            if log:
+                log(f"Serveur : ancienne image {n} non effacée ({e}).")
+    if gone and log:
+        log(f"Serveur : {len(gone)} ancienne(s) image(s) effacée(s) (gardées : {keep}).")
+    return gone
+
+
+def mine_pattern(callsign: str) -> str:
+    """Noms des images hybrides HFImage de cet indicatif (voir remote_name)."""
+    call = "".join(c for c in callsign.upper() if c.isalnum()) or "NOCALL"
+    return re.escape(call) + r"_\d{8}_\d{6}\.[A-Za-z0-9]{1,5}"
+
+
+def upload(cfg, name: str, data: bytes, progress=None, keep=0, call=None, log=None) -> str:
+    """Dépose `data` sous `name` et retourne le lien public. keep > 0 : ensuite, on ne garde
+    sur le serveur que nos `keep` dernières images (indicatif `call`)."""
     if not cfg.get("url", "").strip().lower().startswith(("http://", "https://")):
         raise RuntimeError("lien public (http/https) non renseigné (onglet Réglages)")
     ftp = _ftp_connect(cfg)
@@ -179,6 +214,9 @@ def upload(cfg, name: str, data: bytes, progress=None) -> str:
         ftp.storbinary(f"STOR {name}", io.BytesIO(data), blocksize=8192, callback=cb)
     except ftplib.all_errors as e:
         raise RuntimeError(f"envoi FTP impossible : {e}") from e
+    else:
+        if keep and call:
+            prune(ftp, mine_pattern(call), keep, log=log)
     finally:
         try:
             ftp.quit()

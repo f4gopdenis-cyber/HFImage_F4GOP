@@ -1,5 +1,10 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 1.15 — ménage sur le serveur (demande de RK1AT)
+
+- Nouveau réglage **« Mes images gardées sur le serveur »** (Réglages → Mode hybride) : **les 3 dernières** (par défaut), **la dernière seulement** ou **toutes** (comme avant). Après chaque dépôt réussi, les anciennes images sont effacées du serveur FTP, en hybride HFImage comme en hybride EasyPal.
+- Seuls les fichiers déposés par HFImage avec votre indicatif sont effacés (reconnus à leur nom) : les autres fichiers de votre site ne sont jamais touchés. Le journal indique combien d'images ont été effacées.
+
 ## Version 1.14 — prénoms longs
 
 - Les prénoms longs (« Pierre-Marie ») élargissaient les listes : le report de Rx Ok et la fréquence de la liste Stations sortaient de la fenêtre. Le prénom est maintenant **en bout de ligne**, après le report ou la fréquence (qui restent toujours visibles et alignés), et coupé à 10 caractères (« Pierre-Ma. »). Le prénom complet reste visible dans le journal en cliquant sur la station.

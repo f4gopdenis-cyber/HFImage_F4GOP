@@ -60,7 +60,7 @@ import random
 import wave
 
 APP = "HFImage F4GOP"
-VERSION = "1.14"
+VERSION = "1.15"
 
 
 def _take_profile(argv):
@@ -93,7 +93,7 @@ DEFAULTS = {
     "folder": DEFAULT_OUT,
     "hyb_on": False, "hyb_host": "", "hyb_port": 21, "hyb_user": "", "hyb_pass": "",
     "hyb_dir": "hfimage", "hyb_tls": False, "hyb_url": "", "hyb_auto": True,
-    "hyb_width": "originale", "hyb_kb": 3000, "hyb_fmt": "original", "gif_kb": 2000, "hyb_rx_max_mb": 200,
+    "hyb_width": "originale", "hyb_kb": 3000, "hyb_fmt": "original", "gif_kb": 2000, "hyb_rx_max_mb": 200, "hyb_keep": 3,
     "net_on": True, "net_host": presence.DEFAULT_HOST, "net_port": presence.DEFAULT_PORT,
     "update_check": True,
     "theme": "Vert EasyPal", "theme_color": "#3a8ee6", "font_family": "(par défaut)", "font_size": "9",
@@ -139,6 +139,8 @@ FORMATS_TX = ["avif", "webp", "jpg", "original"]
 ORIGINAL_KINDS = ("jpeg", "png", "gif", "avif", "webp", "svg")
 WIDTHS = ["auto", 160, 240, 320, 480, 640, 800, 1024, 1280, 1600, 1920, "originale"]
 HYB_WIDTHS = [480, 640, 800, 1024, 1280, 1600, 1920, 2560, "originale"]
+# hybride : images déposées sur NOTRE serveur FTP qu'on garde (les plus anciennes sont effacées)
+HYB_KEEP = {"Toutes": 0, "Les 3 dernières": 3, "La dernière seulement": 1}
 HYB_RX_MAX = ["8 Mo", "50 Mo", "200 Mo", "1 Go", "Sans limite"]
 HYB_MAX_BYTES = 1 << 31        # image hybride : partie telle quelle (plus de recompression au-delà de 7,5 Mo)
 # aperçu rapide : taille cible selon le mode (octets) ; proposé si l'émission dépasse 2 min
@@ -2528,6 +2530,15 @@ class App(tk.Tk):
                           state="readonly")
         cb.pack(side="left", padx=6)
         cb.bind("<<ComboboxSelected>>", lambda e: self._rxmax_changed())
+        kp = ttk.Frame(h)
+        kp.grid(row=14, column=0, columnspan=2, sticky="w", pady=(4, 0))
+        ttk.Label(kp, text="Mes images gardées sur le serveur").pack(side="left")
+        self.v_hkeep = TrVar()
+        self.v_hkeep.set(self._keep_label(self.conf.get("hyb_keep", 3)))
+        cb = ttk.Combobox(kp, textvariable=self.v_hkeep, values=[tr(x) for x in HYB_KEEP], width=20,
+                          state="readonly")
+        cb.pack(side="left", padx=6)
+        cb.bind("<<ComboboxSelected>>", lambda e: self._keep_changed())
         hb = ttk.Frame(h)
         hb.grid(row=10, column=0, columnspan=2, sticky="w", pady=(6, 0))
         ttk.Button(hb, text="Tester le serveur", command=self.test_hybrid).pack(side="left")
@@ -3208,6 +3219,18 @@ class App(tk.Tk):
                  f"« {self.v_hdir.get()} » n'était pas dans le lien).")
         if isinstance(self.tx, HybridJob):
             self.prepare()
+
+    @staticmethod
+    def _keep_label(n):
+        n = int(n or 0)
+        return next((lab for lab, v in HYB_KEEP.items() if v == n), "Les 3 dernières")
+
+    def _keep_changed(self):
+        lab = self.v_hkeep.get()
+        n = next((v for x, v in HYB_KEEP.items() if tr(x) == lab or x == lab), 3)
+        self.conf["hyb_keep"] = n
+        self._save_conf_file()
+        self.log(tr("Mes images gardées sur le serveur") + f" : {lab}")
 
     @staticmethod
     def _rxmax_label(mb):
@@ -5052,7 +5075,9 @@ class App(tk.Tk):
                 self.ui(self.log, f"Hybride EasyPal : dépôt de {len(tx.data)} octets "
                                   f"({easypal_hybrid.FILES_DIR}/{name}) sur {cfg['host']}…")
                 easypal_hybrid.upload(cfg, name, tx.data,
-                                      progress=lambda f: self.ui(self.pb_tx.configure, {"value": 100 * f}))
+                                      progress=lambda f: self.ui(self.pb_tx.configure, {"value": 100 * f}),
+                                      keep=int(self.conf.get("hyb_keep", 3) or 0), call=tx.call,
+                                      log=lambda m: self.ui(self.log, m))
                 self.ui(self.log, "Hybride EasyPal : image déposée.")
                 tx.drm_announce = (name, blob)
                 # même identifiant que chez les stations qui la téléchargent : Rx Ok
@@ -5081,7 +5106,9 @@ class App(tk.Tk):
                 name = hybrid.remote_name(tx.call, imgfmt.ext_for(tx.fmt))
                 self.ui(self.log, f"Hybride : dépôt de {len(tx.data)} octets sur {cfg['host']}…")
                 hybrid.upload(cfg, name, tx.data,
-                              progress=lambda f: self.ui(self.pb_tx.configure, {"value": 100 * f}))
+                              progress=lambda f: self.ui(self.pb_tx.configure, {"value": 100 * f}),
+                              keep=int(self.conf.get("hyb_keep", 3) or 0), call=tx.call,
+                              log=lambda m: self.ui(self.log, m))
                 # on vérifie que l'image est bien lisible par le lien public AVANT d'émettre
                 url, base = hybrid.verify_public(cfg, name, tx.data)
                 if base.rstrip("/") != cfg["url"].rstrip("/"):

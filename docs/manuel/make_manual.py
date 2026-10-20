@@ -576,6 +576,13 @@ s.append(Spacer(1, 4))
 s += B(["Les deux stations doivent avoir « <b>Stations en ligne</b> » activé (Réglages → Internet) et la version 0.71 ou plus récente.",
         "Si le serveur n'est pas joignable au moment d'émettre, HFImage envoie l'annonce normale (DATAC3) et le note dans "
         "le journal."])
+s.append(P("Mes images sur le serveur", "h2"))
+s.append(P("Chaque image envoyée en hybride est déposée sur votre serveur FTP sous un nom différent. Réglages → Mode "
+           "hybride → « <b>Mes images gardées sur le serveur</b> » : <b>les 3 dernières</b> (par défaut), <b>la dernière "
+           "seulement</b> ou <b>toutes</b>. Après chaque dépôt, les plus anciennes sont effacées. Seuls les fichiers déposés "
+           "par HFImage avec votre indicatif sont concernés (hybride HFImage et hybride EasyPal) : les autres fichiers de "
+           "votre site ne sont jamais touchés. Avec « la dernière seulement », une station qui télécharge encore l'image "
+           "précédente ne la trouvera plus."))
 s.append(P("Sécurité des téléchargements", "h2"))
 s.append(P("Une annonce reçue par radio ne peut faire télécharger qu'un fichier de la <b>taille maximale choisie</b> (Réglages → Mode hybride → « Fichiers hybrides reçus : taille max », 200 Mo par défaut, ou sans limite), et seulement depuis "
            "une adresse Internet publique : l'ordinateur lui-même et les machines du réseau de la maison (box, NAS…) sont "

@@ -12,6 +12,7 @@ compte FTP dédié, limité à un seul dossier.
 """
 import ftplib
 import io
+import re
 import time
 
 import hybrid
@@ -120,8 +121,27 @@ def _files_path(directory: str) -> str:
     return f"{d}/{FILES_DIR}" if d else FILES_DIR
 
 
-def upload(cfg, name: str, data: bytes, progress=None):
-    """Dépose l'image dans <dossier>/HybridFiles1 du serveur FTP de l'onglet Réglages."""
+def mine_pattern(callsign: str) -> str:
+    """Noms des images déposées par nous (voir file_name) : de_INDICATIF-n-nom.ext."""
+    call = "".join(c for c in callsign.upper() if c.isalnum() or c == "/").replace("/", "-") or "NOCALL"
+    return "de_" + re.escape(call) + r"-\d+-[A-Za-z0-9_-]*\.[A-Za-z0-9]{1,5}"
+
+
+def _order_for(callsign):
+    """Tri par numéro d'envoi n (de_INDICATIF-n-nom.ext), du plus ancien au plus récent."""
+    pre = "de_" + "".join(c for c in callsign.upper() if c.isalnum() or c == "/").replace("/", "-") + "-"
+
+    def order(name):
+        try:
+            return int(name[len(pre):].split("-", 1)[0]) if name.startswith(pre) else 0
+        except ValueError:
+            return 0
+    return order
+
+
+def upload(cfg, name: str, data: bytes, progress=None, keep=0, call=None, log=None):
+    """Dépose l'image dans <dossier>/HybridFiles1 du serveur FTP de l'onglet Réglages.
+    keep > 0 : ensuite, on ne garde que nos `keep` dernières images."""
     ftp = hybrid._ftp_connect(cfg)
     try:
         hybrid._ftp_cd(ftp, _files_path(cfg.get("dir")))
@@ -135,6 +155,9 @@ def upload(cfg, name: str, data: bytes, progress=None):
         ftp.storbinary(f"STOR {name}", io.BytesIO(data), blocksize=8192, callback=cb)
     except ftplib.all_errors as e:
         raise RuntimeError(f"envoi FTP impossible : {e}") from e
+    else:
+        if keep and call:
+            hybrid.prune(ftp, mine_pattern(call), keep, order=_order_for(call), log=log)
     finally:
         try:
             ftp.quit()
