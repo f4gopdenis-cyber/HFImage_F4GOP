@@ -58,7 +58,7 @@ import random
 import wave
 
 APP = "HFImage F4GOP"
-VERSION = "1.03"
+VERSION = "1.04"
 CONF_PATH = os.path.join(os.path.expanduser("~"), ".hfimage.json")
 DEFAULT_OUT = os.path.join(os.path.expanduser("~"), "Documents", "HFImage")
 DEFAULTS = {
@@ -68,7 +68,7 @@ DEFAULTS = {
     "folder": DEFAULT_OUT,
     "hyb_on": False, "hyb_host": "", "hyb_port": 21, "hyb_user": "", "hyb_pass": "",
     "hyb_dir": "hfimage", "hyb_tls": False, "hyb_url": "", "hyb_auto": True,
-    "hyb_width": 640, "hyb_kb": 60, "gif_kb": 2000,
+    "hyb_width": "originale", "hyb_kb": 3000, "hyb_fmt": "original", "gif_kb": 2000,
     "net_on": True, "net_host": presence.DEFAULT_HOST, "net_port": presence.DEFAULT_PORT,
     "update_check": True,
     "theme": "Vert EasyPal", "theme_color": "#3a8ee6", "font_family": "(par défaut)", "font_size": "9",
@@ -114,6 +114,7 @@ FORMATS_TX = ["avif", "webp", "jpg", "original"]
 ORIGINAL_KINDS = ("jpeg", "png", "gif", "avif", "webp", "svg")
 WIDTHS = ["auto", 160, 240, 320, 480, 640, 800, 1024, 1280, 1600, 1920, "originale"]
 HYB_WIDTHS = [480, 640, 800, 1024, 1280, 1600, 1920, 2560, "originale"]
+HYB_MAX_BYTES = 7_500_000      # une image hybride reçue est limitée à 8 Mo (hybrid.MAX_DOWNLOAD)
 # aperçu rapide : taille cible selon le mode (octets) ; proposé si l'émission dépasse 2 min
 PREVIEW_BYTES = {"DATAC1X": 1200, "DATAC1": 1000, "DATAC3": 450, "DATAC4": 220}
 PREVIEW_MIN_S = 120
@@ -184,6 +185,16 @@ def load_conf():
             # des stations en ligne au moment d'émettre, l'annonce normale (DATAC3) part à la place
             c["hyb_flash"] = True
             c["conf_v"] = 63
+        if saved.get("conf_v", 0) < 64:
+            # v1.04 : en hybride, l'image passe par Internet : plus de réduction à 640 px / 60 ko
+            # (image floue) ; le fichier original part tel quel, en pleine qualité
+            try:
+                small = float(saved.get("hyb_kb", 60)) <= 100
+            except (TypeError, ValueError):
+                small = True
+            if small:
+                c["hyb_kb"], c["hyb_width"], c["hyb_fmt"] = 3000, "originale", "original"
+            c["conf_v"] = 64
         if c.get("fmt") not in FORMATS_TX:
             c["fmt"] = {"jpeg": "jpg"}.get(c.get("fmt"), "avif")
     except Exception:
@@ -2968,7 +2979,7 @@ class App(tk.Tk):
                 width=self.v_width.get(), seconds=int(self.v_sec.get()),
                 fmt=self._fmt_mem["radio"] if self._fmt_side == "hyb" else self.v_fmt.get(),
                 hyb_fmt=self.v_fmt.get() if self._fmt_side == "hyb" else self._fmt_mem["hyb"],
-                overhead=self._robust_conf(), conf_v=63,
+                overhead=self._robust_conf(), conf_v=64,
                 out_dev=self.v_out.get(), in_dev=self.v_in.get(), level=int(self.v_lvl.get()),
                 radio=self.radio_cfg,
                 folder=self.v_folder.get(),
@@ -4047,6 +4058,12 @@ class App(tk.Tk):
         elif fmt == "original":
             data, fmt = self._payload(fmt, hybrid=True)
             q, size = None, (self.src_img.width, self.src_img.height)
+            if len(data) > HYB_MAX_BYTES:
+                # trop gros pour les stations qui reçoivent (8 Mo au plus) : même image, recompressée
+                fmt = "jpeg"
+                data, q, size = self._cz(engine.compress, src, "originale", HYB_MAX_BYTES, fmt)
+                if len(data) > HYB_MAX_BYTES:            # même à qualité minimale : image réduite
+                    data, q, size = self._cz(engine.compress_auto, src, HYB_MAX_BYTES, fmt)
         else:
             data, q, size = self._cz(engine.compress, src, width, int(kb * 1000), fmt)
         call = self.v_call.get().strip().upper() or "NOCALL"

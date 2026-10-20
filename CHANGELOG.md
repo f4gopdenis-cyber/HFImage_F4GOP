@@ -1,5 +1,11 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 1.04 — hybride en pleine qualité
+
+- **Mode hybride** : l'image passe par Internet, il n'y a donc aucune raison de la dégrader. Elle part maintenant **en pleine qualité** par défaut : format **original** (le fichier tel quel, sans réduction ni recompression) et largeur **originale**. Avant, les réglages par défaut (640 px, 60 ko) rendaient l'image floue.
+- Mise à jour : les réglages hybrides restés petits (60 ko…) passent en pleine qualité ; un réglage choisi plus grand est gardé.
+- Une image de plus de **7,5 Mo** (les stations n'acceptent pas plus de 8 Mo) est recompressée à la même taille d'image, et réduite seulement si elle ne tient toujours pas.
+
 ## Version 1.03 — aide au réglage du serveur hybride
 
 - **Tester le serveur** sans lien public (ou avec « ftp.… » à la place d'une adresse web) : au lieu d'échouer tout de suite, HFImage teste quand même le **dépôt FTP**, qui suffit pour l'**hybride EasyPal**, puis explique ce qu'est le lien public (l'adresse **web** du dossier, nécessaire pour l'hybride HFImage).

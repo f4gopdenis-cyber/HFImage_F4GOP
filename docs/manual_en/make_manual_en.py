@@ -494,7 +494,8 @@ s.append(P("In the HFImage modes, hybrid mode sends the picture through your <b>
            "<b>link</b> goes over the air (~11 s in DATAC3). Stations download it automatically. Ideal for large "
            "pictures and <b>animated GIFs</b>. Settings → Hybrid mode: FTP server, user name, password, folder and "
            "<b>public link</b> of this folder; “Test server” checks everything. Only the link goes over the air, never "
-           "the password."))
+           "the password. By default the picture goes in <b>full quality</b> (“original” format: the file as it is, "
+           "not reduced); only a picture larger than 7.5 MB is recompressed."))
 s.append(P("<b>Flash hybrid</b>: tick <b>Flash (9 s)</b> next to “Hybrid mode” (TX tab), <b>ticked by default</b> since 0.98. The announcement no longer carries "
            "the link, only the picture's <b>fingerprint</b> (shortened SHA-256), size and format, in a 14-byte frame. Since "
            "version 0.93 it is sent <b>3 times in DATAC13</b> (a very narrow 200 Hz mode made to get through noise and QRM), "

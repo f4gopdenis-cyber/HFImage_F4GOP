@@ -36,7 +36,7 @@ class EclairParDefaut(unittest.TestCase):
     def test_mise_a_jour_une_seule_fois(self):
         c = self.conf({"conf_v": 62, "hyb_flash": False, "callsign": "F4EEH"})
         self.assertTrue(c["hyb_flash"])
-        self.assertEqual(c["conf_v"], 63)
+        self.assertGreaterEqual(c["conf_v"], 63)
         # décoché ensuite par l'utilisateur : son choix est gardé
         self.assertFalse(self.conf({"conf_v": 63, "hyb_flash": False})["hyb_flash"])
 

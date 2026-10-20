@@ -527,7 +527,8 @@ s.append(P("L'image passe par votre <b>hébergement web</b> (FTP) ; seul le <b>l
            "(~11 s en DATAC3). Les stations la téléchargent automatiquement. Idéal pour les grandes images et les "
            "<b>GIF animés</b>. Réglages → Mode hybride : serveur FTP, identifiant, mot de passe, dossier et "
            "<b>lien public</b> de ce dossier ; « Tester le serveur » vérifie tout. Seul le lien passe par radio, "
-           "jamais le mot de passe."))
+           "jamais le mot de passe. Par défaut, l'image part en <b>pleine qualité</b> (format « original » : le "
+           "fichier tel quel, sans réduction) ; seule une image de plus de 7,5 Mo est recompressée."))
 s.append(P("Hybride éclair", "h2"))
 s.append(P("Case <b>Éclair (9 s)</b>, à côté de « Mode hybride » (onglet TX), <b>cochée par défaut</b> depuis la 0.98. L'annonce radio ne porte plus le lien, seulement "
            "l'<b>empreinte</b> de l'image (SHA-256 abrégé), sa taille et son format, dans une trame de 14 octets. Depuis la "
