@@ -1,5 +1,9 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 1.17 — l'émission hybride repart sans attendre
+
+- 1.15 : le ménage des anciennes images sur le serveur se faisait **avant** l'émission. La première fois, des centaines d'anciennes images pouvaient être à effacer, une par une : l'émission mettait longtemps à partir. Le ménage se fait maintenant **en tâche de fond**, par une connexion à part, pendant que l'émission part.
+
 ## Version 1.16 — prénom dans Rx Ok seulement
 
 - Le prénom n'est plus affiché dans la liste **Stations** (il prenait trop de place) ; il reste dans la liste **Rx Ok**, après le report. Le prénom complet s'affiche toujours dans le journal en cliquant sur une station.

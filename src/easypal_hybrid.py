@@ -127,6 +127,12 @@ def mine_pattern(callsign: str) -> str:
     return "de_" + re.escape(call) + r"-\d+-[A-Za-z0-9_-]*\.[A-Za-z0-9]{1,5}"
 
 
+def cleanup_async(cfg, callsign, keep, log=None):
+    """Ménage de nos anciennes images dans HybridFiles1, en tâche de fond."""
+    return hybrid.cleanup_async(cfg, _files_path(cfg.get("dir")), mine_pattern(callsign), keep,
+                                order=_order_for(callsign), log=log)
+
+
 def _order_for(callsign):
     """Tri par numéro d'envoi n (de_INDICATIF-n-nom.ext), du plus ancien au plus récent."""
     pre = "de_" + "".join(c for c in callsign.upper() if c.isalnum() or c == "/").replace("/", "-") + "-"

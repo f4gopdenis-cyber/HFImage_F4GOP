@@ -190,6 +190,36 @@ def prune(ftp, pattern, keep, order=None, log=None):
     return gone
 
 
+def cleanup_async(cfg, directory, pattern, keep, order=None, log=None):
+    """Ménage sur le serveur dans une connexion à part, en tâche de fond : il ne retarde jamais
+    l'émission (la première fois, des centaines d'anciennes images peuvent être à effacer)."""
+    if not keep or keep <= 0:
+        return None
+    import threading
+
+    def run():
+        try:
+            ftp = _ftp_connect(cfg)
+        except Exception as e:
+            if log:
+                log(f"Serveur : ménage des anciennes images impossible ({e}).")
+            return
+        try:
+            _ftp_cd(ftp, directory)
+            prune(ftp, pattern, keep, order=order, log=log)
+        except Exception as e:
+            if log:
+                log(f"Serveur : ménage des anciennes images impossible ({e}).")
+        finally:
+            try:
+                ftp.quit()
+            except Exception:
+                ftp.close()
+    t = threading.Thread(target=run, daemon=True)
+    t.start()
+    return t
+
+
 def mine_pattern(callsign: str) -> str:
     """Noms des images hybrides HFImage de cet indicatif (voir remote_name)."""
     call = "".join(c for c in callsign.upper() if c.isalnum()) or "NOCALL"

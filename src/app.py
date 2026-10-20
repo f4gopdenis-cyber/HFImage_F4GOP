@@ -60,7 +60,7 @@ import random
 import wave
 
 APP = "HFImage F4GOP"
-VERSION = "1.16"
+VERSION = "1.17"
 
 
 def _take_profile(argv):
@@ -5075,9 +5075,10 @@ class App(tk.Tk):
                 self.ui(self.log, f"Hybride EasyPal : dépôt de {len(tx.data)} octets "
                                   f"({easypal_hybrid.FILES_DIR}/{name}) sur {cfg['host']}…")
                 easypal_hybrid.upload(cfg, name, tx.data,
-                                      progress=lambda f: self.ui(self.pb_tx.configure, {"value": 100 * f}),
-                                      keep=int(self.conf.get("hyb_keep", 3) or 0), call=tx.call,
-                                      log=lambda m: self.ui(self.log, m))
+                                      progress=lambda f: self.ui(self.pb_tx.configure, {"value": 100 * f}))
+                # ménage des anciennes images : en tâche de fond, n'attarde pas l'émission
+                easypal_hybrid.cleanup_async(cfg, tx.call, int(self.conf.get("hyb_keep", 3) or 0),
+                                             log=lambda m: self.ui(self.log, m))
                 self.ui(self.log, "Hybride EasyPal : image déposée.")
                 tx.drm_announce = (name, blob)
                 # même identifiant que chez les stations qui la téléchargent : Rx Ok
@@ -5106,14 +5107,15 @@ class App(tk.Tk):
                 name = hybrid.remote_name(tx.call, imgfmt.ext_for(tx.fmt))
                 self.ui(self.log, f"Hybride : dépôt de {len(tx.data)} octets sur {cfg['host']}…")
                 hybrid.upload(cfg, name, tx.data,
-                              progress=lambda f: self.ui(self.pb_tx.configure, {"value": 100 * f}),
-                              keep=int(self.conf.get("hyb_keep", 3) or 0), call=tx.call,
-                              log=lambda m: self.ui(self.log, m))
+                              progress=lambda f: self.ui(self.pb_tx.configure, {"value": 100 * f}))
                 # on vérifie que l'image est bien lisible par le lien public AVANT d'émettre
                 url, base = hybrid.verify_public(cfg, name, tx.data)
                 if base.rstrip("/") != cfg["url"].rstrip("/"):
                     self.ui(self._fix_public_url, base)
                 self.ui(self.log, f"Hybride : image en ligne et vérifiée : {url}")
+                # ménage des anciennes images : en tâche de fond, n'attarde pas l'émission
+                hybrid.cleanup_async(cfg, cfg.get("dir"), hybrid.mine_pattern(tx.call),
+                                     int(self.conf.get("hyb_keep", 3) or 0), log=lambda m: self.ui(self.log, m))
                 tx.announce = engine.HybridTransmission(tx.data, tx.fmt, tx.call, url, flash=want_flash)
                 self.my_ids.add(tx.announce.image_id)
                 self.ui(self._rxok_show, tx.announce.image_id)
