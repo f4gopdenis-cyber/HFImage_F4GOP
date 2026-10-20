@@ -66,6 +66,13 @@ class Prenom(unittest.TestCase):
         self.assertEqual(s._station_call("F1JI PAU"), "F1JI")       # 8 caractères : peut-être coupé
         self.assertEqual(s._label("F1JI"), "F1JI")
 
+    def test_mon_prenom_sur_ma_ligne(self):
+        app = _app()
+        s = self._stub(app)
+        s.mycall, s.myname = (lambda: "F4GOP"), (lambda: "Denis")
+        self.assertEqual(s._label("F4GOP"), "F4GOP Denis")
+        self.assertEqual(s._label("F4EEH"), "F4EEH")
+
     def test_mon_indicatif(self):
         app = _app()
         Var = lambda v: types.SimpleNamespace(get=lambda: v)

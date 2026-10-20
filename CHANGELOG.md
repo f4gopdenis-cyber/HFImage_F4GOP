@@ -1,5 +1,9 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 1.13 — votre prénom sur votre propre ligne
+
+- Dans la liste Rx Ok (et Stations), votre propre ligne affiche aussi votre prénom (« F4GOP Denis »), comme celles des autres stations.
+
 ## Version 1.12 — prénom à part, une seule ligne par station
 
 - **Nouvelle case « Prénom »** (Réglages → Station) : il s'affiche à côté de l'indicatif dans la liste des stations des autres utilisateurs (« F4LTX Chris »), sans toucher à l'indicatif envoyé par radio.

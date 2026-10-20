@@ -60,7 +60,7 @@ import random
 import wave
 
 APP = "HFImage F4GOP"
-VERSION = "1.12"
+VERSION = "1.13"
 
 
 def _take_profile(argv):
@@ -1858,6 +1858,11 @@ class App(tk.Tk):
     def _label(self, call):
         """Indicatif + prénom pour l'affichage des listes."""
         n = self.opnames.get(call)
+        try:
+            if call == self.mycall():
+                n = self.myname() or n               # notre propre ligne (Rx Ok) : notre prénom
+        except AttributeError:
+            pass
         return f"{call} {n}" if n else call
 
     def _net_station(self, key, d):
