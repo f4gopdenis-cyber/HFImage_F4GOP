@@ -60,7 +60,7 @@ import random
 import wave
 
 APP = "HFImage F4GOP"
-VERSION = "1.13"
+VERSION = "1.14"
 
 
 def _take_profile(argv):
@@ -1865,6 +1865,16 @@ class App(tk.Tk):
             pass
         return f"{call} {n}" if n else call
 
+    def _name_tail(self, call, tag=None):
+        """Prénom en bout de ligne (après le report / la fréquence) : un prénom long ne cache
+        plus rien ; coupé à 10 caractères."""
+        n = self._label(call)[len(call) + 1:]
+        if not n:
+            return ""
+        if len(n) > 10:
+            n = n[:9] + "."
+        return (" " * 6 if tag == "" else "  ") + n
+
     def _net_station(self, key, d):
         if d is None:
             if self.online.pop(key, None) is not None:
@@ -2217,7 +2227,7 @@ class App(tk.Tk):
         on = {str(d["call"]).upper(): d for d in self.online.values()}
         self._heard_names = sorted(set(on) | set(self.heard))
         # colonne de l'indicatif à la largeur du plus long (PA0041SWL, F4FRC/P…) : colonnes alignées
-        cw = max([7] + [len(self._label(c)) for c in self._heard_names])
+        cw = max([7] + [len(c) for c in self._heard_names])
         self.lst_heard.delete(0, "end")
         for c in self._heard_names:
             hyb = self._is_hyb(c, on)
@@ -2228,20 +2238,20 @@ class App(tk.Tk):
                 mark = "*" if d.get("state") == "TX" else " "        # * = en émission
                 # fréquence publiée par la station ; sinon celle où on l'a entendue par radio
                 fq = d.get("freq") or h.get("freq")
-                self.lst_heard.insert("end", f"{self._label(c):<{cw}}{mark}{self._mhz(fq):>6}{tag}")
+                self.lst_heard.insert("end", f"{c:<{cw}}{mark}{self._mhz(fq):>6}{tag}{self._name_tail(c, tag)}")
                 self.lst_heard.itemconfigure("end", fg=self._c("#c01818" if d.get("state") == "TX" else
                                                                ("#1f4fbf" if hyb else "#062e06")))
             else:
-                self.lst_heard.insert("end", f"{self._label(c):<{cw}} {self._mhz(h.get('freq')):>6}{tag}")
+                self.lst_heard.insert("end", f"{c:<{cw}} {self._mhz(h.get('freq')):>6}{tag}{self._name_tail(c, tag)}")
                 # entendue par radio seulement (pas en ligne) : en gris-vert (bleu pâle si hybride)
                 self.lst_heard.itemconfigure("end", fg=self._c(("#5a78b8" if hyb else "#4a7a4a")
                                                                if now - h["t"] < 1800 else "#8a9a8a"))
         self._rxok_names = sorted(self.rxok)
         self.lst_rxok.delete(0, "end")
-        rw = max([7] + [len(self._label(c)) for c in self._rxok_names])
+        rw = max([7] + [len(c) for c in self._rxok_names])
         for c in self._rxok_names:
             rep = self.rxok[c][0]
-            self.lst_rxok.insert("end", f"{self._label(c):<{rw}}{'' if rep is None else f'{rep:+d} dB':>7}")
+            self.lst_rxok.insert("end", f"{c:<{rw}}{'' if rep is None else f'{rep:+d} dB':>7}{self._name_tail(c)}")
         # toujours affichées depuis le début de la ligne : un glisser à la souris décalait la liste
         # vers la droite et coupait le début des indicatifs (« 4FR79 » pour « 14FR79 »)
         self.lst_heard.xview_moveto(0)

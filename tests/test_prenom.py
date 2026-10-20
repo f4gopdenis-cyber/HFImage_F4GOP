@@ -84,5 +84,39 @@ class Prenom(unittest.TestCase):
         self.assertEqual(app.App.myname(s), "Denis")
 
 
+
+class Listes(unittest.TestCase):
+    def test_prenom_long_ne_cache_rien(self):
+        """1.14 : le prénom est en bout de ligne : le report et la fréquence restent visibles."""
+        app = _app()
+        import tkinter as tk
+        try:
+            root = tk.Tk()
+        except tk.TclError as e:
+            self.skipTest(str(e))
+        lb, rx = tk.Listbox(root, width=18), tk.Listbox(root, width=14)
+        now = time.time()
+        s = types.SimpleNamespace(
+            heard={}, rxok={"F4FCE": (9, now), "F4GOP": (5, now), "F1FHQ": (None, now)}, lst_heard=lb,
+            lst_rxok=rx, rig_freq=None, map_win=None, opnames={"F4FCE": "Pierre-Marie", "F4BJR": "Marc"},
+            online={"a": {"call": "F4FCE", "t": now, "state": "RX", "freq": 7058000},
+                    "b": {"call": "F4BJR", "t": now, "state": "RX", "freq": 7058000},
+                    "c": {"call": "F1FHQ", "t": now, "state": "RX"}},
+            lb_heard=tk.Label(root), lb_rxok=tk.Label(root), _net_status=lambda: None,
+            _set_text=lambda w, t: None, _c=lambda c: c, _mhz=lambda f: f"{f / 1e6:.3f}" if f else "—",
+            _is_hyb=lambda c, on=None: c == "F4BJR", mycall=lambda: "F4GOP", myname=lambda: "Denis")
+        for n in ("_label", "_name_tail"):
+            setattr(s, n, getattr(app.App, n).__get__(s))
+        app.App._heard_refresh(s)
+        rows = rx.get(0, "end")
+        self.assertTrue(rows[1].startswith("F4FCE    +9 dB"), rows)
+        self.assertTrue(rows[1].endswith("Pierre-Ma."), rows)
+        self.assertTrue(rows[2].startswith("F4GOP    +5 dB") and rows[2].endswith("Denis"), rows)
+        st = lb.get(0, "end")
+        self.assertIn("7.058 HYB  Marc", st[1])
+        self.assertEqual(st[1].index("Marc"), st[2].index("Pierre"))   # prénoms alignés
+        root.destroy()
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -73,7 +73,7 @@ class Swl(unittest.TestCase):
                                                                               "state": "RX", "freq": 7058000}},
             lb_heard=tk.Label(root), lb_rxok=tk.Label(root), _net_status=lambda: None,
             _set_text=lambda w, t: None, _c=lambda c: c, _mhz=app.App._mhz.__get__(object()) if False else
-            (lambda f: f"{f / 1e6:.3f}" if f else "—"), _is_hyb=lambda c, on=None: False, _label=lambda c: c)
+            (lambda f: f"{f / 1e6:.3f}" if f else "—"), _is_hyb=lambda c, on=None: False, _label=lambda c: c, _name_tail=lambda c, tag=None: "")
         lb.insert("end", "x" * 80)
         lb.xview_moveto(0.5)
         app.App._heard_refresh(s)

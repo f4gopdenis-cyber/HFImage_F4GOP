@@ -1,5 +1,9 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 1.14 — prénoms longs
+
+- Les prénoms longs (« Pierre-Marie ») élargissaient les listes : le report de Rx Ok et la fréquence de la liste Stations sortaient de la fenêtre. Le prénom est maintenant **en bout de ligne**, après le report ou la fréquence (qui restent toujours visibles et alignés), et coupé à 10 caractères (« Pierre-Ma. »). Le prénom complet reste visible dans le journal en cliquant sur la station.
+
 ## Version 1.13 — votre prénom sur votre propre ligne
 
 - Dans la liste Rx Ok (et Stations), votre propre ligne affiche aussi votre prénom (« F4GOP Denis »), comme celles des autres stations.
