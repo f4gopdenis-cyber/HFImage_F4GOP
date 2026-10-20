@@ -1,5 +1,10 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 1.10 — le mode choisi à la main est gardé
+
+- Après une image reçue en **EasyPal**, l'émission passe bien en EasyPal pour répondre à la station (case « suivre le mode reçu »). Mais si l'on choisissait ensuite **Auto** à la main (par exemple pour renvoyer l'image en DATAC), le programme remettait EasyPal quelques instants après, et l'image partait en EasyPal : l'état de la dernière réception EasyPal restait affiché et relançait le changement de mode à chaque rafraîchissement du panneau.
+- Maintenant, le mode suit la station **une seule fois par émission reçue** ; un choix fait à la main ensuite est gardé jusqu'à la prochaine image reçue. Même règle pour les images DATAC (une fois par image).
+
 ## Version 1.09 — glisser-déposer réparé
 
 - **Le programme se fermait** quand on glissait une image sur la fenêtre (1.08). Le glisser-déposer passe maintenant par **tkdnd** (paquet tkinterdnd2), l'extension de glisser-déposer reconnue pour Tk, au lieu d'une interception maison des messages de Windows. Une image glissée n'importe où sur la fenêtre s'ouvre dans l'onglet TX ; un autre fichier est proposé à l'envoi. Les chemins avec des espaces sont bien reconnus.

@@ -60,7 +60,7 @@ import random
 import wave
 
 APP = "HFImage F4GOP"
-VERSION = "1.09"
+VERSION = "1.10"
 
 
 def _take_profile(argv):
@@ -2868,6 +2868,8 @@ class App(tk.Tk):
         """Panneau de gauche quand la réception la plus récente est en mode EasyPal.
         -> True si le panneau a été rempli avec les infos EasyPal."""
         st = getattr(eng, "drm_status", None) or {}
+        if now - eng.drm_t > 10:
+            self._drm_followed = False                   # plus de signal EasyPal : prochaine émission reçue
         if not st or not listening:
             return False
         act_t = max([a["t"] for a in eng.activity.values()] or [0])
@@ -2902,8 +2904,12 @@ class App(tk.Tk):
         got, K = st.get("seg_received", 0), st.get("seg_total", 0)
         if K > 0:
             self._rx_tab_auto(("easypal", K, st.get("callsign") or good.get("callsign")))
-            # dès le début : mode EasyPal (A/B/E et QAM repris quand l'image sera complète)
-            self._follow_mode({"call": st.get("callsign") or good.get("callsign"), "hybrid": True}, None, True)
+            # dès le début : mode EasyPal (A/B/E et QAM repris quand l'image sera complète).
+            # Une seule fois par émission reçue : l'état EasyPal reste affiché après la fin du signal,
+            # et le mode choisi ensuite à la main (Auto…) ne doit pas être remis sur EasyPal (1.10).
+            if time.time() - eng.drm_t < 3 and not getattr(self, "_drm_followed", False):
+                self._drm_followed = True
+                self._follow_mode({"call": st.get("callsign") or good.get("callsign"), "hybrid": True}, None, True)
             done = eng.drm_done_t >= eng.drm_t - 1 and got >= K
             P.set_cell("Total", "RX", str(K))
             P.set_cell("Segs OK", "RX", str(min(got, K)))
@@ -5695,8 +5701,11 @@ class App(tk.Tk):
             got, K = prog
             if st["mode"] not in ("DATAC0", engine.DRM_MODE) and not st.get("from_file"):
                 self._rx_tab_auto(("datac", st.get("id")))
-                # dès le début de l'image : l'émission passe sur le mode reçu (réponse, BSR…)
-                self._follow_mode({"call": st.get("call")}, None, False)
+                # dès le début de l'image : l'émission passe sur le mode reçu (réponse, BSR…),
+                # une fois par image (un choix fait à la main ensuite est gardé)
+                if getattr(self, "_datac_followed", None) != st.get("id"):
+                    self._datac_followed = st.get("id")
+                    self._follow_mode({"call": st.get("call")}, None, False)
             self.pb_rx.configure(value=100 * min(got, K) / K)
             self.v_rxstat.set(txt + f"\nImage en cours : {min(got, K)} / {K} symboles "
                                     f"({100 * min(got, K) // K} %)")
