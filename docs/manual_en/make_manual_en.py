@@ -282,7 +282,8 @@ s += B(["Separate windows always stay <b>in front of</b> the main window and are
 
 # ------------------------------------------------------------------ 4
 s.append(P("Changing frequency", "h2"))
-s.append(P("With a CAT link, <b>click the frequency</b> shown (panel at the top left, or the status bar) to open the "
+s.append(P("With a CAT link, the <b>“Frequency ▾”</b> button (right of “Wait for clear frequency”), or a <b>click on the "
+           "frequency</b> shown (panel at the top left, marked ▾, or the status bar) opens the "
            "picture-frequency menu: <b>3.733 – 7.058 – 14.233 – 21.340 – 28.680 MHz</b>. One click and the radio goes "
            "there, with that frequency's sideband (LSB below 10 MHz, USB above); if it was in DATA, it stays in DATA. "
            "Same menu in <b>Action → Go to a frequency</b>, with “Other frequency…” and “Edit the list…” (one line per "

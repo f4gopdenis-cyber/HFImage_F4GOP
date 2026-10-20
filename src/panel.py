@@ -72,7 +72,8 @@ class StatusPanel(tk.Frame):
 
     def set_freq(self, freq, sub=""):
         """Fréquence du poste (lue par CAT), avec mode et bande en petit."""
-        self.freq.configure(text=f"{freq}\n{sub}" if freq else "",
+        # ▾ : la fréquence se clique (menu des fréquences)
+        self.freq.configure(text=f"{freq} ▾\n{sub}" if freq else "",
                             font=("TkDefaultFont", 11, "bold"))
 
     def set_call(self, call):

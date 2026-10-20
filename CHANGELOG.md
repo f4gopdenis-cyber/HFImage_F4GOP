@@ -1,5 +1,10 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 1.18 — bouton « Fréquence ▾ »
+
+- Beaucoup d'utilisateurs ne trouvaient pas comment changer de fréquence (il fallait cliquer sur la fréquence affichée). Nouveau bouton **« Fréquence ▾ »** bien visible, à droite de « Attendre fréquence libre » : il ouvre le menu des fréquences image (3,733 – 7,058 – 14,233…).
+- La fréquence du panneau porte une petite flèche **▾** pour montrer qu'elle se clique aussi, et une bulle d'aide « Cliquez pour changer de fréquence » apparaît au passage de la souris.
+
 ## Version 1.17 — l'émission hybride repart sans attendre
 
 - 1.15 : le ménage des anciennes images sur le serveur se faisait **avant** l'émission. La première fois, des centaines d'anciennes images pouvaient être à effacer, une par une : l'émission mettait longtemps à partir. Le ménage se fait maintenant **en tâche de fond**, par une connexion à part, pendant que l'émission part.

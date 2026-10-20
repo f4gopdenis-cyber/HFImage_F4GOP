@@ -60,7 +60,7 @@ import random
 import wave
 
 APP = "HFImage F4GOP"
-VERSION = "1.17"
+VERSION = "1.18"
 
 
 def _take_profile(argv):
@@ -173,6 +173,38 @@ class TrVar(tk.StringVar):
     def retranslate(self):
         super().set(tr(getattr(self, "_fr", "")))
 
+
+
+def tip(widget, text):
+    """Petite bulle d'aide quand la souris s'arrête sur `widget` (texte traduit)."""
+    state = {"w": None, "job": None}
+
+    def show():
+        state["job"] = None
+        if state["w"] is not None:
+            return
+        t = tk.Toplevel(widget)
+        t.wm_overrideredirect(True)
+        t.wm_geometry(f"+{widget.winfo_pointerx() + 12}+{widget.winfo_pointery() + 16}")
+        tk.Label(t, text=tr(text), bg="#ffffe0", fg="#000", relief="solid", borderwidth=1,
+                 font=("TkDefaultFont", 8), padx=4, pady=1).pack()
+        state["w"] = t
+
+    def enter(_e):
+        if state["job"] is None and state["w"] is None:
+            state["job"] = widget.after(500, show)
+
+    def leave(_e):
+        if state["job"] is not None:
+            widget.after_cancel(state["job"])
+            state["job"] = None
+        if state["w"] is not None:
+            state["w"].destroy()
+            state["w"] = None
+
+    widget.bind("<Enter>", enter, add="+")
+    widget.bind("<Leave>", leave, add="+")
+    widget.bind("<Button-1>", leave, add="+")
 
 def split_call(text):
     """« F4LTX CHRIS » -> ("F4LTX", "Chris") : l'indicatif est le premier mot, le reste est le
@@ -477,6 +509,7 @@ class App(tk.Tk):
         for w in (self.lb_freq, self.panel.freq):
             w.configure(cursor="hand2")
             w.bind("<Button-1>", self._freq_menu)
+            tip(w, "Cliquez pour changer de fréquence")
         self.lb_freq.pack(side="right", padx=12)
 
         self._tab_conf()            # fenêtres Réglages et Texte (cachées)
@@ -1017,11 +1050,19 @@ class App(tk.Tk):
             g.columnconfigure(c, weight=1, uniform="b")
         self.gbtn["tx"].bind("<Button-3>", self._btn_emission_force)
         self.v_waitfree = tk.BooleanVar(value=self.conf.get("wait_free", True))
-        tk.Checkbutton(parent, text="Attendre fréquence libre", variable=self.v_waitfree, bg=GREEN,
+        row = tk.Frame(parent, bg=GREEN)
+        row.pack(fill="x")
+        # bouton bien visible pour changer de fréquence (le clic sur la fréquence affichée
+        # n'était pas trouvé par beaucoup d'utilisateurs)
+        bq = tk.Button(row, text="Fréquence ▾", font=("TkDefaultFont", 8), bg="white", cursor="hand2",
+                       padx=6, pady=0, command=lambda: self._freq_menu_at(bq))
+        bq.pack(side="right", padx=(4, 2), pady=1)
+        tip(bq, "Cliquez pour changer de fréquence")
+        tk.Checkbutton(row, text="Attendre fréquence libre", variable=self.v_waitfree, bg=GREEN,
                        activebackground=GREEN, font=("TkDefaultFont", 8), anchor="w",
                        command=lambda: (self.conf.__setitem__("wait_free", bool(self.v_waitfree.get())),
                                         self._save_conf_file())
-                       ).pack(fill="x")
+                       ).pack(side="left", fill="x", expand=True)
         # compatibilité avec le reste du code
         self.btn_listen = self.gbtn["ecoute"]
         self.btn_bsr = self.gbtn["bsr"]
@@ -2101,6 +2142,12 @@ class App(tk.Tk):
         m.add_separator()
         m.add_command(label=tr("Autre fréquence…"), command=self._qsy_ask)
         m.add_command(label=tr("Modifier la liste…"), command=self._qsy_edit)
+
+    def _freq_menu_at(self, w):
+        """Menu des fréquences ouvert sous le bouton « Fréquence ▾ »."""
+        m = tk.Menu(self, tearoff=0)
+        self._fill_qsy_menu(m)
+        m.tk_popup(w.winfo_rootx(), w.winfo_rooty() + w.winfo_height())
 
     def _freq_menu(self, event=None):
         """Clic sur la fréquence affichée : menu des fréquences image."""

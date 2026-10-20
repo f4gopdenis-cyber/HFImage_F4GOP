@@ -290,8 +290,8 @@ s += B(["Les fenêtres séparées restent <b>toujours devant</b> la fenêtre pri
 # ------------------------------------------------------------------ 4
 s.append(PageBreak())
 s.append(P("Changer de fréquence", "h2"))
-s.append(P("Avec une liaison CAT, un <b>clic sur la fréquence</b> affichée (panneau en haut à gauche, ou barre d'état en "
-           "bas) ouvre le menu des fréquences image : <b>3,733 – 7,058 – 14,233 – 21,340 – 28,680 MHz</b>. Un clic, et le "
+s.append(P("Avec une liaison CAT, le bouton <b>« Fréquence ▾ »</b> (à droite de « Attendre fréquence libre »), ou un "
+           "<b>clic sur la fréquence</b> affichée (panneau en haut à gauche, marquée ▾, ou barre d'état en bas) ouvre le menu des fréquences image : <b>3,733 – 7,058 – 14,233 – 21,340 – 28,680 MHz</b>. Un clic, et le "
            "poste y va, avec la bande latérale de la fréquence (LSB en dessous de 10 MHz, USB au-dessus) ; s'il était en "
            "DATA, il y reste. Même menu dans <b>Action → Aller sur une fréquence</b>, avec « Autre fréquence… » et "
            "« Modifier la liste… » (une ligne par fréquence, ex. « 7.058 LSB »). Clic droit dans la liste des stations : "

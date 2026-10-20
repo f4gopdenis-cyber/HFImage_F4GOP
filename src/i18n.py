@@ -1475,6 +1475,8 @@ T = [
     ("Toutes", "All", "Alle", "Todas", "Tutte"),
     ("Les 3 dernières", "The last 3", "Die letzten 3", "Las 3 últimas", "Le ultime 3"),
     ("La dernière seulement", "The last one only", "Nur das letzte", "Solo la última", "Solo l'ultima"),
+    ("Fréquence ▾", "Frequency ▾", "Frequenz ▾", "Frecuencia ▾", "Frequenza ▾"),
+    ("Cliquez pour changer de fréquence", "Click to change frequency", "Klicken, um die Frequenz zu ändern", "Haga clic para cambiar de frecuencia", "Fare clic per cambiare frequenza"),
     ("Attendre fréquence libre", "Wait for clear frequency", "Auf freie Frequenz warten", "Esperar frecuencia libre", "Attendere frequenza libera"),
     ("ATTENTE…", "WAITING…", "WARTEN…", "ESPERA…", "ATTESA…"),
     ("image", "picture", "Bild", "imagen", "immagine"),
