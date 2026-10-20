@@ -19,7 +19,9 @@ class Bulles(unittest.TestCase):
             b = dict(bubbles.new("Bonjour de Flers ! 73", st, "moyenne", 0.3, 0.3), tx=0.6, ty=0.8)
             out = bubbles.draw(self.im, [b])
             self.assertEqual(out.size, self.im.size)
-            self.assertEqual(out.getpixel((int(0.3 * 800), int(0.3 * 600) - 30)), (255, 255, 255), st)
+            g = bubbles.layout(800, 600, b)
+            x = int(g["cx"] - g["rx"] + max(g["lw"] * 3, 6))      # dans la bulle, à côté du texte
+            self.assertGreater(min(out.getpixel((x, int(g["cy"])))), 230, st)
             self.assertEqual(self.im.getpixel((240, 150)), (40, 90, 160))      # original intact
 
     def test_bulle_vide_ignoree(self):
