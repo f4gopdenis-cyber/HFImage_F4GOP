@@ -66,5 +66,23 @@ class Resync(unittest.TestCase):
         self.assertEqual(len(tx), 1)
 
 
+
+class Bandeau(unittest.TestCase):
+    def test_bandeau_sous_l_image(self):
+        """1.20 : l'étiquette est ajoutée sous l'image, la photo n'est pas cachée."""
+        import io
+        with tempfile.TemporaryDirectory() as d:
+            p = os.path.join(d, "a.png")
+            Image.new("RGB", (400, 300), (255, 255, 255)).save(p)
+            blob, size = websync.label_image(p, "G7VQV  2026-10-20 19:28 UTC  DATAC13")
+        im = Image.open(io.BytesIO(blob)).convert("RGB")
+        self.assertEqual(im.width, 400)
+        self.assertGreater(im.height, 300)
+        self.assertEqual(size, im.size)
+        # bas de la photo intact (blanc), bandeau noir en dessous
+        self.assertGreater(min(im.getpixel((200, 295))), 240)
+        self.assertLess(max(im.getpixel((399, im.height - 2))), 30)
+
+
 if __name__ == "__main__":
     unittest.main()

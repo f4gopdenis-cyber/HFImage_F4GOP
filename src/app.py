@@ -60,7 +60,7 @@ import random
 import wave
 
 APP = "HFImage F4GOP"
-VERSION = "1.19"
+VERSION = "1.20"
 
 
 def _take_profile(argv):
@@ -6423,7 +6423,7 @@ class App(tk.Tk):
             mode = str(e.get("mode") or "")
             if " aperçu" in mode:
                 continue
-            when = clocktz.fmt("%Y-%m-%d %H:%M", e.get("t"))
+            when = time.strftime("%Y-%m-%d %H:%M UTC", time.gmtime(e.get("t") or 0))
             call = str(e.get("call") or "?")
             if e.get("dir") == "rx" and call.upper() not in skip:
                 rx.append((src, "  ".join([call, when, mode.split()[0] if mode else ""]).strip()))
@@ -6434,7 +6434,8 @@ class App(tk.Tk):
 
     def _web_caption(self, call, mode):
         band = audio.band_of(self.rig_freq) if self.rig_freq else ""
-        parts = [call or "?", clocktz.fmt("%Y-%m-%d %H:%M"), (mode or "").split()[0]]
+        # heure UTC, comme EasyPal : la même pour toutes les stations, quel que soit leur pays
+        parts = [call or "?", time.strftime("%Y-%m-%d %H:%M UTC", time.gmtime()), (mode or "").split()[0]]
         if band:
             parts.append(band)
         return "  ".join(parts)

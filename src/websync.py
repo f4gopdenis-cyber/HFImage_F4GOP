@@ -38,9 +38,13 @@ def label_image(path, caption, max_w=1024):
         font = ImageFont.load_default(size=size)
     except TypeError:
         font = ImageFont.load_default()
-    d = ImageDraw.Draw(im, "RGBA")
+    # bandeau AJOUTÉ sous l'image (avant, il était posé sur le bas de la photo et cachait
+    # le bandeau de la station émettrice : les deux textes se mélangeaient)
     h = size + 8
-    d.rectangle((0, im.height - h, im.width, im.height), fill=(0, 0, 0, 160))
+    out = Image.new("RGB", (im.width, im.height + h), (0, 0, 0))
+    out.paste(im, (0, 0))
+    im = out
+    d = ImageDraw.Draw(im)
     d.text((6, im.height - h + 3), caption, fill=(255, 255, 255), font=font)
     buf = io.BytesIO()
     im.save(buf, "JPEG", quality=88, optimize=True, progressive=True)

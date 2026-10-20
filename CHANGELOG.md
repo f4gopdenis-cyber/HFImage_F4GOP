@@ -1,5 +1,11 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 1.20 — étiquette du site web sous l'image, heure UTC
+
+- Site web / Digi-Sites : l'étiquette (indicatif, date, mode, bande) est maintenant **ajoutée sous l'image**, sur une bande noire. Avant, elle était posée sur le bas de la photo et cachait le bandeau de la station émettrice (les deux textes se mélangeaient).
+- L'heure de l'étiquette est en **UTC** (« 19:28 UTC »), comme EasyPal : la même pour toutes les stations, quel que soit leur pays.
+- Rappel : la liste des fichiers du serveur qsl.net affiche les heures de New York (6 h de moins que la France) ; ce n'est pas une erreur.
+
 ## Version 1.19 — « Envoyer la page maintenant » renvoie aussi les images
 
 - Site web / Digi-Sites : le bouton **« Envoyer la page maintenant »** remet aussi en ligne les dernières images reçues (image1.jpg…) et émises (TX1.jpg…), prises dans la galerie. Après un changement de dossier ou de serveur, Digi-Sites trouve tout de suite les images, sans attendre la prochaine réception.
