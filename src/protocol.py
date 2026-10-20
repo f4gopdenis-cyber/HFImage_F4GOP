@@ -147,11 +147,13 @@ class Sender:
 
 class Receiver:
     """Accumule les trames reçues, rend les images complètes."""
+    KEEP = 64            # images gardées en mémoire (programme ouvert des jours : pas de croissance sans fin)
 
     def __init__(self, callsign="RX"):
         self.call = callsign
         self.sessions = {}   # id -> dict
-        self.done = {}       # id -> (info, data)
+        self.done = {}       # id -> (info, data)  (les KEEP derniers)
+        self.total = 0       # images complètes depuis le début
 
     def feed(self, payload: bytes):
         """Retourne (info, octets) quand une image vient d'être reconstituée."""
@@ -196,7 +198,16 @@ class Receiver:
             return None
         s["info"]["fmt"] = detect_format(data)
         self.done[iid] = (s["info"], data)
+        self.total += 1
+        s["dec"] = None                      # image complète : le décodeur (gros) n'est plus utile
+        s["rank"] = s["info"]["K"]
+        self._trim()
         return s["info"], data
+
+    def _trim(self):
+        for d in (self.sessions, self.done):
+            for k in list(d)[:-self.KEEP]:
+                del d[k]
 
     @staticmethod
     def _info(iid, size, crc, T, call):
@@ -208,7 +219,7 @@ class Receiver:
         s = self.sessions.get(iid)
         if not s:
             return None
-        return (s["dec"].rank if s["dec"] else 0), s["info"]["K"]
+        return (s["dec"].rank if s["dec"] else s.get("rank", 0)), s["info"]["K"]
 
     def loss_rate(self, iid):
         """Taux de pertes estimé d'après les trous dans les numéros de symboles."""

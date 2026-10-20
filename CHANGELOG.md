@@ -1,5 +1,11 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 1.11 — contrôle général, programme ouvert des jours
+
+- **Mémoire** : quand le programme restait ouvert très longtemps (des jours, beaucoup d'images reçues et envoyées), la mémoire utilisée grossissait petit à petit sans jamais redescendre : chaque image reçue gardait son décodeur, chaque image envoyée gardait son modem. Maintenant, une image reçue complète libère son décodeur, et le programme ne garde en mémoire que les 64 dernières images reçues et les 32 dernières envoyées (largement assez pour répondre aux demandes de complément). Les images enregistrées sur le disque ne sont pas touchées.
+- Le bilan de la relecture d'un fichier WAV compte toujours toutes les images, même au-delà de 64.
+- Nettoyage du code (importations inutilisées, ligne en double) ; aucun changement visible.
+
 ## Version 1.10 — le mode choisi à la main est gardé
 
 - Après une image reçue en **EasyPal**, l'émission passe bien en EasyPal pour répondre à la station (case « suivre le mode reçu »). Mais si l'on choisissait ensuite **Auto** à la main (par exemple pour renvoyer l'image en DATAC), le programme remettait EasyPal quelques instants après, et l'image partait en EasyPal : l'état de la dernière réception EasyPal restait affiché et relançait le changement de mode à chaque rafraîchissement du panneau.

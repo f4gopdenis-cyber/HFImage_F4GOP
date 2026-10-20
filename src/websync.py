@@ -13,7 +13,6 @@ import ftplib
 import html
 import io
 import json
-import os
 import queue
 import threading
 import time

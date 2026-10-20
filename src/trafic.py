@@ -1,6 +1,5 @@
 """« Mes conditions de trafic » incrustées sur l'image émise (comme le bandeau d'EasyPal) :
 indicatif, locator, poste, puissance, antenne, fréquence, date UTC, texte libre."""
-import time
 
 from PIL import Image, ImageDraw, ImageFont
 

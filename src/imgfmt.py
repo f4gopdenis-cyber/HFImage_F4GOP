@@ -275,4 +275,3 @@ def gif_shrink(data: bytes, max_bytes: int):
                 break
             scale = max(0.25, scale * 0.88)
     return last
-    return last

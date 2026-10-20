@@ -529,6 +529,8 @@ class RxEngine:
                         self.on_hybrid(hyb, mode)
                     continue
                 res = self.rcv.feed(payload)
+                if iid not in self.activity:
+                    self._trim_ids()
                 act = self.activity.setdefault(iid, {"end": 0, "mode": mode, "t": 0.0})
                 act["t"] = time.time()
                 act["mode"] = mode
@@ -645,6 +647,15 @@ class RxEngine:
         os.makedirs(d, exist_ok=True)
         return d
 
+    def _trim_ids(self, keep=200):
+        """Suivi par image (activité, fichiers enregistrés) : les plus récentes seulement,
+        le programme pouvant rester ouvert des jours."""
+        for d in (self.activity, self.saved):
+            for k in list(d)[:-keep]:
+                del d[k]
+        if len(self.hyb_seen) > 2000:
+            self.hyb_seen.clear()
+
     def incomplete(self):
         """Images en cours mais incomplètes : [(id, reçus, K, fin_vue, âge_s, mode, indicatif)]."""
         out = []
@@ -721,7 +732,9 @@ class RxEngine:
             if not path.startswith(nb):
                 nb = base                    # fichier laissé sous son nom d'origine
         self.saved[iid] = [path, png, nb, True]
-        self.on_ident(self.rcv.done[iid][0], path, png)
+        d = self.rcv.done.get(iid)
+        if d:
+            self.on_ident(d[0], path, png)
 
     def nack_for(self, iid):
         return self.rcv.nack(iid)

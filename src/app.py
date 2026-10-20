@@ -55,12 +55,12 @@ import wavtext
 from panel import LED_AMBER, LED_GREEN, LED_OFF, LED_RED, ImageView, StatusPanel
 import waterfall
 from waterfall import RowMaker, Waterfall
-from modem import MODE_BPS, MODE_BW, MODE_FPB
+from modem import MODE_BPS, MODE_BW
 import random
 import wave
 
 APP = "HFImage F4GOP"
-VERSION = "1.10"
+VERSION = "1.11"
 
 
 def _take_profile(argv):
@@ -3196,6 +3196,13 @@ class App(tk.Tk):
             messagebox.showinfo(APP, msg + "\n" + "Exemple : https://www.qsl.net/votreindicatif/easypal/")
 
     # -------------------------------------------------------------- émission
+    def _remember_sent(self, tx):
+        """Images envoyées gardées pour répondre aux BSR / FIX : les 32 dernières seulement
+        (chacune garde son modem en mémoire ; programme ouvert des jours)."""
+        self.sent_images[tx.image_id] = tx
+        for k in list(self.sent_images)[:-32]:
+            del self.sent_images[k]
+
     def _cmp_click(self, e):
         p0 = getattr(self, "_cmp_press", None)
         self._cmp_press = None
@@ -4654,7 +4661,7 @@ class App(tk.Tk):
                     return False
                 job["cfg"] = cfg
         else:
-            self.sent_images[tx.image_id] = tx
+            self._remember_sent(tx)
             self.my_ids.add(tx.image_id)
         if not complement:
             # nouvelle image : nouvelle liste Rx Ok (l'id d'une annonce hybride est connu plus tard)
@@ -4681,7 +4688,7 @@ class App(tk.Tk):
             params = self._drm_params()
             tx = engine.DrmTransmission(data, "txt", call, params,
                                         f"{call}_texte_{time.strftime('%H%M%S', time.gmtime())}")
-            self.sent_images[tx.image_id] = tx
+            self._remember_sent(tx)
             self.my_ids.add(tx.image_id)
             self.log(f"Texte EasyPal : {len(text)} caractères, {hamdrm.describe(params)}, "
                      f"~{_fmt_s(tx.estimate_s())}")
@@ -4690,7 +4697,7 @@ class App(tk.Tk):
                 self._msg_sent(tx.image_id, text, engine.DRM_MODE)
             return
         tx = engine.Transmission(protocol.pack_text(text), "hft", call, mode, 0.25)
-        self.sent_images[tx.image_id] = tx
+        self._remember_sent(tx)
         self.log(f"Texte : {len(text)} caractères, {mode}, ~{_fmt_s(tx.estimate_s())}")
         self.my_ids.add(tx.image_id)
         if self._start_job({"kind": "text", "tx": tx, "complement": False, "extra": None}):
@@ -4742,7 +4749,7 @@ class App(tk.Tk):
             msg += "\n\nC'est long : pensez au mode hybride (le fichier passe par Internet, seul le lien par radio)."
         if not messagebox.askyesno(APP, msg + "\n\nÉmettre ?"):
             return
-        self.sent_images[tx.image_id] = tx
+        self._remember_sent(tx)
         self.my_ids.add(tx.image_id)
         self._rxok_reset(tx.image_id)
         self.log(f"Fichier {name} : {len(raw)} octets, {mode}, ~{_fmt_s(est)}")
@@ -5644,7 +5651,7 @@ class App(tk.Tk):
                             eng.process48(x48[i:i + 4800])
                     finally:
                         engine.drm_release(eng)
-                n = len(eng.rcv.done) + eng.drm_files
+                n = eng.rcv.total + eng.drm_files
                 h = len(eng.hyb_seen)
                 self.ui(self.log, f"Fichier traité : {n} image(s) reçue(s), {eng.last['frames']} trames valides."
                         + (f" {eng.drm_files} en mode EasyPal." if eng.drm_files else "")
@@ -6022,7 +6029,7 @@ class App(tk.Tk):
                     eng.process48(np.zeros(48000 * 3, np.float32))
                 finally:
                     engine.drm_release(eng)
-            self.ui(self.log, f"Relecture terminée : {len(eng.rcv.done) + eng.drm_files} élément(s) décodé(s) "
+            self.ui(self.log, f"Relecture terminée : {eng.rcv.total + eng.drm_files} élément(s) décodé(s) "
                               f"(dossier « relecture »).")
 
         threading.Thread(target=run, daemon=True).start()
@@ -6664,7 +6671,6 @@ def selftest(report_path, hyb_test=None):
     """Autotest sans interface : chaîne complète (AVIF -> fontaine -> modem ->
     48 kHz -> bruit -> démodulation) dans les 3 modes. Résultat écrit dans un fichier.
     Usage : HFImage_F4GOP.exe --selftest rapport.txt [ftp://id:mdp@serveur/dossier lien_public]"""
-    import io
     import urllib.parse
     import channel
     lines = [f"{APP} {VERSION} — autotest {time.strftime('%Y-%m-%d %H:%M:%S')}"]

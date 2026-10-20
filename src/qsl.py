@@ -1,5 +1,4 @@
 """Carte QSL : photo de fond + bandeau avec indicatifs, date UTC, fréquence, report."""
-import time
 
 from i18n import tr
 
