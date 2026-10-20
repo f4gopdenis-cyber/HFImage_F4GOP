@@ -31,7 +31,7 @@ DEFAULT_PORT = 1883
 STALE_S = 5 * 60          # une présence non rafraîchie depuis 5 min est considérée hors ligne
 FLASH_KEEP_S = 3600       # hybride éclair : liens gardés 1 h
 FLASH_MAX = 300           # et au plus 300 (les plus récents)
-MAX_SIZE = 8 * 1024 * 1024
+MAX_SIZE = (1 << 24) - 1      # hybride éclair : taille sur 3 octets (plus gros : annonce normale)
 
 
 def _topic_call(call):

@@ -45,6 +45,7 @@ from i18n import tr
 import protocol
 import qsl
 import rxclean
+import dropfiles
 import bubbles
 import setupwiz
 import translate
@@ -59,7 +60,7 @@ import random
 import wave
 
 APP = "HFImage F4GOP"
-VERSION = "1.07"
+VERSION = "1.08"
 
 
 def _take_profile(argv):
@@ -92,7 +93,7 @@ DEFAULTS = {
     "folder": DEFAULT_OUT,
     "hyb_on": False, "hyb_host": "", "hyb_port": 21, "hyb_user": "", "hyb_pass": "",
     "hyb_dir": "hfimage", "hyb_tls": False, "hyb_url": "", "hyb_auto": True,
-    "hyb_width": "originale", "hyb_kb": 3000, "hyb_fmt": "original", "gif_kb": 2000,
+    "hyb_width": "originale", "hyb_kb": 3000, "hyb_fmt": "original", "gif_kb": 2000, "hyb_rx_max_mb": 200,
     "net_on": True, "net_host": presence.DEFAULT_HOST, "net_port": presence.DEFAULT_PORT,
     "update_check": True,
     "theme": "Vert EasyPal", "theme_color": "#3a8ee6", "font_family": "(par défaut)", "font_size": "9",
@@ -138,7 +139,8 @@ FORMATS_TX = ["avif", "webp", "jpg", "original"]
 ORIGINAL_KINDS = ("jpeg", "png", "gif", "avif", "webp", "svg")
 WIDTHS = ["auto", 160, 240, 320, 480, 640, 800, 1024, 1280, 1600, 1920, "originale"]
 HYB_WIDTHS = [480, 640, 800, 1024, 1280, 1600, 1920, 2560, "originale"]
-HYB_MAX_BYTES = 7_500_000      # une image hybride reçue est limitée à 8 Mo (hybrid.MAX_DOWNLOAD)
+HYB_RX_MAX = ["8 Mo", "50 Mo", "200 Mo", "1 Go", "Sans limite"]
+HYB_MAX_BYTES = 1 << 31        # image hybride : partie telle quelle (plus de recompression au-delà de 7,5 Mo)
 # aperçu rapide : taille cible selon le mode (octets) ; proposé si l'émission dépasse 2 min
 PREVIEW_BYTES = {"DATAC1X": 1200, "DATAC1": 1000, "DATAC3": 450, "DATAC4": 220}
 PREVIEW_MIN_S = 120
@@ -475,6 +477,12 @@ class App(tk.Tk):
             d.add_tab(name, title, self.tab_frames[name], nb, text, tabs)
         self._menus()
         self._translate_ui()
+        hybrid.set_max_download(self.conf.get("hyb_rx_max_mb", 200))
+        try:
+            # glisser-déposer depuis l'Explorateur Windows, n'importe où sur la fenêtre
+            dropfiles.hook(self, self._dropped, toplevel=True)
+        except Exception as e:
+            self.log(f"Glisser-déposer indisponible : {e}")
 
     # ------------------------------------------------------------------ fenêtres séparées
     def _dock_changed(self):
@@ -1364,8 +1372,11 @@ class App(tk.Tk):
         self.lb_src_info.pack(side="left", padx=6)
         self.lb_cmp_info = tk.Label(info, text="", bg=GREEN, anchor="w", font=("TkDefaultFont", 9, "bold"))
         self.lb_cmp_info.pack(side="left", padx=12)
-        self.lb_cmp = ImageView(t, placeholder="Ouvrez une image (bouton « Image… » ou menu Images)")
+        self.lb_cmp = ImageView(t, placeholder="Cliquez ici pour ouvrir une image, ou glissez-la ici")
         self.lb_cmp.pack(fill="both", expand=True)
+        # un clic (sans glisser) sur l'image TX ouvre le choix de l'image
+        self.lb_cmp.bind("<ButtonPress-1>", lambda e: setattr(self, "_cmp_press", (e.x, e.y)), add="+")
+        self.lb_cmp.bind("<ButtonRelease-1>", self._cmp_click, add="+")
         self.lb_src = ImageView(t)          # original : pas affiché, gardé pour la carte QSL
 
     def _build_text_window(self):
@@ -2438,6 +2449,15 @@ class App(tk.Tk):
         ttk.Spinbox(gf, textvariable=self.v_gifkb, from_=50, to=8000, increment=250, width=7).pack(side="left", padx=6)
         ttk.Checkbutton(h, text="Télécharger automatiquement les images hybrides reçues",
                         variable=self.v_hauto).grid(row=12, column=0, columnspan=2, sticky="w", pady=(6, 0))
+        rxm = ttk.Frame(h)
+        rxm.grid(row=13, column=0, columnspan=2, sticky="w", pady=(4, 0))
+        ttk.Label(rxm, text="Fichiers hybrides reçus : taille max").pack(side="left")
+        self.v_hrxmax = TrVar()
+        self.v_hrxmax.set(self._rxmax_label(self.conf.get("hyb_rx_max_mb", 200)))
+        cb = ttk.Combobox(rxm, textvariable=self.v_hrxmax, values=[tr(x) for x in HYB_RX_MAX], width=12,
+                          state="readonly")
+        cb.pack(side="left", padx=6)
+        cb.bind("<<ComboboxSelected>>", lambda e: self._rxmax_changed())
         hb = ttk.Frame(h)
         hb.grid(row=10, column=0, columnspan=2, sticky="w", pady=(6, 0))
         ttk.Button(hb, text="Tester le serveur", command=self.test_hybrid).pack(side="left")
@@ -3105,6 +3125,20 @@ class App(tk.Tk):
         if isinstance(self.tx, HybridJob):
             self.prepare()
 
+    @staticmethod
+    def _rxmax_label(mb):
+        mb = int(mb or 0)
+        return "Sans limite" if mb <= 0 else (f"{mb // 1024} Go" if mb >= 1024 else f"{mb} Mo")
+
+    def _rxmax_changed(self):
+        lab = self.v_hrxmax.get()
+        mb = next((0 if x == "Sans limite" else int(x.split()[0]) * (1024 if x.endswith("Go") else 1)
+                   for x in HYB_RX_MAX if tr(x) == lab or x == lab), 200)
+        self.conf["hyb_rx_max_mb"] = mb
+        hybrid.set_max_download(mb)
+        self._save_conf_file()
+        self.log(tr("Fichiers hybrides reçus : taille max") + f" : {lab}")
+
     def test_hybrid(self):
         cfg = self._hyb_cfg()
         self.log(f"Test du serveur {cfg['host']}…")
@@ -3155,6 +3189,30 @@ class App(tk.Tk):
             messagebox.showinfo(APP, msg + "\n" + "Exemple : https://www.qsl.net/votreindicatif/easypal/")
 
     # -------------------------------------------------------------- émission
+    def _cmp_click(self, e):
+        p0 = getattr(self, "_cmp_press", None)
+        self._cmp_press = None
+        if p0 is None or abs(e.x - p0[0]) > 4 or abs(e.y - p0[1]) > 4 or self.lb_cmp.zoom > 1.0:
+            return                                    # glisser (image agrandie) : pas un clic
+        if not self.tx_busy:
+            self.open_image()
+
+    IMAGE_EXTS = (".jpg", ".jpeg", ".png", ".gif", ".bmp", ".webp", ".avif", ".svg", ".svgz", ".tif", ".tiff",
+                  ".jp2", ".j2k")
+
+    def _dropped(self, paths):
+        """Fichiers glissés depuis l'Explorateur : une image s'ouvre dans l'onglet TX ;
+        un autre fichier est proposé à l'envoi (par radio, ou en hybride sans limite)."""
+        paths = [p for p in paths if os.path.isfile(p)]
+        if not paths:
+            return
+        p = paths[0]
+        if p.lower().endswith(self.IMAGE_EXTS):
+            self.show_tab("tx")
+            self.load_image(p)
+        elif messagebox.askyesno(APP, tr("Envoyer ce fichier ?") + f"\n{os.path.basename(p)}"):
+            self.send_file(p)
+
     def open_image(self):
         p = filedialog.askopenfilename(filetypes=[("Images", "*.jpg *.jpeg *.png *.svg *.svgz *.bmp *.gif *.webp *.avif *.tif *.tiff"),
                                                   ("JPEG", "*.jpg *.jpeg"), ("SVG", "*.svg *.svgz"),
@@ -4631,11 +4689,11 @@ class App(tk.Tk):
         if self._start_job({"kind": "text", "tx": tx, "complement": False, "extra": None}):
             self._msg_sent(tx.image_id, text, mode)
 
-    def send_file(self):
+    def send_file(self, p=None):
         """Envoi d'un fichier quelconque (texte, PDF, ZIP, ADIF…) par radio, ou par Internet en hybride."""
         if self.tx_busy:
             return
-        p = filedialog.askopenfilename(title=tr("Fichier à envoyer"), filetypes=[(tr("Tous les fichiers"), "*.*")])
+        p = p or filedialog.askopenfilename(title=tr("Fichier à envoyer"), filetypes=[(tr("Tous les fichiers"), "*.*")])
         if not p:
             return
         try:
@@ -4647,8 +4705,9 @@ class App(tk.Tk):
         name = os.path.basename(p)
         data = protocol.pack_file(name, raw)
         call = self.v_call.get().strip().upper() or "NOCALL"
-        if len(data) >= 16_000_000:
-            messagebox.showerror(APP, "Fichier trop gros (16 Mo maximum).")
+        if len(data) >= 16_000_000 and not self.v_hyb.get():
+            # par radio seulement : en hybride, aucune limite de taille ni de type (comme EasyPal)
+            messagebox.showerror(APP, "Fichier trop gros pour la radio (16 Mo maximum) : utilisez le mode hybride.")
             return
         if self.v_hyb.get():
             cfg = self._hyb_cfg()
@@ -4919,6 +4978,9 @@ class App(tk.Tk):
             modem = frames = None
         elif kind == "hybrid":
             want_flash = bool(job.get("flash"))
+            if want_flash and len(tx.data) >= 1 << 24:
+                self.ui(self.log, "Hybride éclair : fichier de plus de 16 Mo, annonce normale à la place.")
+                want_flash = False
             if want_flash and not (self.net is not None and self.net.connected):
                 self.ui(self.log, "Hybride éclair : serveur des stations en ligne non connecté, "
                                   "annonce normale (DATAC3) à la place.")

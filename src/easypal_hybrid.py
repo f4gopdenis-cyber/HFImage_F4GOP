@@ -198,7 +198,7 @@ def download(acc, name: str, tries=4, wait=5.0, timeout=20, log=None) -> bytes:
                     return data
             except _TooBig as e:
                 raise hybrid.Refused(f"fichier {name} refusé : trop gros ({e.args[0]} octets, "
-                                     f"maximum {hybrid.MAX_DOWNLOAD // (1024 * 1024)} Mo)") from None
+                                     f"maximum {hybrid.MAX_DOWNLOAD // (1024 * 1024)} Mo, voir Réglages)") from None
             except ftplib.all_errors as e:
                 last = e
         if k + 1 < tries:

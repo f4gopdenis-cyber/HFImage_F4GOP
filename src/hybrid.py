@@ -18,7 +18,14 @@ import urllib.parse
 import urllib.request
 import zlib
 
-MAX_DOWNLOAD = 8 * 1024 * 1024
+MAX_DOWNLOAD = 200 * 1024 * 1024          # réglable (Réglages → Mode hybride) ; 0 dans les réglages = sans limite
+UNLIMITED = 1 << 40
+
+
+def set_max_download(mb):
+    """Taille maximale d'un fichier hybride reçu, en Mo (0 ou moins : sans limite)."""
+    global MAX_DOWNLOAD
+    MAX_DOWNLOAD = UNLIMITED if not mb or mb <= 0 else int(mb * 1024 * 1024)
 USER_AGENT = "HFImage-F4GOP"
 
 

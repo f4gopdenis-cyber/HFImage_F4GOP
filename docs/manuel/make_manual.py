@@ -343,6 +343,9 @@ s += N(["Onglet <b>TX</b> → <b>Ouvrir une image…</b> (JPG, PNG, GIF, WebP, A
         "émettre tout de suite. Les réponses automatiques (ACK, BSR, FIX) n'attendent pas.",
         "Si des stations demandent des morceaux (BSR), <b>+ Compléter</b> / FIX envoie seulement ce qui manque."])
 s.append(img("tx.png", 165, "L'onglet TX : mode Auto, robustesse, image compressée et durée d'émission."))
+s.append(P("<b>Ouvrir une image</b> : un clic dans la grande image de l'onglet TX ouvre le choix du fichier ; on peut "
+           "aussi <b>glisser une image</b> depuis l'Explorateur Windows n'importe où sur la fenêtre (un autre type de "
+           "fichier est proposé à l'envoi)."))
 s.append(P("Bulles de texte (BD)", "h2"))
 s.append(P("Bouton <b>Bulles…</b> (onglet TX) ou menu <b>Images → Bulles de texte…</b> : on écrit un texte, il "
            "apparaît dans une bulle de bande dessinée sur l'image émise. Quatre styles : <b>parole</b> (bulle ronde "
@@ -547,7 +550,9 @@ s.append(P("L'image passe par votre <b>hébergement web</b> (FTP) ; seul le <b>l
            "<b>GIF animés</b>. Réglages → Mode hybride : serveur FTP, identifiant, mot de passe, dossier et "
            "<b>lien public</b> de ce dossier ; « Tester le serveur » vérifie tout. Seul le lien passe par radio, "
            "jamais le mot de passe. Par défaut, l'image part en <b>pleine qualité</b> (format « original » : le "
-           "fichier tel quel, sans réduction) ; seule une image de plus de 7,5 Mo est recompressée."))
+           "fichier tel quel, sans réduction), quelle que soit sa taille. Les <b>fichiers</b> (Images → Envoyer un "
+           "fichier…, ou glissés sur la fenêtre) partent aussi <b>sans limite de taille ni de type</b> en hybride, comme "
+           "dans EasyPal (par radio : 16 Mo au plus)."))
 s.append(P("Hybride éclair", "h2"))
 s.append(P("Case <b>Éclair (9 s)</b>, à côté de « Mode hybride » (onglet TX), <b>cochée par défaut</b> depuis la 0.98. L'annonce radio ne porte plus le lien, seulement "
            "l'<b>empreinte</b> de l'image (SHA-256 abrégé), sa taille et son format, dans une trame de 14 octets. Depuis la "
@@ -567,7 +572,7 @@ s += B(["Les deux stations doivent avoir « <b>Stations en ligne</b> » activé 
         "Si le serveur n'est pas joignable au moment d'émettre, HFImage envoie l'annonce normale (DATAC3) et le note dans "
         "le journal."])
 s.append(P("Sécurité des téléchargements", "h2"))
-s.append(P("Une annonce reçue par radio ne peut faire télécharger qu'un fichier de <b>8 Mo au plus</b>, et seulement depuis "
+s.append(P("Une annonce reçue par radio ne peut faire télécharger qu'un fichier de la <b>taille maximale choisie</b> (Réglages → Mode hybride → « Fichiers hybrides reçus : taille max », 200 Mo par défaut, ou sans limite), et seulement depuis "
            "une adresse Internet publique : l'ordinateur lui-même et les machines du réseau de la maison (box, NAS…) sont "
            "refusés, y compris après une redirection. Le test de votre propre serveur dans les Réglages n'est pas concerné. "
            "Les images et fichiers reçus restent toujours dans le dossier de réception, quel que soit l'indicatif annoncé."))

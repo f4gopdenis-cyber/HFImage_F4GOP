@@ -11,7 +11,7 @@ _ucrt = [(f, '.') for f in _glob.glob('ucrt/*.dll')] if LEGACY else []
 a = Analysis(['app.py'], pathex=['.'],
              binaries=[('libcodec2.dll', '.'), ('hamdrm.dll', '.')] + _ucrt,
              datas=[('carte.bin', '.'), ('hfimage.ico', '.'), ('icon64.png', '.'), ('icon32.png', '.'), ('icon256.png', '.'), ('HFImage_mode_emploi.pdf', '.'), ('HFImage_user_manual_EN.pdf', '.'), ('LICENSE.txt', '.'), ('LICENCE.txt', '.'), ('emoji/*.png', 'emoji')],
-             hiddenimports=["loopback", "docking", "rxclean", "translate", "setupwiz", "bubbles", "msgwin", "clocktz", "trafic", "channel", "waterfall", "hybrid", "panel", "qsl", "i18n", "wavtext", "imgfmt", "stationmap", "presence", "theme", "updater", "tkinter.colorchooser", "paho.mqtt.client", "tkinter.simpledialog",
+             hiddenimports=["loopback", "docking", "rxclean", "translate", "setupwiz", "bubbles", "dropfiles", "msgwin", "clocktz", "trafic", "channel", "waterfall", "hybrid", "panel", "qsl", "i18n", "wavtext", "imgfmt", "stationmap", "presence", "theme", "updater", "tkinter.colorchooser", "paho.mqtt.client", "tkinter.simpledialog",
                             "serial.tools.list_ports", "secrets", "hmac", "radio", "radiodlg", "gallery", "qrmfilter", "websync", "trafic", "wavanalyze", "anadlg", "riglist", "contextlib",
                             "xmlrpc.client", "comtypes", "comtypes.client", "comtypes.automation", "buildinfo", "hamdrm", "easypal_hybrid"] + _legacy + ([] if LEGACY else ["resvg_py"]),
              excludes=['scipy', 'skimage', 'matplotlib', 'pandas', 'IPython', 'pytest',

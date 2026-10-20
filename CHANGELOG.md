@@ -1,5 +1,12 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 1.08 — fichiers hybrides sans limite, glisser-déposer (demandes de RK1AT)
+
+- **Fichiers en mode hybride** : plus de limite de taille ni de type, comme dans EasyPal. Les images hybrides partent telles quelles quelle que soit leur taille (plus de recompression au-delà de 7,5 Mo) ; un fichier de plus de 16 Mo part par l'annonce hybride normale (l'éclair est limité à 16 Mo). Par radio seule, la limite de 16 Mo reste (elle n'aurait pas de sens au-delà).
+- **Réception** : nouveau réglage **« Fichiers hybrides reçus : taille max »** (Réglages → Mode hybride) : 8 Mo, 50 Mo, **200 Mo (par défaut)**, 1 Go ou **sans limite**. Avant, la limite était fixée à 8 Mo. Les autres protections restent (adresse publique seulement, contrôle de taille et de CRC).
+- **Glisser-déposer** : une image glissée depuis l'Explorateur Windows n'importe où sur la fenêtre s'ouvre dans l'onglet TX ; un autre fichier est proposé à l'envoi.
+- **Clic dans la fenêtre TX** : un clic dans la grande image ouvre le choix de l'image (un glisser pour se déplacer dans une image agrandie n'est pas un clic).
+
 ## Version 1.07 — émoticônes dans les bulles
 
 - Fenêtre **Bulles de texte** : une palette de **30 émoticônes en couleur** (sourires, 👍 👋 🙏, ❤️ ⭐ 🎉, météo ☀️ 🌧️ ❄️ ⚡, 📻 📡 🎙️ 📷, ☕ 🍺 🎂 🏆…). Un clic l'ajoute dans le texte de la bulle, à l'endroit du curseur ; elle est dessinée en couleur dans l'image émise, à la taille du texte.
