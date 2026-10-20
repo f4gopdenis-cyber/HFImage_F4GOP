@@ -101,6 +101,7 @@ licence, qui reste applicable (détail dans THIRD_PARTY.md) :
     Pillow (MIT-CMU), python-sounddevice et PortAudio (MIT), comtypes (MIT),
     Eclipse Paho MQTT (EPL-2.0 / EDL-1.0), resvg (Apache-2.0 / MIT) ;
   - carte du monde : Natural Earth (domaine public) ;
+  - émoticônes des bulles : Twemoji (© Twitter, Inc. et contributeurs), licence CC-BY 4.0 ;
   - Hamlib (LGPL 2.1, GPL 2.0 pour rigctld), OmniRig, FLRig, EasyPal et QSSTV ne sont pas
     fournis avec le Logiciel et restent soumis à leurs propres licences.
 Hommage à Erik Sundstrup VK4AES (SK), auteur d'EasyPal.

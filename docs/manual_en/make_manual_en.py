@@ -335,10 +335,10 @@ s += N(["<b>TX</b> tab → <b>Open image…</b> (JPG, PNG, GIF, WebP, AVIF, SVG,
         "transmit now. Automatic replies (ACK, BSR, FIX) do not wait.",
         "If stations ask for missing pieces (BSR), <b>FIX</b> sends only what is missing (automatically by default)."])
 s.append(P("Speech bubbles", "h2"))
-s.append(P("<b>💬 Bubbles…</b> button (TX tab) or <b>Images → Speech bubbles…</b>: type a text and it appears in a "
+s.append(P("<b>Bubbles…</b> button (TX tab) or <b>Images → Speech bubbles…</b>: type a text and it appears in a "
            "comic-strip bubble on the transmitted picture. Four styles: <b>speech</b> (round bubble with a tail), "
            "<b>thought</b> (small circles), <b>shout</b> (star outline), <b>caption</b> (rectangle); three text sizes; "
-           "background and text colours of your choice. <b>Drag the bubble</b> with the mouse, and the <b>red dot</b> "
+           "background and text colours of your choice; <b>30 colour emoticons</b> to add to the text with one click. <b>Drag the bubble</b> with the mouse, and the <b>red dot</b> "
            "(the tail) towards what it points at; several bubbles are possible, right-click a bubble to delete it. The "
            "bubble is part of the picture: everyone sees it, over the air or in hybrid mode, EasyPal stations too. "
            "Bubbles are cleared when you open another picture."))

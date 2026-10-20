@@ -344,10 +344,11 @@ s += N(["Onglet <b>TX</b> → <b>Ouvrir une image…</b> (JPG, PNG, GIF, WebP, A
         "Si des stations demandent des morceaux (BSR), <b>+ Compléter</b> / FIX envoie seulement ce qui manque."])
 s.append(img("tx.png", 165, "L'onglet TX : mode Auto, robustesse, image compressée et durée d'émission."))
 s.append(P("Bulles de texte (BD)", "h2"))
-s.append(P("Bouton <b>💬 Bulles…</b> (onglet TX) ou menu <b>Images → Bulles de texte…</b> : on écrit un texte, il "
+s.append(P("Bouton <b>Bulles…</b> (onglet TX) ou menu <b>Images → Bulles de texte…</b> : on écrit un texte, il "
            "apparaît dans une bulle de bande dessinée sur l'image émise. Quatre styles : <b>parole</b> (bulle ronde "
            "avec une pointe), <b>pensée</b> (petits ronds), <b>cri</b> (contour en étoile), <b>cartouche</b> "
-           "(rectangle, comme une légende) ; trois tailles de texte ; couleurs du fond et du texte au choix. "
+           "(rectangle, comme une légende) ; trois tailles de texte ; couleurs du fond et du texte au choix ; "
+           "<b>30 émoticônes</b> en couleur (sourires, pouce levé, poste radio, soleil, cœur…) à ajouter d'un clic dans le texte. "
            "<b>Glissez la bulle</b> à la souris, et le <b>rond rouge</b> (la pointe) vers ce qu'elle doit montrer ; "
            "plusieurs bulles possibles, clic droit sur une bulle pour la supprimer. La bulle fait partie de l'image : "
            "tout le monde la voit, en radio comme en hybride, y compris les stations EasyPal. Les bulles sont effacées "

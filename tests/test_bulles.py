@@ -46,5 +46,19 @@ class Bulles(unittest.TestCase):
         self.assertIsNone(bubbles.hit(800, 600, [b], 20, 20))
 
 
+    def test_emoticones(self):
+        """1.07 : émoticônes en couleur dans les bulles."""
+        self.assertEqual(len(bubbles.EMOJI), 30)
+        for ch in bubbles.EMOJI:
+            self.assertIsNotNone(bubbles.emoji_image(ch, 20), ch)
+        b = bubbles.new("❤️", "cartouche", "grande", 0.5, 0.5)
+        out = bubbles.draw(self.im, [b])
+        r, g, bl = out.getpixel((400, 300))
+        self.assertTrue(r > 180 and g < 120 and bl < 120, (r, g, bl))   # cœur rouge au centre
+        font = bubbles._font(40)
+        self.assertGreater(bubbles._measure(font, "73 📻"), bubbles._measure(font, "73 "))
+        self.assertEqual(bubbles._runs("a👍b"), [("t", "a"), ("e", "👍"), ("t", "b")])
+
+
 if __name__ == "__main__":
     unittest.main()

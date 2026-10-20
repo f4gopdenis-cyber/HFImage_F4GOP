@@ -1,5 +1,10 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 1.07 — émoticônes dans les bulles
+
+- Fenêtre **Bulles de texte** : une palette de **30 émoticônes en couleur** (sourires, 👍 👋 🙏, ❤️ ⭐ 🎉, météo ☀️ 🌧️ ❄️ ⚡, 📻 📡 🎙️ 📷, ☕ 🍺 🎂 🏆…). Un clic l'ajoute dans le texte de la bulle, à l'endroit du curseur ; elle est dessinée en couleur dans l'image émise, à la taille du texte.
+- Images Twemoji (licence CC-BY 4.0), fournies avec le programme : rien à installer, même rendu chez tout le monde.
+
 ## Version 1.06 — bulles de texte façon BD
 
 - **💬 Bulles…** (onglet TX, ou menu Images → Bulles de texte…) : un texte dans une **bulle de bande dessinée** sur l'image émise.

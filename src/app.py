@@ -59,7 +59,7 @@ import random
 import wave
 
 APP = "HFImage F4GOP"
-VERSION = "1.06"
+VERSION = "1.07"
 
 
 def _take_profile(argv):
@@ -3433,13 +3433,29 @@ class App(tk.Tk):
         left = ttk.Frame(f)
         left.grid(row=0, column=0, sticky="ns", padx=(0, 10))
         ttk.Label(left, text="Bulles").pack(anchor="w")
-        lb = tk.Listbox(left, height=6, width=26, exportselection=False)
+        lb = tk.Listbox(left, height=5, width=30, exportselection=False)
         lb.pack(fill="x")
         bb = ttk.Frame(left)
         bb.pack(fill="x", pady=(4, 8))
         ttk.Label(left, text="Texte").pack(anchor="w")
-        txt = tk.Text(left, width=26, height=4, wrap="word", font=("TkDefaultFont", 10))
+        txt = tk.Text(left, width=30, height=4, wrap="word", font=("TkDefaultFont", 10))
         txt.pack(fill="x")
+        # émoticônes : un clic l'ajoute dans le texte, à l'endroit du curseur
+        emo = tk.Frame(left)
+        emo.pack(anchor="w", pady=(4, 0))
+        geo["emo"] = []
+        for k, ch in enumerate(bubbles.EMOJI):
+            im = bubbles.emoji_image(ch, 22)
+            if im is None:
+                continue
+            ph = ImageTk.PhotoImage(im)
+            geo["emo"].append(ph)
+            btn = tk.Button(emo, image=ph, relief="flat", bd=0, padx=1, pady=1, cursor="hand2",
+                            command=lambda c=ch: (txt.insert("insert", (" " if txt.get("insert-1c", "insert")
+                                                                        not in ("", " ", "\n") else "") + c),
+                                                  txt.focus_set()))
+            btn._no_theme = True
+            btn.grid(row=k // 10, column=k % 10)
         ttk.Label(left, text="Style").pack(anchor="w", pady=(6, 0))
         v_style = tk.StringVar()
         ttk.Combobox(left, textvariable=v_style, values=list(styles.values()), state="readonly",

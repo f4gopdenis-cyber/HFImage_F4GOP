@@ -4,11 +4,14 @@ Une bulle : {"text", "style", "size", "cx", "cy", "tx", "ty", "bg", "fg"}
   - style : « parole » (bulle ronde + pointe), « pensée » (petits ronds), « cri » (contour en
     étoile + pointe), « cartouche » (rectangle, sans pointe) ;
   - size : « petite », « moyenne », « grande » (hauteur du texte relative à l'image) ;
+  - text peut contenir les émoticônes de EMOJI (dessinées en couleur, images Twemoji) ;
   - cx, cy : centre de la bulle, tx, ty : bout de la pointe, en fractions de la largeur /
     hauteur de l'image (0..1) : la bulle garde sa place quelle que soit la taille d'émission.
 Le dessin est fait à double résolution puis réduit (bords lisses).
 """
 import math
+import os
+import sys
 
 from PIL import Image, ImageDraw
 
@@ -19,6 +22,57 @@ SIZES = {"petite": 0.038, "moyenne": 0.052, "grande": 0.072}
 MIN_PX = 14                     # en dessous, le texte devient illisible après compression
 FONTS = ("Comic Sans MS", "Arial")
 SS = 2                          # suréchantillonnage
+
+# émoticônes (images Twemoji, CC-BY 4.0) : dessinées en couleur dans le texte des bulles
+EMOJI_CODES = ("1f600 1f602 1f609 1f60e 1f60d 1f914 1f62e 1f622 1f44d 1f44b 1f44f 1f64f 1f91d 2764 2b50 "
+               "1f389 1f382 2615 1f37a 1f525 26a1 2600 1f327 2744 1f30d 1f4fb 1f4e1 1f399 1f4f7 1f3c6").split()
+EMOJI = {chr(int(c, 16)): c for c in EMOJI_CODES}
+_EMO_CACHE = {}
+
+
+def emoji_dir():
+    here = getattr(sys, "_MEIPASS", os.path.dirname(os.path.abspath(__file__)))
+    return os.path.join(here, "emoji")
+
+
+def emoji_image(ch, px):
+    """Image RGBA de l'émoticône `ch` à la taille px (None si inconnue)."""
+    code = EMOJI.get(ch)
+    if not code:
+        return None
+    key = (code, px)
+    if key not in _EMO_CACHE:
+        try:
+            im = Image.open(os.path.join(emoji_dir(), code + ".png")).convert("RGBA")
+        except OSError:
+            _EMO_CACHE[key] = None
+            return None
+        _EMO_CACHE[key] = im.resize((px, px), Image.LANCZOS)
+    return _EMO_CACHE[key]
+
+
+def _runs(text):
+    """Texte -> [(« t », morceau) ou (« e », émoticône)]."""
+    out, cur = [], ""
+    for ch in text.replace("\ufe0f", ""):
+        if ch in EMOJI:
+            if cur:
+                out.append(("t", cur))
+                cur = ""
+            out.append(("e", ch))
+        else:
+            cur += ch
+    if cur:
+        out.append(("t", cur))
+    return out
+
+
+def _esize(font):
+    return int(round(font.size * 1.15))
+
+
+def _measure(font, text):
+    return sum(font.getlength(v) if k == "t" else _esize(font) + font.size * 0.08 for k, v in _runs(text))
 
 
 def new(text="", style="parole", size="moyenne", cx=0.5, cy=0.3):
@@ -47,7 +101,7 @@ def _wrap(text, font, max_w):
             continue
         for w in words:
             t = f"{cur} {w}".strip()
-            if cur and font.getlength(t) > max_w:
+            if cur and _measure(font, t) > max_w:
                 lines.append(cur)
                 cur = w
             else:
@@ -63,7 +117,7 @@ def layout(W, H, b, scale=1.0):
     font = _font(int(fpx * scale))
     lines = _wrap(b.get("text", ""), font, 0.45 * W * scale)
     lh = font.size * 1.18
-    tw = max([font.getlength(t) for t in lines] + [font.size * 2])
+    tw = max([_measure(font, t) for t in lines] + [font.size * 2])
     th = lh * len(lines)
     pad = font.size * 0.55
     style = b.get("style", "parole")
@@ -120,7 +174,7 @@ def _bounds(g):
     return x0 - m, y0 - m, x1 + m, y1 + m
 
 
-def _draw_one(d, g, off, bg, fg):
+def _draw_one(d, g, off, bg, fg, layer=None):
     ox, oy = off
     sh = lambda pts: [(x - ox, y - oy) for x, y in pts]
     lw = g["lw"]
@@ -164,7 +218,18 @@ def _draw_one(d, g, off, bg, fg):
     font, lh = g["font"], g["lh"]
     y = cy - g["th"] / 2
     for line in g["lines"]:
-        d.text((cx, y + lh / 2), line, font=font, fill=fg, anchor="mm")
+        ym = y + lh / 2
+        x = cx - _measure(font, line) / 2
+        for kind, v in _runs(line):
+            if kind == "t":
+                d.text((x, ym), v, font=font, fill=fg, anchor="lm")
+                x += font.getlength(v)
+            else:
+                es = _esize(font)
+                em = emoji_image(v, es)
+                if em is not None and layer is not None:
+                    layer.alpha_composite(em, (int(x + font.size * 0.04), int(ym - es / 2)))
+                x += es + font.size * 0.08
         y += lh
 
 
@@ -184,7 +249,7 @@ def draw(img, bubbles):
             continue
         layer = Image.new("RGBA", (x1 - x0, y1 - y0), (0, 0, 0, 0))
         _draw_one(ImageDraw.Draw(layer), g, (x0, y0), trafic._rgb(b.get("bg"), (255, 255, 255)) + (255,),
-                  trafic._rgb(b.get("fg"), (0, 0, 0)) + (255,))
+                  trafic._rgb(b.get("fg"), (0, 0, 0)) + (255,), layer)
         small = layer.resize(((x1 - x0) // SS, (y1 - y0) // SS), Image.LANCZOS)
         out.alpha_composite(small, (x0 // SS, y0 // SS))
     return out.convert("RGB")
