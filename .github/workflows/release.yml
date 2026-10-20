@@ -53,7 +53,15 @@ jobs:
 
       - name: Tests (sécurité de la réception)
         if: steps.ver.outputs.exists == 'no'
-        run: python -m unittest discover -s tests -v
+        shell: bash
+        run: |
+          # en cas d'échec, les tests en défaut sont affichés en annotations (lisibles sans le journal)
+          if ! python -m unittest discover -s tests -v > tests.log 2>&1; then
+            cat tests.log
+            grep -E "^(FAIL|ERROR):|Error:|assert" tests.log | head -20 | while read -r l; do echo "::error::$l"; done
+            exit 1
+          fi
+          tail -5 tests.log
 
       - name: Fabrication de l'exe
         if: steps.ver.outputs.exists == 'no'
