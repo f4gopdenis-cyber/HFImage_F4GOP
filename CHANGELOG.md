@@ -1,5 +1,10 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 1.09 — glisser-déposer réparé
+
+- **Le programme se fermait** quand on glissait une image sur la fenêtre (1.08). Le glisser-déposer passe maintenant par **tkdnd** (paquet tkinterdnd2), l'extension de glisser-déposer reconnue pour Tk, au lieu d'une interception maison des messages de Windows. Une image glissée n'importe où sur la fenêtre s'ouvre dans l'onglet TX ; un autre fichier est proposé à l'envoi. Les chemins avec des espaces sont bien reconnus.
+- Si l'extension ne peut pas se charger, le programme démarre normalement, sans glisser-déposer (message dans le journal).
+
 ## Version 1.08 — fichiers hybrides sans limite, glisser-déposer (demandes de RK1AT)
 
 - **Fichiers en mode hybride** : plus de limite de taille ni de type, comme dans EasyPal. Les images hybrides partent telles quelles quelle que soit leur taille (plus de recompression au-delà de 7,5 Mo) ; un fichier de plus de 16 Mo part par l'annonce hybride normale (l'éclair est limité à 16 Mo). Par radio seule, la limite de 16 Mo reste (elle n'aurait pas de sens au-delà).

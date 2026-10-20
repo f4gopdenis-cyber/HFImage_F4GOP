@@ -7,11 +7,18 @@ _legacy = ["pillow_avif", "numpy.core._multiarray_tests"] if LEGACY else []   # 
 # la CRT universelle (dossier ucrt/, copié depuis le SDK Windows par release.yml) est embarquée
 # pour les Windows 7 sans la mise à jour KB2999226.
 import glob as _glob
+import os as _os
+# glisser-déposer : extension tkdnd de tkinterdnd2 (Windows 64 bits seulement)
+try:
+    import tkinterdnd2 as _dnd
+    _dnd_data = [(_os.path.join(_os.path.dirname(_dnd.__file__), 'tkdnd', 'win-x64'), 'tkinterdnd2/tkdnd/win-x64')]
+except ImportError:
+    _dnd_data = []
 _ucrt = [(f, '.') for f in _glob.glob('ucrt/*.dll')] if LEGACY else []
 a = Analysis(['app.py'], pathex=['.'],
              binaries=[('libcodec2.dll', '.'), ('hamdrm.dll', '.')] + _ucrt,
-             datas=[('carte.bin', '.'), ('hfimage.ico', '.'), ('icon64.png', '.'), ('icon32.png', '.'), ('icon256.png', '.'), ('HFImage_mode_emploi.pdf', '.'), ('HFImage_user_manual_EN.pdf', '.'), ('LICENSE.txt', '.'), ('LICENCE.txt', '.'), ('emoji/*.png', 'emoji')],
-             hiddenimports=["loopback", "docking", "rxclean", "translate", "setupwiz", "bubbles", "dropfiles", "msgwin", "clocktz", "trafic", "channel", "waterfall", "hybrid", "panel", "qsl", "i18n", "wavtext", "imgfmt", "stationmap", "presence", "theme", "updater", "tkinter.colorchooser", "paho.mqtt.client", "tkinter.simpledialog",
+             datas=[('carte.bin', '.'), ('hfimage.ico', '.'), ('icon64.png', '.'), ('icon32.png', '.'), ('icon256.png', '.'), ('HFImage_mode_emploi.pdf', '.'), ('HFImage_user_manual_EN.pdf', '.'), ('LICENSE.txt', '.'), ('LICENCE.txt', '.'), ('emoji/*.png', 'emoji')] + _dnd_data,
+             hiddenimports=["loopback", "docking", "rxclean", "translate", "setupwiz", "bubbles", "dropfiles", "tkinterdnd2", "tkinterdnd2.TkinterDnD", "msgwin", "clocktz", "trafic", "channel", "waterfall", "hybrid", "panel", "qsl", "i18n", "wavtext", "imgfmt", "stationmap", "presence", "theme", "updater", "tkinter.colorchooser", "paho.mqtt.client", "tkinter.simpledialog",
                             "serial.tools.list_ports", "secrets", "hmac", "radio", "radiodlg", "gallery", "qrmfilter", "websync", "trafic", "wavanalyze", "anadlg", "riglist", "contextlib",
                             "xmlrpc.client", "comtypes", "comtypes.client", "comtypes.automation", "buildinfo", "hamdrm", "easypal_hybrid"] + _legacy + ([] if LEGACY else ["resvg_py"]),
              excludes=['scipy', 'skimage', 'matplotlib', 'pandas', 'IPython', 'pytest',

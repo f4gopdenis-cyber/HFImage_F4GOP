@@ -99,7 +99,8 @@ licence, qui reste applicable (détail dans THIRD_PARTY.md) :
     GNU LGPL 2.1 ;
   - Python et Tcl/Tk (licence PSF, licence Tcl/Tk), NumPy et pySerial (BSD),
     Pillow (MIT-CMU), python-sounddevice et PortAudio (MIT), comtypes (MIT),
-    Eclipse Paho MQTT (EPL-2.0 / EDL-1.0), resvg (Apache-2.0 / MIT) ;
+    Eclipse Paho MQTT (EPL-2.0 / EDL-1.0), resvg (Apache-2.0 / MIT),
+    tkinterdnd2 (MIT) et tkdnd (BSD) ;
   - carte du monde : Natural Earth (domaine public) ;
   - émoticônes des bulles : Twemoji (© Twitter, Inc. et contributeurs), licence CC-BY 4.0 ;
   - Hamlib (LGPL 2.1, GPL 2.0 pour rigctld), OmniRig, FLRig, EasyPal et QSSTV ne sont pas

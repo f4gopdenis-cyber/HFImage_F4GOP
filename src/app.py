@@ -60,7 +60,7 @@ import random
 import wave
 
 APP = "HFImage F4GOP"
-VERSION = "1.08"
+VERSION = "1.09"
 
 
 def _take_profile(argv):
@@ -480,7 +480,8 @@ class App(tk.Tk):
         hybrid.set_max_download(self.conf.get("hyb_rx_max_mb", 200))
         try:
             # glisser-déposer depuis l'Explorateur Windows, n'importe où sur la fenêtre
-            dropfiles.hook(self, self._dropped, toplevel=True)
+            if not dropfiles.hook(self, dropfiles.all_widgets(self), self._dropped):
+                self.log("Glisser-déposer indisponible (tkinterdnd2 absent).")
         except Exception as e:
             self.log(f"Glisser-déposer indisponible : {e}")
 

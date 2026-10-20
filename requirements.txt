@@ -6,3 +6,4 @@ comtypes>=1.4 ; sys_platform == "win32"
 paho-mqtt==2.1.0
 resvg_py>=0.5
 pyinstaller>=6.10
+tkinterdnd2

@@ -9,3 +9,4 @@ comtypes==1.4.8
 pyinstaller==5.13.2
 pyinstaller-hooks-contrib==2024.8
 pefile==2024.8.26
+tkinterdnd2==0.4.3

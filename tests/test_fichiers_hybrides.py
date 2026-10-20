@@ -83,12 +83,33 @@ class Glisser(unittest.TestCase):
         app.App._cmp_click(s, types.SimpleNamespace(x=80, y=12))       # glisser : non
         self.assertEqual(opened, [1])
 
-    def test_hors_windows_sans_effet(self):
+    def test_depot_tkdnd(self):
+        """1.09 : dépôt reçu par tkdnd (chemins avec espaces), sans fermer le programme."""
+        import tkinter as tk
         import dropfiles
-        if sys.platform.startswith("win"):
-            self.skipTest("Windows")
-        self.assertFalse(dropfiles.hook(None, None))
-
+        try:
+            root = tk.Tk()
+        except tk.TclError as e:
+            self.skipTest(str(e))
+        got = []
+        try:
+            lab = tk.Label(root, text="x")
+            lab.pack()
+            try:
+                ok = dropfiles.hook(root, dropfiles.all_widgets(root), got.append)
+            except RuntimeError as e:
+                self.skipTest(str(e))                           # tkdnd absent pour cette plate-forme
+            if not ok:
+                self.skipTest("tkinterdnd2 absent")
+            script = lab.bind("<<Drop>>")
+            name = [w for w in script.replace('"', " ").replace("[", " ").split() if w.endswith("on_drop")][0]
+            args = ["copy", "copy", "1", "CF_HDROP", "x", "", "", "{C:/Mes images/photo 1.jpg} C:/b.png",
+                    "<<Drop>>", "", "", "", "DND_Files", "", "", str(lab), "10", "10"]
+            root.tk.call(name, *args)
+            root.update()
+            self.assertEqual(got, [["C:/Mes images/photo 1.jpg", "C:/b.png"]])
+        finally:
+            root.destroy()
 
 if __name__ == "__main__":
     unittest.main()

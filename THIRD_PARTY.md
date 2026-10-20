@@ -19,6 +19,7 @@ HFImage F4GOP s'appuie sur les composants libres suivants. Leurs licences s'appl
 | [pySerial](https://github.com/pyserial/pyserial) | CAT / PTT | BSD-3-Clause |
 | [Hamlib](https://github.com/Hamlib/Hamlib) | Commande de plus de 300 postes (`rigctld`). **Pas inclus dans l'exe** : téléchargé à la demande depuis les Releases officielles de Hamlib, sans modification. La liste des modèles (`src/riglist.py`) en est tirée | LGPL-2.1 (bibliothèque), GPL-2.0 (rigctld) |
 | [comtypes](https://github.com/enthought/comtypes) | Liaison avec OmniRig | MIT |
+| [tkinterdnd2](https://github.com/Eliav2/tkinterdnd2) / [tkdnd](https://github.com/petasis/tkdnd) | Glisser-déposer de fichiers sur la fenêtre | MIT / BSD |
 | [Eclipse Paho MQTT](https://github.com/eclipse-paho/paho.mqtt.python) | Présence des stations par Internet | EPL-2.0 / EDL-1.0 |
 | [resvg](https://github.com/linebender/resvg) / resvg_py | Affichage des images SVG | Apache-2.0 / MIT |
 | [PyInstaller](https://pyinstaller.org/) | Fabrication de l'exécutable | GPL-2.0 avec exception pour les programmes produits |
