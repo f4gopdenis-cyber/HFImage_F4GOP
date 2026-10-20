@@ -39,6 +39,7 @@ Programme Windows de F4GOP (Denis, IN98QR) pour envoyer et recevoir des photos p
 - **Galerie** des dernières images reçues et envoyées, comme EZPix.
 - **Site web / Digi-Sites** : images reçues mises en ligne par FTP comme EasyPal (image1.jpg, image2.jpg…, TX1.jpg…), avec une page prête à l'emploi.
 - **Texte dans le waterfall** (begin.wav / end.wav), envoi de texte, texte inclus avec l'image.
+- **Bulles de texte** façon bande dessinée sur l'image (parole, pensée, cri, cartouche), placées à la souris.
 - **Carte QSL** : photo de fond, indicatif, locator, report rempli automatiquement, police et couleurs au choix.
 
 ### Trafic

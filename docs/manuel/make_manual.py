@@ -343,6 +343,15 @@ s += N(["Onglet <b>TX</b> → <b>Ouvrir une image…</b> (JPG, PNG, GIF, WebP, A
         "émettre tout de suite. Les réponses automatiques (ACK, BSR, FIX) n'attendent pas.",
         "Si des stations demandent des morceaux (BSR), <b>+ Compléter</b> / FIX envoie seulement ce qui manque."])
 s.append(img("tx.png", 165, "L'onglet TX : mode Auto, robustesse, image compressée et durée d'émission."))
+s.append(P("Bulles de texte (BD)", "h2"))
+s.append(P("Bouton <b>💬 Bulles…</b> (onglet TX) ou menu <b>Images → Bulles de texte…</b> : on écrit un texte, il "
+           "apparaît dans une bulle de bande dessinée sur l'image émise. Quatre styles : <b>parole</b> (bulle ronde "
+           "avec une pointe), <b>pensée</b> (petits ronds), <b>cri</b> (contour en étoile), <b>cartouche</b> "
+           "(rectangle, comme une légende) ; trois tailles de texte ; couleurs du fond et du texte au choix. "
+           "<b>Glissez la bulle</b> à la souris, et le <b>rond rouge</b> (la pointe) vers ce qu'elle doit montrer ; "
+           "plusieurs bulles possibles, clic droit sur une bulle pour la supprimer. La bulle fait partie de l'image : "
+           "tout le monde la voit, en radio comme en hybride, y compris les stations EasyPal. Les bulles sont effacées "
+           "quand on ouvre une autre image."))
 s.append(P("Mode Auto et robustesse", "h2"))
 s.append(P("En mode <b>Auto</b>, HFImage choisit le mode d'après le <b>report le plus faible</b> des stations "
            "qui ont reçu vos images ces 45 dernières minutes (liste Rx Ok). Sans report, il prend le SNR des "

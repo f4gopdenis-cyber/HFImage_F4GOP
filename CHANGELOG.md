@@ -1,5 +1,14 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 1.06 — bulles de texte façon BD
+
+- **💬 Bulles…** (onglet TX, ou menu Images → Bulles de texte…) : un texte dans une **bulle de bande dessinée** sur l'image émise.
+  - Quatre styles : **parole** (bulle ronde avec une pointe), **pensée** (petits ronds), **cri** (contour en étoile), **cartouche** (rectangle, comme une légende).
+  - Trois tailles de texte, relatives à l'image (lisible quelle que soit la taille d'émission) ; couleurs du fond et du texte au choix.
+  - On **glisse la bulle** à la souris, et le rond rouge (la **pointe**) vers ce qu'elle montre. Plusieurs bulles possibles ; clic droit sur une bulle pour la supprimer.
+- La bulle fait partie de l'image : tout le monde la voit, en radio comme en hybride, y compris les stations EasyPal / QSSTV. Elle s'ajoute aux incrustations (images des correspondants, conditions de trafic).
+- Les bulles sont effacées quand on ouvre une autre image (elles étaient placées pour la précédente).
+
 ## Version 1.05 — plusieurs fréquences à la fois (profils)
 
 - **Plusieurs HFImage ouverts en même temps**, chacun avec **ses propres réglages** : par exemple un sur 40 m, un sur 20 m et un sur 28,680 MHz, chacun branché sur son récepteur ou sur une bande d'un SDR (câbles audio virtuels type VB-Cable).

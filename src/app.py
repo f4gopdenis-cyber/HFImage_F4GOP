@@ -45,6 +45,7 @@ from i18n import tr
 import protocol
 import qsl
 import rxclean
+import bubbles
 import setupwiz
 import translate
 import shutil
@@ -58,7 +59,7 @@ import random
 import wave
 
 APP = "HFImage F4GOP"
-VERSION = "1.05"
+VERSION = "1.06"
 
 
 def _take_profile(argv):
@@ -304,6 +305,7 @@ class App(tk.Tk):
         self.audio_q = queue.Queue()
         self._photos = {}
         self.pips = []              # images des correspondants incrustées dans l'image TX
+        self.bubbles = []           # bulles de texte (BD) dessinées sur l'image TX
 
         self.sent_images = {}       # id -> Transmission émise (pour répondre aux BSR)
         self.my_ids = set()         # id de nos images (normales et annonces hybrides)
@@ -713,6 +715,7 @@ class App(tk.Tk):
         i.add_command(label="Envoyer un fichier…", command=self.send_file)
         i.add_command(label="Mes conditions de trafic…", command=self.trafic_dialog)
         i.add_command(label="Image du correspondant…", command=self.pip_dialog)
+        i.add_command(label="Bulles de texte…", command=self.bubble_dialog)
         i.add_command(label="Carte QSL…", command=self.qsl_dialog)
         i.add_separator()
         i.add_command(label="Image reçue en plein format", command=self._open_full)
@@ -1318,6 +1321,7 @@ class App(tk.Tk):
         ttk.Checkbutton(r2, text="Image du correspondant", variable=self.v_pipon,
                         command=_pip_toggle).pack(side="left", padx=(12, 0))
         ttk.Button(r2, text="…", width=3, command=self.pip_dialog).pack(side="left", padx=(2, 0))
+        ttk.Button(r2, text="💬 Bulles…", command=self.bubble_dialog).pack(side="left", padx=(12, 0))
 
         # réglages du mode EasyPal (HamDRM) : visibles seulement dans ce mode
         self.drm_row = ttk.Frame(tb)
@@ -3162,6 +3166,7 @@ class App(tk.Tk):
     def load_image(self, p):
         try:
             self.src_img, self.src_raw, self.src_kind = imgfmt.load_source(p)
+            self.bubbles = []                 # les bulles étaient placées pour l'image précédente
             self.src_path = p                 # nom repris pour les fichiers EasyPal (« de_…-photo.jpg »)
         except Exception as e:
             messagebox.showerror(APP, f"Image illisible : {e}")
@@ -3235,8 +3240,20 @@ class App(tk.Tk):
                                   rs=DRM_RSS.index(v["drm_rs"].get()))
 
     def _tx_source(self):
-        """Image à émettre : l'image ouverte, + l'image du correspondant (avec son report),
-        + « mes conditions de trafic », selon les cases cochées."""
+        """Image à émettre : l'image ouverte, + images des correspondants, + « mes conditions
+        de trafic », + bulles de texte, selon les réglages."""
+        im = self._tx_source_nobubbles()
+        if im is None or not any((b.get("text") or "").strip() for b in self.bubbles):
+            return im
+        key = (id(im), json.dumps(self.bubbles, sort_keys=True))
+        c = getattr(self, "_bub_cache", None)
+        if c and c[0] == key:
+            return c[1]
+        out = bubbles.draw(im, self.bubbles)
+        self._bub_cache = (key, out)
+        return out
+
+    def _tx_source_nobubbles(self):
         base = self._pip_source()
         if base is None or not self.conf.get("tc_on"):
             return base
@@ -3390,6 +3407,240 @@ class App(tk.Tk):
         if self.src_img is None:
             messagebox.showinfo(APP, "Ouvrez maintenant votre image : celle du correspondant y sera incrustée.")
         self.prepare()
+
+    # ------------------------------------------------------------- bulles de texte (BD)
+    def bubble_dialog(self):
+        """Bulles de texte façon BD sur l'image émise : texte, style, taille, couleurs ;
+        la bulle se déplace à la souris, sa pointe aussi (petit rond rouge)."""
+        w = getattr(self, "_bub_win", None)
+        if w is not None and w.winfo_exists():
+            w.lift()
+            return
+        if self.src_img is None:
+            messagebox.showinfo(APP, "Ouvrez d'abord une image (onglet TX).")
+            return
+        w = self._bub_win = tk.Toplevel(self)
+        w.title(tr("Bulles de texte"))
+        w.transient(self)
+        f = ttk.Frame(w, padding=10)
+        f.pack(fill="both", expand=True)
+        styles = {"parole": tr("Parole"), "pensée": tr("Pensée"), "cri": tr("Cri"), "cartouche": tr("Cartouche")}
+        sizes = {"petite": tr("Petite"), "moyenne": tr("Moyenne"), "grande": tr("Grande")}
+        sel = [len(self.bubbles) - 1 if self.bubbles else None]
+        geo = {}
+        busy = [False]
+
+        left = ttk.Frame(f)
+        left.grid(row=0, column=0, sticky="ns", padx=(0, 10))
+        ttk.Label(left, text="Bulles").pack(anchor="w")
+        lb = tk.Listbox(left, height=6, width=26, exportselection=False)
+        lb.pack(fill="x")
+        bb = ttk.Frame(left)
+        bb.pack(fill="x", pady=(4, 8))
+        ttk.Label(left, text="Texte").pack(anchor="w")
+        txt = tk.Text(left, width=26, height=4, wrap="word", font=("TkDefaultFont", 10))
+        txt.pack(fill="x")
+        ttk.Label(left, text="Style").pack(anchor="w", pady=(6, 0))
+        v_style = tk.StringVar()
+        ttk.Combobox(left, textvariable=v_style, values=list(styles.values()), state="readonly",
+                     width=16).pack(anchor="w")
+        ttk.Label(left, text="Taille du texte").pack(anchor="w", pady=(6, 0))
+        v_size = tk.StringVar()
+        ttk.Combobox(left, textvariable=v_size, values=list(sizes.values()), state="readonly",
+                     width=16).pack(anchor="w")
+        cf = ttk.Frame(left)
+        cf.pack(anchor="w", pady=(8, 0))
+        sw_bg = tk.Label(cf, width=3, relief="solid", bd=1)
+        sw_fg = tk.Label(cf, width=3, relief="solid", bd=1)
+        sw_bg._no_theme = sw_fg._no_theme = True
+        ttk.Label(left, text="Glissez la bulle à la souris ; le rond rouge est la pointe.",
+                  wraplength=190, foreground="#555", justify="left").pack(anchor="w", pady=(10, 0))
+
+        cv = tk.Canvas(f, width=640, height=480, bg="#222", highlightthickness=0)
+        cv.grid(row=0, column=1)
+
+        def cur():
+            i = sel[0]
+            return self.bubbles[i] if i is not None and 0 <= i < len(self.bubbles) else None
+
+        def base_small():
+            im = self._tx_source_nobubbles() or self.src_img
+            k = min(640 / im.width, 480 / im.height)
+            size = (max(1, int(im.width * k)), max(1, int(im.height * k)))
+            if geo.get("src") is not im or geo.get("size") != size:
+                geo.update(src=im, size=size, small=im.resize(size, Image.LANCZOS),
+                           off=((640 - size[0]) // 2, (480 - size[1]) // 2))
+            return geo["small"]
+
+        def preview():
+            small = base_small()
+            pic = bubbles.draw(small, self.bubbles)
+            geo["ph"] = ImageTk.PhotoImage(pic)
+            cv.delete("all")
+            ox, oy = geo["off"]
+            cv.create_image(ox, oy, image=geo["ph"], anchor="nw")
+            b = cur()
+            if b is not None and (b.get("text") or "").strip():
+                W, H = geo["size"]
+                g = bubbles.layout(W, H, b)
+                x0, y0, x1, y1 = g["box"]
+                cv.create_rectangle(ox + x0, oy + y0, ox + x1, oy + y1, outline="#ffd400", dash=(4, 3))
+                if b.get("style") != "cartouche":
+                    tx, ty = ox + b["tx"] * W, oy + b["ty"] * H
+                    cv.create_oval(tx - 6, ty - 6, tx + 6, ty + 6, fill="#e02020", outline="white")
+
+        def refresh_list():
+            lb.delete(0, "end")
+            for b in self.bubbles:
+                t = " ".join((b.get("text") or "").split()) or tr("(vide)")
+                lb.insert("end", t if len(t) <= 30 else t[:28] + "…")
+            if sel[0] is not None and sel[0] < len(self.bubbles):
+                lb.selection_clear(0, "end")
+                lb.selection_set(sel[0])
+
+        def load_fields():
+            b = cur()
+            busy[0] = True
+            txt.delete("1.0", "end")
+            if b is not None:
+                txt.insert("1.0", b.get("text", ""))
+                v_style.set(styles.get(b.get("style"), styles["parole"]))
+                v_size.set(sizes.get(b.get("size"), sizes["moyenne"]))
+                sw_bg.configure(bg=b.get("bg", "#ffffff"))
+                sw_fg.configure(bg=b.get("fg", "#000000"))
+            busy[0] = False
+
+        def changed(*_):
+            if busy[0]:
+                return
+            b = cur()
+            if b is None:
+                return
+            b["text"] = txt.get("1.0", "end").rstrip("\n")
+            b["style"] = next((k for k, v in styles.items() if v == v_style.get()), "parole")
+            b["size"] = next((k for k, v in sizes.items() if v == v_size.get()), "moyenne")
+            refresh_list()
+            preview()
+
+        def add():
+            n = len(self.bubbles)
+            b = bubbles.new(tr("73 de") + f" {self.v_call.get().strip().upper() or 'F4GOP'} !",
+                            cy=0.2 + 0.18 * (n % 4), cx=0.3 + 0.2 * (n % 2))
+            last = cur()
+            if last is not None:                          # même style que la précédente
+                b.update({k: last[k] for k in ("style", "size", "bg", "fg") if k in last})
+            self.bubbles.append(b)
+            sel[0] = len(self.bubbles) - 1
+            refresh_list()
+            load_fields()
+            preview()
+            txt.focus_set()
+            txt.tag_add("sel", "1.0", "end")
+
+        def remove():
+            if cur() is None:
+                return
+            del self.bubbles[sel[0]]
+            sel[0] = (len(self.bubbles) - 1) if self.bubbles else None
+            refresh_list()
+            load_fields()
+            preview()
+
+        def pick(which):
+            from tkinter import colorchooser
+            b = cur()
+            if b is None:
+                return
+            c = colorchooser.askcolor(color=b.get(which), parent=w)[1]
+            if c:
+                b[which] = c
+                load_fields()
+                preview()
+
+        ttk.Button(bb, text="Ajouter", command=add).pack(side="left")
+        ttk.Button(bb, text="Supprimer", command=remove).pack(side="left", padx=4)
+        ttk.Label(cf, text="Fond").pack(side="left")
+        sw_bg.pack(side="left", padx=(4, 12))
+        ttk.Label(cf, text="Texte").pack(side="left")
+        sw_fg.pack(side="left", padx=4)
+        sw_bg.bind("<Button-1>", lambda e: pick("bg"))
+        sw_fg.bind("<Button-1>", lambda e: pick("fg"))
+
+        def to_frac(e):
+            ox, oy = geo["off"]
+            W, H = geo["size"]
+            return min(1.0, max(0.0, (e.x - ox) / W)), min(1.0, max(0.0, (e.y - oy) / H))
+
+        def press(e):
+            if "size" not in geo:
+                return
+            ox, oy = geo["off"]
+            W, H = geo["size"]
+            h = bubbles.hit(W, H, self.bubbles, e.x - ox, e.y - oy, grab=10)
+            if h is None:
+                geo.pop("grab", None)
+                return
+            sel[0], part = h
+            refresh_list()
+            load_fields()
+            b = cur()
+            fx, fy = to_frac(e)
+            geo["grab"] = (part, fx - (b["tx"] if part == "pointe" else b["cx"]),
+                           fy - (b["ty"] if part == "pointe" else b["cy"]))
+            preview()
+
+        def drag(e):
+            g = geo.get("grab")
+            b = cur()
+            if not g or b is None:
+                return
+            fx, fy = to_frac(e)
+            if g[0] == "pointe":
+                b["tx"], b["ty"] = fx - g[1], fy - g[2]
+            else:
+                nx, ny = fx - g[1], fy - g[2]
+                b["tx"] += nx - b["cx"]                   # la pointe suit la bulle
+                b["ty"] += ny - b["cy"]
+                b["cx"], b["cy"] = nx, ny
+            preview()
+
+        def right(e):
+            ox, oy = geo.get("off", (0, 0))
+            W, H = geo.get("size", (1, 1))
+            h = bubbles.hit(W, H, self.bubbles, e.x - ox, e.y - oy)
+            if h is not None:
+                sel[0] = h[0]
+                remove()
+
+        cv.bind("<ButtonPress-1>", press)
+        cv.bind("<B1-Motion>", drag)
+        cv.bind("<ButtonRelease-1>", lambda e: geo.pop("grab", None))
+        cv.bind("<Button-3>", right)
+        lb.bind("<<ListboxSelect>>", lambda e: (sel.__setitem__(0, lb.curselection()[0]) if lb.curselection()
+                                                else None, load_fields(), preview()))
+        txt.bind("<<Modified>>", lambda e: (txt.edit_modified(False), changed()))
+        v_style.trace_add("write", changed)
+        v_size.trace_add("write", changed)
+
+        def close():
+            self.bubbles[:] = [b for b in self.bubbles if (b.get("text") or "").strip()]
+            w.destroy()
+            self.prepare()
+
+        bot = ttk.Frame(f)
+        bot.grid(row=1, column=0, columnspan=2, sticky="ew", pady=(8, 0))
+        ttk.Button(bot, text="Tout effacer", command=lambda: (self.bubbles.clear(), sel.__setitem__(0, None),
+                                                              refresh_list(), load_fields(), preview())
+                   ).pack(side="left")
+        ttk.Button(bot, text="OK", command=close).pack(side="right")
+        w.protocol("WM_DELETE_WINDOW", close)
+        if not self.bubbles:
+            add()
+        else:
+            refresh_list()
+            load_fields()
+            preview()
+        self._translate_ui(w)
 
     def pip_dialog(self):
         w = getattr(self, "_pip_win", None)
