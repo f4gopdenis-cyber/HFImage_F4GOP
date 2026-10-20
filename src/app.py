@@ -58,7 +58,7 @@ import random
 import wave
 
 APP = "HFImage F4GOP"
-VERSION = "1.02"
+VERSION = "1.03"
 CONF_PATH = os.path.join(os.path.expanduser("~"), ".hfimage.json")
 DEFAULT_OUT = os.path.join(os.path.expanduser("~"), "Documents", "HFImage")
 DEFAULTS = {
@@ -3011,6 +3011,8 @@ class App(tk.Tk):
     def test_hybrid(self):
         cfg = self._hyb_cfg()
         self.log(f"Test du serveur {cfg['host']}…")
+        if not hybrid.has_public_url(cfg):
+            return self._test_ftp_only(cfg)
 
         def run():
             try:
@@ -3025,6 +3027,35 @@ class App(tk.Tk):
                 self.ui(messagebox.showerror, APP, f"Test du serveur échoué :\n{e}")
 
         threading.Thread(target=run, daemon=True).start()
+
+    def _test_ftp_only(self, cfg):
+        """Lien public absent (ou « ftp.… » au lieu d'une adresse web) : on teste quand même le dépôt FTP,
+        qui suffit pour l'hybride EasyPal, et on explique le lien public (nécessaire pour l'hybride HFImage)."""
+        def run():
+            try:
+                hybrid.test_ftp(cfg)
+            except Exception as e:
+                self.ui(self.log_exc, "Test serveur hybride", e)
+                self.ui(messagebox.showerror, APP, f"Test du serveur échoué :\n{e}")
+                return
+            self.ui(self._ftp_only_ok, cfg)
+        threading.Thread(target=run, daemon=True).start()
+
+    def _ftp_only_ok(self, cfg):
+        self.log(f"Dépôt FTP réussi sur {cfg['host']}.")
+        given = cfg.get("url", "").strip()
+        sug = hybrid.suggest_public_url(cfg)
+        msg = ("Dépôt FTP réussi : le serveur convient pour l'hybride EasyPal (mode EasyPal).\n\n"
+               "Pour l'hybride HFImage, il faut aussi le lien public : l'adresse web (http:// ou https://) "
+               "où l'on voit ce dossier dans un navigateur, pas l'adresse du serveur FTP.")
+        if given:
+            msg += "\n" + f"« {given} » n'est pas une adresse web."
+        if sug and messagebox.askyesno(APP, msg + "\n\n" + "Lien public probable :" + f"\n{sug}\n\n" + "L'utiliser et refaire le test ?"):
+            self.v_hurl.set(sug)
+            self.save_conf(quiet=True)
+            self.test_hybrid()
+        elif not sug:
+            messagebox.showinfo(APP, msg + "\n" + "Exemple : https://www.qsl.net/votreindicatif/easypal/")
 
     # -------------------------------------------------------------- émission
     def open_image(self):

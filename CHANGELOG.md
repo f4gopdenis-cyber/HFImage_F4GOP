@@ -1,5 +1,13 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 1.03 — aide au réglage du serveur hybride
+
+- **Tester le serveur** sans lien public (ou avec « ftp.… » à la place d'une adresse web) : au lieu d'échouer tout de suite, HFImage teste quand même le **dépôt FTP**, qui suffit pour l'**hybride EasyPal**, puis explique ce qu'est le lien public (l'adresse **web** du dossier, nécessaire pour l'hybride HFImage).
+- **qsl.net** : HFImage propose le lien public probable (ex. **https://www.qsl.net/wasstv/easypal/**) et refait le test d'un clic.
+- **Port 22** : c'est le port du SFTP (SSH), que ni HFImage ni EasyPal n'utilisent ; le message le dit clairement et indique le port 21 (FTP).
+- Échec de connexion avec **FTPS** coché : le message conseille d'essayer sans FTPS, comme dans EasyPal.
+- Messages du serveur hybride **traduits** dans les 5 langues (ils restaient en français).
+
 ## Version 1.02 — dédicace et transparence
 
 - **Infos → À propos…**, mode d'emploi (français et anglais) et page GitHub : le programme est **dédié à Erik Sundstrup VK4AES (SK)**, créateur d'EasyPal, en hommage à son travail.

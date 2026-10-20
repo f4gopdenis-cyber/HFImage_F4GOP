@@ -86,6 +86,10 @@ def _ftp_connect(cfg, timeout=20):
     host, port = cfg["host"].strip(), int(cfg.get("port") or 21)
     if not host:
         raise RuntimeError("serveur FTP non renseigné (onglet Réglages)")
+    if port == 22:
+        # erreur fréquente : 22 est le port du SFTP (SSH), un autre protocole que le FTP
+        raise RuntimeError("le port 22 est celui du SFTP (SSH), que HFImage et EasyPal n'utilisent pas : "
+                           "mettez le port 21 (FTP)")
     try:
         if cfg.get("tls"):
             ftp = ftplib.FTP_TLS(timeout=timeout)
@@ -99,7 +103,8 @@ def _ftp_connect(cfg, timeout=20):
     except ftplib.error_perm as e:
         raise RuntimeError(f"connexion FTP refusée : {e} (identifiant / mot de passe ?)") from e
     except OSError as e:
-        raise RuntimeError(f"serveur FTP injoignable ({host}:{port}) : {e}") from e
+        hint = "\n" + "Essayez sans « FTPS » (case décochée), comme dans EasyPal." if cfg.get("tls") else ""
+        raise RuntimeError(f"serveur FTP injoignable ({host}:{port}) : {e}{hint}") from e
     return ftp
 
 
@@ -114,6 +119,40 @@ def _ftp_cd(ftp, directory):
         except ftplib.error_perm:
             ftp.mkd(part)
             ftp.cwd(part)
+
+
+def has_public_url(cfg):
+    return cfg.get("url", "").strip().lower().startswith(("http://", "https://"))
+
+
+def suggest_public_url(cfg):
+    """Lien public probable d'après le serveur (qsl.net : https://www.qsl.net/<compte>/<dossier>), sinon None."""
+    host = cfg.get("host", "").strip().lower()
+    user = cfg.get("user", "").strip().lower()
+    if user and (host == "qsl.net" or host.endswith(".qsl.net")):
+        d = (cfg.get("dir") or "").strip().strip("/")
+        return f"https://www.qsl.net/{user}/" + (d + "/" if d else "")
+    return None
+
+
+def test_ftp(cfg):
+    """Dépôt FTP seul (sans lien public) : petit fichier déposé dans le dossier puis effacé."""
+    name = f"hfimage_test_{int(time.time())}.txt"
+    ftp = _ftp_connect(cfg)
+    try:
+        _ftp_cd(ftp, cfg.get("dir"))
+        ftp.storbinary(f"STOR {name}", io.BytesIO(b"HFImage test"))
+        try:
+            ftp.delete(name)
+        except ftplib.all_errors:
+            pass
+    except ftplib.all_errors as e:
+        raise RuntimeError(f"envoi FTP impossible : {e}") from e
+    finally:
+        try:
+            ftp.quit()
+        except Exception:
+            ftp.close()
 
 
 def upload(cfg, name: str, data: bytes, progress=None) -> str:
