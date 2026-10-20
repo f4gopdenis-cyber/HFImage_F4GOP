@@ -46,7 +46,7 @@ class FausseAccroche(unittest.TestCase):
         app = _app()
         s = types.SimpleNamespace(WAIT_HOLD_S=app.App.WAIT_HOLD_S, WAIT_SYNC_S=app.App.WAIT_SYNC_S,
                                   rig_freq=None, online={}, rx_stream=object(),
-                                  v_call=types.SimpleNamespace(get=lambda: "F4GOP"))
+                                  v_call=types.SimpleNamespace(get=lambda: "F4GOP"), mycall=lambda: "F4GOP")
         now = time.time()
         m = types.SimpleNamespace(sync=1 if sync_age is not None else 0,
                                   sync_since=now - (sync_age or 0), last_ok=now - last_ok_age)

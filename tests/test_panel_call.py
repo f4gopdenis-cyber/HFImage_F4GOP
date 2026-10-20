@@ -13,6 +13,7 @@ class Stub:
         self.panel = type("P", (), {"set_call": lambda _s, c: self.shown.append(c or "—")})()
         self.online, self.rig_freq = {}, 7058000
         self.v_call = type("V", (), {"get": lambda _s: "F4GOP"})()
+        self.mycall = lambda: "F4GOP"
         self._rx_call = App._rx_call.__get__(self)
         self._guess_tx_call = App._guess_tx_call.__get__(self)
 

@@ -45,7 +45,7 @@ class Envoi(unittest.TestCase):
         with open(p, "wb") as f:
             f.write(os.urandom(17_000_000))                    # > 16 Mo, type quelconque
         sent = []
-        s = types.SimpleNamespace(tx_busy=False, v_call=types.SimpleNamespace(get=lambda: "RK1AT"),
+        s = types.SimpleNamespace(tx_busy=False, v_call=types.SimpleNamespace(get=lambda: "RK1AT"), mycall=lambda: "RK1AT",
                                   v_hyb=types.SimpleNamespace(get=lambda: True), log=lambda m: None,
                                   _hyb_cfg=lambda: {"host": "ftp.x", "url": "https://x/"},
                                   transmit=lambda tx=None: sent.append(tx))

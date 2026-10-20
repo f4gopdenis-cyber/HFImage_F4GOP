@@ -38,7 +38,7 @@ class Swl(unittest.TestCase):
     def test_swl_n_emet_jamais(self):
         app = _app()
         logs, shown = [], []
-        s = types.SimpleNamespace(tx_busy=False, v_call=types.SimpleNamespace(get=lambda: "PA0041SWL"),
+        s = types.SimpleNamespace(tx_busy=False, v_call=types.SimpleNamespace(get=lambda: "PA0041SWL"), mycall=lambda: "PA0041SWL",
                                   log=logs.append)
         with mock.patch.object(app.messagebox, "showinfo", lambda *a, **k: shown.append(a[1])):
             self.assertFalse(app.App._start_job(s, {"kind": "ack"}, quiet=True))
@@ -73,7 +73,7 @@ class Swl(unittest.TestCase):
                                                                               "state": "RX", "freq": 7058000}},
             lb_heard=tk.Label(root), lb_rxok=tk.Label(root), _net_status=lambda: None,
             _set_text=lambda w, t: None, _c=lambda c: c, _mhz=app.App._mhz.__get__(object()) if False else
-            (lambda f: f"{f / 1e6:.3f}" if f else "—"), _is_hyb=lambda c, on=None: False)
+            (lambda f: f"{f / 1e6:.3f}" if f else "—"), _is_hyb=lambda c, on=None: False, _label=lambda c: c)
         lb.insert("end", "x" * 80)
         lb.xview_moveto(0.5)
         app.App._heard_refresh(s)

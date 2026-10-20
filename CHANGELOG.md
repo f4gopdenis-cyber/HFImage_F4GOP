@@ -1,5 +1,12 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 1.12 — prénom à part, une seule ligne par station
+
+- **Nouvelle case « Prénom »** (Réglages → Station) : il s'affiche à côté de l'indicatif dans la liste des stations des autres utilisateurs (« F4LTX Chris »), sans toucher à l'indicatif envoyé par radio.
+- Beaucoup d'utilisateurs écrivaient leur prénom dans la case indicatif (« F4LTX CHRIS »). Par radio, l'indicatif est limité à 8 caractères : il arrivait coupé (« F4LTX CH ») et la même station apparaissait plusieurs fois dans les listes Stations et Rx Ok. Le prénom écrit derrière l'indicatif est maintenant rangé tout seul dans la case Prénom.
+- **Une seule ligne par station** dans les listes, même si son indicatif arrive avec un prénom, coupé par la radio, ou depuis une ancienne version du programme.
+- Pendant qu'on tape son indicatif, la présence Internet attend la fin de la frappe (3 s) au lieu de se reconnecter à chaque lettre (on voyait passer « F4LTX CH », « F4LTX CHR », « F4LTX CHRIS »…).
+
 ## Version 1.11 — contrôle général, programme ouvert des jours
 
 - **Mémoire** : quand le programme restait ouvert très longtemps (des jours, beaucoup d'images reçues et envoyées), la mémoire utilisée grossissait petit à petit sans jamais redescendre : chaque image reçue gardait son décodeur, chaque image envoyée gardait son modem. Maintenant, une image reçue complète libère son décodeur, et le programme ne garde en mémoire que les 64 dernières images reçues et les 32 dernières envoyées (largement assez pour répondre aux demandes de complément). Les images enregistrées sur le disque ne sont pas touchées.

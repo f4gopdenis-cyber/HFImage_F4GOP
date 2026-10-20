@@ -1470,6 +1470,7 @@ T = [
     ("Cliquez ici pour ouvrir une image, ou glissez-la ici", "Click here to open a picture, or drag it here", "Hier klicken, um ein Bild zu öffnen, oder es hierher ziehen", "Haga clic aquí para abrir una imagen, o arrástrela aquí", "Fate clic qui per aprire un'immagine, o trascinatela qui"),
     ("Envoyer ce fichier ?", "Send this file?", "Diese Datei senden?", "¿Enviar este archivo?", "Inviare questo file?"),
     ("Fichier trop gros pour la radio (16 Mo maximum) : utilisez le mode hybride.", "File too large for radio (16 MB maximum): use hybrid mode.", "Datei zu groß für Funk (max. 16 MB): Hybridmodus verwenden.", "Archivo demasiado grande para radio (16 MB máximo): use el modo híbrido.", "File troppo grande per la radio (16 MB massimo): usate il modo ibrido."),
+    ("Prénom", "First name", "Vorname", "Nombre", "Nome"),
     ("Attendre fréquence libre", "Wait for clear frequency", "Auf freie Frequenz warten", "Esperar frecuencia libre", "Attendere frequenza libera"),
     ("ATTENTE…", "WAITING…", "WARTEN…", "ESPERA…", "ATTESA…"),
     ("image", "picture", "Bild", "imagen", "immagine"),

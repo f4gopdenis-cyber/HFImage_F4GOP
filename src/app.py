@@ -60,7 +60,7 @@ import random
 import wave
 
 APP = "HFImage F4GOP"
-VERSION = "1.11"
+VERSION = "1.12"
 
 
 def _take_profile(argv):
@@ -87,7 +87,7 @@ DEFAULT_OUT = os.path.join(os.path.expanduser("~"), "Documents", "HFImage")
 if PROFILE:
     DEFAULT_OUT = os.path.join(DEFAULT_OUT, PROFILE)
 DEFAULTS = {
-    "callsign": "", "mode": "Auto", "width": "auto", "seconds": 120, "fmt": "avif",
+    "callsign": "", "opname": "", "mode": "Auto", "width": "auto", "seconds": 120, "fmt": "avif",
     "overhead": "auto", "out_dev": "", "in_dev": "", "level": 50,
     "ptt": "VOX", "cat_port": "", "cat_baud": 115200, "cat_cmd": "TX1;",
     "folder": DEFAULT_OUT,
@@ -172,6 +172,16 @@ class TrVar(tk.StringVar):
         super().set(tr(getattr(self, "_fr", "")))
 
 
+def split_call(text):
+    """« F4LTX CHRIS » -> ("F4LTX", "Chris") : l'indicatif est le premier mot, le reste est le
+    prénom (beaucoup d'utilisateurs l'écrivaient dans la case indicatif ; par radio, l'indicatif
+    est coupé à 8 caractères : « F4LTX CH », et la même station apparaissait deux fois)."""
+    parts = str(text or "").strip().split()
+    if not parts:
+        return "", ""
+    return parts[0].upper(), " ".join(parts[1:]).title()[:16]
+
+
 def is_swl(call):
     """Indicatif d'écouteur (SWL) : PA0041SWL, F-12345, 14VD274 (identifiants 14…), ONL1234.
     Ces stations reçoivent et envoient leurs reports par Internet, mais n'émettent jamais."""
@@ -227,6 +237,11 @@ def load_conf():
             if small:
                 c["hyb_kb"], c["hyb_width"], c["hyb_fmt"] = 3000, "originale", "original"
             c["conf_v"] = 64
+        # prénom écrit dans la case indicatif : rangé dans sa propre case
+        call, name = split_call(c.get("callsign"))
+        if name:
+            c["callsign"] = call
+            c["opname"] = c.get("opname") or name
         if c.get("fmt") not in FORMATS_TX:
             c["fmt"] = {"jpeg": "jpg"}.get(c.get("fmt"), "avif")
     except Exception:
@@ -320,6 +335,7 @@ class App(tk.Tk):
         self.known_loc = self._load_locs()   # indicatif -> locator (gardé d'une session à l'autre)
         self.map_win = None
         self.online = {}            # stations en ligne (Internet) : clé -> présence (call, loc, freq…)
+        self.opnames = {}           # indicatif -> prénom (présence Internet, ou écrit après l'indicatif)
         self.net = None             # client de présence Internet
         self.net_ok = False
         self.rxok_sent = set()      # images dont on a déjà confirmé la réception par Internet
@@ -379,6 +395,7 @@ class App(tk.Tk):
     def _build(self):
         self.configure(bg=GREEN)
         self.v_call = tk.StringVar(value=self.conf["callsign"])
+        self.v_opname = tk.StringVar(value=self.conf.get("opname", ""))
         self.v_loc = tk.StringVar(value=self.conf.get("locator", ""))
         protocol.MY_LOCATOR = self.v_loc.get().strip()
         self.v_loc.trace_add("write", lambda *a: setattr(protocol, "MY_LOCATOR", self.v_loc.get().strip()))
@@ -648,8 +665,21 @@ class App(tk.Tk):
         self.save_conf(quiet=True)
         self.log("Langue changée.")
 
+    def mycall(self):
+        """Notre indicatif (premier mot de la case : un prénom tapé derrière n'en fait pas partie)."""
+        return split_call(self.v_call.get())[0]
+
+    def myname(self):
+        """Prénom affiché dans les listes des autres stations (case Prénom, sinon ce qui suit
+        l'indicatif dans la case indicatif)."""
+        try:
+            n = self.v_opname.get().strip()
+        except AttributeError:
+            n = ""
+        return (n.title()[:16] if n else split_call(self.v_call.get())[1])
+
     def _set_title(self):
-        self.title(f"{APP} {VERSION} — {self.v_call.get().strip().upper() or 'NOCALL'}"
+        self.title(f"{APP} {VERSION} — {self.mycall() or 'NOCALL'}"
                    + (f" — {PROFILE}" if PROFILE else ""))
 
     # ---------------------------------------------------------------- menus
@@ -1026,7 +1056,7 @@ class App(tk.Tk):
             if r.drm is not None and now - r.drm_t < self.WAIT_HOLD_S:
                 return "signal EasyPal"
         if self.rig_freq:
-            mine = self.v_call.get().strip().upper()
+            mine = self.mycall()
             for d in self.online.values():
                 if d.get("state") != "TX" or now - float(d.get("seen") or d.get("t") or 0) > 120:
                     continue
@@ -1761,7 +1791,7 @@ class App(tk.Tk):
     # ------------------------------------------------- présence par Internet (comme EasyPal)
     def net_start(self):
         self.net_stop()
-        call = self.v_call.get().strip().upper()
+        call = self.mycall()
         if not self.v_net.get() or not call:
             self._net_status()
             return
@@ -1780,7 +1810,7 @@ class App(tk.Tk):
         try:
             self.net.start(call, {"loc": self.v_loc.get().strip(), "freq": self.rig_freq,
                                   "mode": self.rig_mode, "state": "RX", "ver": VERSION, "app": "HFImage",
-                                  "hyb": bool(self.v_hyb.get())})
+                                  "hyb": bool(self.v_hyb.get()), "name": self.myname()})
         except Exception as e:
             self.log_exc("Présence Internet", e)
             self.net = None
@@ -1815,12 +1845,34 @@ class App(tk.Tk):
             txt = "Connexion en cours…"
         self._set_text(self.lb_netstat, txt)
 
+    def _station_call(self, text):
+        """Indicatif d'une station tel qu'il arrive (« F4LTX CHRIS », « F4LTX CH » par radio) ->
+        indicatif seul (une seule ligne par station) ; le prénom éventuel est retenu."""
+        call, name = split_call(text)
+        # (8 caractères tout juste : peut-être coupé par la radio, « F1JI PAU » pour « F1JI PAUL »)
+        if name and call and call != "?" and len(name) >= 3 and call not in self.opnames \
+                and len(str(text).strip()) != 8:
+            self.opnames[call] = name               # « CH » (coupé par la radio) : pas un prénom
+        return call
+
+    def _label(self, call):
+        """Indicatif + prénom pour l'affichage des listes."""
+        n = self.opnames.get(call)
+        return f"{call} {n}" if n else call
+
     def _net_station(self, key, d):
         if d is None:
             if self.online.pop(key, None) is not None:
                 self._heard_refresh()
             return
-        new = key not in self.online
+        d = dict(d)
+        d["call"] = self._station_call(d.get("call"))
+        name = str(d.get("name") or "").strip()
+        if name:
+            self.opnames[d["call"]] = name.title()[:16]
+        # même station sous une autre clé (ancienne présence « F4LTX-CHRIS », 2e profil) :
+        # une seule ligne dans la liste, et pas de nouveau « En ligne » dans le journal
+        new = not any(x.get("call") == d["call"] for x in self.online.values())
         self.online[key] = dict(d, seen=time.time())
         if d.get("loc"):
             self._remember_loc(str(d["call"]).upper(), d["loc"])
@@ -1831,7 +1883,7 @@ class App(tk.Tk):
         self._heard_refresh()
 
     def _net_rxok(self, d):
-        call = str(d.get("from", "")).upper()
+        call = self._station_call(d.get("from", ""))
         iid = d.get("id")
         if d.get("loc"):
             self._remember_loc(call, d["loc"])
@@ -1856,7 +1908,7 @@ class App(tk.Tk):
         snr = self.snr_by_id.get(iid)
         if show and iid not in self.my_ids:
             self._rxok_show(iid)
-            self._rxok_add(self.v_call.get().strip().upper(), None if snr is None else int(round(snr)), iid)
+            self._rxok_add(self.mycall(), None if snr is None else int(round(snr)), iid)
         if self.net is None or iid in self.rxok_sent:
             return
         if self.net.send_rxok(call, iid, None if snr is None else int(round(snr)), self.v_loc.get().strip()):
@@ -1889,7 +1941,7 @@ class App(tk.Tk):
 
     def _map_data(self):
         """Pour la carte : (notre station, [stations entendues / Rx Ok avec position])."""
-        mycall = self.v_call.get().strip().upper() or "NOCALL"
+        mycall = self.mycall() or "NOCALL"
         myloc = self.v_loc.get().strip()
         me = {"call": mycall, "loc": myloc, "pos": protocol.locator_to_latlon(myloc), "info": tr("votre station")}
         out = []
@@ -1963,8 +2015,8 @@ class App(tk.Tk):
 
     def _heard(self, call, snr=None, what="", loc=None, hyb=False):
         """Une station utilisant HFImage a été entendue (image, annonce, BSR, ACK, QRV)."""
-        call = (call or "").strip().upper()
-        if not call or call == "?" or call == self.v_call.get().strip().upper():
+        call = self._station_call(call)
+        if not call or call == "?" or call == self.mycall():
             return
         h = self.heard.setdefault(call, {"loc": ""})
         h.update(t=time.time(), freq=self.rig_freq, what=what)
@@ -1979,7 +2031,7 @@ class App(tk.Tk):
 
     def _rxok_add(self, call, report, iid=None):
         """Une station a bien reçu l'image iid (sans iid : l'image affichée)."""
-        call = (call or "").strip().upper()
+        call = self._station_call(call)
         if not call or call == "?":
             return
         iid = self.rxok_ctx if iid is None else iid
@@ -2160,7 +2212,7 @@ class App(tk.Tk):
         on = {str(d["call"]).upper(): d for d in self.online.values()}
         self._heard_names = sorted(set(on) | set(self.heard))
         # colonne de l'indicatif à la largeur du plus long (PA0041SWL, F4FRC/P…) : colonnes alignées
-        cw = max([7] + [len(c) for c in self._heard_names])
+        cw = max([7] + [len(self._label(c)) for c in self._heard_names])
         self.lst_heard.delete(0, "end")
         for c in self._heard_names:
             hyb = self._is_hyb(c, on)
@@ -2171,20 +2223,20 @@ class App(tk.Tk):
                 mark = "*" if d.get("state") == "TX" else " "        # * = en émission
                 # fréquence publiée par la station ; sinon celle où on l'a entendue par radio
                 fq = d.get("freq") or h.get("freq")
-                self.lst_heard.insert("end", f"{c:<{cw}}{mark}{self._mhz(fq):>6}{tag}")
+                self.lst_heard.insert("end", f"{self._label(c):<{cw}}{mark}{self._mhz(fq):>6}{tag}")
                 self.lst_heard.itemconfigure("end", fg=self._c("#c01818" if d.get("state") == "TX" else
                                                                ("#1f4fbf" if hyb else "#062e06")))
             else:
-                self.lst_heard.insert("end", f"{c:<{cw}} {self._mhz(h.get('freq')):>6}{tag}")
+                self.lst_heard.insert("end", f"{self._label(c):<{cw}} {self._mhz(h.get('freq')):>6}{tag}")
                 # entendue par radio seulement (pas en ligne) : en gris-vert (bleu pâle si hybride)
                 self.lst_heard.itemconfigure("end", fg=self._c(("#5a78b8" if hyb else "#4a7a4a")
                                                                if now - h["t"] < 1800 else "#8a9a8a"))
         self._rxok_names = sorted(self.rxok)
         self.lst_rxok.delete(0, "end")
-        rw = max([7] + [len(c) for c in self._rxok_names])
+        rw = max([7] + [len(self._label(c)) for c in self._rxok_names])
         for c in self._rxok_names:
             rep = self.rxok[c][0]
-            self.lst_rxok.insert("end", f"{c:<{rw}}{'' if rep is None else f'{rep:+d} dB':>7}")
+            self.lst_rxok.insert("end", f"{self._label(c):<{rw}}{'' if rep is None else f'{rep:+d} dB':>7}")
         # toujours affichées depuis le début de la ligne : un glisser à la souris décalait la liste
         # vers la droite et coupait le début des indicatifs (« 4FR79 » pour « 14FR79 »)
         self.lst_heard.xview_moveto(0)
@@ -2212,7 +2264,7 @@ class App(tk.Tk):
             return
         c = names[sel[0]]
         h = self.heard.get(c, {})
-        parts = [c]
+        parts = [self._label(c)]
         d = next((x for x in self.online.values() if str(x.get("call")).upper() == c), None)
         if d:
             parts.append(tr("en ligne") + (f", {audio.format_freq(d['freq'], True)}" if d.get("freq") else "")
@@ -2238,7 +2290,7 @@ class App(tk.Tk):
         self.show_map(c)
 
     def send_qrv(self):
-        call = self.v_call.get().strip().upper()
+        call = self.mycall()
         if not call:
             messagebox.showinfo(APP, "Indiquez d'abord votre indicatif (Réglages).")
             return
@@ -2341,6 +2393,8 @@ class App(tk.Tk):
         ttk.Entry(st, textvariable=self.v_call, width=12).grid(row=0, column=1, sticky="w", padx=6)
         ttk.Label(st, text="Locator").grid(row=0, column=2, sticky="w", padx=(12, 0))
         ttk.Entry(st, textvariable=self.v_loc, width=8).grid(row=0, column=3, sticky="w", padx=6)
+        ttk.Label(st, text="Prénom").grid(row=2, column=0, sticky="w", pady=(6, 0))
+        ttk.Entry(st, textvariable=self.v_opname, width=12).grid(row=2, column=1, sticky="w", padx=6, pady=(6, 0))
         ttk.Label(st, text="Langue / Language").grid(row=1, column=0, sticky="w", pady=(6, 0))
         names = list(i18n.LANGS.values())
         self.v_lang = tk.StringVar(value=i18n.LANGS.get(i18n.get_lang(), "Français"))
@@ -2830,14 +2884,22 @@ class App(tk.Tk):
         # présence Internet : republiée à chaque changement (fréquence, émission…) et chaque minute
         if self.net is not None:
             st = (fr, self.rig_mode, "TX" if self.tx_busy else "RX", self.v_loc.get().strip(),
-                  self.v_call.get().strip().upper(), bool(self.v_hyb.get()))
+                  self.mycall(), bool(self.v_hyb.get()), self.myname())
             now = time.time()
+            # indicatif ou prénom en cours de frappe : on attend 3 s sans changement
+            # (avant, chaque lettre tapée créait une nouvelle présence : « F4LTX CH », « F4LTX CHR »…)
+            typed = (st[4], st[6])
+            if typed != getattr(self, "_net_typed", None):
+                self._net_typed, self._net_typed_t = typed, now
+            settled = now - self._net_typed_t >= 3
             if st != getattr(self, "_net_st", None) or now - getattr(self, "_net_t", 0) > 60:
                 if st[4] and st[4] != self.net.call:
-                    self.net_start()                         # indicatif changé : nouvelle présence
-                else:
+                    if settled:
+                        self.net_start()                     # indicatif changé : nouvelle présence
+                elif settled or st[6] == (self._net_st or (None,) * 7)[6]:
                     self._net_st, self._net_t = st, now
-                    self.net.update(freq=fr, mode=self.rig_mode, state=st[2], loc=st[3], hyb=st[5])
+                    self.net.update(freq=fr, mode=self.rig_mode, state=st[2], loc=st[3], hyb=st[5],
+                                    name=st[6])
         self.after(1000, self._clock)
 
     def _tick(self):
@@ -3088,7 +3150,7 @@ class App(tk.Tk):
     def save_conf(self, quiet=False):
         try:
             self.conf.update(
-                callsign=self.v_call.get().strip().upper(), mode=self.v_mode.get(),
+                callsign=self.mycall(), opname=self.myname(), mode=self.v_mode.get(),
                 width=self.v_width.get(), seconds=int(self.v_sec.get()),
                 fmt=self._fmt_mem["radio"] if self._fmt_side == "hyb" else self.v_fmt.get(),
                 hyb_fmt=self.v_fmt.get() if self._fmt_side == "hyb" else self._fmt_mem["hyb"],
@@ -3304,7 +3366,7 @@ class App(tk.Tk):
 
     def _drm_params(self):
         v = self.v_drm
-        return hamdrm.make_params(self.v_call.get().strip().upper() or "NOCALL",
+        return hamdrm.make_params(self.mycall() or "NOCALL",
                                   mode=DRM_MODES.index(v["drm_mode"].get()),
                                   bandwidth=DRM_BWS.index(v["drm_bw"].get()),
                                   qam=DRM_QAMS.index(v["drm_qam"].get()),
@@ -3331,11 +3393,11 @@ class App(tk.Tk):
             return base
         freq = audio.format_freq(self.rig_freq, True) if self.rig_freq else ""
         model = getattr(self.rig, "model", "") if self.rig is not None else ""
-        items = trafic.parts(self.conf, self.v_call.get().strip().upper(), self.v_loc.get().strip().upper(),
+        items = trafic.parts(self.conf, self.mycall(), self.v_loc.get().strip().upper(),
                              model or "", freq)
         style = {k: self.conf[k] for k in ("tc_font", "tc_bold", "tc_italic", "tc_color", "tc_stroke", "tc_bg",
                                            "tc_alpha", "tc_callcolor", "tc_frame") if k in self.conf}
-        call = self.v_call.get().strip().upper()
+        call = self.mycall()
         key = (id(base), tuple(i for i in items if not re.match(r"\d{4}-\d\d-\d\d \d\d:\d\d", i)),
                self.conf.get("tc_pos"), self.conf.get("tc_size"), tuple(sorted(style.items())))
         c = getattr(self, "_tc_cache", None)
@@ -3612,7 +3674,7 @@ class App(tk.Tk):
 
         def add():
             n = len(self.bubbles)
-            b = bubbles.new(tr("73 de") + f" {self.v_call.get().strip().upper() or 'F4GOP'} !",
+            b = bubbles.new(tr("73 de") + f" {self.mycall() or 'F4GOP'} !",
                             cy=0.2 + 0.18 * (n % 4), cx=0.3 + 0.2 * (n % 2))
             last = cur()
             if last is not None:                          # même style que la précédente
@@ -4367,7 +4429,7 @@ class App(tk.Tk):
                     self.v_txinfo.set(f"{seconds} s, c'est trop court pour une image en {mode}.\n"
                                       f"Minimum : environ {_fmt_s(mini)}, ou choisissez un mode plus rapide.")
             return
-        call = self.v_call.get().strip().upper() or "NOCALL"
+        call = self.mycall() or "NOCALL"
         text = self.txt_msg.get("1.0", "end").strip() if self.v_txtinc.get() else ""
         if text:
             data = protocol.pack_text(text, data)
@@ -4431,7 +4493,7 @@ class App(tk.Tk):
                 self.v_txinfo.set(f"{seconds} s, c'est trop court pour une image en mode EasyPal.\n"
                                   f"Minimum : environ {_fmt_s(mini)}, ou un mode plus rapide (A, QAM64).")
                 return
-        call = self.v_call.get().strip().upper() or "NOCALL"
+        call = self.mycall() or "NOCALL"
         key = ("drm", data, fmt, call, tuple(getattr(params, f) for f, _ in params._fields_))
         if self.tx is None or getattr(self.tx, "key", None) != key:
             base = os.path.splitext(os.path.basename(getattr(self, "src_path", "") or "image"))[0]
@@ -4487,7 +4549,7 @@ class App(tk.Tk):
                     data, q, size = self._cz(engine.compress_auto, src, HYB_MAX_BYTES, fmt)
         else:
             data, q, size = self._cz(engine.compress, src, width, int(kb * 1000), fmt)
-        call = self.v_call.get().strip().upper() or "NOCALL"
+        call = self.mycall() or "NOCALL"
         key = ("hyb", data, fmt, call)
         if self.tx is None or getattr(self.tx, "key", None) != key:
             self.tx = HybridJob(data, fmt, call)
@@ -4564,7 +4626,7 @@ class App(tk.Tk):
         quiet=True : déclenchée automatiquement, pas de boîte de dialogue."""
         if self.tx_busy:
             return False
-        if is_swl(self.v_call.get()):
+        if is_swl(self.mycall()):
             # station d'écoute : jamais d'émission radio (ni ACK / BSR automatiques) ;
             # les reports partent par Internet (Rx Ok)
             if not quiet:
@@ -4592,7 +4654,7 @@ class App(tk.Tk):
             return False
         job.setdefault("volume", int(self.v_wavvol.get()))
         job.update(ptt=ptt, level=self.v_lvl.get() / 100.0, dev=self.v_out.get(),
-                   cwid=bool(self.v_cwid.get()), call=self.v_call.get().strip().upper() or "NOCALL")
+                   cwid=bool(self.v_cwid.get()), call=self.mycall() or "NOCALL")
         was_listening = self.rx_stream is not None
         if was_listening:
             self.toggle_listen(quiet=True)     # semi-duplex : on coupe la réception pendant l'émission
@@ -4680,7 +4742,7 @@ class App(tk.Tk):
         if not text:
             messagebox.showinfo(APP, "Écrivez d'abord le texte à envoyer.")
             return
-        call = self.v_call.get().strip().upper() or "NOCALL"
+        call = self.mycall() or "NOCALL"
         mode = self._tx_mode()
         if mode == engine.DRM_MODE:
             # comme EasyPal / QSSTV : un petit fichier .txt (Windows : CRLF, accents en cp1252)
@@ -4718,7 +4780,7 @@ class App(tk.Tk):
             return
         name = os.path.basename(p)
         data = protocol.pack_file(name, raw)
-        call = self.v_call.get().strip().upper() or "NOCALL"
+        call = self.mycall() or "NOCALL"
         if len(data) >= 16_000_000 and not self.v_hyb.get():
             # par radio seulement : en hybride, aucune limite de taille ni de type (comme EasyPal)
             messagebox.showerror(APP, "Fichier trop gros pour la radio (16 Mo maximum) : utilisez le mode hybride.")
@@ -5230,7 +5292,7 @@ class App(tk.Tk):
 
     # ------------------------------------------------------------- réception
     def _new_engine(self):
-        call = self.v_call.get().strip().upper() or "NOCALL"
+        call = self.mycall() or "NOCALL"
         eng = engine.RxEngine(call, self.v_folder.get(),
                               on_image=lambda *a: self.ui(self._got_image, *a),
                               on_status=lambda st: self.ui(self._rx_status, st),
@@ -5676,7 +5738,7 @@ class App(tk.Tk):
     def _guess_tx_call(self):
         """Station en ligne actuellement en émission sur notre fréquence (à 3 kHz près),
         s'il n'y en a qu'une -> indicatif, sinon None."""
-        mine = self.v_call.get().strip().upper()
+        mine = self.mycall()
         cands = set()
         for d in self.online.values():
             if d.get("state") != "TX" or time.time() - float(d.get("seen") or d.get("t") or 0) > 300:
@@ -5862,7 +5924,7 @@ class App(tk.Tk):
     def _msg_ack(self, iid, call, rep, via):
         m = self.sent_msgs.get(iid)
         call = (call or "").strip().upper()
-        if not m or not call or call == "?" or call == self.v_call.get().strip().upper():
+        if not m or not call or call == "?" or call == self.mycall():
             return
         first = call not in m["acks"]
         old = m["acks"].get(call)
@@ -6043,7 +6105,7 @@ class App(tk.Tk):
         last = ""
         for iid in self.tree.get_children():          # dernière station identifiée
             c = self.tree.item(iid, "values")[1]
-            if c and c != "?" and c != self.v_call.get().strip().upper():
+            if c and c != "?" and c != self.mycall():
                 last = c
                 break
         freq = audio.format_freq(self.rig_freq, True) if self.rig_freq else self.conf.get("qsl_freq", "14.233 MHz")
@@ -6128,7 +6190,7 @@ class App(tk.Tk):
             return dict(style)
 
         def build():
-            return qsl.make_card(bg["img"], self.v_call.get().strip() or "NOCALL", self.v_loc.get().strip(),
+            return qsl.make_card(bg["img"], self.mycall() or "NOCALL", self.v_loc.get().strip(),
                                  fields["to"].get(), fields["freq"].get(), fields["report"].get(),
                                  fields["msg"].get(), fields["utc"].get(), style=current_style())
 
@@ -6239,7 +6301,7 @@ class App(tk.Tk):
                 return
             d = os.path.join(self.gal_store.folder, gallery.SENT_DIR, time.strftime("%Y-%m-%d"))
             os.makedirs(d, exist_ok=True)
-            call = self.v_call.get().strip().upper().replace("/", "-") or "NOCALL"
+            call = self.mycall().replace("/", "-") or "NOCALL"
             mode_n = (mode or "") + ("-HYB" if job["kind"] == "hybrid" and "HYB" not in (mode or "") else "")
             base = os.path.join(d, f"{time.strftime('%Y%m%d_%H%M%S')}_{mode_n}_{call}")
             path, png = imgfmt.save_received(base, fmt, data)
@@ -6253,7 +6315,7 @@ class App(tk.Tk):
         c = self._hyb_cfg()                        # même serveur FTP que le mode hybride
         c.update(dir=self.conf.get("web_dir", "dsstv") or "", url=self.conf.get("web_url", ""),
                  count=int(self.conf.get("web_count", 20)),
-                 call=self.v_call.get().strip().upper() or "NOCALL")
+                 call=self.mycall() or "NOCALL")
         return c
 
     def _web_caption(self, call, mode):
