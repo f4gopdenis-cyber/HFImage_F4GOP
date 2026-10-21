@@ -351,6 +351,10 @@ s.append(img("tx.png", 165, "L'onglet TX : mode Auto, robustesse, image compress
 s.append(P("<b>Ouvrir une image</b> : un clic dans la grande image de l'onglet TX ouvre le choix du fichier ; on peut "
            "aussi <b>glisser une image</b> depuis l'Explorateur Windows n'importe où sur la fenêtre (un autre type de "
            "fichier est proposé à l'envoi)."))
+s.append(P("<b>Photos de téléphone</b> : une photo enregistrée « couchée » par le téléphone est remise droite "
+           "toute seule à l'ouverture, comme dans Windows. Les boutons <b>⟲</b> et <b>⟳</b> (en bas à droite de l'image, "
+           "onglet TX) la tournent d'un quart de tour à gauche ou à droite si besoin. Une photo tournée part en JPEG "
+           "très haute qualité, déjà droite, même en mode « original »."))
 s.append(P("Bulles de texte (BD)", "h2"))
 s.append(P("Bouton <b>Bulles…</b> (onglet TX) ou menu <b>Images → Bulles de texte…</b> : on écrit un texte, il "
            "apparaît dans une bulle de bande dessinée sur l'image émise. Quatre styles : <b>parole</b> (bulle ronde "

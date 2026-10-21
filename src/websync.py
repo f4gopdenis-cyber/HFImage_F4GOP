@@ -20,6 +20,7 @@ import time
 from PIL import Image, ImageDraw, ImageFont
 
 import hybrid
+import imgfmt
 
 PAGE = "hfimage.html"
 LIST = "list.txt"
@@ -30,6 +31,8 @@ def label_image(path, caption, max_w=1024):
     """JPEG étiqueté (bandeau en bas) prêt à mettre en ligne."""
     im = Image.open(path)
     im.seek(0)
+    if getattr(im, "n_frames", 1) == 1:
+        im = imgfmt.upright(im)                   # photo de téléphone : dans le bon sens
     im = im.convert("RGB")
     if im.width > max_w:
         im = im.resize((max_w, round(im.height * max_w / im.width)), Image.LANCZOS)

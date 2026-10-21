@@ -342,6 +342,10 @@ s += N(["<b>TX</b> tab → <b>Open image…</b> (JPG, PNG, GIF, WebP, AVIF, SVG,
 s.append(P("<b>Opening a picture</b>: one click in the large picture of the TX tab opens the file chooser; you can also "
            "<b>drag a picture</b> from Windows Explorer anywhere onto the window (another file type is offered for "
            "sending)."))
+s.append(P("<b>Phone pictures</b>: a picture saved “lying on its side” by the phone is turned the right way up "
+           "automatically when opened, as in Windows. The <b>⟲</b> and <b>⟳</b> buttons (bottom right of the picture, "
+           "TX tab) rotate it a quarter turn left or right if needed. A rotated picture is sent as a very high quality "
+           "JPEG, already upright, even in “original” mode."))
 s.append(P("Speech bubbles", "h2"))
 s.append(P("<b>Bubbles…</b> button (TX tab) or <b>Images → Speech bubbles…</b>: type a text and it appears in a "
            "comic-strip bubble on the transmitted picture. Four styles: <b>speech</b> (round bubble with a tail), "

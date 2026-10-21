@@ -16,6 +16,8 @@ from tkinter import ttk
 
 from PIL import Image, ImageTk
 
+import imgfmt
+
 INDEX = "galerie.json"
 SENT_DIR = "envoyees"
 KEEP = 300                       # entrées gardées dans l'index (par sens)
@@ -256,6 +258,8 @@ class GalleryView(tk.Frame):
             if ph is None:
                 im = Image.open(src)
                 im.draft("RGB", (self.TW * 2, self.TH * 2))
+                if getattr(im, "n_frames", 1) == 1:
+                    im = imgfmt.upright(im)         # photo de téléphone : dans le bon sens
                 im = im.convert("RGB")
                 im.thumbnail((self.TW, self.TH), Image.LANCZOS)
                 ph = ImageTk.PhotoImage(im)

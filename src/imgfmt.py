@@ -12,7 +12,7 @@ import re
 import sys
 import tempfile
 
-from PIL import Image
+from PIL import Image, ImageOps
 
 try:                                              # Pillow < 11 (version Windows 7) : AVIF par greffon
     Image.init()
@@ -97,14 +97,60 @@ def render_svg(data: bytes, width=SVG_RENDER_W) -> Image.Image:
     return im
 
 
-def load_source(path):
-    """Fichier ouvert pour l'émission -> (image affichable, octets bruts, type)."""
+def orientation(img):
+    """Indication EXIF « à afficher tournée » des photos de téléphone (1 = droite)."""
+    try:
+        return int(img.getexif().get(0x0112, 1) or 1)
+    except Exception:
+        return 1
+
+
+def upright(img):
+    """Image remise dans le bon sens d'après son indication EXIF (comme Windows)."""
+    if orientation(img) == 1:
+        return img
+    try:
+        return ImageOps.exif_transpose(img)
+    except Exception:
+        return img
+
+
+def open_upright(src):
+    """Image.open + remise dans le bon sens (images reçues, galerie, site web)."""
+    im = Image.open(src)
+    if getattr(im, "n_frames", 1) > 1:
+        return im
+    return upright(im)
+
+
+def reencode(img, kind):
+    """Image tournée -> nouveaux octets « originaux » : PNG reste PNG (sans perte),
+    le reste part en JPEG très haute qualité, déjà droit (lisible partout, même par EasyPal)."""
+    buf = io.BytesIO()
+    if kind == "png":
+        img.save(buf, "PNG", optimize=True)
+        return buf.getvalue(), "png"
+    img.convert("RGB").save(buf, "JPEG", quality=95, optimize=True)
+    return buf.getvalue(), "jpeg"
+
+
+def load_source(path, notes=None):
+    """Fichier ouvert pour l'émission -> (image affichable, octets bruts, type).
+    Photo de téléphone « couchée » (indication EXIF) : remise droite, et ses octets
+    « originaux » réencodés droits (notes reçoit un message)."""
     with open(path, "rb") as f:
         raw = f.read()
     if path.lower().endswith((".svg", ".svgz")) or is_svg(raw):
         return render_svg(raw), raw, "svg"
     img = Image.open(io.BytesIO(raw))
     kind = (img.format or "bin").lower()
+    o = orientation(img) if getattr(img, "n_frames", 1) == 1 else 1
+    if o != 1:
+        up = upright(img).convert("RGB")
+        raw, kind = reencode(up, kind)
+        if notes is not None:
+            notes.append(o)
+        return up, raw, kind
     return img.convert("RGB"), raw, kind
 
 

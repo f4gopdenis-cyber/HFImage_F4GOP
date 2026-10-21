@@ -1,5 +1,12 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 1.21 — photos de téléphone dans le bon sens (demande de G4GIM)
+
+- Les téléphones enregistrent souvent la photo « couchée » avec une indication « à afficher tournée » : HFImage l'ignorait, la photo apparaissait et partait couchée. Elle est maintenant **remise droite automatiquement** à l'ouverture, comme dans Windows (message dans le journal).
+- En mode « original », une photo remise droite part en **JPEG très haute qualité, déjà droite** (lisible partout, même par EasyPal).
+- Nouveaux boutons **⟲ / ⟳** (en bas à droite de l'image, onglet TX) : tourner l'image d'un quart de tour à gauche ou à droite.
+- Les images **reçues** qui portent cette indication s'affichent aussi dans le bon sens (fenêtre RX, galerie, site web).
+
 ## Version 1.20 — étiquette du site web sous l'image, heure UTC
 
 - Site web / Digi-Sites : l'étiquette (indicatif, date, mode, bande) est maintenant **ajoutée sous l'image**, sur une bande noire. Avant, elle était posée sur le bas de la photo et cachait le bandeau de la station émettrice (les deux textes se mélangeaient).

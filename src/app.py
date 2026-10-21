@@ -60,7 +60,7 @@ import random
 import wave
 
 APP = "HFImage F4GOP"
-VERSION = "1.20"
+VERSION = "1.21"
 
 
 def _take_profile(argv):
@@ -1446,6 +1446,12 @@ class App(tk.Tk):
         self.lb_src_info.pack(side="left", padx=6)
         self.lb_cmp_info = tk.Label(info, text="", bg=GREEN, anchor="w", font=("TkDefaultFont", 9, "bold"))
         self.lb_cmp_info.pack(side="left", padx=12)
+        # tourner l'image à émettre (photos de téléphone mal orientées)
+        for txt, deg, hint in (("⟳", -90, "Tourner à droite"), ("⟲", 90, "Tourner à gauche")):
+            b = tk.Button(info, text=txt, font=("TkDefaultFont", 10, "bold"), bg="white", cursor="hand2",
+                          padx=4, pady=0, command=lambda d=deg: self._rotate_tx(d))
+            b.pack(side="right", padx=(0, 4), pady=1)
+            tip(b, hint)
         self.lb_cmp = ImageView(t, placeholder="Cliquez ici pour ouvrir une image, ou glissez-la ici")
         self.lb_cmp.pack(fill="both", expand=True)
         # un clic (sans glisser) sur l'image TX ouvre le choix de l'image
@@ -3384,7 +3390,10 @@ class App(tk.Tk):
 
     def load_image(self, p):
         try:
-            self.src_img, self.src_raw, self.src_kind = imgfmt.load_source(p)
+            notes = []
+            self.src_img, self.src_raw, self.src_kind = imgfmt.load_source(p, notes)
+            if notes:
+                self.log(tr("Photo remise dans le bon sens (indication du téléphone)."))
             self.bubbles = []                 # les bulles étaient placées pour l'image précédente
             self.src_path = p                 # nom repris pour les fichiers EasyPal (« de_…-photo.jpg »)
         except Exception as e:
@@ -3414,6 +3423,23 @@ class App(tk.Tk):
             self.v_fmt.set("avif")
             self.log(f"Photo de {len(self.src_raw) / 1000:.0f} K : format avif pour la radio "
                      "(« original » reste possible en mode hybride).")
+        self.prepare()
+
+    def _rotate_tx(self, deg):
+        """Tourne l'image à émettre d'un quart de tour (deg = 90 : à gauche, -90 : à droite)."""
+        if self.src_img is None or self.tx_busy:
+            return
+        if self.src_kind == "svg" or self.src_anim is not None:
+            self.log(tr("Les dessins SVG et les GIF animés ne peuvent pas être tournés ici."))
+            return
+        self.src_img = self.src_img.rotate(deg, expand=True)
+        self.src_raw, self.src_kind = imgfmt.reencode(self.src_img, self.src_kind)
+        self.bubbles = []                     # placées pour l'ancienne orientation
+        self.tx = None
+        self._show(self.lb_src, "src", self.src_img)
+        name = os.path.basename(getattr(self, "src_path", "") or "")
+        self._set_text(self.lb_src_info, f"{name} — {imgfmt.describe(self.src_kind)} — "
+                                         f"{self.src_img.width}×{self.src_img.height} — {len(self.src_raw) / 1000:.1f} K")
         self.prepare()
 
     def _payload(self, fmt, hybrid=False):
@@ -5987,7 +6013,7 @@ class App(tk.Tk):
     def _show_rx(self, path, png):
         """Affiche une image reçue ; un GIF animé est joué en boucle.
         -> (première image, texte en plus pour la barre d'info)."""
-        im = Image.open(png)
+        im = imgfmt.open_upright(png)            # photo de téléphone « couchée » : remise droite
         if path and path.lower().endswith(".gif") and os.path.exists(path):
             try:
                 frames, durs = imgfmt.gif_frames(path)
