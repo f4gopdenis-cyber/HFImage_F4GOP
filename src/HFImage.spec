@@ -52,4 +52,4 @@ a.datas = [d for d in a.datas if _keep(d)]
 pyz = PYZ(a.pure)
 exe = EXE(pyz, a.scripts, a.binaries, a.datas, [],
           name='HFImage_F4GOP' if WIN else 'HFImage_F4GOP_Linux', console=False, upx=False,
-          icon='hfimage.ico' if WIN else None, strip=not WIN)
+          icon='hfimage.ico' if WIN else None, strip=False)   # strip abîme la bibliothèque de numpy (openblas)
