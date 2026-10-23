@@ -262,6 +262,11 @@ s += B(["<b>Poste</b> : tapez une partie du nom dans « Rechercher » (ex. 7300,
         "Autres postes : Hamlib, téléchargé une fois (bouton « Installer Hamlib », 3 Mo).",
         "<b>OmniRig</b> (Rig 1 / Rig 2) ou <b>FLRig</b> : pour partager le poste avec d'autres logiciels "
         "(logger, WSJT-X…).",
+        "<b>Commandes CAT personnalisées (comme EasyPal)</b> : on écrit soi-même les commandes envoyées au poste, en "
+        "hexadécimal (Icom CI-V : FEFE5EE01C0001FD) ou en texte (Kenwood : TX1;) : <b>Départ</b> 1 et 2 (à l'ouverture "
+        "du port), <b>PTT marche</b> / <b>PTT arrêt</b> (avec la méthode PTT « CAT »), <b>Sortie</b> 1 et 2 (à la fermeture "
+        "du programme) et le délai entre deux commandes. Les réglages d'EasyPal (« \\$…\\ ») se collent tels quels. "
+        "Dans ce mode, la fréquence du poste n'est pas lue.",
         "<b>Port série</b> et vitesse ; paramètres avancés si besoin (bits, stop, contrôle de flux, DTR/RTS forcés). "
         "La liste montre tous les ports actifs de Windows (Prolific, CH340, Silicon Labs, ports virtuels compris) ; "
         "on peut aussi taper le nom du port, par exemple COM9.",
@@ -575,6 +580,10 @@ s.append(P("L'image passe par votre <b>hébergement web</b> (FTP) ; seul le <b>l
            "fichier tel quel, sans réduction), quelle que soit sa taille. Les <b>fichiers</b> (Images → Envoyer un "
            "fichier…, ou glissés sur la fenêtre) partent aussi <b>sans limite de taille ni de type</b> en hybride, comme "
            "dans EasyPal (par radio : 16 Mo au plus)."))
+s.append(P("<b>Déposer d'avance</b> : en mode hybride, le bouton <b>⇪ Déposer</b> (onglet TX, à droite de WAV…) met "
+           "l'image sur le serveur tout de suite, comme l'ancien EasyPal. Quand vient votre tour, <b>Émettre</b> envoie "
+           "directement l'annonce radio, sans attendre le dépôt. Si l'image ou le serveur changent entre-temps, "
+           "l'image est redéposée au moment d'émettre."))
 s.append(P("Hybride éclair", "h2"))
 s.append(P("Case <b>Éclair (9 s)</b>, à côté de « Mode hybride » (onglet TX), <b>cochée par défaut</b> depuis la 0.98. L'annonce radio ne porte plus le lien, seulement "
            "l'<b>empreinte</b> de l'image (SHA-256 abrégé), sa taille et son format, dans une trame de 14 octets. Depuis la "

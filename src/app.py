@@ -61,7 +61,7 @@ import random
 import wave
 
 APP = "HFImage F4GOP"
-VERSION = "1.23"
+VERSION = "1.24"
 
 
 def _take_profile(argv):
@@ -366,6 +366,7 @@ class HybridJob:
         self.data, self.fmt, self.call = data, fmt, call
         self.mode = "DATAC3"
         self.announce = None
+        self.pre = None             # dépôt fait d'avance (« Déposer maintenant ») : (signature, résultat)
 
 
 def sd():
@@ -1264,7 +1265,18 @@ class App(tk.Tk):
                 v[k].set(val)
             self._drm_before_hyb = None
 
+    def _show_pre_btn(self):
+        """« Déposer maintenant » : visible en mode hybride seulement."""
+        b = getattr(self, "btn_pre", None)
+        if b is None:
+            return
+        if self.v_hyb.get():
+            b.pack(side="left", padx=(4, 0))
+        else:
+            b.pack_forget()
+
     def _toggle_hyb_ui(self):
+        self._show_pre_btn()
         self._drm_hyb_mode()
         self._btn_on("hyb", self.v_hyb.get())
         side = "hyb" if self.v_hyb.get() else "radio"
@@ -1493,6 +1505,11 @@ class App(tk.Tk):
         self.btn_comp.pack(side="left", padx=4)
         ttk.Button(bt, text="■ Arrêter", command=lambda: self.stop_tx.set()).pack(side="left")
         ttk.Button(bt, text="WAV…", command=self.save_wav).pack(side="left", padx=(4, 0))
+        # mode hybride : déposer l'image d'avance (l'annonce part tout de suite à l'émission)
+        self.btn_pre = ttk.Button(bt, text="⇪ Déposer", command=self.hyb_preupload)
+        tip(self.btn_pre, "Mode hybride : met l'image sur le serveur tout de suite ; à votre tour, "
+                          "« Émettre » envoie directement l'annonce.")
+        self._show_pre_btn()
         info = tk.Frame(t, bg=GREEN)
         info.pack(fill="x", side="bottom")
         self.lb_src_info = tk.Label(info, text="", bg=GREEN, anchor="w", font=("TkDefaultFont", 8))
@@ -2956,6 +2973,9 @@ class App(tk.Tk):
                     continue
             r = self.rig
             if r is None:
+                continue
+            if not getattr(r, "reads_freq", True):
+                self._rig_kick.wait(poll)              # CAT personnalisé : port gardé ouvert, rien à lire
                 continue
             try:
                 f = r.freq()
@@ -4909,6 +4929,94 @@ class App(tk.Tk):
             self._msg_sent(tx.image_id, tx.msg_text, tx.mode, with_image=True)
         return ok
 
+    # ------------------------------------------------------------- hybride : dépôt (d'avance ou à l'émission)
+    @staticmethod
+    def _pre_sig(tx, cfg, drm):
+        """Ce qui doit être identique entre le dépôt d'avance et l'émission."""
+        return (bool(drm), zlib.crc32(tx.data), len(tx.data), tx.fmt, tx.call,
+                cfg.get("host"), cfg.get("port"), cfg.get("user"), cfg.get("dir"), cfg.get("url"))
+
+    def _hyb_upload(self, tx, cfg, drm):
+        """Dépose l'image (fil de fond). -> lien public (HFImage) ou (nom, blob) (EasyPal)."""
+        prog = lambda f: self.ui(self.pb_tx.configure, {"value": 100 * f})
+        keep = int(self.conf.get("hyb_keep", 3) or 0)
+        log = lambda m: self.ui(self.log, m)
+        if drm:
+            if cfg.get("tls"):
+                self.ui(self.log, "Hybride EasyPal : les stations EasyPal téléchargent en FTP simple "
+                                  "(sans TLS) : vérifiez que votre serveur l'accepte.")
+            n = int(self.conf.get("drm_hyb_n", 0)) + 1
+            self.conf["drm_hyb_n"] = n
+            base = os.path.splitext(os.path.basename(getattr(self, "src_path", "") or "image"))[0]
+            name = easypal_hybrid.file_name(tx.call, n, base, imgfmt.ext_for(tx.fmt))
+            blob = easypal_hybrid.encrypt(cfg["host"], cfg.get("user", ""), cfg.get("password", ""),
+                                          cfg.get("dir", ""))
+            self.ui(self.log, f"Hybride EasyPal : dépôt de {len(tx.data)} octets "
+                              f"({easypal_hybrid.FILES_DIR}/{name}) sur {cfg['host']}…")
+            easypal_hybrid.upload(cfg, name, tx.data, progress=prog)
+            # ménage des anciennes images : en tâche de fond, n'attarde pas l'émission
+            easypal_hybrid.cleanup_async(cfg, tx.call, keep, log=log)
+            self.ui(self.log, "Hybride EasyPal : image déposée.")
+            return name, blob
+        name = hybrid.remote_name(tx.call, imgfmt.ext_for(tx.fmt))
+        self.ui(self.log, f"Hybride : dépôt de {len(tx.data)} octets sur {cfg['host']}…")
+        hybrid.upload(cfg, name, tx.data, progress=prog)
+        # on vérifie que l'image est bien lisible par le lien public AVANT d'émettre
+        url, base = hybrid.verify_public(cfg, name, tx.data)
+        if base.rstrip("/") != cfg["url"].rstrip("/"):
+            self.ui(self._fix_public_url, base)
+        self.ui(self.log, f"Hybride : image en ligne et vérifiée : {url}")
+        hybrid.cleanup_async(cfg, cfg.get("dir"), hybrid.mine_pattern(tx.call), keep, log=log)
+        return url
+
+    def _pre_or_upload(self, tx, cfg, drm):
+        """À l'émission : réutilise le dépôt fait d'avance s'il correspond à cette image et à ce
+        serveur (l'annonce part tout de suite), sinon dépose maintenant."""
+        sig = self._pre_sig(tx, cfg, drm)
+        pre = getattr(tx, "pre", None)
+        if pre is not None and pre[0] == sig:
+            tx.pre = None                       # un dépôt d'avance sert pour une émission
+            self.ui(self.log, tr("Hybride : image déjà déposée, l'annonce part tout de suite."))
+            return pre[1]
+        return self._hyb_upload(tx, cfg, drm)
+
+    def hyb_preupload(self):
+        """Bouton « ⇪ Déposer » (mode hybride) : l'image part sur le serveur tout de suite ;
+        au moment d'émettre, seule l'annonce radio reste à envoyer (comme l'ancien EasyPal)."""
+        tx = self.tx
+        if not isinstance(tx, HybridJob) or not self.v_hyb.get():
+            messagebox.showinfo(APP, tr("Cochez « Mode hybride » et choisissez d'abord une image."))
+            return
+        if self.tx_busy or getattr(self, "_preupload_busy", False):
+            return
+        drm = bool(getattr(tx, "drm", False))
+        cfg = self._hyb_cfg()
+        if not cfg["host"] or (not drm and not cfg["url"]):
+            messagebox.showinfo(APP, "Mode hybride : renseignez le serveur FTP et le lien "
+                                     "public dans l'onglet Réglages.")
+            return
+        sig = self._pre_sig(tx, cfg, drm)
+        if tx.pre is not None and tx.pre[0] == sig:
+            self.log(tr("Cette image est déjà déposée : prête à émettre."))
+            return
+        self._preupload_busy = True
+        self._set_text(self.btn_pre, "Dépôt…")
+
+        def run():
+            try:
+                res = self._hyb_upload(tx, cfg, drm)
+                tx.pre = (sig, res)
+                self.ui(self.log, tr("Image déposée d'avance : à votre tour, « Émettre » envoie "
+                                     "directement l'annonce."))
+            except Exception as e:
+                self.ui(self.log_exc, "Dépôt hybride", e)
+                self.ui(messagebox.showerror, APP, tr("Dépôt impossible :") + f"\n{e}")
+            finally:
+                self.ui(setattr, self, "_preupload_busy", False)
+                self.ui(self._set_text, self.btn_pre, "⇪ Déposer")
+                self.ui(self.pb_tx.configure, {"value": 0})
+        threading.Thread(target=run, daemon=True).start()
+
     def send_text(self):
         text = self.txt_msg.get("1.0", "end").strip()
         if not text:
@@ -5060,8 +5168,8 @@ class App(tk.Tk):
             return True
         try:
             r = self._rig_open()
-            if r is None:
-                return True
+            if r is None or not getattr(r, "reads_freq", True):
+                return True                          # CAT personnalisé : ni mode ni fréquence à contrôler
             if cfg.get("set_mode") in ("usb", "data"):
                 m = r.mode() or ""
                 want_data = cfg["set_mode"] == "data"
@@ -5204,24 +5312,7 @@ class App(tk.Tk):
             # hybride façon EasyPal : image dans HybridFiles1, annonce « de_… » en HamDRM
             if not job["complement"] or getattr(tx, "drm_announce", None) is None:
                 cfg = job["cfg"]
-                if cfg.get("tls"):
-                    self.ui(self.log, "Hybride EasyPal : les stations EasyPal téléchargent en FTP simple "
-                                      "(sans TLS) : vérifiez que votre serveur l'accepte.")
-                n = int(self.conf.get("drm_hyb_n", 0)) + 1
-                self.conf["drm_hyb_n"] = n
-                base = os.path.splitext(os.path.basename(getattr(self, "src_path", "") or "image"))[0]
-                name = easypal_hybrid.file_name(tx.call, n, base, imgfmt.ext_for(tx.fmt))
-                blob = easypal_hybrid.encrypt(cfg["host"], cfg.get("user", ""), cfg.get("password", ""),
-                                              cfg.get("dir", ""))
-                self.ui(self.log, f"Hybride EasyPal : dépôt de {len(tx.data)} octets "
-                                  f"({easypal_hybrid.FILES_DIR}/{name}) sur {cfg['host']}…")
-                easypal_hybrid.upload(cfg, name, tx.data,
-                                      progress=lambda f: self.ui(self.pb_tx.configure, {"value": 100 * f}))
-                # ménage des anciennes images : en tâche de fond, n'attarde pas l'émission
-                easypal_hybrid.cleanup_async(cfg, tx.call, int(self.conf.get("hyb_keep", 3) or 0),
-                                             log=lambda m: self.ui(self.log, m))
-                self.ui(self.log, "Hybride EasyPal : image déposée.")
-                tx.drm_announce = (name, blob)
+                tx.drm_announce = self._pre_or_upload(tx, cfg, drm=True)
                 # même identifiant que chez les stations qui la téléchargent : Rx Ok
                 iid = zlib.crc32(tx.data + b"hamdrm") & 0xFFFF
                 self.my_ids.add(iid)
@@ -5245,18 +5336,7 @@ class App(tk.Tk):
                 want_flash = False
             if not job["complement"]:
                 cfg = job["cfg"]
-                name = hybrid.remote_name(tx.call, imgfmt.ext_for(tx.fmt))
-                self.ui(self.log, f"Hybride : dépôt de {len(tx.data)} octets sur {cfg['host']}…")
-                hybrid.upload(cfg, name, tx.data,
-                              progress=lambda f: self.ui(self.pb_tx.configure, {"value": 100 * f}))
-                # on vérifie que l'image est bien lisible par le lien public AVANT d'émettre
-                url, base = hybrid.verify_public(cfg, name, tx.data)
-                if base.rstrip("/") != cfg["url"].rstrip("/"):
-                    self.ui(self._fix_public_url, base)
-                self.ui(self.log, f"Hybride : image en ligne et vérifiée : {url}")
-                # ménage des anciennes images : en tâche de fond, n'attarde pas l'émission
-                hybrid.cleanup_async(cfg, cfg.get("dir"), hybrid.mine_pattern(tx.call),
-                                     int(self.conf.get("hyb_keep", 3) or 0), log=lambda m: self.ui(self.log, m))
+                url = self._pre_or_upload(tx, cfg, drm=False)
                 tx.announce = engine.HybridTransmission(tx.data, tx.fmt, tx.call, url, flash=want_flash)
                 self.my_ids.add(tx.announce.image_id)
                 self.ui(self._rxok_show, tx.announce.image_id)

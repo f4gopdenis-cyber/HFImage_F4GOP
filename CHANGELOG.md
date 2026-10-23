@@ -1,5 +1,10 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 1.24 — commandes CAT personnalisées, dépôt hybride d'avance (demandes de VK6NJP)
+
+- **Commandes CAT personnalisées (comme EasyPal)** : nouveau choix dans Réglages → Poste radio…. On écrit soi-même les commandes envoyées au poste, en hexadécimal (Icom CI-V : `FEFE5EE01C0001FD`) ou en texte (Kenwood : `TX1;`) : Départ 1 et 2 (à l'ouverture du port), PTT marche / PTT arrêt (méthode PTT « CAT »), Sortie 1 et 2 (à la fermeture du programme), délai entre deux commandes. Les réglages d'EasyPal (`\$…\`) se collent tels quels. La fréquence du poste n'est pas lue dans ce mode.
+- **Déposer l'image hybride d'avance** : nouveau bouton **⇪ Déposer** (onglet TX, mode hybride), comme l'ancien EasyPal. L'image part sur le serveur tout de suite ; à votre tour, **Émettre** envoie directement l'annonce radio. Pratique pour les groupes qui émettent chacun leur tour. Si l'image ou le serveur changent entre-temps, l'image est redéposée au moment d'émettre. Marche aussi en hybride EasyPal.
+
 ## Version 1.23 — HFImage pour Linux
 
 - **Nouvelle version Linux** 64 bits : **HFImage_F4GOP_Linux.tar.gz** sur la page des versions (Ubuntu 22.04 et plus récents, Debian 12, Linux Mint 21…). Un seul fichier à lancer, même programme et mêmes modes que sous Windows (DATAC, EasyPal, hybride, présence, Rx Ok, galerie, site web…), compatible avec les stations Windows. Fabriquée et testée automatiquement par GitHub à chaque version, avec codec2 et HamDRM compilés depuis leurs sources.

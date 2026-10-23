@@ -255,6 +255,11 @@ s += B(["<b>Radio</b>: type part of the name in “Search” (e.g. 7300, FT-991,
         "Kenwood TS-990S / TS-890S / TS-590 / TS-2000 / TS-480 are driven directly, nothing to install. "
         "Other radios: Hamlib, downloaded once (“Install Hamlib” button, 3 MB).",
         "<b>OmniRig</b> (Rig 1 / Rig 2) or <b>FLRig</b>: to share the radio with other programs (logger, WSJT-X…).",
+        "<b>Custom CAT commands (as in EasyPal)</b>: you write the commands sent to the radio yourself, in hexadecimal "
+        "(Icom CI-V: FEFE5EE01C0001FD) or as text (Kenwood: TX1;): <b>Initial</b> strings 1 and 2 (when the port opens), "
+        "<b>PTT ON</b> / <b>PTT OFF</b> (with PTT method “CAT”), <b>Exit</b> strings 1 and 2 (when the program closes) and "
+        "the delay between commands. EasyPal settings (“\\$…\\”) can be pasted as they are. In this mode the radio "
+        "frequency is not read.",
         "<b>Serial port</b> and speed; advanced parameters if needed (bits, stop, flow control, forced DTR / RTS). "
         "The list shows every active Windows port (Prolific, CH340, Silicon Labs and virtual ports included); you can "
         "also type the port name, e.g. COM9.",
@@ -538,6 +543,10 @@ s.append(P("In the HFImage modes, hybrid mode sends the picture through your <b>
            "the password. By default the picture goes in <b>full quality</b> (“original” format: the file as it is, "
            "not reduced), whatever its size. <b>Files</b> (Images → Send a file…, or dragged onto the window) also go "
            "<b>with no size or type limit</b> in hybrid mode, as in EasyPal (over the air: 16 MB at most)."))
+s.append(P("<b>Upload in advance</b>: in hybrid mode, the <b>⇪ Upload</b> button (TX tab, right of WAV…) puts the "
+           "picture on the server right away, as the old EasyPal did. When it is your turn, <b>Transmit</b> sends the "
+           "radio announcement at once, without waiting for the upload. If the picture or the server change in the "
+           "meantime, the picture is uploaded again when transmitting."))
 s.append(P("<b>Flash hybrid</b>: tick <b>Flash (9 s)</b> next to “Hybrid mode” (TX tab), <b>ticked by default</b> since 0.98. The announcement no longer carries "
            "the link, only the picture's <b>fingerprint</b> (shortened SHA-256), size and format, in a 14-byte frame. Since "
            "version 0.93 it is sent <b>3 times in DATAC13</b> (a very narrow 200 Hz mode made to get through noise and QRM), "

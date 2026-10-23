@@ -94,6 +94,24 @@ class RadioDialog(tk.Toplevel):
                         next(k for k, n in self._line_names.items() if n == vv.get())))
             self.line_cbs[line] = cb
 
+        # ---- commandes personnalisées (comme EasyPal)
+        cc = ttk.LabelFrame(L, text="Commandes personnalisées", padding=8)
+        self.custom_frame = cc
+        for i, (key, lab) in enumerate((("cmd_init1", "Départ 1"), ("cmd_init2", "Départ 2"),
+                                        ("cmd_ptt_on", "PTT marche"), ("cmd_ptt_off", "PTT arrêt"),
+                                        ("cmd_exit1", "Sortie 1"), ("cmd_exit2", "Sortie 2"))):
+            ttk.Label(cc, text=lab).grid(row=i, column=0, sticky="w")
+            ttk.Entry(cc, textvariable=self.v[key], width=30).grid(row=i, column=1, sticky="w", padx=4, pady=1)
+        df = ttk.Frame(cc)
+        df.grid(row=6, column=0, columnspan=2, sticky="w", pady=(2, 0))
+        ttk.Label(df, text="Délai entre deux commandes (ms)").pack(side="left")
+        ttk.Spinbox(df, from_=0, to=2000, increment=50, textvariable=self.v["cmd_delay"], width=6).pack(
+            side="left", padx=4)
+        ttk.Label(cc, text="Hexadécimal (Icom CI-V : FEFE5EE01C0001FD) ou texte (Kenwood : TX1;).\n"
+                           "Départ : à l'ouverture du port ; Sortie : à la fermeture du programme.\n"
+                           "Les réglages d'EasyPal (\\$…\\) se collent tels quels. Choisissez PTT « CAT ».",
+                  foreground="#555", justify="left").grid(row=7, column=0, columnspan=2, sticky="w", pady=(4, 0))
+
         # ---- PTT
         p = ttk.LabelFrame(R, text="Méthode PTT", padding=8)
         p.pack(fill="x")
@@ -187,6 +205,12 @@ class RadioDialog(tk.Toplevel):
             c["poll"] = max(1, int(c["poll"]))
         except ValueError:
             c["poll"] = 1
+        try:
+            c["cmd_delay"] = max(0, min(2000, int(float(c["cmd_delay"]))))
+        except ValueError:
+            c["cmd_delay"] = 200
+        for k in radio.CUSTOM_KEYS:
+            c[k] = c[k].strip()
         pp = self.v_pttport.get().strip()
         c["ptt_port"] = "" if pp in ("", self.ptt_names[""]) else pp
         c["port"] = c["port"].strip()
@@ -215,7 +239,11 @@ class RadioDialog(tk.Toplevel):
                 b.configure(background=self._btn_bg, activebackground=self._btn_bg)
         c = self.cfg()
         kind = radio.rig_entry(c["rig"])["kind"]
-        serial_on = kind in ("kenwood", "hamlib")
+        serial_on = kind in ("kenwood", "hamlib", "custom")
+        if kind == "custom":
+            self.custom_frame.pack(fill="x", pady=(8, 0))
+        else:
+            self.custom_frame.pack_forget()
         RadioDialog._ro = set(self.line_cbs.values())
         self._state(self.serial_frame, serial_on)
         self.cb_port.configure(state="normal" if serial_on else "disabled")
@@ -248,7 +276,9 @@ class RadioDialog(tk.Toplevel):
                                               "flrig": "FLRig doit être lancé (serveur XML-RPC, port 12345 "
                                                        "par défaut).",
                                               "netrigctl": "Un serveur rigctld doit tourner (port 4532 par "
-                                                           "défaut)."}.get(kind, "")))
+                                                           "défaut).",
+                                              "custom": "Commandes écrites à la main, comme dans EasyPal : "
+                                                        "la fréquence du poste n'est pas lue."}.get(kind, "")))
             self.bt_hamlib.grid_remove()
 
     # ------------------------------------------------------------------ Hamlib
@@ -302,6 +332,11 @@ class RadioDialog(tk.Toplevel):
                         f, m = r.freq(), r.mode()
                     finally:
                         r.close()
+                if not getattr(r, "reads_freq", True):
+                    txt = tr("Port ouvert : commandes de départ et de sortie envoyées.") + f" ({r.port})"
+                    self.app.ui(self.app.log, "Test CAT : " + txt)
+                    self.app.ui(self._show, self.bt_cat, True, txt)
+                    return
                 txt = f"{r.model} : {audio.format_freq(f) + ' kHz' if f else '?'} {m or ''}"
                 self.app.ui(self.app.log, "Test CAT : " + txt)
                 self.app.ui(self._show, self.bt_cat, bool(f), txt)
@@ -352,12 +387,22 @@ class RadioDialog(tk.Toplevel):
     def ok(self):
         c = self.cfg()
         kind = radio.rig_entry(c["rig"])["kind"]
-        if kind in ("kenwood", "hamlib") and not c["port"]:
+        if kind in ("kenwood", "hamlib", "custom") and not c["port"]:
             messagebox.showerror("HFImage", tr("Choisissez le port série du poste."), parent=self)
             return
         if c["ptt"] == "CAT" and kind == "none":
             messagebox.showerror("HFImage", tr("PTT par CAT : choisissez d'abord le poste."), parent=self)
             return
+        if kind == "custom" and c["ptt"] == "CAT" and not (c["cmd_ptt_on"] and c["cmd_ptt_off"]):
+            messagebox.showerror("HFImage", tr("PTT par CAT : remplissez « PTT marche » et « PTT arrêt »."),
+                                 parent=self)
+            return
+        for k in radio.CUSTOM_KEYS:
+            try:
+                radio.parse_cmd(c[k])
+            except ValueError as e:
+                messagebox.showerror("HFImage", f"{k} : {e}", parent=self)
+                return
         if c["ptt"] in ("DTR", "RTS") and not (c["ptt_port"] or c["port"]):
             messagebox.showerror("HFImage", tr("PTT par DTR / RTS : choisissez le port de l'interface."),
                                  parent=self)

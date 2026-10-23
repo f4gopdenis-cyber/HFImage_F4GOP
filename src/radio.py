@@ -27,7 +27,8 @@ from riglist import HAMLIB_VERSION, RIGS
 # clé enregistrée dans la configuration -> libellé (en français, traduit à l'affichage)
 SPECIAL = [("none", "Aucun (pas de CAT)"), ("kenwood", "Kenwood (détection automatique)"),
            ("omnirig1", "OmniRig Rig 1"), ("omnirig2", "OmniRig Rig 2"),
-           ("flrig", "FLRig"), ("netrigctl", "Hamlib NET rigctl")]
+           ("flrig", "FLRig"), ("netrigctl", "Hamlib NET rigctl"),
+           ("custom", "Commandes CAT personnalisées (comme EasyPal)")]
 if not sys.platform.startswith("win"):
     SPECIAL = [s for s in SPECIAL if not s[0].startswith("omnirig")]      # OmniRig : Windows seulement
 # Kenwood pilotés en direct (commandes ASCII éprouvées) ; les autres passent par Hamlib
@@ -58,7 +59,7 @@ def rig_entry(key):
     label = rig_label(key)
     if key.startswith("omnirig"):
         return {"kind": "omnirig", "rig_no": 2 if key.endswith("2") else 1, "model_id": None, "label": label}
-    if key in ("none", "kenwood", "flrig", "netrigctl"):
+    if key in ("none", "kenwood", "flrig", "netrigctl", "custom"):
         return {"kind": key, "model_id": None, "label": label}
     if key.startswith("hamlib:"):
         try:
@@ -73,7 +74,11 @@ def rig_entry(key):
 
 DEFAULTS = {"rig": "none", "port": "", "baud": 115200, "data_bits": "default", "stop_bits": "default",
             "handshake": "default", "dtr": "", "rts": "", "ptt": "VOX", "ptt_port": "",
-            "tx_audio": "rear", "set_mode": "none", "host": "", "poll": 1}
+            "tx_audio": "rear", "set_mode": "none", "host": "", "poll": 1,
+            # « Commandes CAT personnalisées » (comme EasyPal) : hexadécimal ou texte
+            "cmd_init1": "", "cmd_init2": "", "cmd_ptt_on": "", "cmd_ptt_off": "",
+            "cmd_exit1": "", "cmd_exit2": "", "cmd_delay": 200}
+CUSTOM_KEYS = ("cmd_init1", "cmd_init2", "cmd_ptt_on", "cmd_ptt_off", "cmd_exit1", "cmd_exit2")
 
 
 def from_conf(conf):
@@ -96,7 +101,7 @@ def from_conf(conf):
 
 def cat_signature(cfg):
     """Ce qui oblige à rouvrir la liaison CAT quand ça change."""
-    keys = ("rig", "port", "baud", "data_bits", "stop_bits", "handshake", "dtr", "rts", "host")
+    keys = ("rig", "port", "baud", "data_bits", "stop_bits", "handshake", "dtr", "rts", "host") + CUSTOM_KEYS
     sig = tuple(str(cfg.get(k)) for k in keys)
     if rig_entry(cfg["rig"])["kind"] == "hamlib":       # PTT DTR/RTS du port CAT confié à rigctld
         sig += (cfg.get("ptt"), cfg.get("ptt_port"))
@@ -107,7 +112,7 @@ def describe(cfg):
     """Résumé d'une ligne (Réglages)."""
     e = rig_entry(cfg["rig"])
     parts = [e["label"]]
-    if e["kind"] in ("kenwood", "hamlib") and cfg.get("port"):
+    if e["kind"] in ("kenwood", "hamlib", "custom") and cfg.get("port"):
         parts.append(f"{cfg['port']} {cfg['baud']} bauds")
     if e["kind"] in ("netrigctl", "flrig"):
         parts.append(cfg.get("host") or ("127.0.0.1:4532" if e["kind"] == "netrigctl" else "127.0.0.1:12345"))
@@ -218,6 +223,97 @@ class RigBase:
 
     def close(self):
         pass
+
+
+def parse_cmd(text):
+    """Commande écrite à la main -> octets à envoyer (None si vide).
+    - hexadécimal (Icom CI-V…) : « FEFE5EE01C0001FD », espaces permis ; la forme d'EasyPal
+      « \\$FEFE5EE014...FD\\ » est acceptée telle quelle (copier-coller) ;
+    - sinon texte (Kenwood, Elecraft, Yaesu récents…) : « TX1; », avec \\r et \\n si besoin.
+    Plusieurs commandes peuvent se suivre, séparées par « | »."""
+    import re
+    t = (text or "").strip()
+    if not t:
+        return None
+    out = b""
+    for part in t.split("|"):
+        p = part.strip()
+        if p.startswith("\\"):
+            p = p[1:]
+        if p.endswith("\\"):
+            p = p[:-1]
+        p = p.lstrip("$").strip()
+        if not p:
+            continue
+        h = re.sub(r"[\s,]", "", p)
+        if h.lower().startswith("0x"):
+            h = h[2:]
+        if re.fullmatch(r"(?:[0-9A-Fa-f]{2})+", h):
+            out += bytes.fromhex(h)
+        else:
+            out += p.replace("\\r", "\r").replace("\\n", "\n").encode("latin-1", "replace")
+    return out or None
+
+
+class CustomRig(RigBase):
+    """Commandes CAT personnalisées, comme EasyPal : chaînes de départ (à l'ouverture), PTT
+    marche / arrêt, chaînes de sortie (à la fermeture), délai entre deux commandes.
+    Ne lit pas la fréquence du poste."""
+    kind = "custom"
+    reads_freq = False
+
+    def __init__(self, cfg):
+        self.cfg = cfg
+        self.model = "CAT personnalisé"
+        self.port = cfg.get("port")
+        if not self.port:
+            raise RuntimeError("commandes CAT personnalisées : choisissez le port série")
+        self.cmds = {k: parse_cmd(cfg.get(k)) for k in CUSTOM_KEYS}
+        try:
+            self.delay = max(0, min(5000, int(cfg.get("cmd_delay") or 0))) / 1000
+        except (TypeError, ValueError):
+            self.delay = 0.2
+        self.lock = threading.Lock()
+        self.ser = open_port(cfg)
+        try:
+            self._send("cmd_init1", "cmd_init2")
+        except Exception:
+            self.ser.close()
+            raise
+
+    def _send(self, *keys):
+        with self.lock:
+            for k in keys:
+                data = self.cmds.get(k)
+                if not data:
+                    continue
+                self.ser.write(data)
+                self.ser.flush()
+                if self.delay:
+                    time.sleep(self.delay)
+
+    def ptt(self, on, rear=True):
+        k = "cmd_ptt_on" if on else "cmd_ptt_off"
+        if not self.cmds.get(k):
+            raise RuntimeError("PTT par CAT : commande « " + ("PTT marche" if on else "PTT arrêt") +
+                               " » vide (Réglages → Poste radio…)")
+        self._send(k)
+
+    def set_line(self, line, on):
+        setattr(self.ser, line, bool(on))
+
+    def close(self):
+        if self.ser is None:
+            return
+        try:
+            self._send("cmd_exit1", "cmd_exit2")
+        except Exception:
+            pass
+        try:
+            self.ser.close()
+        except Exception:
+            pass
+        self.ser = None
 
 
 class KenwoodRig(RigBase):
@@ -705,6 +801,8 @@ def make_rig(cfg):
         return FlrigRig(cfg)
     if k == "omnirig":
         return OmniRigRig(cfg, e["rig_no"])
+    if k == "custom":
+        return CustomRig(cfg)
     return None
 
 
@@ -726,7 +824,7 @@ class Ptt:
             port = cfg.get("ptt_port") or cfg.get("port")
             if not port:
                 raise RuntimeError(f"PTT {self.method} : aucun port COM choisi")
-            if rig is not None and rig.port == port and e["kind"] == "kenwood":
+            if rig is not None and rig.port == port and e["kind"] in ("kenwood", "custom"):
                 pass                                     # même port que le CAT Kenwood : ses lignes
             elif rig is not None and rig.port == port and e["kind"] == "hamlib":
                 self.method = "CAT"                      # Hamlib tient le port et pilote la ligne
