@@ -5,6 +5,8 @@
 # alors la mise à jour par le bandeau.
 # Ensuite, le travail « win7 » fabrique HFImage_F4GOP_Win7.exe (Python 3.8, pour Windows 7 / 8)
 # et l'ajoute à la même release ; s'il échoue, la version normale n'est pas touchée.
+# Le travail « linux » fabrique HFImage_F4GOP_Linux.tar.gz (Ubuntu 22.04 : glibc 2.35, marche sur
+# Ubuntu 22.04+, Debian 12+, Mint 21+…), avec codec2 et HamDRM compilés depuis leurs sources.
 name: Release
 
 on:
@@ -182,5 +184,98 @@ jobs:
         if: steps.w7.outputs.todo == 'yes'
         shell: bash
         run: gh release upload "${{ steps.w7.outputs.tag }}" src/dist/HFImage_F4GOP_Win7.exe --clobber
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+  linux:
+    needs: release
+    if: always() && needs.release.result == 'success'
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Faut-il fabriquer la version Linux ?
+        id: lx
+        shell: bash
+        run: |
+          v=$(grep -m1 -oP '^VERSION = "\K[0-9.]+' src/app.py)
+          echo "tag=v$v" >> "$GITHUB_OUTPUT"
+          if ! gh release view "v$v" >/dev/null 2>&1; then
+            echo "todo=no" >> "$GITHUB_OUTPUT"; echo "Pas de release v$v."
+          elif gh release view "v$v" --json assets --jq '.assets[].name' | grep -qx 'HFImage_F4GOP_Linux.tar.gz'; then
+            echo "todo=no" >> "$GITHUB_OUTPUT"; echo "HFImage_F4GOP_Linux.tar.gz déjà présent."
+          else
+            echo "todo=yes" >> "$GITHUB_OUTPUT"
+          fi
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+      - name: Paquets système
+        if: steps.lx.outputs.todo == 'yes'
+        run: sudo apt-get update && sudo apt-get install -y libportaudio2 xvfb cmake g++
+
+      - name: codec2 (avec le mode DATAC1X de HFImage)
+        if: steps.lx.outputs.todo == 'yes'
+        shell: bash
+        run: |
+          git clone -q https://github.com/drowe67/codec2.git "$RUNNER_TEMP/codec2"
+          cd "$RUNNER_TEMP/codec2"
+          git checkout -q 310777b1c6f1af0bc7c72f5b32f80f6fd9136962
+          cp "$GITHUB_WORKSPACE/codec2_patch/hfi_modes.c" src/
+          git apply "$GITHUB_WORKSPACE/codec2_patch/CMakeLists.patch"
+          mkdir build && cd build
+          cmake .. -DCMAKE_BUILD_TYPE=Release > /dev/null
+          make -j"$(nproc)" codec2 > /dev/null
+          cp -L src/libcodec2.so "$GITHUB_WORKSPACE/src/libcodec2.so"
+
+      - name: HamDRM (mode EasyPal)
+        if: steps.lx.outputs.todo == 'yes'
+        run: sh hamdrm/build_standalone.sh linux "$GITHUB_WORKSPACE/src"
+
+      - uses: actions/setup-python@v5
+        if: steps.lx.outputs.todo == 'yes'
+        with:
+          python-version: "3.12"
+
+      - name: Dépendances
+        if: steps.lx.outputs.todo == 'yes'
+        run: python -m pip install -r requirements-build-linux.txt
+
+      - name: Tests sous Linux
+        if: steps.lx.outputs.todo == 'yes'
+        shell: bash
+        run: |
+          export CODEC2_LIB="$GITHUB_WORKSPACE/src/libcodec2.so"
+          if ! xvfb-run -a python -m unittest discover -s tests -v > tests.log 2>&1; then
+            cat tests.log
+            grep -E "^(FAIL|ERROR):|Error:|assert" tests.log | head -20 | while read -r l; do echo "::error::$l"; done
+            exit 1
+          fi
+          tail -5 tests.log
+
+      - name: Fabrication du programme Linux
+        if: steps.lx.outputs.todo == 'yes'
+        working-directory: src
+        run: pyinstaller --noconfirm HFImage.spec
+
+      - name: Autotest
+        if: steps.lx.outputs.todo == 'yes'
+        working-directory: src
+        shell: bash
+        run: |
+          timeout 600 xvfb-run -a dist/HFImage_F4GOP_Linux --selftest "$RUNNER_TEMP/selftest.txt"
+          cat "$RUNNER_TEMP/selftest.txt"
+          echo "::notice::Autotest Linux : $(grep -E 'DATAC|HamDRM|RÉSULTAT' "$RUNNER_TEMP/selftest.txt" | tr '\n' '|')"
+          grep -q "DATAC1X: .* -> OK" "$RUNNER_TEMP/selftest.txt" || { echo "::error::modems en échec"; exit 1; }
+          grep -q "HamDRM (EasyPal): .* -> OK" "$RUNNER_TEMP/selftest.txt" || { echo "::error::HamDRM en échec"; exit 1; }
+          grep -q "PortAudio : PortAudio" "$RUNNER_TEMP/selftest.txt" || { echo "::error::PortAudio absent"; exit 1; }
+
+      - name: Ajout à la release
+        if: steps.lx.outputs.todo == 'yes'
+        shell: bash
+        run: |
+          cd src/dist
+          tar czf HFImage_F4GOP_Linux.tar.gz HFImage_F4GOP_Linux
+          gh release upload "${{ steps.lx.outputs.tag }}" HFImage_F4GOP_Linux.tar.gz --clobber
         env:
           GH_TOKEN: ${{ github.token }}

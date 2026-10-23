@@ -5,3 +5,4 @@ dist/
 *.exe
 *.log
 .hfimage.json
+src/*.so

@@ -1481,6 +1481,8 @@ T = [
     ("Tourner à gauche", "Rotate left", "Nach links drehen", "Girar a la izquierda", "Ruota a sinistra"),
     ("Photo remise dans le bon sens (indication du téléphone).", "Picture turned the right way up (phone orientation).", "Foto richtig herum gedreht (Ausrichtung des Telefons).", "Foto girada a la posición correcta (orientación del teléfono).", "Foto raddrizzata (orientamento del telefono)."),
     ("Les dessins SVG et les GIF animés ne peuvent pas être tournés ici.", "SVG drawings and animated GIFs cannot be rotated here.", "SVG-Zeichnungen und animierte GIFs können hier nicht gedreht werden.", "Los dibujos SVG y los GIF animados no se pueden girar aquí.", "I disegni SVG e le GIF animate non possono essere ruotati qui."),
+    ("Sous Linux, installez-le dans un terminal :", "On Linux, install it in a terminal:", "Unter Linux in einem Terminal installieren:", "En Linux, instálelo en una terminal:", "Su Linux, installatelo in un terminale:"),
+    ("puis relancez l'émission.", "then start the transmission again.", "dann die Sendung neu starten.", "y vuelva a lanzar la emisión.", "poi riavviate la trasmissione."),
     ("Attendre fréquence libre", "Wait for clear frequency", "Auf freie Frequenz warten", "Esperar frecuencia libre", "Attendere frequenza libera"),
     ("ATTENTE…", "WAITING…", "WARTEN…", "ESPERA…", "ATTESA…"),
     ("image", "picture", "Bild", "imagen", "immagine"),

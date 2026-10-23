@@ -23,7 +23,10 @@ try:
     from buildinfo import LEGACY
 except ImportError:
     LEGACY = False
-ASSET_NAME = "HFImage_F4GOP_Win7.exe" if LEGACY else "HFImage_F4GOP.exe"
+WIN = sys.platform.startswith("win")
+LINUX_BIN = "HFImage_F4GOP_Linux"                 # Linux : un seul fichier exécutable…
+LINUX_ASSET = LINUX_BIN + ".tar.gz"               # …publié dans une archive (garde le droit d'exécution)
+ASSET_NAME = ("HFImage_F4GOP_Win7.exe" if LEGACY else "HFImage_F4GOP.exe") if WIN else LINUX_ASSET
 ALLOWED = (f"https://github.com/{REPO}/releases/download/",)
 UA = {"User-Agent": "HFImage-F4GOP-updater", "Accept": "application/vnd.github+json"}
 
@@ -48,7 +51,7 @@ def check(timeout=10):
     with urllib.request.urlopen(req, timeout=timeout) as r:
         d = json.loads(r.read().decode("utf-8"))
     asset = next((a for a in d.get("assets", []) if a.get("name") == ASSET_NAME), None)
-    if asset is None and not LEGACY:      # la version Windows 7 ne prend jamais l'exe normal
+    if asset is None and not LEGACY and WIN:   # la version Windows 7 ne prend jamais l'exe normal
         asset = next((a for a in d.get("assets", []) if a.get("name", "").lower().endswith(".exe")
                       and "win7" not in a.get("name", "").lower()), None)
     info = {"version": (parse_version(d.get("tag_name")) and ".".join(map(str, parse_version(d["tag_name"]))))
@@ -76,7 +79,7 @@ def download(info, progress=lambda f: None, stop=None):
     if not test and not url.startswith(ALLOWED):
         raise ValueError(f"adresse de téléchargement refusée : {url}")
     folder = os.path.dirname(os.path.abspath(sys.executable if frozen() else __file__))
-    dest = os.path.join(folder, f"HFImage_F4GOP_{info['version']}.exe")
+    dest = os.path.join(folder, f"HFImage_F4GOP_{info['version']}" + (".exe" if WIN else ".tar.gz"))
     part = dest + ".part"
     h = hashlib.sha256()
     got = 0
@@ -101,7 +104,32 @@ def download(info, progress=lambda f: None, stop=None):
         os.remove(part)
         raise ValueError("empreinte SHA-256 différente : fichier abîmé, mise à jour refusée")
     os.replace(part, dest)
+    if not WIN:
+        dest = _extract_linux(dest)
     return dest
+
+
+def _extract_linux(archive):
+    """Linux : sort l'exécutable de l'archive téléchargée (un seul fichier attendu, rien d'autre)."""
+    import tarfile
+    out = archive[:-len(".tar.gz")] + "_Linux"
+    with tarfile.open(archive, "r:gz") as t:
+        m = next((m for m in t.getmembers() if m.isfile() and os.path.basename(m.name) == LINUX_BIN), None)
+        if m is None:
+            raise ValueError("archive Linux sans le programme")
+        with t.extractfile(m) as src, open(out + ".part", "wb") as dst:
+            while True:
+                b = src.read(256 * 1024)
+                if not b:
+                    break
+                dst.write(b)
+    os.chmod(out + ".part", 0o755)
+    os.replace(out + ".part", out)
+    try:
+        os.remove(archive)
+    except OSError:
+        pass
+    return out
 
 
 def install(new_exe):
@@ -116,9 +144,11 @@ def install(new_exe):
             os.remove(old)
     except OSError:
         old = exe + f".{os.getpid()}.old"
-    os.replace(exe, old)                     # Windows permet de renommer l'exe en cours
+    os.replace(exe, old)                     # Windows (et Linux) permettent de renommer l'exe en cours
     try:
         os.replace(new_exe, exe)
+        if not WIN:
+            os.chmod(exe, 0o755)
     except OSError:
         os.replace(old, exe)                 # on remet l'ancien en place
         raise

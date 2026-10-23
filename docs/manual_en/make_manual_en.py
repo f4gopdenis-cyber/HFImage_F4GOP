@@ -200,6 +200,19 @@ s += N(["Download <b>HFImage_F4GOP.exe</b> from the <i>Releases</i> page of the 
 s.append(P("Nothing else to install: a single file, Windows 8.1 / 10 / 11 64-bit. For <b>Windows 7 SP1 or 8</b> "
            "(64-bit), take <b>HFImage_F4GOP_Win7.exe</b> from the same page: same program, updated with its own "
            "version; only SVG pictures cannot be displayed there."))
+s.append(P("Linux", "h2"))
+s.append(P("Since version 1.23, HFImage is also available for 64-bit <b>Linux</b> (Ubuntu 22.04 and newer, Debian 12, "
+           "Linux Mint 21, etc.): same program, same modes, compatible with Windows stations."))
+s += N(["Download <b>HFImage_F4GOP_Linux.tar.gz</b> from the same GitHub page and open it (double-click, or "
+        "<b>tar xzf HFImage_F4GOP_Linux.tar.gz</b>): it holds a single file, <b>HFImage_F4GOP_Linux</b>.",
+        "Put it in a folder of your own (for example <b>~/HFImage</b>) and start it with a double-click. On first start it "
+        "adds itself to the applications menu (Ham Radio section).",
+        "To control the radio through Hamlib: <b>sudo apt install libhamlib-utils</b>. Direct Kenwood control, FLRig and "
+        "serial-port PTT need nothing else; OmniRig only exists on Windows.",
+        "Serial ports (/dev/ttyUSB0…): your account must be in the <b>dialout</b> group: "
+        "<b>sudo usermod -aG dialout $USER</b>, then log out and back in."])
+s.append(P("Updates work as on Windows (orange banner). The FTP password is kept in the settings file, readable by your "
+           "account only."))
 s.append(P("Automatic updates", "h2"))
 s.append(P("At start-up (then every 3 hours), HFImage checks GitHub for a newer version. If there is one, an "
            "<b>orange banner</b> appears at the top of the window: one click, “Yes”, and the program updates itself "

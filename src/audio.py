@@ -383,6 +383,10 @@ def open_serial(port, baud):
         return serial.Serial(port, baud, timeout=0.5, write_timeout=1)
     except serial.SerialException as e:
         msg = str(e)
+        if not sys.platform.startswith("win") and ("Permission denied" in msg or "Errno 13" in msg):
+            raise RuntimeError(
+                f"{port} : accès refusé. Sous Linux, ajoutez votre compte au groupe « dialout » "
+                "(sudo usermod -aG dialout $USER), puis fermez la session et reconnectez-vous.") from e
         if "Access is denied" in msg or "Accès refusé" in msg or "PermissionError" in msg or "13" in msg:
             raise RuntimeError(
                 f"{port} est déjà utilisé par un autre programme (ARCP, logger, WSJT-X…). "

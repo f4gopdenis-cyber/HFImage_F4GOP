@@ -1,5 +1,11 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 1.23 — HFImage pour Linux
+
+- **Nouvelle version Linux** 64 bits : **HFImage_F4GOP_Linux.tar.gz** sur la page des versions (Ubuntu 22.04 et plus récents, Debian 12, Linux Mint 21…). Un seul fichier à lancer, même programme et mêmes modes que sous Windows (DATAC, EasyPal, hybride, présence, Rx Ok, galerie, site web…), compatible avec les stations Windows. Fabriquée et testée automatiquement par GitHub à chaque version, avec codec2 et HamDRM compilés depuis leurs sources.
+- Linux : Hamlib vient du système (`sudo apt install libhamlib-utils`, le programme l'indique s'il manque) ; ports série /dev/ttyUSB… (message clair si le compte n'est pas dans le groupe « dialout ») ; polices libres équivalentes à celles de Windows ; entrée dans le menu des applications ; mises à jour automatiques comme sous Windows. OmniRig n'existe que sous Windows.
+- Rappel 1.22 : le fichier journal complet s'ouvre par Réglages → Ouvrir le journal.
+
 ## Version 1.22 — journal à l'écran vidé automatiquement
 
 - Le journal affiché dans la fenêtre ne garde plus que les **300 dernières lignes** : il se vide tout seul, le programme restant ouvert des jours. Tout reste enregistré dans le fichier journal (Fichiers → journal).

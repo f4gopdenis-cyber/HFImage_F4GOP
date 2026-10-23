@@ -201,6 +201,19 @@ s += N(["Téléchargez <b>HFImage_F4GOP.exe</b> sur la page <i>Releases</i> du p
 s.append(P("Rien d'autre à installer : un seul fichier, Windows 8.1 / 10 / 11 64 bits. Pour <b>Windows 7 SP1 ou 8</b> "
            "(64 bits), prenez <b>HFImage_F4GOP_Win7.exe</b> sur la même page GitHub : même programme, qui se met à jour "
            "avec sa propre version ; seules les images SVG ne s'y affichent pas."))
+s.append(P("Linux", "h2"))
+s.append(P("Depuis la version 1.23, HFImage existe aussi pour <b>Linux</b> 64 bits (Ubuntu 22.04 et plus récents, "
+           "Debian 12, Linux Mint 21, etc.) : même programme, mêmes modes, compatible avec les stations Windows."))
+s += N(["Téléchargez <b>HFImage_F4GOP_Linux.tar.gz</b> sur la même page GitHub et ouvrez-le (double-clic, ou "
+        "<b>tar xzf HFImage_F4GOP_Linux.tar.gz</b>) : il contient un seul fichier, <b>HFImage_F4GOP_Linux</b>.",
+        "Placez-le dans un dossier à vous (par exemple <b>~/HFImage</b>) et lancez-le par un double-clic. Au premier "
+        "lancement, il s'ajoute au menu des applications (rubrique Radioamateur).",
+        "Pour piloter le poste par Hamlib : <b>sudo apt install libhamlib-utils</b>. Le pilotage Kenwood direct, FLRig et le "
+        "PTT par le port série n'ont besoin de rien d'autre ; OmniRig n'existe que sous Windows.",
+        "Ports série (/dev/ttyUSB0…) : votre compte doit être dans le groupe <b>dialout</b> : "
+        "<b>sudo usermod -aG dialout $USER</b>, puis fermez la session et reconnectez-vous."])
+s.append(P("Les mises à jour se font comme sous Windows (bandeau orange). Le mot de passe FTP est gardé dans le fichier "
+           "de réglages, lisible par votre seul compte."))
 s.append(P("Mises à jour automatiques", "h2"))
 s.append(P("Au démarrage (puis toutes les 3 heures), HFImage regarde sur GitHub s'il existe une version plus "
            "récente. Si oui, un <b>bandeau orange</b> apparaît en haut de la fenêtre : un clic, « Oui », et le "

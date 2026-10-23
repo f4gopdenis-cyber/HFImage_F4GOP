@@ -16,6 +16,6 @@ if [ "$TARGET" = windows ]; then
   echo "built $OUT/hamdrm.dll"
 else
   CXX=${CXX:-g++}
-  $CXX $FLAGS -fPIC -fvisibility=hidden $INC -shared -o "$OUT/libhamdrm.so" $SRC
+  $CXX $FLAGS -fPIC -fvisibility=hidden $INC -shared -o "$OUT/libhamdrm.so" $SRC -static-libstdc++ -static-libgcc -s
   echo "built $OUT/libhamdrm.so"
 fi

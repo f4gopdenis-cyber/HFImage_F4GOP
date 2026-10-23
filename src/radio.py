@@ -28,6 +28,8 @@ from riglist import HAMLIB_VERSION, RIGS
 SPECIAL = [("none", "Aucun (pas de CAT)"), ("kenwood", "Kenwood (détection automatique)"),
            ("omnirig1", "OmniRig Rig 1"), ("omnirig2", "OmniRig Rig 2"),
            ("flrig", "FLRig"), ("netrigctl", "Hamlib NET rigctl")]
+if not sys.platform.startswith("win"):
+    SPECIAL = [s for s in SPECIAL if not s[0].startswith("omnirig")]      # OmniRig : Windows seulement
 # Kenwood pilotés en direct (commandes ASCII éprouvées) ; les autres passent par Hamlib
 KENWOOD_NATIVE = {"TS-990S", "TS-890S", "TS-590S", "TS-590SG", "TS-2000", "TS-480"}
 _BY_ID = {num: (mfg, mod) for num, mfg, mod, _ in RIGS}
@@ -780,8 +782,15 @@ def hamlib_dir():
     return os.path.join(base, "HFImage", f"hamlib-{HAMLIB_VERSION}")
 
 
+LINUX_HAMLIB_HINT = "sudo apt install libhamlib-utils"      # Debian, Ubuntu, Mint, Raspberry Pi OS
+
+
 def find_rigctld():
-    """rigctld.exe : celui téléchargé par HFImage, sinon celui de WSJT-X / JTDX / Hamlib installé."""
+    """rigctld.exe : celui téléchargé par HFImage, sinon celui de WSJT-X / JTDX / Hamlib installé.
+    Linux : rigctld du système (paquet libhamlib-utils / hamlib)."""
+    if not sys.platform.startswith("win"):
+        import shutil
+        return shutil.which("rigctld")
     cands = [os.path.join(hamlib_dir(), "rigctld.exe")]
     pf = [os.environ.get(v) for v in ("ProgramFiles", "ProgramFiles(x86)", "LOCALAPPDATA")]
     for root in [r"C:\WSJT\wsjtx\bin", r"C:\WSJT\wsjtx-improved\bin", r"C:\JTDX64\bin", r"C:\JTDX\bin"]:
@@ -804,6 +813,8 @@ def find_rigctld():
 def install_hamlib(progress=lambda f: None):
     """Télécharge Hamlib pour Windows depuis GitHub (empreinte SHA-256 vérifiée)
     et n'en garde que rigctld et ses bibliothèques. -> dossier."""
+    if not sys.platform.startswith("win"):
+        raise RuntimeError("Linux : installez Hamlib avec le gestionnaire de paquets : " + LINUX_HAMLIB_HINT)
     import io
     import urllib.request
     req = urllib.request.Request(HAMLIB_URL, headers={"User-Agent": "HFImage-F4GOP"})

@@ -56,10 +56,48 @@ def _registry_fonts():
     return out
 
 
+FONT_DIRS = ("/usr/share/fonts", "/usr/local/share/fonts", "~/.local/share/fonts", "~/.fonts")
+
+
+def _linux_fonts():
+    """Linux : {famille: (normal, gras, italique, gras italique)} d'après les fichiers de polices
+    installés (noms lus dans les fichiers eux-mêmes)."""
+    import os
+    files = []
+    for d in FONT_DIRS:
+        d = os.path.expanduser(d)
+        for root, _dirs, names in os.walk(d):
+            files += [os.path.join(root, n) for n in names if n.lower().endswith((".ttf", ".otf"))]
+            if len(files) > 3000:
+                break
+    fam = {}
+    for f in files:
+        try:
+            family, style = ImageFont.truetype(f, 12).getname()
+        except Exception:
+            continue
+        st = (style or "").lower()
+        slot = (1 if "bold" in st else 0) + (2 if ("italic" in st or "oblique" in st) else 0)
+        if any(w in st for w in ("light", "thin", "black", "condensed", "medium", "semi", "extra")):
+            continue
+        fam.setdefault(family, [None] * 4)
+        if fam[family][slot] is None:
+            fam[family][slot] = f
+    out = {}
+    for name, (n, b, i, bi) in fam.items():
+        base = n or b or i or bi
+        out[name] = (base, b or base, i or base, bi or b or base)
+    return out
+
+
 def fonts():
     """{famille: (normal, gras, italique, gras italique)} — les polices installées, triées."""
     global _FONTS
     if _FONTS is not None:
+        return _FONTS
+    import sys
+    if not sys.platform.startswith("win"):
+        _FONTS = dict(sorted(_linux_fonts().items(), key=lambda kv: kv[0].lower()))
         return _FONTS
     reg = _registry_fonts()
     fam = {}
@@ -88,8 +126,14 @@ def _try(f, size=12):
         return False
 
 
+# Linux : polices libres équivalentes aux polices de Windows
+LINUX_ALIAS = {"Arial": "Liberation Sans", "Times New Roman": "Liberation Serif", "Courier New": "Liberation Mono",
+               "Verdana": "DejaVu Sans", "Tahoma": "DejaVu Sans", "Segoe UI": "DejaVu Sans", "Calibri": "Carlito"}
+
+
 def font(family="Arial", size=24, bold=True, italic=False):
-    files = fonts().get(family) or BUILTIN.get(family)
+    fs = fonts()
+    files = fs.get(family) or fs.get(LINUX_ALIAS.get(family, "")) or BUILTIN.get(family)
     if files:
         for f in (files[bold + 2 * italic], files[1 if bold else 0], files[0]):
             try:

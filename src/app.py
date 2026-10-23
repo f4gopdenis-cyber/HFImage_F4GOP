@@ -6,6 +6,7 @@ Onglets : Émission, Réception, Simulation, Réglages.
 import io
 import json
 import os
+import platform
 import re
 import queue
 import subprocess
@@ -60,7 +61,7 @@ import random
 import wave
 
 APP = "HFImage F4GOP"
-VERSION = "1.22"
+VERSION = "1.23"
 
 
 def _take_profile(argv):
@@ -206,6 +207,53 @@ def tip(widget, text):
     widget.bind("<Leave>", leave, add="+")
     widget.bind("<Button-1>", leave, add="+")
 
+
+def private_file(path):
+    """Linux : fichier de réglages lisible par son seul propriétaire (il contient le mot de passe
+    FTP ; sous Windows, celui-ci est déjà chiffré pour le compte Windows)."""
+    if sys.platform.startswith("win"):
+        return
+    try:
+        os.chmod(path, 0o600)
+    except OSError:
+        pass
+
+
+def linux_menu_entry(cmd, name, slug, desktop=False):
+    """Linux : fichier .desktop (menu des applications, et Bureau si desktop=True) + icône."""
+    import shlex
+    import shutil
+    here = getattr(sys, "_MEIPASS", os.path.dirname(os.path.abspath(__file__)))
+    data = os.environ.get("XDG_DATA_HOME") or os.path.join(os.path.expanduser("~"), ".local", "share")
+    icon_dir = os.path.join(data, "icons")
+    os.makedirs(icon_dir, exist_ok=True)
+    icon = os.path.join(icon_dir, "hfimage-f4gop.png")
+    src = os.path.join(here, "icon256.png")
+    if os.path.exists(src) and not os.path.exists(icon):
+        shutil.copyfile(src, icon)
+    text = ("[Desktop Entry]\nType=Application\n"
+            f"Name={name}\nComment=Images numériques en HF / HF digital pictures\n"
+            f"Exec={' '.join(shlex.quote(c) for c in cmd)}\nIcon={icon}\nTerminal=false\n"
+            "Categories=HamRadio;Network;\n")
+    targets = [os.path.join(data, "applications", slug + ".desktop")]
+    if desktop:
+        d = os.path.join(os.path.expanduser("~"), "Desktop")
+        if not os.path.isdir(d):
+            d = os.path.join(os.path.expanduser("~"), "Bureau")
+        if os.path.isdir(d):
+            targets.append(os.path.join(d, slug + ".desktop"))
+    for t in targets:
+        os.makedirs(os.path.dirname(t), exist_ok=True)
+        try:
+            with open(t, encoding="utf-8") as f:
+                if f.read() == text:
+                    continue
+        except OSError:
+            pass
+        with open(t, "w", encoding="utf-8") as f:
+            f.write(text)
+        os.chmod(t, 0o755)
+
 def split_call(text):
     """« F4LTX CHRIS » -> ("F4LTX", "Chris") : l'indicatif est le premier mot, le reste est le
     prénom (beaucoup d'utilisateurs l'écrivaient dans la case indicatif ; par radio, l'indicatif
@@ -330,7 +378,9 @@ class App(tk.Tk):
         super().__init__()
         self.title(f"{APP} {VERSION}" + (f" — {PROFILE}" if PROFILE else ""))
         self._set_icon()
+        self._linux_menu()
         self.first_run = not os.path.exists(CONF_PATH)    # aucun réglage enregistré : premier démarrage
+        private_file(CONF_PATH)
         self.conf = load_conf()
         clocktz.MODE = self.conf.get("clock", "local")
         self.v_fbold = tk.BooleanVar(value=bool(self.conf.get("font_bold")))       # menu Police / Réglages
@@ -852,7 +902,7 @@ class App(tk.Tk):
             self._save_conf_file()
 
     def _about(self):
-        messagebox.showinfo(APP, f"{APP} {VERSION}" + (" (Windows 7 / 8)" if updater.LEGACY else "")
+        messagebox.showinfo(APP, f"{APP} {VERSION}" + (" (Windows 7 / 8)" if updater.LEGACY else "") + ("" if updater.WIN else " (Linux)")
                             + "\n\nImages numériques en HF : modem OFDM codec2 "
                                  "(DATAC1X / DATAC1 / DATAC3 / DATAC4, BSR/ACK en DATAC0), code fontaine, "
                                  "mode hybride par Internet.\n\nAutotests :\n"
@@ -900,7 +950,7 @@ class App(tk.Tk):
             messagebox.showerror(APP, tr("Lancement impossible :") + f" {e}")
             return
         self.log(tr("Instance lancée :") + f" {prof}")
-        if sys.platform.startswith("win") and messagebox.askyesno(
+        if messagebox.askyesno(
                 APP, tr("Créer un raccourci sur le Bureau pour ouvrir directement ce profil ?")):
             try:
                 self._desktop_shortcut(prof, cmd)
@@ -910,6 +960,9 @@ class App(tk.Tk):
 
     @staticmethod
     def _desktop_shortcut(prof, cmd):
+        if not sys.platform.startswith("win"):
+            linux_menu_entry(cmd, f"HFImage {prof}", f"hfimage-f4gop-{prof}", desktop=True)
+            return
         import comtypes.client
         shell = comtypes.client.CreateObject("WScript.Shell", dynamic=True)
         desk = shell.SpecialFolders("Desktop")
@@ -2728,7 +2781,7 @@ class App(tk.Tk):
     def journal_devices(self):
         """Inventaire audio et COM écrit dans le journal (pour le diagnostic)."""
         lines = [f"===== {APP} {VERSION} — {time.strftime('%Y-%m-%d %H:%M:%S')} =====",
-                 f"Windows : {sys.platform} {sys.version.split()[0]}"]
+                 f"Système : {platform.platform()} — Python {sys.version.split()[0]}"]
         try:
             S = sd()
             lines.append(f"PortAudio : {S.get_portaudio_version()[1]}")
@@ -3264,6 +3317,7 @@ class App(tk.Tk):
                 self.conf.pop(k, None)              # anciens réglages : repris dans « radio »
             with open(CONF_PATH, "w", encoding="utf-8") as f:
                 json.dump(self.conf, f, indent=1)
+            private_file(CONF_PATH)
             if not quiet:
                 self.log("Réglages enregistrés.")
             if getattr(self, "gal_store", None) is not None:
@@ -4959,6 +5013,13 @@ class App(tk.Tk):
         """Hamlib manque pour piloter le poste : proposer de l'installer tout de suite."""
         if getattr(self, "_hamlib_busy", False):
             messagebox.showinfo(APP, tr("Installation de Hamlib en cours… Relancez l'émission dans quelques secondes."))
+            return
+        if not sys.platform.startswith("win"):
+            # Linux : Hamlib vient du système (une commande dans un terminal)
+            messagebox.showinfo(APP, tr("Hamlib n'est pas installé : il est nécessaire pour piloter ce poste "
+                                        "(PTT par CAT).") + "\n\n" +
+                                tr("Sous Linux, installez-le dans un terminal :") + f"\n\n    {radio.LINUX_HAMLIB_HINT}\n\n" +
+                                tr("puis relancez l'émission."))
             return
         if not messagebox.askyesno(APP, tr("Hamlib n'est pas installé : il est nécessaire pour piloter ce poste "
                                            "(PTT par CAT).") + "\n\n" +
@@ -6835,6 +6896,16 @@ class App(tk.Tk):
         self.after(400, lambda: self.panes["rxside"].sash_place(
             0, 0, self.panes["rxside"].winfo_height() // 2))
 
+    def _linux_menu(self):
+        """Linux, programme téléchargé (un seul fichier) : entrée « HFImage F4GOP » dans le menu
+        des applications (Mint, Ubuntu…), mise à jour si le fichier a été déplacé."""
+        if sys.platform.startswith("win") or not getattr(sys, "frozen", False) or PROFILE:
+            return
+        try:
+            linux_menu_entry([sys.executable], "HFImage F4GOP", "hfimage-f4gop")
+        except Exception as e:
+            self._journal(f"Entrée du menu des applications : {e}\n")
+
     def _set_icon(self):
         """Icône du programme (fenêtre, barre des tâches, toutes les fenêtres filles)."""
         here = getattr(sys, "_MEIPASS", os.path.dirname(os.path.abspath(__file__)))
@@ -6975,11 +7046,14 @@ def selftest(report_path, hyb_test=None):
     try:
         lines.append(f"Poste radio : {len(radio.rig_keys())} entrées (Hamlib {radio.HAMLIB_VERSION}), "
                      f"rigctld : {radio.find_rigctld() or 'non installé'}")
-        try:
-            import comtypes.client  # noqa: F401  (OmniRig)
-            lines.append("OmniRig : module COM présent")
-        except Exception as e:
-            lines.append(f"OmniRig : module COM absent ({e})")
+        if not sys.platform.startswith("win"):
+            lines.append(f"Système : {platform.platform()} — OmniRig : sans objet (Windows seulement)")
+        else:
+            try:
+                import comtypes.client  # noqa: F401  (OmniRig)
+                lines.append("OmniRig : module COM présent")
+            except Exception as e:
+                lines.append(f"OmniRig : module COM absent ({e})")
     except Exception as e:
         lines.append(f"Poste radio : ERREUR {e}")
     if hyb_test:

@@ -10,7 +10,7 @@ import radio  # noqa: E402
 
 
 class Offre(unittest.TestCase):
-    def run_tx(self, ptt, answer, install_ok=True, after=True):
+    def run_tx(self, ptt, answer, install_ok=True, after=True, platform="win32"):
         try:
             import app
         except ImportError as e:
@@ -46,7 +46,8 @@ class Offre(unittest.TestCase):
                 mock.patch.object(mb, "showerror", lambda *a, **k: shown.append(("err", a[1]))), \
                 mock.patch.object(radio, "install_hamlib", install), \
                 mock.patch.object(radio, "find_rigctld", lambda: "C:/x/rigctld.exe" if after else None), \
-                mock.patch.object(app.threading, "Thread", T):
+                mock.patch.object(app.threading, "Thread", T), \
+                mock.patch.object(app.sys, "platform", platform):
             ok = app.App._check_rig_before_tx(Stub(), {"rig": "hamlib:2041", "ptt": ptt, "tx_audio": "rear"})
         return ok, shown
 
@@ -55,6 +56,13 @@ class Offre(unittest.TestCase):
         self.assertFalse(ok)
         self.assertEqual([k for k, _ in shown], ["ask", "info"])
         self.assertIn("relancer", shown[1][1])
+
+    def test_linux_commande_apt(self):
+        """1.23 : sous Linux, Hamlib vient du système : la commande à taper est indiquée."""
+        ok, shown = self.run_tx("CAT", True, platform="linux")
+        self.assertFalse(ok)
+        self.assertEqual([k for k, _ in shown], ["info"])
+        self.assertIn("apt install libhamlib-utils", shown[0][1])
 
     def test_refus(self):
         ok, shown = self.run_tx("CAT", False)
