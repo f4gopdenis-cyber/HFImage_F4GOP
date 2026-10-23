@@ -61,7 +61,7 @@ import random
 import wave
 
 APP = "HFImage F4GOP"
-VERSION = "1.24"
+VERSION = "1.25"
 
 
 def _take_profile(argv):
@@ -364,6 +364,7 @@ class HybridJob:
 
     def __init__(self, data, fmt, call):
         self.data, self.fmt, self.call = data, fmt, call
+        self.filename = ""          # fichier (pas une image) : nom d'origine, déposé tel quel
         self.mode = "DATAC3"
         self.announce = None
         self.pre = None             # dépôt fait d'avance (« Déposer maintenant ») : (signature, résultat)
@@ -4947,8 +4948,13 @@ class App(tk.Tk):
                                   "(sans TLS) : vérifiez que votre serveur l'accepte.")
             n = int(self.conf.get("drm_hyb_n", 0)) + 1
             self.conf["drm_hyb_n"] = n
-            base = os.path.splitext(os.path.basename(getattr(self, "src_path", "") or "image"))[0]
-            name = easypal_hybrid.file_name(tx.call, n, base, imgfmt.ext_for(tx.fmt))
+            fname = getattr(tx, "filename", "")
+            if fname:                              # fichier : son nom et son extension d'origine
+                base, ext = os.path.splitext(fname)
+                name = easypal_hybrid.file_name(tx.call, n, base, ext.lstrip(".") or "bin")
+            else:
+                base = os.path.splitext(os.path.basename(getattr(self, "src_path", "") or "image"))[0]
+                name = easypal_hybrid.file_name(tx.call, n, base, imgfmt.ext_for(tx.fmt))
             blob = easypal_hybrid.encrypt(cfg["host"], cfg.get("user", ""), cfg.get("password", ""),
                                           cfg.get("dir", ""))
             self.ui(self.log, f"Hybride EasyPal : dépôt de {len(tx.data)} octets "
@@ -4958,7 +4964,7 @@ class App(tk.Tk):
             easypal_hybrid.cleanup_async(cfg, tx.call, keep, log=log)
             self.ui(self.log, "Hybride EasyPal : image déposée.")
             return name, blob
-        name = hybrid.remote_name(tx.call, imgfmt.ext_for(tx.fmt))
+        name = hybrid.remote_name(tx.call, imgfmt.ext_for(tx.fmt), getattr(tx, "filename", ""))
         self.ui(self.log, f"Hybride : dépôt de {len(tx.data)} octets sur {cfg['host']}…")
         hybrid.upload(cfg, name, tx.data, progress=prog)
         # on vérifie que l'image est bien lisible par le lien public AVANT d'émettre
@@ -5074,8 +5080,11 @@ class App(tk.Tk):
             if not messagebox.askyesno(APP, f"Envoyer {name} ({_fmt_size(len(raw))}) par Internet (mode hybride) ?\n"
                                             f"Seul le lien passe par radio (~11 s)."):
                 return
-            job = HybridJob(data, "file", call)
-            self.log(f"Fichier {name} : {len(raw)} octets ({len(data)} compressés), mode hybride")
+            # 1.25 : le fichier part TEL QUEL, sous son nom d'origine : le lien public s'ouvre
+            # directement dans un navigateur (vidéo, son, page web…)
+            job = HybridJob(raw, "file", call)
+            job.filename = name
+            self.log(f"Fichier {name} : {len(raw)} octets, mode hybride (déposé tel quel)")
             return self.transmit(tx=job)
         mode = self._tx_mode()
         if mode == engine.DRM_MODE:

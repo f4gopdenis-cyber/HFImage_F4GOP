@@ -55,6 +55,10 @@ class Envoi(unittest.TestCase):
         self.assertEqual(len(sent), 1)
         self.assertNotEqual(sent[0], "refusé")
         self.assertEqual(sent[0].fmt, "file")
+        # 1.25 : déposé tel quel, sous son nom d'origine (pas d'enveloppe HFImage)
+        with open(p, "rb") as f:
+            self.assertEqual(sent[0].data, f.read())
+        self.assertEqual(sent[0].filename, "archive.xyz")
 
 
 class Glisser(unittest.TestCase):

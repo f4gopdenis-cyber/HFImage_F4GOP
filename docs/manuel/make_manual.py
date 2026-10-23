@@ -579,7 +579,8 @@ s.append(P("L'image passe par votre <b>hébergement web</b> (FTP) ; seul le <b>l
            "jamais le mot de passe. Par défaut, l'image part en <b>pleine qualité</b> (format « original » : le "
            "fichier tel quel, sans réduction), quelle que soit sa taille. Les <b>fichiers</b> (Images → Envoyer un "
            "fichier…, ou glissés sur la fenêtre) partent aussi <b>sans limite de taille ni de type</b> en hybride, comme "
-           "dans EasyPal (par radio : 16 Mo au plus)."))
+           "dans EasyPal (par radio : 16 Mo au plus). Depuis la 1.25, un fichier est déposé <b>tel quel, sous son nom "
+           "d'origine</b> (ex. RK1AT_20261021_133402_TEST.mp4) : le lien public s'ouvre directement dans un navigateur."))
 s.append(P("<b>Déposer d'avance</b> : en mode hybride, le bouton <b>⇪ Déposer</b> (onglet TX, à droite de WAV…) met "
            "l'image sur le serveur tout de suite, comme l'ancien EasyPal. Quand vient votre tour, <b>Émettre</b> envoie "
            "directement l'annonce radio, sans attendre le dépôt. Si l'image ou le serveur changent entre-temps, "

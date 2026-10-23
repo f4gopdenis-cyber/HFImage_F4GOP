@@ -542,7 +542,9 @@ s.append(P("In the HFImage modes, hybrid mode sends the picture through your <b>
            "<b>public link</b> of this folder; “Test server” checks everything. Only the link goes over the air, never "
            "the password. By default the picture goes in <b>full quality</b> (“original” format: the file as it is, "
            "not reduced), whatever its size. <b>Files</b> (Images → Send a file…, or dragged onto the window) also go "
-           "<b>with no size or type limit</b> in hybrid mode, as in EasyPal (over the air: 16 MB at most)."))
+           "<b>with no size or type limit</b> in hybrid mode, as in EasyPal (over the air: 16 MB at most). Since 1.25, a "
+           "file is uploaded <b>as it is, under its original name</b> (e.g. RK1AT_20261021_133402_TEST.mp4): the public "
+           "link opens directly in a web browser."))
 s.append(P("<b>Upload in advance</b>: in hybrid mode, the <b>⇪ Upload</b> button (TX tab, right of WAV…) puts the "
            "picture on the server right away, as the old EasyPal did. When it is your turn, <b>Transmit</b> sends the "
            "radio announcement at once, without waiting for the upload. If the picture or the server change in the "

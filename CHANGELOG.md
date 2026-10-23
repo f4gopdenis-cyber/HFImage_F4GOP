@@ -1,5 +1,11 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 1.25 — fichiers hybrides déposés tels quels (demande de RK1AT)
+
+- En mode hybride, un **fichier** (vidéo MP4, son MP3, page HTML, PDF, AVI…) est maintenant déposé **tel quel, sous son nom d'origine** : `RK1AT_20261021_133402_TEST.mp4`. Le lien public s'ouvre directement dans un navigateur (la vidéo se lit, la page s'affiche). Avant, il était emballé par HFImage (compressé, nom en « .file ») et seul HFImage savait l'ouvrir.
+- À la réception, le fichier est enregistré sous son nom d'origine dans le dossier « fichiers ». Les fichiers emballés des anciennes versions sont toujours compris. Une station restée sur une ancienne version reçoit le nouveau fichier complet, mais sous le nom « fichier.bin » : il suffit qu'elle se mette à jour.
+- Hybride EasyPal : le fichier garde aussi son extension d'origine. Le ménage du serveur reconnaît ces nouveaux noms. Par radio seule, rien ne change (le fichier reste compressé pour gagner du temps d'émission).
+
 ## Version 1.24 — commandes CAT personnalisées, dépôt hybride d'avance (demandes de VK6NJP)
 
 - **Commandes CAT personnalisées (comme EasyPal)** : nouveau choix dans Réglages → Poste radio…. On écrit soi-même les commandes envoyées au poste, en hexadécimal (Icom CI-V : `FEFE5EE01C0001FD`) ou en texte (Kenwood : `TX1;`) : Départ 1 et 2 (à l'ouverture du port), PTT marche / PTT arrêt (méthode PTT « CAT »), Sortie 1 et 2 (à la fermeture du programme), délai entre deux commandes. Les réglages d'EasyPal (`\$…\`) se collent tels quels. La fréquence du poste n'est pas lue dans ce mode.

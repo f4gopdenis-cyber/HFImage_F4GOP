@@ -20,6 +20,7 @@ import hamdrm
 import imgfmt
 from modem import MODE_FPB, Modem
 import qrmfilter
+import hybrid
 import protocol
 from protocol import (T_ACK, T_HDR, T_NACK, T_QRV, Receiver, Sender, detect_format, hybrid_frame,
                       T_HYB0, flash_frame, flash_key, parse_control, parse_flash, parse_hybrid,
@@ -691,7 +692,8 @@ class RxEngine:
             try:
                 name, body = protocol.unpack_file(data)
             except Exception:
-                name, body = "fichier.bin", data
+                # 1.25 : en hybride, le fichier est déposé tel quel ; son nom est dans le lien
+                name, body = (hybrid.name_from_url(info["url"]) if info.get("url") else "fichier.bin"), data
             safe = "".join(c if (c.isalnum() or c in "._- ()") else "_" for c in name).strip(" .") or "fichier"
             d = os.path.join(self.outdir, "fichiers")
             os.makedirs(d, exist_ok=True)

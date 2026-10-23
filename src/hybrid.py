@@ -81,9 +81,32 @@ def _dpapi(data: bytes, encrypt: bool) -> bytes:
 
 
 # ---------------------------------------------------------------- envoi
-def remote_name(callsign: str, fmt: str) -> str:
+def remote_name(callsign: str, fmt: str, filename: str = "") -> str:
+    """Nom sur le serveur : INDICATIF_date_heure.ext ; un fichier garde son nom d'origine
+    (INDICATIF_date_heure_TEST.mp4) : le lien public s'ouvre directement dans un navigateur."""
     call = "".join(c for c in callsign.upper() if c.isalnum()) or "NOCALL"
-    return f"{call}_{time.strftime('%Y%m%d_%H%M%S', time.gmtime())}.{fmt}"
+    stamp = time.strftime('%Y%m%d_%H%M%S', time.gmtime())
+    if filename:
+        return f"{call}_{stamp}_{safe_name(filename)}"
+    return f"{call}_{stamp}.{fmt}"
+
+
+def safe_name(filename: str) -> str:
+    """Nom de fichier sans risque pour un serveur web (lettres, chiffres, . _ -), extension gardée."""
+    import os
+    import unicodedata
+    base = os.path.basename(filename or "").strip()
+    base = unicodedata.normalize("NFKD", base).encode("ascii", "ignore").decode()   # été -> ete
+    out = "".join(c if (c.isascii() and (c.isalnum() or c in "._-")) else "_" for c in base).strip("._")
+    stem, ext = os.path.splitext(out)
+    return (stem[:60] or "fichier") + ext[:10]
+
+
+def name_from_url(url: str) -> str:
+    """Fichier hybride reçu : nom d'origine repris dans le lien (sans INDICATIF_date_heure_)."""
+    name = urllib.parse.unquote((url or "").split("?", 1)[0].rstrip("/").rsplit("/", 1)[-1])
+    m = re.match(r"[A-Za-z0-9]+_\d{8}_\d{6}_(.+)$", name)
+    return (m.group(1) if m else name) or "fichier.bin"
 
 
 def public_url(base: str, name: str) -> str:
@@ -223,7 +246,7 @@ def cleanup_async(cfg, directory, pattern, keep, order=None, log=None):
 def mine_pattern(callsign: str) -> str:
     """Noms des images hybrides HFImage de cet indicatif (voir remote_name)."""
     call = "".join(c for c in callsign.upper() if c.isalnum()) or "NOCALL"
-    return re.escape(call) + r"_\d{8}_\d{6}\.[A-Za-z0-9]{1,5}"
+    return re.escape(call) + r"_\d{8}_\d{6}(?:_[A-Za-z0-9._-]+)?\.[A-Za-z0-9]{1,10}"
 
 
 def upload(cfg, name: str, data: bytes, progress=None, keep=0, call=None, log=None) -> str:
