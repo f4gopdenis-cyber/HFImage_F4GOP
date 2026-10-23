@@ -1,5 +1,12 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 1.31 — carte des stations plus lisible
+
+- **Couleur selon le report** : le trait et le cadre de chaque station qui a reçu votre image ont la couleur de son report (vert foncé : +5 dB et plus, vert clair : 0 à +4, orange : -10 à -1, rouge : moins de -10 dB), avec une légende ; le report est écrit à côté de l'indicatif (« F6GIA +8 »).
+- **Étiquettes rangées** : chacune près de son point, du côté où il y a de la place, avec un petit trait de rappel si elle doit s'écarter ; elles ne se chevauchent plus. Traits plus fins.
+- **Souris sur une station** : une bulle donne prénom, locator, distance, direction, report et heure.
+- **Bouton « Tout voir »** : cadre la carte sur toutes les stations. La barre du haut n'est plus coupée ; en bas : nombre de stations, la plus lointaine et l'aide souris.
+
 ## Version 1.30 — « Répondre » met toujours l'indicatif du correspondant
 
 - Fenêtre des messages reçus, **Répondre…** : le message commence toujours par « F4EEH de F4GOP : », curseur juste après. Avant, rien n'était écrit si la case contenait encore le message envoyé précédemment. Si un message est en cours d'écriture (pas encore envoyé), le programme demande avant de le remplacer.

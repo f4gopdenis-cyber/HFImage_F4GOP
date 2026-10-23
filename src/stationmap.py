@@ -91,6 +91,48 @@ def bearing(a, b):
     return (math.degrees(math.atan2(y, x)) + 360) % 360
 
 
+# couleur du trait et du cadre selon le report reçu (dB)
+REPORT_COLORS = ((5, (20, 130, 20), "+5 dB et plus"), (0, (110, 190, 50), "0 à +4 dB"),
+                 (-10, (235, 145, 25), "-10 à -1 dB"), (None, (215, 45, 35), "moins de -10 dB"))
+NO_REPORT = (90, 130, 90)
+
+
+def report_color(rep):
+    if rep is None:
+        return NO_REPORT
+    for lim, col, _ in REPORT_COLORS:
+        if lim is None or rep >= lim:
+            return col
+    return REPORT_COLORS[-1][1]
+
+
+def _place_labels(items, W, H, avoid=()):
+    """Place les étiquettes sans chevauchement. items : [(px, py, w, h)] -> [(bx, by)].
+    Essaie 8 positions autour du point, puis de plus en plus loin (avec un trait de rappel)."""
+    boxes = [(x - 7, y - 7, x + 7, y + 7) for x, y in avoid]
+    out = []
+
+    def free(b):
+        return (b[0] >= 0 and b[1] >= 0 and b[2] <= W and b[3] <= H and
+                all(b[2] < o[0] or b[0] > o[2] or b[3] < o[1] or b[1] > o[3] for o in boxes))
+    for px, py, w, h in items:
+        pos = None
+        for dist in (9, 22, 40, 62, 90):
+            for dx, dy in ((1, 0), (-1, 0), (0, -1), (0, 1), (1, -1), (-1, -1), (1, 1), (-1, 1)):
+                bx = px + dx * dist + (0 if dx > 0 else (-w if dx < 0 else -w / 2))
+                by = py + dy * (dist * 0.6 + (h / 2 if dy else 0)) - (h / 2 if dy == 0 else (h if dy < 0 else 0))
+                if free((bx, by, bx + w, by + h)):
+                    pos = (bx, by)
+                    break
+            if pos:
+                break
+        if pos is None:                                   # pas de place : à droite du point
+            pos = (px + 9, py - h / 2)
+        boxes.append((pos[0], pos[1], pos[0] + w, pos[1] + h))
+        out.append(pos)
+    return out
+
+
 def _great_circle(a, b, n=48):
     la1, lo1, la2, lo2 = map(math.radians, (a[0], a[1], b[0], b[1]))
     d = 2 * math.asin(min(1.0, math.sqrt(math.sin((la2 - la1) / 2) ** 2 +
@@ -154,7 +196,7 @@ def fit_view(points, w, h, margin=0.25, min_span=8.0):
     return View(lon, lat, min(360.0, max(min_span, span_x, span_y)), w, h)
 
 
-def render(view, stations=(), me=None, lang="fr", show_lines=True):
+def render(view, stations=(), me=None, lang="fr", show_lines=True, tr=lambda s: s):
     """-> image PIL de la carte.
     stations : [{"call", "pos": (lat, lon), "ok": bool, "info": str}] ; me : idem pour nous."""
     d_ = load()
@@ -240,37 +282,56 @@ def render(view, stations=(), me=None, lang="fr", show_lines=True):
             g.ellipse([px - 2, py - 2, px + 2, py + 2], fill="black")
             g.text((px + 4, py), name, fill="black", font=f, anchor="lm")
 
-    # trajets puis étiquettes
-    flab = _font(13)
+    # trajets (couleur selon le report), puis points, puis étiquettes placées sans chevauchement
+    flab = _font(12)
     if me and me.get("pos") and show_lines:
-        for s in stations:
+        # les moins bons d'abord : les bons reports restent visibles par-dessus
+        for s in sorted(stations, key=lambda s: -999 if s.get("rep") is None else s["rep"]):
             if s.get("ok") and s.get("pos"):
+                col = report_color(s.get("rep"))
                 path = [view.xy(lo, la) for la, lo in _great_circle(me["pos"], s["pos"])]
                 for a, b in zip(path, path[1:]):
                     if abs(a[0] - b[0]) < W / 2:
-                        g.line([a, b], fill=LINE, width=4)
-    boxes = []
-    for s in list(stations) + ([me] if me and me.get("pos") else []):
-        if not s.get("pos"):
-            continue
+                        g.line([a, b], fill=col, width=2)
+    shown = [s for s in list(stations) + ([me] if me and me.get("pos") else []) if s.get("pos")]
+    pts = []
+    for s in shown:
         px, py = view.xy(s["pos"][1], s["pos"][0])
         is_me = s is me
-        col = (255, 255, 255) if is_me else (GREEN if s.get("ok") else (255, 224, 102))
-        g.ellipse([px - 6, py - 6, px + 6, py + 6], fill=LINE if not is_me else (40, 40, 40))
-        tw = g.textlength(s["call"], font=flab)
-        bw, bh = tw + 16, 20
-        bx, by = px - 10 - bw, py - bh / 2
-        for _ in range(8):                         # évite que deux étiquettes se chevauchent
-            if any(not (bx + bw < x0 or bx > x1 or by + bh < y0 or by > y1) for x0, y0, x1, y1 in boxes):
-                by += bh + 2
-            else:
-                break
-        boxes.append((bx, by, bx + bw, by + bh))
-        if abs(by + bh / 2 - py) > 1:              # étiquette déplacée : petit trait vers le point
-            g.line([(bx + bw, by + bh / 2), (px, py)], fill=(60, 60, 60), width=1)
-        g.rectangle([bx, by, bx + bw, by + bh], fill=col, outline=(30, 30, 30))
-        g.text((bx + bw / 2, by + bh / 2), s["call"], fill="black", font=flab, anchor="mm")
+        dot = (40, 40, 40) if is_me else (report_color(s.get("rep")) if s.get("ok") else (200, 160, 0))
+        g.ellipse([px - 5, py - 5, px + 5, py + 5], fill=dot, outline=(255, 255, 255))
+        pts.append((px, py))
+    items, texts = [], []
+    for s, (px, py) in zip(shown, pts):
+        t = s["call"] + ("" if s.get("rep") is None or s is me else f" {s['rep']:+d}")
+        texts.append(t)
+        items.append((px, py, g.textlength(t, font=flab) + 10, 17))
+    # notre station d'abord (elle garde la place à côté de son point)
+    order = sorted(range(len(shown)), key=lambda i: (shown[i] is not me, not shown[i].get("ok")))
+    placed = _place_labels([items[i] for i in order], W, H, avoid=pts)
+    for i, (bx, by) in zip(order, placed):
+        s, (px, py), (_, _, bw, bh) = shown[i], pts[i], items[i]
+        is_me = s is me
+        cx, cy = min(max(px, bx), bx + bw), min(max(py, by), by + bh)
+        if math.hypot(cx - px, cy - py) > 12:               # étiquette écartée : trait de rappel
+            g.line([(px, py), (cx, cy)], fill=(70, 70, 70), width=1)
+        fill = (255, 255, 255) if is_me else ((245, 250, 245) if s.get("ok") else (255, 236, 150))
+        edge = (30, 30, 30) if is_me else (report_color(s.get("rep")) if s.get("ok") else (170, 130, 0))
+        g.rectangle([bx, by, bx + bw, by + bh], fill=fill, outline=edge, width=2)
+        g.text((bx + bw / 2, by + bh / 2), texts[i], fill="black", font=flab, anchor="mm")
         s["_hit"] = (bx, by, bx + bw, by + bh, px, py)
+
+    # légende
+    if show_lines and any(s.get("ok") for s in stations):
+        fl = _font(11)
+        rows = [(col, tr(lab)) for _, col, lab in REPORT_COLORS]
+        lw = max(g.textlength(lab, font=fl) for _, lab in rows) + 40
+        x0, y0 = 8, H - 10 - 16 * len(rows) - 8
+        g.rectangle([x0, y0, x0 + lw, H - 10], fill=(255, 255, 255), outline=(120, 120, 120))
+        for k, (col, lab) in enumerate(rows):
+            y = y0 + 8 + 16 * k + 4
+            g.line([(x0 + 8, y), (x0 + 28, y)], fill=col, width=3)
+            g.text((x0 + 34, y), lab, fill="black", font=fl, anchor="lm")
     return img
 
 
@@ -319,11 +380,10 @@ class MapWindow:
         tk.Checkbutton(bar, text=tr("Aussi les autres stations (en jaune)"),
                        variable=self.v_heard, bg="#33d633", activebackground="#33d633",
                        command=toggled).pack(side="left", padx=6)
+        tk.Button(bar, text=tr("Tout voir"), command=lambda: self.set_view("*")).pack(side="left", padx=6)
         if on_paste:
             tk.Button(bar, text=tr("Coller la carte dans la fenêtre TX"),
                       command=self._paste).pack(side="left", padx=6)
-        tk.Label(bar, text=tr("Bouton gauche maintenu : déplacer la carte — molette : zoom"),
-                 bg="#33d633").pack(side="left", padx=10)
         self.cv = tk.Canvas(w, bg="#bee2f7", highlightthickness=0, cursor="fleur")
         self.cv.pack(fill="both", expand=True)
         self.info = tk.Label(w, text="", anchor="w", bg="#e8f7e6")
@@ -340,6 +400,8 @@ class MapWindow:
         self.cv.bind("<MouseWheel>", lambda e: self._zoom(e, 1 if e.delta > 0 else -1))
         self.cv.bind("<Button-4>", lambda e: self._zoom(e, 1))
         self.cv.bind("<Button-5>", lambda e: self._zoom(e, -1))
+        self.cv.bind("<Motion>", self._hover)
+        self.cv.bind("<Leave>", lambda e: self.cv.delete("tip"))
         self._preset = "Europe"
         self._focus = None          # station sur laquelle la carte est centrée
         self._moved = False         # l'utilisateur a déplacé / zoomé : on garde sa vue
@@ -418,7 +480,7 @@ class MapWindow:
         me, st = self._stations()
         st = [dict(s) for s in st]
         me = dict(me) if me else None
-        self._img = render(self.view, st, me, self.lang())
+        self._img = render(self.view, st, me, self.lang(), tr=self.tr)
         self._last = (st, me)
         self._ph = ImageTk.PhotoImage(self._img)
         self.cv.delete("all")
@@ -428,6 +490,47 @@ class MapWindow:
                             font=("TkDefaultFont", 8))
         if not me or not me.get("pos"):
             self.info.configure(text=self.tr("Indiquez votre locator dans les Réglages pour placer votre station."))
+        else:
+            self.info.configure(text=self._summary(st, me))
+
+    def _summary(self, st, me):
+        """Ligne du bas : nombre de stations, la plus lointaine, et l'aide souris."""
+        far = [(distance_km(me["pos"], s["pos"]), s["call"]) for s in st if s.get("pos")]
+        parts = [f"{len(st)} " + self.tr("stations")]
+        if far:
+            d, c = max(far)
+            parts.append(self.tr("la plus loin :") + f" {c}, " + f"{d:,.0f}".replace(",", " ") + " km")
+        parts.append(self.tr("glisser : déplacer la carte — molette : zoom — survol : détails"))
+        return "   —   ".join(parts)
+
+    def _hover(self, e):
+        """Bulle d'information au passage de la souris sur une station."""
+        if self._drag:
+            return
+        self.cv.delete("tip")
+        st, me = self._last
+        for s in st + ([me] if me else []):
+            h = s.get("_hit")
+            if h and (h[0] <= e.x <= h[2] and h[1] <= e.y <= h[3] or math.hypot(e.x - h[4], e.y - h[5]) < 8):
+                lines = [s["call"] + (f"  {s['name']}" if s.get("name") else "")]
+                if s.get("loc"):
+                    lines.append(s["loc"])
+                if me and me.get("pos") and s.get("pos") and s is not me and s["call"] != me.get("call"):
+                    lines.append(f"{distance_km(me['pos'], s['pos']):.0f} km, {bearing(me['pos'], s['pos']):.0f}°")
+                if s.get("info"):
+                    lines += [x.strip() for x in s["info"].split("—") if x.strip()]
+                txt = "\n".join(lines)
+                x, y = e.x + 14, e.y + 14
+                t = self.cv.create_text(x + 6, y + 4, text=txt, anchor="nw", tags="tip", font=("TkDefaultFont", 9))
+                bb = self.cv.bbox(t)
+                dx = min(0, self.view.w - bb[2] - 8) if self.view else 0
+                dy = min(0, self.view.h - bb[3] - 8) if self.view else 0
+                self.cv.move(t, dx, dy)
+                bb = self.cv.bbox(t)
+                r = self.cv.create_rectangle(bb[0] - 6, bb[1] - 4, bb[2] + 6, bb[3] + 4, fill="#ffffe0",
+                                             outline="#555", tags="tip")
+                self.cv.tag_raise(t, r)
+                return
 
     # déplacement / zoom
     def _press(self, e):

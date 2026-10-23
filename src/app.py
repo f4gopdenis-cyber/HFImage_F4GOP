@@ -62,7 +62,7 @@ import random
 import wave
 
 APP = "HFImage F4GOP"
-VERSION = "1.30"
+VERSION = "1.31"
 
 
 def _take_profile(argv):
@@ -2115,7 +2115,8 @@ class App(tk.Tk):
             # trait depuis notre station seulement vers ceux qui ont reçu NOTRE image
             ok = c in mine
             out.append({"call": c, "loc": loc, "pos": protocol.locator_to_latlon(loc), "ok": ok,
-                        "info": "   —   ".join(info)})
+                        "info": "   —   ".join(info), "rep": mine[c][0] if ok else None,
+                        "name": self.opnames.get(c, "")})
         return me, out
 
     def show_map(self, call=None):

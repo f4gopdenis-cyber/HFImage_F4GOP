@@ -537,7 +537,10 @@ s += B(["In the list, <b>*</b> marks a station transmitting (red) and <b>HYB</b>
         "(over the air and via the Internet). Also works for EasyPal pictures and hybrid EasyPal pictures received "
         "by HFImage stations.",
         "Click a station: the <b>station map</b> (like Digi-Sites), with path and distance; “Paste the map into the TX "
-        "window” to send it as a picture.",
+        "window” to send it as a picture. Each station's line and label have the <b>colour of its report</b> (dark green: "
+        "+5 dB and more, light green, orange, red: below -10 dB; legend at the bottom left), and the report is written "
+        "next to the callsign. Mouse over a station: name, locator, distance, report and time. “<b>Show all</b>” fits "
+        "the map to all stations.",
         "Firewall or Internet provider blocking port 1883: HFImage tries the other accesses of the same server by itself "
         "(8883 encrypted, then 8884 and 8000 via the web); the log shows which one worked."])
 s.append(img("en_stations.png", 160, "Stations tab: BSR / FIX options, mode following, and the station log."))

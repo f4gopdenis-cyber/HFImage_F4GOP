@@ -570,7 +570,10 @@ s += B(["<b>Rx Ok</b> : les stations qui ont bien reçu l'image, avec leur <b>re
         "Clic sur une station : la <b>carte des stations</b> (comme Digi-Sites), avec le trajet et la distance. "
         "Elle montre en vert, avec un trait, les stations qui ont reçu <b>votre dernière image</b> ; la case "
         "« Aussi les autres stations (en jaune) » ajoute les stations en ligne ou entendues. "
-        "« Coller la carte dans la fenêtre TX » pour l'envoyer en image.",
+        "« Coller la carte dans la fenêtre TX » pour l'envoyer en image. Le trait et le cadre de chaque station ont la "
+        "<b>couleur de son report</b> (vert foncé : +5 dB et plus, vert clair, orange, rouge : moins de -10 dB ; "
+        "légende en bas à gauche), et le report est écrit à côté de l'indicatif. Souris sur une station : prénom, "
+        "locator, distance, report et heure. « <b>Tout voir</b> » cadre la carte sur toutes les stations.",
         "Pare-feu ou fournisseur d'accès qui bloque le port 1883 : HFImage essaie tout seul les autres accès du même "
         "serveur (8883 chiffré, puis 8884 et 8000 par le web) ; le journal indique celui qui a fonctionné."])
 s.append(img("carte_stations.png", 150, "La carte des stations qui ont reçu l'image."))
