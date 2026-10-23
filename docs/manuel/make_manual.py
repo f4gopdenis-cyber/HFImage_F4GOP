@@ -262,6 +262,10 @@ s += B(["<b>Poste</b> : tapez une partie du nom dans « Rechercher » (ex. 7300,
         "Autres postes : Hamlib, téléchargé une fois (bouton « Installer Hamlib », 3 Mo).",
         "<b>OmniRig</b> (Rig 1 / Rig 2) ou <b>FLRig</b> : pour partager le poste avec d'autres logiciels "
         "(logger, WSJT-X…).",
+        "<b>SunSDR / ExpertSDR (TCI)</b> : HFImage parle directement à ExpertSDR par le TCI (Options → TCI dans "
+        "ExpertSDR, port 40001 ; « Serveur réseau » 127.0.0.1:40001, ou l'adresse du PC qui fait tourner ExpertSDR) : "
+        "fréquence, mode (DIGL / DIGU) et PTT « CAT », sans RadioSync ni port COM virtuel. Le son passe par les câbles "
+        "audio virtuels (VAC) d'ExpertSDR. Marche aussi avec les autres SDR qui parlent TCI.",
         "<b>Commandes CAT personnalisées (comme EasyPal)</b> : on écrit soi-même les commandes envoyées au poste, en "
         "hexadécimal (Icom CI-V : FEFE5EE01C0001FD) ou en texte (Kenwood : TX1;) : <b>Départ</b> 1 et 2 (à l'ouverture "
         "du port), <b>PTT marche</b> / <b>PTT arrêt</b> (avec la méthode PTT « CAT »), <b>Sortie</b> 1 et 2 (à la fermeture "

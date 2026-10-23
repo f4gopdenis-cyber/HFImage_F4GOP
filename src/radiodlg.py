@@ -247,10 +247,11 @@ class RadioDialog(tk.Toplevel):
         RadioDialog._ro = set(self.line_cbs.values())
         self._state(self.serial_frame, serial_on)
         self.cb_port.configure(state="normal" if serial_on else "disabled")
-        self.e_host.configure(state="normal" if kind in ("flrig", "netrigctl") else "disabled")
-        if kind in ("flrig", "netrigctl") and not self.v["host"].get():
-            self.v["host"].set("127.0.0.1:12345" if kind == "flrig" else "127.0.0.1:4532")
-        if kind not in ("flrig", "netrigctl") and self.v["host"].get() in ("127.0.0.1:12345", "127.0.0.1:4532"):
+        net = {"flrig": "127.0.0.1:12345", "netrigctl": "127.0.0.1:4532", "tci": "127.0.0.1:40001"}
+        self.e_host.configure(state="normal" if kind in net else "disabled")
+        if kind in net and (not self.v["host"].get() or self.v["host"].get() in net.values()):
+            self.v["host"].set(net[kind])
+        if kind not in net and self.v["host"].get() in net.values():
             self.v["host"].set("")
         self._state(self.mode_frame, kind != "none")
         # source audio : sert au PTT CAT (TX1; / TX0;) et au contrôle du mode DATA (dès que le CAT est relié)
@@ -278,7 +279,10 @@ class RadioDialog(tk.Toplevel):
                                               "netrigctl": "Un serveur rigctld doit tourner (port 4532 par "
                                                            "défaut).",
                                               "custom": "Commandes écrites à la main, comme dans EasyPal : "
-                                                        "la fréquence du poste n'est pas lue."}.get(kind, "")))
+                                                        "la fréquence du poste n'est pas lue.",
+                                              "tci": "ExpertSDR doit être lancé avec TCI activé (Options → TCI, "
+                                                     "port 40001). Le son passe par les câbles audio virtuels "
+                                                     "(VAC) d'ExpertSDR. Choisissez PTT « CAT »."}.get(kind, "")))
             self.bt_hamlib.grid_remove()
 
     # ------------------------------------------------------------------ Hamlib

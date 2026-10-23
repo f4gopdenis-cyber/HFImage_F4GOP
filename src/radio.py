@@ -28,7 +28,8 @@ from riglist import HAMLIB_VERSION, RIGS
 SPECIAL = [("none", "Aucun (pas de CAT)"), ("kenwood", "Kenwood (détection automatique)"),
            ("omnirig1", "OmniRig Rig 1"), ("omnirig2", "OmniRig Rig 2"),
            ("flrig", "FLRig"), ("netrigctl", "Hamlib NET rigctl"),
-           ("custom", "Commandes CAT personnalisées (comme EasyPal)")]
+           ("custom", "Commandes CAT personnalisées (comme EasyPal)"),
+           ("tci", "SunSDR / ExpertSDR (TCI)")]
 if not sys.platform.startswith("win"):
     SPECIAL = [s for s in SPECIAL if not s[0].startswith("omnirig")]      # OmniRig : Windows seulement
 # Kenwood pilotés en direct (commandes ASCII éprouvées) ; les autres passent par Hamlib
@@ -59,7 +60,7 @@ def rig_entry(key):
     label = rig_label(key)
     if key.startswith("omnirig"):
         return {"kind": "omnirig", "rig_no": 2 if key.endswith("2") else 1, "model_id": None, "label": label}
-    if key in ("none", "kenwood", "flrig", "netrigctl", "custom"):
+    if key in ("none", "kenwood", "flrig", "netrigctl", "custom", "tci"):
         return {"kind": key, "model_id": None, "label": label}
     if key.startswith("hamlib:"):
         try:
@@ -114,8 +115,9 @@ def describe(cfg):
     parts = [e["label"]]
     if e["kind"] in ("kenwood", "hamlib", "custom") and cfg.get("port"):
         parts.append(f"{cfg['port']} {cfg['baud']} bauds")
-    if e["kind"] in ("netrigctl", "flrig"):
-        parts.append(cfg.get("host") or ("127.0.0.1:4532" if e["kind"] == "netrigctl" else "127.0.0.1:12345"))
+    if e["kind"] in ("netrigctl", "flrig", "tci"):
+        parts.append(cfg.get("host") or {"netrigctl": "127.0.0.1:4532", "flrig": "127.0.0.1:12345",
+                                          "tci": "127.0.0.1:40001"}[e["kind"]])
     p = cfg["ptt"]
     if p in ("DTR", "RTS"):
         p += f" {cfg.get('ptt_port') or cfg.get('port') or '?'}"
@@ -314,6 +316,60 @@ class CustomRig(RigBase):
         except Exception:
             pass
         self.ser = None
+
+
+class TciRig(RigBase):
+    """SunSDR / ExpertSDR et autres SDR par TCI (WebSocket, port 40001) : fréquence, mode, PTT."""
+    kind = "tci"
+    RX = 0                                         # récepteur / émetteur 0, voie A
+
+    def __init__(self, cfg):
+        import tci
+        self.cfg = cfg
+        self.port = cfg.get("host") or tci.DEFAULT_HOST
+        self.c = tci.TciClient(self.port)
+        self.model = self.c.device or "TCI"
+
+    def _alive(self):
+        if not self.c.alive:
+            raise RuntimeError("TCI : connexion perdue (ExpertSDR fermé ?)")
+
+    def freq(self):
+        self._alive()
+        v = self.c.query(f"vfo:{self.RX},0", f"VFO:{self.RX},0;")
+        try:
+            return int(float(v)) if v else None
+        except ValueError:
+            return None
+
+    def mode(self):
+        self._alive()
+        m = self.c.query(f"modulation:{self.RX}", f"MODULATION:{self.RX};")
+        return (m or "").upper() or None
+
+    def ptt(self, on, rear=True):
+        self._alive()
+        self.c.send(f"TRX:{self.RX},{'true' if on else 'false'};")
+
+    def set_freq(self, hz):
+        self._alive()
+        self.c.send(f"VFO:{self.RX},0,{int(hz)};")
+        self.c.wait_for(f"vfo:{self.RX},0", str(int(hz)))
+
+    def set_sideband(self, side):
+        self._alive()
+        self.c.send(f"MODULATION:{self.RX},{'LSB' if side == 'LSB' else 'USB'};")
+
+    def set_mode(self, which):
+        """« data » : DIGL / DIGU (selon la bande latérale) ; « usb » : USB."""
+        self._alive()
+        want = ("DIGL" if self.is_lsb(self.mode()) else "DIGU") if which == "data" else "USB"
+        self.c.send(f"MODULATION:{self.RX},{want};")
+        ok = self.c.wait_for(f"modulation:{self.RX}", want)
+        return ok, f"{self.model} : mode {want}" + ("" if ok else " (pas de confirmation)")
+
+    def close(self):
+        self.c.close()
 
 
 class KenwoodRig(RigBase):
@@ -803,6 +859,8 @@ def make_rig(cfg):
         return OmniRigRig(cfg, e["rig_no"])
     if k == "custom":
         return CustomRig(cfg)
+    if k == "tci":
+        return TciRig(cfg)
     return None
 
 

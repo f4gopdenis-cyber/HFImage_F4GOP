@@ -1,5 +1,10 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 1.29 — SunSDR / ExpertSDR par TCI (demande de F4FRC, radio-club F8KLY)
+
+- Nouveau choix **« SunSDR / ExpertSDR (TCI) »** dans Réglages → Poste radio… : HFImage parle directement à ExpertSDR par le **TCI** (réseau, port 40001), sans RadioSync ni port COM virtuel. Fréquence et mode lus en direct (ExpertSDR prévient de chaque changement), PTT par CAT, changement de fréquence (bouton Fréquence ▾), passage automatique en DIGL / DIGU avant d'émettre.
+- Le son passe, comme avant, par les câbles audio virtuels (VAC) d'ExpertSDR. Dans ExpertSDR : Options → TCI, activer le serveur (port 40001). Marche aussi avec les autres logiciels SDR qui parlent TCI.
+
 ## Version 1.28 — Sites des stations (remplace Digi-Sites)
 
 - Nouvelle fenêtre **Sites des stations** (Images → Sites des stations…, aussi dans Action et par clic droit sur la liste des stations) : comme Digi-Sites, qui n'est plus entretenu depuis le décès de W3WV, une vignette par station avec la **dernière image qu'elle a reçue** (son image1), l'heure de cette image et la distance. Les plus récentes en premier ; un clic l'agrandit ; clic droit : ouvrir la page de la station.

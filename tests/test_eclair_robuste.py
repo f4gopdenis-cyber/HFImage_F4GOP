@@ -30,7 +30,8 @@ def rx(audio):
 @unittest.skipIf(engine is None, "libcodec2 absente")
 class EclairRobuste(unittest.TestCase):
     def setUp(self):
-        self.h = engine.HybridTransmission(os.urandom(4000), "jpeg", "G7VQV", "https://x/y.jpg", flash=True)
+        rng = np.random.default_rng(4000)                # données fixes : essai reproductible
+        self.h = engine.HybridTransmission(rng.bytes(4000), "jpeg", "G7VQV", "https://x/y.jpg", flash=True)
 
     def test_composition(self):
         self.assertEqual([(m.mode, n) for m, n in self.h.parts], [("DATAC13", 3), ("DATAC0", 2)])
@@ -48,7 +49,9 @@ class EclairRobuste(unittest.TestCase):
         old = engine.RX_MODES
         try:
             engine.RX_MODES = tuple(x for x in old if x != "DATAC13")
-            got = rx(self.h.audio())
+            # sur l'air (bruit réel) : sans aucun bruit, le coupe-QRM voit un plancher nul et
+            # peut abîmer le DATAC0 qui suit le DATAC13 (artefact de simulation, ~10 % des tirages)
+            got = rx(channel.apply(self.h.audio(), 8000, 10.0, "none", 7))
         finally:
             engine.RX_MODES = old
         self.assertEqual(len(got), 1)

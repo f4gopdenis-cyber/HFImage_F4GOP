@@ -255,6 +255,10 @@ s += B(["<b>Radio</b>: type part of the name in “Search” (e.g. 7300, FT-991,
         "Kenwood TS-990S / TS-890S / TS-590 / TS-2000 / TS-480 are driven directly, nothing to install. "
         "Other radios: Hamlib, downloaded once (“Install Hamlib” button, 3 MB).",
         "<b>OmniRig</b> (Rig 1 / Rig 2) or <b>FLRig</b>: to share the radio with other programs (logger, WSJT-X…).",
+        "<b>SunSDR / ExpertSDR (TCI)</b>: HFImage talks directly to ExpertSDR through TCI (Options → TCI in ExpertSDR, "
+        "port 40001; “Network server” 127.0.0.1:40001, or the address of the PC running ExpertSDR): frequency, mode "
+        "(DIGL / DIGU) and PTT “CAT”, without RadioSync or a virtual COM port. Audio goes through ExpertSDR's virtual "
+        "audio cables (VAC). Also works with other SDRs that speak TCI.",
         "<b>Custom CAT commands (as in EasyPal)</b>: you write the commands sent to the radio yourself, in hexadecimal "
         "(Icom CI-V: FEFE5EE01C0001FD) or as text (Kenwood: TX1;): <b>Initial</b> strings 1 and 2 (when the port opens), "
         "<b>PTT ON</b> / <b>PTT OFF</b> (with PTT method “CAT”), <b>Exit</b> strings 1 and 2 (when the program closes) and "
