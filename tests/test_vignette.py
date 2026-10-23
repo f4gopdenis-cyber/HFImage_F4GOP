@@ -19,7 +19,8 @@ class Vignette(unittest.TestCase):
                                   v_loc=types.SimpleNamespace(get=lambda: "IN98QR"), mycall=lambda: "F4GOP",
                                   myname=lambda: "", _journal=lambda t: got.append(("err", t)),
                                   panel=types.SimpleNamespace(set_thumb=lambda im, t: got.append((im.size, t))))
-        for n in ("_station_call", "_label"):
+        s.online = {}
+        for n in ("_station_call", "_label", "_distance_to"):
             setattr(s, n, getattr(app.App, n).__get__(s))
         app.App._panel_thumb(s, Image.new("RGB", (40, 30)), "F4EEH")
         size, txt = got[0]

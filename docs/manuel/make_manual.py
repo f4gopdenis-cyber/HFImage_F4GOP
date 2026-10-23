@@ -624,6 +624,13 @@ s.append(P("Menu <b>Images → Site web / Digi-Sites…</b> : comme EasyPal, cha
            "et bande. Vos images émises vont dans TX1.jpg … TX5.jpg. Une page <b>hfimage.html</b> les présente "
            "(rafraîchie toutes les 5 minutes). Dans Digi-Sites : Setup → Edit site, et donnez l'adresse du fichier "
            "<b>image1</b> (affichée en vert dans la fenêtre)."))
+s.append(P("Sites des stations", "h2"))
+s.append(P("Menu <b>Images → Sites des stations…</b> (ou Action, ou clic droit sur la liste des stations) : comme "
+           "Digi-Sites, qui n'est plus entretenu, une vignette par station avec la <b>dernière image qu'elle a reçue</b> "
+           "(son image1), l'heure de cette image et la distance. Les stations HFImage en ligne qui mettent leurs images "
+           "sur leur site y apparaissent toutes seules ; « <b>Ajouter une station…</b> » pour une station EasyPal (adresse "
+           "de son image1, celle donnée à Digi-Sites). Relu toutes les 2 minutes, seulement si l'image a changé ; un clic "
+           "l'agrandit, clic droit : page de la station."))
 s += B(["<b>Dossier sur le serveur</b> : le dossier FTP, pas une adresse web. <b>Vide = racine du site</b>, comme EasyPal.",
         "<b>Lien public</b> : l'adresse web de ce dossier.",
         "Exemple qsl.net : serveur <b>ftp.qsl.net</b>, identifiant = votre indicatif (Réglages → Mode hybride), "

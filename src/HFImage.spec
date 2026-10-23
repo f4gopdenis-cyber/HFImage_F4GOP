@@ -29,7 +29,7 @@ a = Analysis(['app.py'], pathex=['.'],
              binaries=_native + _ucrt,
              datas=[('carte.bin', '.'), ('hfimage.ico', '.'), ('icon64.png', '.'), ('icon32.png', '.'), ('icon256.png', '.'), ('HFImage_mode_emploi.pdf', '.'), ('HFImage_user_manual_EN.pdf', '.'), ('LICENSE.txt', '.'), ('LICENCE.txt', '.'), ('emoji/*.png', 'emoji')] + _dnd_data,
              hiddenimports=["loopback", "docking", "rxclean", "translate", "setupwiz", "bubbles", "dropfiles", "tkinterdnd2", "tkinterdnd2.TkinterDnD", "msgwin", "clocktz", "trafic", "channel", "waterfall", "hybrid", "panel", "qsl", "i18n", "wavtext", "imgfmt", "stationmap", "presence", "theme", "updater", "tkinter.colorchooser", "paho.mqtt.client", "tkinter.simpledialog",
-                            "serial.tools.list_ports", "secrets", "hmac", "radio", "radiodlg", "gallery", "qrmfilter", "websync", "trafic", "wavanalyze", "anadlg", "riglist", "contextlib",
+                            "serial.tools.list_ports", "secrets", "hmac", "radio", "radiodlg", "gallery", "qrmfilter", "websync", "sites", "email.utils", "trafic", "wavanalyze", "anadlg", "riglist", "contextlib",
                             "xmlrpc.client", "buildinfo", "hamdrm", "easypal_hybrid", "PIL._tkinter_finder", "PIL.ImageTk"] + (["comtypes", "comtypes.client", "comtypes.automation"] if WIN else [])
                            + _legacy + ([] if LEGACY else ["resvg_py"]),
              excludes=['scipy', 'skimage', 'matplotlib', 'pandas', 'IPython', 'pytest',

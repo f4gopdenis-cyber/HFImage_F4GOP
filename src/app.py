@@ -32,6 +32,7 @@ import imgfmt
 import presence
 import docking
 import gallery
+import sites
 import websync
 import trafic
 import msgwin
@@ -61,7 +62,7 @@ import random
 import wave
 
 APP = "HFImage F4GOP"
-VERSION = "1.27"
+VERSION = "1.28"
 
 
 def _take_profile(argv):
@@ -835,6 +836,7 @@ class App(tk.Tk):
         a.add_separator()
         a.add_command(label="Signaler ma présence (QRV)", command=self.send_qrv)
         a.add_command(label="Carte des stations…", command=self.show_map)
+        a.add_command(label="Sites des stations…", command=self.show_sites)
         self.qsy_menu = tk.Menu(a, tearoff=0, postcommand=lambda: self._fill_qsy_menu(self.qsy_menu))
         a.add_cascade(label="Aller sur une fréquence", menu=self.qsy_menu)
         m.add_cascade(label="Action", menu=a)
@@ -850,6 +852,7 @@ class App(tk.Tk):
         i.add_command(label="Dossier des images reçues", command=self.open_folder)
         i.add_command(label="Galerie des dernières images", command=lambda: self.show_tab("gal"))
         i.add_command(label="Site web / Digi-Sites…", command=self.web_dialog)
+        i.add_command(label="Sites des stations…", command=self.show_sites)
         m.add_cascade(label="Images", menu=i)
         f = tk.Menu(m, tearoff=0)
         f.add_command(label="Enregistrer l'émission en WAV…", command=self.save_wav)
@@ -1902,6 +1905,7 @@ class App(tk.Tk):
         self.lst_rxok.bind("<Double-Button-1>", lambda e: self._heard_detail(self.lst_rxok))
         menu = tk.Menu(self, tearoff=0)
         menu.add_command(label="Carte des stations…", command=self.show_map)
+        menu.add_command(label="Sites des stations…", command=self.show_sites)
         menu.add_command(label="Signaler ma présence (QRV)", command=self.send_qrv)
         menu.add_command(label="Aller sur la fréquence de cette station", command=self._qsy_station)
         menu.add_command(label="Vider la liste des stations", command=self._heard_clear)
@@ -1932,7 +1936,8 @@ class App(tk.Tk):
         try:
             self.net.start(call, {"loc": self.v_loc.get().strip(), "freq": self.rig_freq,
                                   "mode": self.rig_mode, "state": "RX", "ver": VERSION, "app": "HFImage",
-                                  "hyb": bool(self.v_hyb.get()), "name": self.myname()})
+                                  "hyb": bool(self.v_hyb.get()), "name": self.myname(),
+                                  "site": self._my_site()})
         except Exception as e:
             self.log_exc("Présence Internet", e)
             self.net = None
@@ -3046,7 +3051,7 @@ class App(tk.Tk):
         # présence Internet : republiée à chaque changement (fréquence, émission…) et chaque minute
         if self.net is not None:
             st = (fr, self.rig_mode, "TX" if self.tx_busy else "RX", self.v_loc.get().strip(),
-                  self.mycall(), bool(self.v_hyb.get()), self.myname())
+                  self.mycall(), bool(self.v_hyb.get()), self.myname(), self._my_site())
             now = time.time()
             # indicatif ou prénom en cours de frappe : on attend 3 s sans changement
             # (avant, chaque lettre tapée créait une nouvelle présence : « F4LTX CH », « F4LTX CHR »…)
@@ -3058,10 +3063,10 @@ class App(tk.Tk):
                 if st[4] and st[4] != self.net.call:
                     if settled:
                         self.net_start()                     # indicatif changé : nouvelle présence
-                elif settled or st[6] == (self._net_st or (None,) * 7)[6]:
+                elif settled or st[6] == (self._net_st or (None,) * 8)[6]:
                     self._net_st, self._net_t = st, now
                     self.net.update(freq=fr, mode=self.rig_mode, state=st[2], loc=st[3], hyb=st[5],
-                                    name=st[6])
+                                    name=st[6], site=st[7])
         self.after(1000, self._clock)
 
     def _tick(self):
@@ -6185,16 +6190,42 @@ class App(tk.Tk):
         except Exception as ex:
             self._journal(f"Vignette du panneau : {ex}\n")
 
+    def _distance_to(self, call):
+        """Distance (km) jusqu'à la station, d'après les locators ; None si inconnue."""
+        here = protocol.locator_to_latlon(self.v_loc.get().strip())
+        loc = self.known_loc.get(call, "")
+        if not loc:
+            d = next((x for x in self.online.values() if x.get("call") == call), None)
+            loc = (d or {}).get("loc", "")
+        there = protocol.locator_to_latlon(loc)
+        if not (here and there):
+            return None
+        import stationmap
+        return stationmap.distance_km(here, there)
+
+    def show_sites(self):
+        """Fenêtre « Sites des stations » (remplace Digi-Sites, qui n'est plus entretenu)."""
+        w = getattr(self, "sites_win", None)
+        if w is not None and w.alive():
+            w.lift()
+            w.refresh(force=True)
+            return
+        self.sites_win = sites.SitesWindow(self)
+
+    def _my_site(self):
+        """Adresse de notre image1 (Site web / Digi-Sites), annoncée dans la présence ; "" sinon."""
+        if not self.conf.get("web_on") or not self.conf.get("web_url"):
+            return ""
+        return websync.digisites_url(self._web_cfg())
+
     def _panel_thumb(self, im, call):
         """Vignette du panneau : dernière image reçue, avec indicatif, prénom et distance."""
         try:
             c = self._station_call(call) if call else ""
             parts = [self._label(c)] if c and c != "?" else []
-            here = protocol.locator_to_latlon(self.v_loc.get().strip())
-            there = protocol.locator_to_latlon(self.known_loc.get(c, "")) if c else None
-            if here and there:
-                import stationmap
-                parts.append(f"{stationmap.distance_km(here, there):.0f} km")
+            dist = self._distance_to(c) if c else None
+            if dist is not None:
+                parts.append(f"{dist:.0f} km")
             self.panel.set_thumb(im.convert("RGB"), "\n".join(parts))      # une ligne chacun
         except Exception as e:
             self._journal(f"Vignette du panneau : {e}\n")

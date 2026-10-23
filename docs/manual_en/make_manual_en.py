@@ -574,6 +574,12 @@ s.append(P("Menu <b>Images → Website / Digi-Sites…</b>: as in EasyPal, each 
            "qsl.net: server <b>ftp.qsl.net</b>, empty folder, link <b>https://www.qsl.net/yourcall</b>, address for "
            "Digi-Sites (Setup → Edit site) <b>https://www.qsl.net/yourcall/image1</b>; page of your pictures: "
            "https://www.qsl.net/yourcall/hfimage.html."))
+s.append(P("<b>Station sites</b>: menu <b>Images → Station sites…</b> (or Action, or right-click on the station list): "
+           "like Digi-Sites, which is no longer maintained, one thumbnail per station with the <b>last picture it "
+           "received</b> (its image1), the time of that picture and the distance. Online HFImage stations that upload "
+           "their pictures appear by themselves; “<b>Add a station…</b>” for an EasyPal station (address of its image1, "
+           "the one given to Digi-Sites). Read every 2 minutes, only if the picture changed; a click enlarges it, "
+           "right-click: the station's page."))
 
 # ------------------------------------------------------------------ 10
 s.append(P("10. Noise, QSB and QRM", "h1"))

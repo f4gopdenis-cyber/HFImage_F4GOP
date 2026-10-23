@@ -1,5 +1,11 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 1.28 — Sites des stations (remplace Digi-Sites)
+
+- Nouvelle fenêtre **Sites des stations** (Images → Sites des stations…, aussi dans Action et par clic droit sur la liste des stations) : comme Digi-Sites, qui n'est plus entretenu depuis le décès de W3WV, une vignette par station avec la **dernière image qu'elle a reçue** (son image1), l'heure de cette image et la distance. Les plus récentes en premier ; un clic l'agrandit ; clic droit : ouvrir la page de la station.
+- Les stations HFImage qui mettent leurs images en ligne (Site web / Digi-Sites) annoncent maintenant l'adresse de leur image1 dans leur présence : elles apparaissent toutes seules. **« Ajouter une station… »** pour le site d'une station EasyPal (adresse de son image1, celle donnée à Digi-Sites).
+- Les images ne sont relues que si elles ont changé (toutes les 2 minutes, seulement quand la fenêtre est ouverte). Sécurité : adresses http / https vers des serveurs publics seulement, 5 Mo au plus par image.
+
 ## Version 1.27 — vignette dans le panneau, adresse Digi-Sites
 
 - **Panneau d'état** : la place libre à droite du tableau TX / RX montre maintenant la **vignette de la dernière image reçue**, avec l'indicatif, le prénom et la distance de la station (« F4EEH Jean — 312 km »). Elle se met à jour à chaque réception (aperçu compris) ; un clic l'affiche dans l'onglet RX. Au démarrage, elle montre la dernière image de la galerie. Elle prend la place disponible sans élargir le panneau.
