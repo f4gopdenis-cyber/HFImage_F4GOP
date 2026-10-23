@@ -13,6 +13,8 @@ from fake_tci import FakeTci  # noqa: E402
 
 class Tci(unittest.TestCase):
     def setUp(self):
+        import gc
+        gc.collect()          # objets Tk des essais précédents libérés dans le fil principal
         self.srv = FakeTci()
         self.cfg = dict(radio.DEFAULTS, rig="tci", host=f"127.0.0.1:{self.srv.port}", ptt="CAT")
 

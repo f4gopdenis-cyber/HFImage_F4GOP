@@ -1,5 +1,10 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 1.30 — « Répondre » met toujours l'indicatif du correspondant
+
+- Fenêtre des messages reçus, **Répondre…** : le message commence toujours par « F4EEH de F4GOP : », curseur juste après. Avant, rien n'était écrit si la case contenait encore le message envoyé précédemment. Si un message est en cours d'écriture (pas encore envoyé), le programme demande avant de le remplacer.
+- Toujours le bon indicatif : le vôtre sans le prénom, celui du correspondant complet (même coupé par la radio ou suivi d'un prénom) ; expéditeur inconnu : « de F4GOP : ».
+
 ## Version 1.29 — SunSDR / ExpertSDR par TCI (demande de F4FRC, radio-club F8KLY)
 
 - Nouveau choix **« SunSDR / ExpertSDR (TCI) »** dans Réglages → Poste radio… : HFImage parle directement à ExpertSDR par le **TCI** (réseau, port 40001), sans RadioSync ni port COM virtuel. Fréquence et mode lus en direct (ExpertSDR prévient de chaque changement), PTT par CAT, changement de fréquence (bouton Fréquence ▾), passage automatique en DIGL / DIGU avant d'émettre.

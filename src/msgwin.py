@@ -4,7 +4,7 @@ import os
 import time
 import sys
 import tkinter as tk
-from tkinter import ttk
+from tkinter import messagebox, ttk
 
 from PIL import Image, ImageTk
 
@@ -207,12 +207,28 @@ class MessageWindow(tk.Toplevel):
             self.app.open_path(p)
 
     def reply(self):
+        """Répondre : nouveau message qui commence par « F4EEH de F4GOP : » (1.30 : toujours ;
+        avant, rien n'était écrit si la case contenait encore le message précédent)."""
         it = self.items[self.pos] if self.items else {}
+        app = self.app
         call = it.get("call")
-        me = self.app.v_call.get().strip().upper()
-        self.app.show_text()
-        box = self.app.txt_msg
-        if call not in (None, "", "?") and not box.get("1.0", "end").strip():
-            box.insert("1.0", f"{call} de {me} : " if me else f"{call} : ")
+        c = ""
+        if call not in (None, "", "?"):
+            c = app._station_call(app._full_call(call))      # indicatif complet, sans prénom
+        me = app.mycall()
+        head = (f"{c} de {me} : " if c and me else f"de {me} : " if me else f"{c} : " if c else "")
+        app.show_text()
+        box = app.txt_msg
+        cur = box.get("1.0", "end").strip()
+        sent = (getattr(app, "_last_sent_text", "") or "").strip()
+        if cur and cur != sent and cur != head.strip():
+            # un message en cours d'écriture (pas encore envoyé) : on demande avant de l'effacer
+            if not messagebox.askyesno("HFImage", tr("Remplacer le message en cours d'écriture par la "
+                                                     "réponse à {0} ?").replace("{0}", c or "?"),
+                                       parent=app.win_txt):
+                box.focus_set()
+                return
+        box.delete("1.0", "end")
+        box.insert("1.0", head)
         box.mark_set("insert", "end-1c")
         box.focus_set()

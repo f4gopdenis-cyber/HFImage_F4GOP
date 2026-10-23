@@ -62,7 +62,7 @@ import random
 import wave
 
 APP = "HFImage F4GOP"
-VERSION = "1.29"
+VERSION = "1.30"
 
 
 def _take_profile(argv):
@@ -6253,6 +6253,7 @@ class App(tk.Tk):
 
     # ------------------------------------------------------------- messages envoyés : accusés de réception
     def _msg_sent(self, iid, text, mode, with_image=False):
+        self._last_sent_text = text           # « Répondre » peut remplacer ce texte sans demander
         self.sent_msgs[iid] = {"text": text, "t": time.time(), "mode": mode, "acks": {}, "image": with_image}
         for k in list(self.sent_msgs)[:-50]:
             del self.sent_msgs[k]
