@@ -373,7 +373,8 @@ s.append(P("<b>Phone pictures</b>: a picture saved “lying on its side” by th
 s.append(P("Speech bubbles", "h2"))
 s.append(P("<b>Bubbles…</b> button (TX tab) or <b>Images → Speech bubbles…</b>: type a text and it appears in a "
            "comic-strip bubble on the transmitted picture. Four styles: <b>speech</b> (round bubble with a tail), "
-           "<b>thought</b> (small circles), <b>shout</b> (star outline), <b>caption</b> (rectangle); three text sizes; "
+           "<b>thought</b> (small circles), <b>shout</b> (star outline), <b>caption</b> (rectangle), <b>text only</b> (no "
+           "bubble: the text directly on the picture, outlined in the “background” colour to stay readable); three text sizes; "
            "background and text colours of your choice; <b>30 colour emoticons</b> to add to the text with one click; "
            "“<b>Animated emoticons</b>” box: in hybrid mode they move (the heart beats, the hand waves, the star spins, "
            "a wink…) and the picture goes as an animated GIF (a photo loses a little detail: 256 colours); over the air "

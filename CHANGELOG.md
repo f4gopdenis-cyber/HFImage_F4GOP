@@ -1,5 +1,10 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 1.34 — texte libre sur l'image, dossier « envoyees » allégé (demandes de RK1AT)
+
+- Bulles de texte : nouveau style **« Texte seul (sans bulle) »** : le texte est écrit directement sur l'image, bordé d'un contour (couleur « Fond ») pour rester lisible sur n'importe quelle photo ; blanc bordé de noir par défaut. Il se déplace à la souris, sur une ou plusieurs lignes, avec émoticônes (même animées).
+- Dossier **« envoyees »** : une image renvoyée à l'identique n'est plus recopiée (elle remonte simplement en tête de la galerie). Nouveau réglage (Réglages → Dossier des images reçues) **« Images envoyées gardées »** : toutes (comme avant), les 20 dernières, ou **la dernière seulement** ; les plus anciennes sont effacées de ce dossier seulement (les images reçues ne sont jamais touchées).
+
 ## Version 1.33 — hommage à VK4AES
 
 - Dans la barre du bas de la fenêtre principale, à gauche de l'horloge : un petit **drapeau australien** et « **En hommage à VK4AES** », pour Erik Sundstrup VK4AES (SK), créateur d'EasyPal, à qui HFImage est dédié. Un clic affiche la dédicace. Traduit dans les 5 langues ; le drapeau est dessiné par le programme.

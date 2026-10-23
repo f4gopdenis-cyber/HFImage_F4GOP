@@ -17,7 +17,8 @@ from PIL import Image, ImageDraw
 
 import trafic
 
-STYLES = ("parole", "pensée", "cri", "cartouche")
+STYLES = ("parole", "pensée", "cri", "cartouche", "texte")
+NO_TAIL = ("cartouche", "texte")       # « texte » : texte seul sur l'image, sans bulle (contour = couleur de fond)
 SIZES = {"petite": 0.038, "moyenne": 0.052, "grande": 0.072}
 MIN_PX = 14                     # en dessous, le texte devient illisible après compression
 FONTS = ("Comic Sans MS", "Arial")
@@ -170,7 +171,8 @@ def layout(W, H, b, scale=1.0):
     -> dict : centre, demi-axes, pointe, lignes, police, boîte englobante de la bulle."""
     fpx = font_px(H, b.get("size"))
     font = _font(int(fpx * scale))
-    lines = _wrap(b.get("text", ""), font, 0.45 * W * scale)
+    # texte seul : lignes plus longues (légende sur toute la largeur)
+    lines = _wrap(b.get("text", ""), font, (0.85 if b.get("style") == "texte" else 0.45) * W * scale)
     lh = font.size * 1.18
     tw = max([_measure(font, t) for t in lines] + [font.size * 2])
     th = lh * len(lines)
@@ -178,6 +180,8 @@ def layout(W, H, b, scale=1.0):
     style = b.get("style", "parole")
     if style == "cartouche":
         rx, ry = tw / 2 + pad, th / 2 + pad * 0.7
+    elif style == "texte":
+        rx, ry = tw / 2 + pad * 0.3, th / 2 + pad * 0.3
     else:
         rx, ry = tw / 2 * 1.22 + pad, th / 2 * 1.5 + pad * 0.6
     if style == "cri":
@@ -198,7 +202,7 @@ def _ell_pt(g, ang, k=1.0):
 
 
 def _has_tail(g):
-    if g["style"] == "cartouche":
+    if g["style"] in NO_TAIL:
         return False
     # pointe à l'intérieur de la bulle : pas de pointe
     dx, dy = (g["tx"] - g["cx"]) / g["rx"], (g["ty"] - g["cy"]) / g["ry"]
@@ -235,7 +239,9 @@ def _draw_one(d, g, off, bg, fg, layer=None, t=None):
     lw = g["lw"]
     cx, cy, rx, ry = g["cx"] - ox, g["cy"] - oy, g["rx"], g["ry"]
     style, tail = g["style"], _has_tail(g)
-    if style == "cartouche":
+    if style == "texte":
+        pass                                  # pas de bulle : le texte seul, avec un contour (plus bas)
+    elif style == "cartouche":
         d.rounded_rectangle((cx - rx - lw, cy - ry - lw, cx + rx + lw, cy + ry + lw), radius=lw * 2, fill=fg)
         d.rounded_rectangle((cx - rx, cy - ry, cx + rx, cy + ry), radius=lw * 1.5, fill=bg)
     elif style == "pensée":
@@ -277,7 +283,11 @@ def _draw_one(d, g, off, bg, fg, layer=None, t=None):
         x = cx - _measure(font, line) / 2
         for kind, v in _runs(line):
             if kind == "t":
-                d.text((x, ym), v, font=font, fill=fg, anchor="lm")
+                if style == "texte":          # contour de la couleur de « fond » : lisible sur toute photo
+                    d.text((x, ym), v, font=font, fill=fg, anchor="lm",
+                           stroke_width=max(2, int(round(font.size / 12))), stroke_fill=bg)
+                else:
+                    d.text((x, ym), v, font=font, fill=fg, anchor="lm")
                 x += font.getlength(v)
             else:
                 es = _esize(font)
@@ -343,7 +353,7 @@ def hit(W, H, bubbles, x, y, grab=10):
     La pointe est prioritaire (petite cible) ; les bulles du dessus d'abord."""
     for i in range(len(bubbles) - 1, -1, -1):
         g = layout(W, H, bubbles[i])
-        if g["style"] != "cartouche" and math.hypot(x - g["tx"], y - g["ty"]) <= grab:
+        if g["style"] not in NO_TAIL and math.hypot(x - g["tx"], y - g["ty"]) <= grab:
             return i, "pointe"
     for i in range(len(bubbles) - 1, -1, -1):
         x0, y0, x1, y1 = layout(W, H, bubbles[i])["box"]

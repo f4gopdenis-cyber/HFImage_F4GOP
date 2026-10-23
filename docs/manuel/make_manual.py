@@ -381,9 +381,10 @@ s.append(P("<b>Photos de téléphone</b> : une photo enregistrée « couchée »
            "très haute qualité, déjà droite, même en mode « original »."))
 s.append(P("Bulles de texte (BD)", "h2"))
 s.append(P("Bouton <b>Bulles…</b> (onglet TX) ou menu <b>Images → Bulles de texte…</b> : on écrit un texte, il "
-           "apparaît dans une bulle de bande dessinée sur l'image émise. Quatre styles : <b>parole</b> (bulle ronde "
+           "apparaît dans une bulle de bande dessinée sur l'image émise. Cinq styles : <b>parole</b> (bulle ronde "
            "avec une pointe), <b>pensée</b> (petits ronds), <b>cri</b> (contour en étoile), <b>cartouche</b> "
-           "(rectangle, comme une légende) ; trois tailles de texte ; couleurs du fond et du texte au choix ; "
+           "(rectangle, comme une légende), <b>texte seul</b> (sans bulle : le texte directement sur l'image, bordé de la "
+           "couleur de « fond » pour rester lisible) ; trois tailles de texte ; couleurs du fond et du texte au choix ; "
            "<b>30 émoticônes</b> en couleur (sourires, pouce levé, poste radio, soleil, cœur…) à ajouter d'un clic dans le texte ; "
            "case « <b>Émoticônes animées</b> » : en mode hybride, elles bougent (le cœur bat, la main salue, l'étoile tourne, "
            "clin d'œil…) et l'image part en GIF animé (une photo y perd un peu en finesse : 256 couleurs) ; en radio seule, "

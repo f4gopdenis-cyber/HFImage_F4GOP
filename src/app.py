@@ -62,7 +62,7 @@ import random
 import wave
 
 APP = "HFImage F4GOP"
-VERSION = "1.33"
+VERSION = "1.34"
 
 
 def _take_profile(argv):
@@ -142,6 +142,8 @@ ORIGINAL_KINDS = ("jpeg", "png", "gif", "avif", "webp", "svg")
 WIDTHS = ["auto", 160, 240, 320, 480, 640, 800, 1024, 1280, 1600, 1920, "originale"]
 HYB_WIDTHS = [480, 640, 800, 1024, 1280, 1600, 1920, 2560, "originale"]
 # hybride : images déposées sur NOTRE serveur FTP qu'on garde (les plus anciennes sont effacées)
+# images envoyées gardées dans « envoyees » (galerie « Dernières envoyées ») ; 0 = toutes
+SENT_KEEP = {"Toutes": 0, "Les 20 dernières": 20, "La dernière seulement": 1}
 HYB_KEEP = {"Toutes": 0, "Les 3 dernières": 3, "La dernière seulement": 1}
 HYB_RX_MAX = ["8 Mo", "50 Mo", "200 Mo", "1 Go", "Sans limite"]
 HYB_MAX_BYTES = 1 << 31        # image hybride : partie telle quelle (plus de recompression au-delà de 7,5 Mo)
@@ -2776,6 +2778,16 @@ class App(tk.Tk):
         ttk.Label(d, text="Images rangées par jour (AAAA-MM-JJ). Seuls ces dossiers sont effacés ;\n"
                           "les fichiers reçus et les anciennes images ne sont jamais touchés.",
                   foreground="#555", justify="left").pack(anchor="w", pady=(4, 0))
+        sk = ttk.Frame(d)
+        sk.pack(fill="x", pady=(6, 0))
+        ttk.Label(sk, text="Images envoyées gardées (dossier « envoyees »)").pack(side="left")
+        self.v_sentkeep = TrVar()
+        self.v_sentkeep.set(next((k for k, v in SENT_KEEP.items() if v == int(self.conf.get("sent_keep", 0) or 0)),
+                                 "Toutes"))
+        cb = ttk.Combobox(sk, textvariable=self.v_sentkeep, values=[tr(x) for x in SENT_KEEP], width=20,
+                          state="readonly")
+        cb.pack(side="left", padx=6)
+        cb.bind("<<ComboboxSelected>>", lambda e: self._sentkeep_changed())
 
         bb = ttk.Frame(win, padding=(10, 6, 10, 8))
         bb.pack(side="bottom", fill="x", before=sc)
@@ -3776,7 +3788,8 @@ class App(tk.Tk):
         w.transient(self)
         f = ttk.Frame(w, padding=10)
         f.pack(fill="both", expand=True)
-        styles = {"parole": tr("Parole"), "pensée": tr("Pensée"), "cri": tr("Cri"), "cartouche": tr("Cartouche")}
+        styles = {"parole": tr("Parole"), "pensée": tr("Pensée"), "cri": tr("Cri"), "cartouche": tr("Cartouche"),
+                  "texte": tr("Texte seul (sans bulle)")}
         sizes = {"petite": tr("Petite"), "moyenne": tr("Moyenne"), "grande": tr("Grande")}
         sel = [len(self.bubbles) - 1 if self.bubbles else None]
         geo = {}
@@ -3857,7 +3870,7 @@ class App(tk.Tk):
                 g = bubbles.layout(W, H, b)
                 x0, y0, x1, y1 = g["box"]
                 cv.create_rectangle(ox + x0, oy + y0, ox + x1, oy + y1, outline="#ffd400", dash=(4, 3))
-                if b.get("style") != "cartouche":
+                if b.get("style") not in bubbles.NO_TAIL:
                     tx, ty = ox + b["tx"] * W, oy + b["ty"] * H
                     cv.create_oval(tx - 6, ty - 6, tx + 6, ty + 6, fill="#e02020", outline="white")
 
@@ -3890,7 +3903,13 @@ class App(tk.Tk):
             if b is None:
                 return
             b["text"] = txt.get("1.0", "end").rstrip("\n")
+            old_style = b.get("style")
             b["style"] = next((k for k, v in styles.items() if v == v_style.get()), "parole")
+            if b["style"] == "texte" and old_style != "texte" and b.get("bg", "#ffffff").lower() == "#ffffff" \
+                    and b.get("fg", "#000000").lower() == "#000000":
+                b["fg"], b["bg"] = "#ffffff", "#000000"     # texte seul : blanc bordé de noir, lisible partout
+                sw_bg.configure(bg=b["bg"])
+                sw_fg.configure(bg=b["fg"])
             b["size"] = next((k for k, v in sizes.items() if v == v_size.get()), "moyenne")
             was = bool(b.get("anim"))
             b["anim"] = bool(v_anim.get())
@@ -6677,6 +6696,49 @@ class App(tk.Tk):
         self.gal_store.add(e)
         self.gal.refresh()
 
+    def _sentkeep_changed(self):
+        lab = self.v_sentkeep.get()
+        self.conf["sent_keep"] = next((v for x, v in SENT_KEEP.items() if tr(x) == lab or x == lab), 0)
+        self._save_conf_file()
+        self.log(tr("Images envoyées gardées (dossier « envoyees »)") + f" : {lab}")
+        self._prune_sent()
+
+    def _prune_sent(self):
+        """Dossier « envoyees » : ne garde que les N dernières images envoyées (réglage), en effaçant
+        les autres fichiers de ce dossier seulement (images reçues et autres dossiers jamais touchés)."""
+        keep = int(self.conf.get("sent_keep", 0) or 0)
+        if keep <= 0 or self.gal_store is None:
+            return
+        root = os.path.realpath(os.path.join(self.gal_store.folder, gallery.SENT_DIR))
+        tx = [e for e in list(self.gal_store.items) if e.get("dir") == "tx"]
+        kept = set()
+        for e in tx[:keep]:
+            kept |= {os.path.realpath(p) for p in (e.get("file"), e.get("png")) if p}
+        for e in tx[keep:]:
+            self.gal_store.remove(e)
+        gone = 0
+        for top, dirs, files in os.walk(root, topdown=False):
+            for n in files:
+                p = os.path.realpath(os.path.join(top, n))
+                if p in kept or not p.startswith(root + os.sep) or n.startswith("."):
+                    continue
+                try:
+                    os.remove(p)
+                    gone += 1
+                except OSError:
+                    pass
+            if top != root:
+                try:
+                    os.rmdir(top)                      # dossier du jour devenu vide
+                except OSError:
+                    pass
+        if gone:
+            self._journal(f"Dossier envoyees : {gone} ancien(s) fichier(s) effacé(s) (gardées : {keep}).\n")
+            try:
+                self.gal.refresh()
+            except Exception:
+                pass
+
     def _gallery_sent(self, job, mode):
         """Image émise : une copie va dans « envoyees » pour la galerie « Dernières envoyées »."""
         try:
@@ -6690,13 +6752,32 @@ class App(tk.Tk):
             fmt = protocol.detect_format(data)
             if fmt in ("hft", "txt", "file", "bin"):
                 return
-            d = os.path.join(self.gal_store.folder, gallery.SENT_DIR, time.strftime("%Y-%m-%d"))
-            os.makedirs(d, exist_ok=True)
             call = self.mycall().replace("/", "-") or "NOCALL"
             mode_n = (mode or "") + ("-HYB" if job["kind"] == "hybrid" and "HYB" not in (mode or "") else "")
-            base = os.path.join(d, f"{time.strftime('%Y%m%d_%H%M%S')}_{mode_n}_{call}")
-            path, png = imgfmt.save_received(base, fmt, data)
-            self._gallery_add("tx", call, mode_n, path, png, len(data))
+            crc = zlib.crc32(data)
+            # même image déjà envoyée : pas de nouvelle copie, elle remonte en tête de la galerie
+            dup = next((e for e in list(self.gal_store.items) if e.get("dir") == "tx" and e.get("crc") == crc
+                        and e.get("size") == len(data) and os.path.exists(e.get("file") or "")), None)
+            if dup is not None:
+                dup.update(t=time.time(), mode=mode_n)
+                self.gal_store.add(dup)
+                self.gal.refresh()
+                path, png = dup.get("file"), dup.get("png")
+            else:
+                d = os.path.join(self.gal_store.folder, gallery.SENT_DIR, time.strftime("%Y-%m-%d"))
+                os.makedirs(d, exist_ok=True)
+                base = os.path.join(d, f"{time.strftime('%Y%m%d_%H%M%S')}_{mode_n}_{call}")
+                import glob
+                k = 2
+                while glob.glob(glob.escape(base) + ".*"):          # même seconde : autre nom
+                    base = base.rsplit("~", 1)[0] + f"~{k}"
+                    k += 1
+                path, png = imgfmt.save_received(base, fmt, data)
+                self._gallery_add("tx", call, mode_n, path, png, len(data))
+                if self.gal_store.items and self.gal_store.items[0].get("file") == path:
+                    self.gal_store.items[0]["crc"] = crc
+                    self.gal_store.save()
+            self._prune_sent()
             self._web_queue("tx", png or path, call, mode_n)
         except Exception as e:
             self.log_exc("Galerie (image envoyée)", e)
