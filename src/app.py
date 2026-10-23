@@ -60,7 +60,7 @@ import random
 import wave
 
 APP = "HFImage F4GOP"
-VERSION = "1.21"
+VERSION = "1.22"
 
 
 def _take_profile(argv):
@@ -2704,10 +2704,17 @@ class App(tk.Tk):
         except Exception:
             pass
 
+    LOG_KEEP = 300               # lignes gardées dans le journal à l'écran
+
     def log(self, msg):
         line = time.strftime("%H:%M:%S ") + tr(msg) + "\n"
         self.logbox.configure(state="normal")
         self.logbox.insert("end", line)
+        # journal à l'écran vidé tout seul : on garde les LOG_KEEP dernières lignes (le programme
+        # reste ouvert des jours ; tout reste dans le fichier journal, menu Fichiers → journal)
+        n = int(self.logbox.index("end-1c").split(".")[0])
+        if n > self.LOG_KEEP + 100:
+            self.logbox.delete("1.0", f"{n - self.LOG_KEEP}.0")
         self.logbox.see("end")
         self.logbox.configure(state="disabled")
         self._journal(time.strftime("%Y-%m-%d ") + line)

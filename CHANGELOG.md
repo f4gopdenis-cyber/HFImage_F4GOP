@@ -1,5 +1,9 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 1.22 — journal à l'écran vidé automatiquement
+
+- Le journal affiché dans la fenêtre ne garde plus que les **300 dernières lignes** : il se vide tout seul, le programme restant ouvert des jours. Tout reste enregistré dans le fichier journal (Fichiers → journal).
+
 ## Version 1.21 — photos de téléphone dans le bon sens (demande de G4GIM)
 
 - Les téléphones enregistrent souvent la photo « couchée » avec une indication « à afficher tournée » : HFImage l'ignorait, la photo apparaissait et partait couchée. Elle est maintenant **remise droite automatiquement** à l'ouverture, comme dans Windows (message dans le journal).
