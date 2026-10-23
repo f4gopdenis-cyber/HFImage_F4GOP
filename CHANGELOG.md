@@ -1,5 +1,11 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 1.32 — émoticônes animées dans les bulles
+
+- Bulles de texte : nouvelle case **« Émoticônes animées (mode hybride : GIF animé) »**. Les émoticônes de la bulle bougent : le cœur bat, la main salue, le pouce se balance, l'étoile et le soleil tournent, le sourire fait un clin d'œil, la flamme danse, l'éclair clignote… L'aperçu de la fenêtre des bulles les montre en mouvement.
+- En **mode hybride**, l'image part alors en **GIF animé** (12 images, environ 1 s, en boucle), que les stations HFImage voient bouger. Une photo y perd un peu en finesse (256 couleurs) ; la largeur est limitée à 800 px par défaut (réglage hybride « largeur max » sinon) et le GIF respecte la taille max des GIF animés. En **radio seule**, les émoticônes restent fixes.
+- Les animations sont calculées par HFImage à partir des émoticônes Twemoji déjà présentes (même licence CC-BY 4.0) : rien de plus à télécharger.
+
 ## Version 1.31 — carte des stations plus lisible
 
 - **Couleur selon le report** : le trait et le cadre de chaque station qui a reçu votre image ont la couleur de son report (vert foncé : +5 dB et plus, vert clair : 0 à +4, orange : -10 à -1, rouge : moins de -10 dB), avec une légende ; le report est écrit à côté de l'indicatif (« F6GIA +8 »).

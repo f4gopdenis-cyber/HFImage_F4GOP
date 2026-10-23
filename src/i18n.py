@@ -1540,6 +1540,8 @@ T = [
     ("0 à +4 dB", "0 to +4 dB", "0 bis +4 dB", "0 a +4 dB", "da 0 a +4 dB"),
     ("-10 à -1 dB", "-10 to -1 dB", "-10 bis -1 dB", "-10 a -1 dB", "da -10 a -1 dB"),
     ("moins de -10 dB", "below -10 dB", "unter -10 dB", "menos de -10 dB", "sotto -10 dB"),
+    ("Émoticônes animées (mode hybride : GIF animé)", "Animated emoticons (hybrid mode: animated GIF)", "Animierte Emoticons (Hybridmodus: animiertes GIF)", "Emoticonos animados (modo híbrido: GIF animado)", "Emoticon animate (modo ibrido: GIF animata)"),
+    ("Émoticônes animées : elles bougent en mode hybride (GIF animé) ; en radio seule, elles restent fixes.", "Animated emoticons: they move in hybrid mode (animated GIF); over the air only, they stay still.", "Animierte Emoticons: sie bewegen sich im Hybridmodus (animiertes GIF); nur über Funk bleiben sie unbewegt.", "Emoticonos animados: se mueven en modo híbrido (GIF animado); solo por radio, quedan fijos.", "Emoticon animate: si muovono in modo ibrido (GIF animata); solo via radio restano ferme."),
     ("Attendre fréquence libre", "Wait for clear frequency", "Auf freie Frequenz warten", "Esperar frecuencia libre", "Attendere frequenza libera"),
     ("ATTENTE…", "WAITING…", "WARTEN…", "ESPERA…", "ATTESA…"),
     ("image", "picture", "Bild", "imagen", "immagine"),

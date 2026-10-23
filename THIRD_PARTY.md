@@ -11,7 +11,7 @@ HFImage F4GOP s'appuie sur les composants libres suivants. Leurs licences s'appl
 | Modem HamDRM, mode EasyPal (`hamdrm/`, compilé dans `hamdrm.dll`) : [QSSTV](https://github.com/ON4QZ/QSSTV) (Johan Maes ON4QZ), Dream (Volker Fischer), RXAMADRM (Ties Bos PA0MBO) | Mode image d'EasyPal / QSSTV : OFDM, MOT, Reed-Solomon, BSR / FIX | GPL-3.0 (code source dans `hamdrm/`) |
 | Brouillage des annonces hybrides EasyPal (`src/easypal_hybrid.py`), d'après `hybridcrypt.cpp` de [QSSTV](https://github.com/ON4QZ/QSSTV) (Johan Maes ON4QZ) | Hybride compatible EasyPal / QSSTV | GPL-3.0 |
 | [Natural Earth](https://www.naturalearthdata.com/) | Fond de la carte des stations (`carte.bin`) | Domaine public |
-| [Twemoji](https://github.com/jdecked/twemoji) (© Twitter, Inc. et contributeurs) | 30 émoticônes des bulles de texte (`src/emoji/`, images 72×72 non modifiées) | [CC-BY 4.0](https://creativecommons.org/licenses/by/4.0/) |
+| [Twemoji](https://github.com/jdecked/twemoji) (© Twitter, Inc. et contributeurs) | 30 émoticônes des bulles de texte (`src/emoji/`, images 72×72 non modifiées ; les animations des « émoticônes animées » sont calculées par HFImage à partir de ces images) | [CC-BY 4.0](https://creativecommons.org/licenses/by/4.0/) |
 | [Python](https://www.python.org/) | Langage, Tkinter | PSF License |
 | [NumPy](https://numpy.org/) | Calcul | BSD-3-Clause |
 | [Pillow](https://python-pillow.org/) (avec libavif, libwebp, libjpeg) | Images AVIF / WebP / JPEG / GIF | MIT-CMU (HPND) et licences des bibliothèques |

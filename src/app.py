@@ -62,7 +62,7 @@ import random
 import wave
 
 APP = "HFImage F4GOP"
-VERSION = "1.31"
+VERSION = "1.32"
 
 
 def _take_profile(argv):
@@ -3791,6 +3791,9 @@ class App(tk.Tk):
                                                   txt.focus_set()))
             btn._no_theme = True
             btn.grid(row=k // 10, column=k % 10)
+        v_anim = tk.BooleanVar(value=False)
+        ttk.Checkbutton(left, text="Émoticônes animées (mode hybride : GIF animé)", variable=v_anim,
+                        command=lambda: changed()).pack(anchor="w", pady=(4, 0))
         ttk.Label(left, text="Style").pack(anchor="w", pady=(6, 0))
         v_style = tk.StringVar()
         ttk.Combobox(left, textvariable=v_style, values=list(styles.values()), state="readonly",
@@ -3825,7 +3828,8 @@ class App(tk.Tk):
 
         def preview():
             small = base_small()
-            pic = bubbles.draw(small, self.bubbles)
+            t = geo.get("t") if bubbles.has_anim(self.bubbles) else None
+            pic = bubbles.draw(small, self.bubbles, t)
             geo["ph"] = ImageTk.PhotoImage(pic)
             cv.delete("all")
             ox, oy = geo["off"]
@@ -3859,6 +3863,7 @@ class App(tk.Tk):
                 v_size.set(sizes.get(b.get("size"), sizes["moyenne"]))
                 sw_bg.configure(bg=b.get("bg", "#ffffff"))
                 sw_fg.configure(bg=b.get("fg", "#000000"))
+                v_anim.set(bool(b.get("anim")))
             busy[0] = False
 
         def changed(*_):
@@ -3870,6 +3875,11 @@ class App(tk.Tk):
             b["text"] = txt.get("1.0", "end").rstrip("\n")
             b["style"] = next((k for k, v in styles.items() if v == v_style.get()), "parole")
             b["size"] = next((k for k, v in sizes.items() if v == v_size.get()), "moyenne")
+            was = bool(b.get("anim"))
+            b["anim"] = bool(v_anim.get())
+            if b["anim"] and not was and not self.v_hyb.get():
+                self.log(tr("Émoticônes animées : elles bougent en mode hybride (GIF animé) ; "
+                            "en radio seule, elles restent fixes."))
             refresh_list()
             preview()
 
@@ -3992,6 +4002,16 @@ class App(tk.Tk):
             load_fields()
             preview()
         self._translate_ui(w)
+
+        def tick(k=0):
+            """Aperçu : les émoticônes des bulles animées bougent (pas de glisser en cours)."""
+            if not w.winfo_exists():
+                return
+            if bubbles.has_anim(self.bubbles) and not geo.get("grab"):
+                geo["t"] = (k % bubbles.ANIM_FRAMES) / bubbles.ANIM_FRAMES
+                preview()
+            w.after(bubbles.ANIM_MS, tick, k + 1)
+        tick()
 
     def pip_dialog(self):
         w = getattr(self, "_pip_win", None)
@@ -4719,6 +4739,8 @@ class App(tk.Tk):
             return
         fmt = self._fmt()
         anim = self.src_anim is not None
+        # bulles avec émoticônes animées : l'image part en GIF animé (mode hybride seulement)
+        banim = not anim and bubbles.has_anim(self.bubbles)
         if anim and fmt != "original":
             self.v_fmt.set("original")         # un GIF animé part tel quel (animation gardée)
             fmt = "original"
@@ -4739,6 +4761,19 @@ class App(tk.Tk):
             fmt, q = "gif", None
             im0 = Image.open(io.BytesIO(data))
             size = im0.size
+        elif banim:
+            base = self._tx_source_nobubbles() or self.src_img
+            try:
+                wmax = min(1024, int(width))
+            except (TypeError, ValueError):
+                wmax = 800
+            try:
+                limit = int(float(self.v_gifkb.get()) * 1000)
+            except (tk.TclError, ValueError):
+                limit = 2_000_000
+            data, how = self._cz(bubbles.make_gif, base, json.dumps(self.bubbles, sort_keys=True), wmax, limit)
+            fmt, q, anim = "gif", None, True
+            size = Image.open(io.BytesIO(data)).size
         elif fmt == "original":
             data, fmt = self._payload(fmt, hybrid=True)
             q, size = None, (self.src_img.width, self.src_img.height)

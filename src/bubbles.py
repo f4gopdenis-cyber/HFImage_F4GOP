@@ -51,6 +51,61 @@ def emoji_image(ch, px):
     return _EMO_CACHE[key]
 
 
+# émoticônes animées (mode hybride : l'image part en GIF animé). Les animations sont faites
+# par HFImage à partir des mêmes images Twemoji : battement, rebond, balancement, rotation,
+# clin d'œil, scintillement.
+ANIM_FRAMES, ANIM_MS = 12, 90
+ANIM_KIND = {"2764": "pulse", "1f525": "flicker", "1f389": "pulse", "1f382": "bounce", "2b50": "spin",
+             "2600": "spin", "2744": "spin", "26a1": "flash", "1f44b": "wave", "1f44d": "wave",
+             "1f44f": "pulse", "1f64f": "pulse", "1f91d": "wave", "1f609": "blink", "1f600": "bounce",
+             "1f602": "shake", "1f60d": "pulse", "1f622": "bounce", "1f327": "bounce", "1f30d": "spin",
+             "1f3c6": "wave", "1f4fb": "shake", "1f4e1": "wave"}
+
+
+def has_anim(bubbles):
+    """Au moins une bulle animée qui contient une émoticône ?"""
+    return any(b.get("anim") and any(ch in EMOJI for ch in (b.get("text") or "")) for b in bubbles or [])
+
+
+def anim_emoji(ch, px, t):
+    """Émoticône animée à l'instant t (0..1) -> (image RGBA de taille px, décalage dx, dy)."""
+    code = EMOJI.get(ch)
+    kind = ANIM_KIND.get(code, "bounce")
+    a = 2 * math.pi * t
+    if kind == "blink":                       # clin d'œil : 😀 ouvert, 😉 sur une partie du cycle
+        im = emoji_image(chr(int("1f600", 16)) if t < 0.7 else ch, px)
+        return im, 0, 0
+    base = emoji_image(ch, px)
+    if base is None:
+        return None, 0, 0
+    dx = dy = 0
+    if kind == "pulse":                       # battement : grossit / rétrécit
+        k = 1 + 0.18 * max(0.0, math.sin(a * 2)) if code == "2764" else 1 + 0.12 * math.sin(a)
+        s = max(1, int(round(px * k)))
+        im = base.resize((s, s), Image.LANCZOS)
+        return im, (px - s) / 2, (px - s) / 2
+    if kind == "bounce":                      # rebond
+        dy = -abs(math.sin(a)) * px * 0.22
+        return base, 0, dy
+    if kind == "shake":                       # secousse
+        dx = math.sin(a * 3) * px * 0.08
+        return base.rotate(math.sin(a * 3) * 8, resample=Image.BICUBIC), dx, 0
+    if kind == "wave":                        # balancement
+        return base.rotate(math.sin(a) * 20, resample=Image.BICUBIC), 0, 0
+    if kind == "spin":                        # rotation
+        return base.rotate(-360 * t, resample=Image.BICUBIC), 0, 0
+    if kind == "flicker":                     # flamme : s'étire vers le haut
+        k = 1 + 0.12 * math.sin(a * 2)
+        h = max(1, int(round(px * k)))
+        return base.resize((px, h), Image.LANCZOS), 0, px - h
+    if kind == "flash":                       # éclair : clignote
+        im = base.copy()
+        if math.sin(a * 2) < -0.3:
+            im.putalpha(im.getchannel("A").point(lambda v: v // 4))
+        return im, 0, 0
+    return base, 0, 0
+
+
 def _runs(text):
     """Texte -> [(« t », morceau) ou (« e », émoticône)]."""
     out, cur = [], ""
@@ -174,7 +229,7 @@ def _bounds(g):
     return x0 - m, y0 - m, x1 + m, y1 + m
 
 
-def _draw_one(d, g, off, bg, fg, layer=None):
+def _draw_one(d, g, off, bg, fg, layer=None, t=None):
     ox, oy = off
     sh = lambda pts: [(x - ox, y - oy) for x, y in pts]
     lw = g["lw"]
@@ -226,15 +281,24 @@ def _draw_one(d, g, off, bg, fg, layer=None):
                 x += font.getlength(v)
             else:
                 es = _esize(font)
-                em = emoji_image(v, es)
+                dx = dy = 0
+                if t is None:
+                    em = emoji_image(v, es)
+                else:
+                    em, dx, dy = anim_emoji(v, es, t)
                 if em is not None and layer is not None:
-                    layer.alpha_composite(em, (int(x + font.size * 0.04), int(ym - es / 2)))
+                    px_, py_ = int(x + font.size * 0.04 + dx), int(ym - es / 2 + dy)
+                    # l'animation peut déborder un peu : on reste dans le calque
+                    px_ = max(0, min(layer.width - em.width, px_))
+                    py_ = max(0, min(layer.height - em.height, py_))
+                    layer.alpha_composite(em, (px_, py_))
                 x += es + font.size * 0.08
         y += lh
 
 
-def draw(img, bubbles):
-    """-> nouvelle image RGB avec les bulles (l'image d'origine n'est pas modifiée)."""
+def draw(img, bubbles, t=None):
+    """-> nouvelle image RGB avec les bulles (l'image d'origine n'est pas modifiée).
+    t (0..1) : instant de l'animation des émoticônes des bulles animées (None : fixes)."""
     bubbles = [b for b in bubbles or [] if (b.get("text") or "").strip()]
     if not bubbles:
         return img
@@ -249,10 +313,29 @@ def draw(img, bubbles):
             continue
         layer = Image.new("RGBA", (x1 - x0, y1 - y0), (0, 0, 0, 0))
         _draw_one(ImageDraw.Draw(layer), g, (x0, y0), trafic._rgb(b.get("bg"), (255, 255, 255)) + (255,),
-                  trafic._rgb(b.get("fg"), (0, 0, 0)) + (255,), layer)
+                  trafic._rgb(b.get("fg"), (0, 0, 0)) + (255,), layer, t if b.get("anim") else None)
         small = layer.resize(((x1 - x0) // SS, (y1 - y0) // SS), Image.LANCZOS)
         out.alpha_composite(small, (x0 // SS, y0 // SS))
     return out.convert("RGB")
+
+
+def frames(img, bubbles, n=ANIM_FRAMES):
+    """Images de l'animation (une par instant) pour le GIF animé."""
+    return [draw(img, bubbles, k / n) for k in range(n)]
+
+
+def make_gif(base, bubbles_json, wmax=800, max_bytes=2_000_000):
+    """Image + bulles animées -> GIF animé (octets, traitement). bubbles_json : les bulles en JSON
+    (clé du cache de préparation). Largeur ramenée à wmax : une photo en GIF (256 couleurs) pèse
+    vite lourd ; réduit encore si besoin (imgfmt.gif_shrink)."""
+    import json
+    import imgfmt
+    bubs = json.loads(bubbles_json)
+    if base.width > wmax:
+        base = base.resize((wmax, max(1, round(base.height * wmax / base.width))), Image.LANCZOS)
+    fr = frames(base.convert("RGB"), bubs)
+    data = imgfmt._gif_encode(fr, [ANIM_MS] * len(fr), 1.0, 255, 1)
+    return imgfmt.gif_shrink(data, max_bytes)
 
 
 def hit(W, H, bubbles, x, y, grab=10):
