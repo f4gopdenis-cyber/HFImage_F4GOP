@@ -263,7 +263,13 @@ jobs:
         working-directory: src
         shell: bash
         run: |
-          timeout 600 xvfb-run -a dist/HFImage_F4GOP_Linux --selftest "$RUNNER_TEMP/selftest.txt"
+          set +e
+          timeout 600 xvfb-run -a dist/HFImage_F4GOP_Linux --selftest "$RUNNER_TEMP/selftest.txt" > "$RUNNER_TEMP/out.txt" 2>&1
+          code=$?
+          set -e
+          echo "::notice::Autotest Linux : code de sortie $code"
+          tail -c 1500 "$RUNNER_TEMP/out.txt" | tr '\n' '|' | sed 's/^/::warning::sortie : /'; echo
+          [ -f "$RUNNER_TEMP/selftest.txt" ] || { echo "::error::pas de rapport d'autotest"; exit 1; }
           cat "$RUNNER_TEMP/selftest.txt"
           echo "::notice::Autotest Linux : $(grep -E 'DATAC|HamDRM|RÉSULTAT' "$RUNNER_TEMP/selftest.txt" | tr '\n' '|')"
           grep -q "DATAC1X: .* -> OK" "$RUNNER_TEMP/selftest.txt" || { echo "::error::modems en échec"; exit 1; }
