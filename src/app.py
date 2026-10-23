@@ -62,7 +62,7 @@ import random
 import wave
 
 APP = "HFImage F4GOP"
-VERSION = "1.32"
+VERSION = "1.33"
 
 
 def _take_profile(argv):
@@ -559,6 +559,17 @@ class App(tk.Tk):
                                  font=("TkDefaultFont", 9, "bold"))
         self.lb_clock.pack(side="right", padx=6)
         self.lb_clock.bind("<Button-1>", lambda e: self._clock_cycle())
+        # hommage à Erik Sundstrup VK4AES (SK), créateur d'EasyPal : petit drapeau australien
+        try:
+            import flag
+            self._flag_ph = ImageTk.PhotoImage(flag.australia(24, 12))
+        except Exception:
+            self._flag_ph = None
+        self.lb_tribute = tk.Label(bar, text=" En hommage à VK4AES", image=self._flag_ph, compound="left",
+                                   bg=GREEN_DARK, fg="white", cursor="hand2", font=("TkDefaultFont", 8, "bold"))
+        self.lb_tribute.pack(side="right", padx=8)
+        self.lb_tribute.bind("<Button-1>", lambda e: self.show_tribute())
+        tip(self.lb_tribute, "Erik Sundstrup VK4AES (SK), créateur d'EasyPal")
         self.lb_freq = tk.Label(bar, text="", bg=GREEN_DARK, fg="#ffe066", font=("TkDefaultFont", 9, "bold"))
         # clic sur la fréquence (barre d'état ou panneau) : menu des fréquences image (CAT)
         for w in (self.lb_freq, self.panel.freq):
@@ -924,6 +935,12 @@ class App(tk.Tk):
                             + "\n\nConçu, choisi et testé sur l'air par Denis F4GOP ; code écrit en grande partie "
                               "avec l'aide de l'intelligence artificielle Claude (Anthropic).\n"
                               "Programme dédié à Erik VK4AES (SK), créateur d'EasyPal.")
+
+    def show_tribute(self):
+        """Clic sur le drapeau australien de la barre du bas : la dédicace."""
+        messagebox.showinfo(APP, tr("HFImage est dédié à la mémoire d'Erik Sundstrup VK4AES (SK), "
+                                    "radioamateur australien et créateur d'EasyPal, en hommage à son travail "
+                                    "pour l'image numérique en HF.") + "\n\n— Denis F4GOP")
 
     LICENCE_VERSION = "1.0"
 

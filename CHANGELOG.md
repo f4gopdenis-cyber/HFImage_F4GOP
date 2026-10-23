@@ -1,5 +1,9 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 1.33 — hommage à VK4AES
+
+- Dans la barre du bas de la fenêtre principale, à gauche de l'horloge : un petit **drapeau australien** et « **En hommage à VK4AES** », pour Erik Sundstrup VK4AES (SK), créateur d'EasyPal, à qui HFImage est dédié. Un clic affiche la dédicace. Traduit dans les 5 langues ; le drapeau est dessiné par le programme.
+
 ## Version 1.32 — émoticônes animées dans les bulles
 
 - Bulles de texte : nouvelle case **« Émoticônes animées (mode hybride : GIF animé) »**. Les émoticônes de la bulle bougent : le cœur bat, la main salue, le pouce se balance, l'étoile et le soleil tournent, le sourire fait un clin d'œil, la flamme danse, l'éclair clignote… L'aperçu de la fenêtre des bulles les montre en mouvement.
