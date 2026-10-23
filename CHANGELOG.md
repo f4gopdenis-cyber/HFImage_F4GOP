@@ -1,5 +1,10 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 1.26 — Digi-Sites : images nommées comme EasyPal
+
+- Site web / Digi-Sites : les images reçues sont mises en ligne sous le nom **« image1 », « image2 »… sans extension**, exactement comme EasyPal : c'est ce fichier que lit Digi-Sites. HFImage les nommait « image1.jpg » : Digi-Sites ne les trouvait pas et continuait d'afficher la dernière image déposée par EasyPal. La page hfimage.html les affiche toujours.
+- Pour Digi-Sites, mettez le **dossier vide** (racine du site, comme EasyPal) dans Site web / Digi-Sites, puis « Envoyer la page maintenant » : les dernières images partent tout de suite. C'est maintenant le réglage par défaut.
+
 ## Version 1.25 — fichiers hybrides déposés tels quels (demande de RK1AT)
 
 - En mode hybride, un **fichier** (vidéo MP4, son MP3, page HTML, PDF, AVI…) est maintenant déposé **tel quel, sous son nom d'origine** : `RK1AT_20261021_133402_TEST.mp4`. Le lien public s'ouvre directement dans un navigateur (la vidéo se lit, la page s'affiche). Avant, il était emballé par HFImage (compressé, nom en « .file ») et seul HFImage savait l'ouvrir.

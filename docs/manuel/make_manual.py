@@ -617,7 +617,8 @@ s.append(P("Une annonce reçue par radio ne peut faire télécharger qu'un fichi
            "Les images et fichiers reçus restent toujours dans le dossier de réception, quel que soit l'indicatif annoncé."))
 s.append(P("Site web / Digi-Sites", "h2"))
 s.append(P("Menu <b>Images → Site web / Digi-Sites…</b> : comme EasyPal, chaque image reçue est mise en ligne "
-           "sous le nom <b>image1.jpg</b> (les précédentes glissent : image2, image3…), avec indicatif, date, mode "
+           "sous le nom <b>image1</b>, sans extension comme EasyPal : c'est ce fichier que lit Digi-Sites (les précédentes "
+           "glissent : image2, image3…), avec indicatif, date, mode "
            "et bande. Vos images émises vont dans TX1.jpg … TX5.jpg. Une page <b>hfimage.html</b> les présente "
            "(rafraîchie toutes les 5 minutes). Dans Digi-Sites : Setup → Edit site, et donnez l'adresse de la page."))
 s += B(["<b>Dossier sur le serveur</b> : le dossier FTP, pas une adresse web. <b>Vide = racine du site</b>, comme EasyPal.",

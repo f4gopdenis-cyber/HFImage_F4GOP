@@ -1,7 +1,8 @@
 """Mise en ligne des images sur votre site web, comme EasyPal (et donc visibles dans Digi-Sites).
 
-Comme EasyPal, chaque image reçue est envoyée par FTP sous le nom image1.jpg ; les
-précédentes glissent d'un cran (image1 -> image2 … jusqu'au nombre choisi). Les images
+Comme EasyPal, chaque image reçue est envoyée par FTP sous le nom « image1 » (SANS extension :
+c'est ce fichier que lit Digi-Sites) ; les précédentes glissent d'un cran (image1 -> image2 …
+jusqu'au nombre choisi). Les images
 émises vont dans TX1.jpg … TX5.jpg. Chaque image porte une étiquette (indicatif, date UTC,
 mode, bande), et une page hfimage.html (rafraîchie toutes les 5 min) les présente.
 On ajoute ensuite l'adresse de la page (ou du dossier) dans Digi-Sites (Setup -> Edit site).
@@ -23,6 +24,12 @@ import hybrid
 import imgfmt
 
 PAGE = "hfimage.html"
+
+
+def remote(prefix, i):
+    """Nom sur le serveur : « image1 » sans extension, comme EasyPal (Digi-Sites lit ce fichier) ;
+    images émises : « TX1.jpg »."""
+    return f"{prefix}{i}" if prefix == "image" else f"{prefix}{i}.jpg"
 LIST = "list.txt"
 TX_KEEP = 5
 
@@ -60,7 +67,7 @@ def _page(call, rx, tx, n):
         out = []
         for i in range(1, count + 1):
             cap = html.escape(items[i - 1]["caption"]) if i <= len(items) else ""
-            out.append(f'<figure><a href="{prefix}{i}.jpg"><img src="{prefix}{i}.jpg" alt="" '
+            out.append(f'<figure><a href="{remote(prefix, i)}"><img src="{remote(prefix, i)}" alt="" '
                        f'onerror="this.closest(\'figure\').style.display=\'none\'"></a>'
                        f"<figcaption>{cap}</figcaption></figure>")
         return "\n".join(out)
@@ -159,7 +166,7 @@ class WebSync:
                             blob, _size = label_image(src, cap)
                         except Exception:
                             continue                              # fichier effacé ou illisible
-                        ftp.storbinary(f"STOR {prefix}{len(lst) + 1}.jpg", io.BytesIO(blob))
+                        ftp.storbinary(f"STOR {remote(prefix, len(lst) + 1)}", io.BytesIO(blob))
                         lst.append({"caption": cap, "t": time.time()})
                     if lst:
                         self.state[kind] = lst
@@ -168,7 +175,7 @@ class WebSync:
             if what == "img":
                 prefix, keep = ("image", n) if kind == "rx" else ("TX", TX_KEEP)
                 self._rotate(ftp, prefix, keep)
-                ftp.storbinary(f"STOR {prefix}1.jpg", io.BytesIO(data))
+                ftp.storbinary(f"STOR {remote(prefix, 1)}", io.BytesIO(data))
                 lst = self.state.setdefault(kind, [])
                 lst.insert(0, {"caption": caption, "t": time.time()})
                 del lst[keep:]
@@ -194,12 +201,12 @@ class WebSync:
     def _rotate(ftp, prefix, keep):
         """image1 -> image2 … (la plus ancienne est effacée)."""
         try:
-            ftp.delete(f"{prefix}{keep}.jpg")
+            ftp.delete(remote(prefix, keep))
         except ftplib.all_errors:
             pass
         for i in range(keep - 1, 0, -1):
             try:
-                ftp.rename(f"{prefix}{i}.jpg", f"{prefix}{i + 1}.jpg")
+                ftp.rename(remote(prefix, i), remote(prefix, i + 1))
             except ftplib.all_errors:
                 pass                                  # pas encore d'image à ce rang
 

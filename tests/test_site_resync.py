@@ -39,7 +39,9 @@ class Resync(unittest.TestCase):
                 w._do("sync", {"count": 2, "call": "F4GOP"}, None,
                       ([(paths[0], "F4FCE 20:50"), (os.path.join(d, "absent.png"), "X"), (paths[1], "M0JGM"),
                         (paths[2], "F1SZC")], [(paths[3], "émise par F4GOP")]), None)
-            self.assertEqual(sorted(ftp.files), ["TX1.jpg", "hfimage.html", "image1.jpg", "image2.jpg", "list.txt"])
+            # 1.26 : « image1 » sans extension, comme EasyPal (c'est ce fichier que lit Digi-Sites)
+            self.assertEqual(sorted(ftp.files), ["TX1.jpg", "hfimage.html", "image1", "image2", "list.txt"])
+            self.assertIn(b'src="image1"', ftp.files["hfimage.html"])
             self.assertEqual([e["caption"] for e in w.state["rx"]], ["F4FCE 20:50", "M0JGM"])
             self.assertIn(b"F4FCE 20:50", ftp.files["list.txt"])
             self.assertIn("1 émise", logs[-1])

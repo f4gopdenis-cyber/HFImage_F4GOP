@@ -61,7 +61,7 @@ import random
 import wave
 
 APP = "HFImage F4GOP"
-VERSION = "1.25"
+VERSION = "1.26"
 
 
 def _take_profile(argv):
@@ -6587,7 +6587,7 @@ class App(tk.Tk):
     # ------------------------------------------------------------- site web / Digi-Sites
     def _web_cfg(self):
         c = self._hyb_cfg()                        # même serveur FTP que le mode hybride
-        c.update(dir=self.conf.get("web_dir", "dsstv") or "", url=self.conf.get("web_url", ""),
+        c.update(dir=self.conf.get("web_dir", "") or "", url=self.conf.get("web_url", ""),
                  count=int(self.conf.get("web_count", 20)),
                  call=self.mycall() or "NOCALL")
         return c
@@ -6652,14 +6652,14 @@ class App(tk.Tk):
         f.pack(fill="both", expand=True)
         v_on = tk.BooleanVar(value=bool(self.conf.get("web_on")))
         v_tx = tk.BooleanVar(value=bool(self.conf.get("web_tx", True)))
-        v_dir = tk.StringVar(value=self.conf.get("web_dir", "dsstv"))
+        v_dir = tk.StringVar(value=self.conf.get("web_dir", ""))
         v_url = tk.StringVar(value=self.conf.get("web_url", ""))
         v_n = tk.StringVar(value=str(self.conf.get("web_count", 20)))
         v_block = tk.StringVar(value=self.conf.get("web_block", ""))
         ttk.Label(f, text="Comme EasyPal : chaque image reçue est mise en ligne sur votre site sous le nom\n"
-                          "image1.jpg (les précédentes glissent : image2, image3…), avec indicatif, date,\n"
-                          "mode et bande. Vos images émises vont dans TX1.jpg … TX5.jpg.\n"
-                          "Ajoutez ensuite l'adresse de la page dans Digi-Sites (Setup → Edit site).",
+                          "image1, sans extension (les précédentes glissent : image2, image3…), avec indicatif,\n"
+                          "date, mode et bande. Digi-Sites lit image1 à la racine du site (dossier vide).\n"
+                          "Vos images émises vont dans TX1.jpg … TX5.jpg.",
                   justify="left").grid(row=0, column=0, columnspan=2, sticky="w")
         ttk.Checkbutton(f, text="Mettre en ligne les images reçues", variable=v_on).grid(
             row=1, column=0, columnspan=2, sticky="w", pady=(10, 0))
@@ -6712,7 +6712,7 @@ class App(tk.Tk):
                 messagebox.showerror(APP, "Réglez d'abord le serveur FTP (Réglages → Mode hybride).", parent=w)
                 return
             # la page ET les dernières images (après un changement de dossier, Digi-Sites trouve
-            # tout de suite image1.jpg, sans attendre la prochaine image reçue)
+            # tout de suite image1, sans attendre la prochaine image reçue)
             rx, tx = self._web_recent()
             self.web.resync(self._web_cfg(), rx, tx)
             lb.configure(text=tr("Envoi de la page en cours… (résultat dans le journal)"))

@@ -566,7 +566,8 @@ s.append(P("<b>Download safety</b>: an announcement received over the air can on
            "only from a public Internet address (never the computer itself or a machine on your home network). Received "
            "pictures and files always stay in the reception folder, whatever the announced callsign."))
 s.append(P("Menu <b>Images → Website / Digi-Sites…</b>: as in EasyPal, each received picture is uploaded as "
-           "<b>image1.jpg</b> (the previous ones move to image2, image3…), with callsign, date, mode and band; your "
+           "<b>image1</b>, with no extension as in EasyPal: this is the file Digi-Sites reads (the previous ones move to "
+           "image2, image3…), with callsign, date, mode and band; your "
            "transmitted pictures go to TX1.jpg … TX5.jpg, and a <b>hfimage.html</b> page shows them. Example with "
            "qsl.net: server <b>ftp.qsl.net</b>, empty folder, link <b>https://www.qsl.net/yourcall</b>, page for "
            "Digi-Sites <b>https://www.qsl.net/yourcall/hfimage.html</b>."))
