@@ -24,7 +24,8 @@ class Envoyees(unittest.TestCase):
         except (ImportError, OSError) as e:
             self.skipTest(str(e))
         self.app, self.gallery = app, gallery
-        self.dir = tempfile.mkdtemp()
+        # dossier avec un « ~ », comme les dossiers temporaires de Windows (C:\Users\RUNNER~1\…)
+        self.dir = tempfile.mkdtemp(prefix="RUN~1_")
         s = types.SimpleNamespace(conf={}, gal_store=gallery.GalleryStore(self.dir),
                                   gal=types.SimpleNamespace(refresh=lambda: None), mycall=lambda: "RK1AT",
                                   log_exc=lambda *a: self.fail(a), _web_queue=lambda *a: None,
@@ -52,6 +53,8 @@ class Envoyees(unittest.TestCase):
         self.assertEqual(len(self.files()), 2)
         tx = [e for e in self.s.gal_store.items if e.get("dir") == "tx"]
         self.assertEqual(len(tx), 2)
+        for e in tx:                                   # toujours dans « envoyees »
+            self.assertTrue(e["file"].startswith(os.path.join(self.dir, self.gallery.SENT_DIR)), e["file"])
 
     def test_la_derniere_seulement(self):
         self.send(jpeg((200, 0, 0)))

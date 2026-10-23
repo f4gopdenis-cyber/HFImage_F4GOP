@@ -6709,17 +6709,18 @@ class App(tk.Tk):
         keep = int(self.conf.get("sent_keep", 0) or 0)
         if keep <= 0 or self.gal_store is None:
             return
-        root = os.path.realpath(os.path.join(self.gal_store.folder, gallery.SENT_DIR))
+        norm = lambda p: os.path.normcase(os.path.realpath(p))
+        root = norm(os.path.join(self.gal_store.folder, gallery.SENT_DIR))
         tx = [e for e in list(self.gal_store.items) if e.get("dir") == "tx"]
         kept = set()
         for e in tx[:keep]:
-            kept |= {os.path.realpath(p) for p in (e.get("file"), e.get("png")) if p}
+            kept |= {norm(p) for p in (e.get("file"), e.get("png")) if p}
         for e in tx[keep:]:
             self.gal_store.remove(e)
         gone = 0
         for top, dirs, files in os.walk(root, topdown=False):
             for n in files:
-                p = os.path.realpath(os.path.join(top, n))
+                p = norm(os.path.join(top, n))
                 if p in kept or not p.startswith(root + os.sep) or n.startswith("."):
                     continue
                 try:
@@ -6766,11 +6767,13 @@ class App(tk.Tk):
             else:
                 d = os.path.join(self.gal_store.folder, gallery.SENT_DIR, time.strftime("%Y-%m-%d"))
                 os.makedirs(d, exist_ok=True)
-                base = os.path.join(d, f"{time.strftime('%Y%m%d_%H%M%S')}_{mode_n}_{call}")
+                stem = os.path.join(d, f"{time.strftime('%Y%m%d_%H%M%S')}_{mode_n}_{call}")
                 import glob
-                k = 2
-                while glob.glob(glob.escape(base) + ".*"):          # même seconde : autre nom
-                    base = base.rsplit("~", 1)[0] + f"~{k}"
+                base, k = stem, 2
+                # même seconde : autre nom (le suffixe ne touche qu'au nom du fichier, jamais au dossier,
+                # qui peut contenir lui-même un « ~ » sous Windows : C:\Users\RUNNER~1\…)
+                while glob.glob(glob.escape(base) + ".*"):
+                    base = f"{stem}_{k}"
                     k += 1
                 path, png = imgfmt.save_received(base, fmt, data)
                 self._gallery_add("tx", call, mode_n, path, png, len(data))
