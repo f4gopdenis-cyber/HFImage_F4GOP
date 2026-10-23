@@ -328,7 +328,9 @@ s.append(P("L'écoute démarre toute seule si l'entrée audio est réglée (bout
            "reprendre). Rien à choisir : <b>tous les modes</b> sont décodés en même temps — DATAC1X, DATAC1, DATAC3, "
            "DATAC4 <b>et</b> EasyPal (HamDRM), quel que soit le mode choisi pour l'émission."))
 s += B(["<b>Panneau d'état</b> (en haut à gauche) : indicatif de la station reçue, fréquence et mode du poste, "
-        "niveau RX, SNR, mode, débit, segments reçus, voyants Signal / Sync / Trame / Image / BSR.",
+        "niveau RX, SNR, mode, débit, segments reçus, voyants Signal / Sync / Trame / Image / BSR. À droite du "
+        "tableau, la <b>vignette de la dernière image reçue</b>, avec l'indicatif, le prénom et la distance de la "
+        "station ; un clic l'affiche dans l'onglet RX.",
         "Quand une image commence à arriver alors que l'<b>onglet TX</b> est affiché, HFImage passe sur l'<b>onglet RX</b> "
         "pour la montrer (sauf pendant vos propres émissions).",
         "<b>Aperçu rapide</b> (modes HFImage) : une petite image arrive en ~20 s, puis l'image complète la remplace.",
@@ -620,12 +622,13 @@ s.append(P("Menu <b>Images → Site web / Digi-Sites…</b> : comme EasyPal, cha
            "sous le nom <b>image1</b>, sans extension comme EasyPal : c'est ce fichier que lit Digi-Sites (les précédentes "
            "glissent : image2, image3…), avec indicatif, date, mode "
            "et bande. Vos images émises vont dans TX1.jpg … TX5.jpg. Une page <b>hfimage.html</b> les présente "
-           "(rafraîchie toutes les 5 minutes). Dans Digi-Sites : Setup → Edit site, et donnez l'adresse de la page."))
+           "(rafraîchie toutes les 5 minutes). Dans Digi-Sites : Setup → Edit site, et donnez l'adresse du fichier "
+           "<b>image1</b> (affichée en vert dans la fenêtre)."))
 s += B(["<b>Dossier sur le serveur</b> : le dossier FTP, pas une adresse web. <b>Vide = racine du site</b>, comme EasyPal.",
         "<b>Lien public</b> : l'adresse web de ce dossier.",
         "Exemple qsl.net : serveur <b>ftp.qsl.net</b>, identifiant = votre indicatif (Réglages → Mode hybride), "
-        "dossier <b>vide</b>, lien <b>https://www.qsl.net/f4gop</b> → page à donner à Digi-Sites : "
-        "<b>https://www.qsl.net/f4gop/hfimage.html</b>."])
+        "dossier <b>vide</b>, lien <b>https://www.qsl.net/f4gop</b> → adresse à donner à Digi-Sites : "
+        "<b>https://www.qsl.net/f4gop/image1</b> ; page de vos images : https://www.qsl.net/f4gop/hfimage.html."])
 s.append(img("webdlg.png", 110, "Réglages de la mise en ligne (serveur FTP du mode hybride)."))
 
 # ------------------------------------------------------------------ 8

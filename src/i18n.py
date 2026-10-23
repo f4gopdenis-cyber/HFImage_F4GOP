@@ -1512,6 +1512,8 @@ T = [
     ("Cette image est déjà déposée : prête à émettre.", "This picture is already uploaded: ready to transmit.", "Dieses Bild ist bereits hochgeladen: bereit zum Senden.", "Esta imagen ya está subida: lista para emitir.", "Questa immagine è già caricata: pronta da trasmettere."),
     ("Image déposée d'avance : à votre tour, « Émettre » envoie directement l'annonce.", "Picture uploaded in advance: when it is your turn, “Transmit” sends the announcement at once.", "Bild vorab hochgeladen: wenn Sie an der Reihe sind, sendet „Senden“ sofort die Ankündigung.", "Imagen subida por adelantado: cuando le toque, «Emitir» envía el anuncio de inmediato.", "Immagine caricata in anticipo: al vostro turno, «Trasmetti» invia subito l'annuncio."),
     ("Dépôt impossible :", "Upload failed:", "Hochladen fehlgeschlagen:", "Subida imposible:", "Caricamento impossibile:"),
+    ("Adresse à donner à Digi-Sites :", "Address to give to Digi-Sites:", "Adresse für Digi-Sites:", "Dirección para Digi-Sites:", "Indirizzo da dare a Digi-Sites:"),
+    ("Page de vos images :", "Page of your pictures:", "Seite Ihrer Bilder:", "Página de sus imágenes:", "Pagina delle vostre immagini:"),
     ("Attendre fréquence libre", "Wait for clear frequency", "Auf freie Frequenz warten", "Esperar frecuencia libre", "Attendere frequenza libera"),
     ("ATTENTE…", "WAITING…", "WARTEN…", "ESPERA…", "ATTESA…"),
     ("image", "picture", "Bild", "imagen", "immagine"),

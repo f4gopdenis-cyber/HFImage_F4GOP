@@ -61,7 +61,7 @@ import random
 import wave
 
 APP = "HFImage F4GOP"
-VERSION = "1.26"
+VERSION = "1.27"
 
 
 def _take_profile(argv):
@@ -453,6 +453,7 @@ class App(tk.Tk):
         self._apply_look(save=False)
         self.gal_store = None
         self._gallery_open()
+        self.after(1500, self._thumb_from_gallery)     # vignette : dernière image reçue
         self.web = websync.WebSync(os.path.join(os.path.expanduser("~"), ".hfimage_web.json"),
                                    log=lambda m: self.ui(self.log, m))
         self.after(100, self._poll)
@@ -517,6 +518,7 @@ class App(tk.Tk):
         ctl = tk.Frame(left, bg=GREEN)               # panneau d'état + grille de boutons
         ctl.pack(fill="x")
         self.panel = StatusPanel(ctl)
+        self.panel.on_thumb = lambda: self.show_tab("rx")
         self.panel.pack(fill="x")
         self._button_grid(ctl)
         lpw = tk.PanedWindow(left, orient="vertical", **pw)
@@ -6114,6 +6116,7 @@ class App(tk.Tk):
             mode = mode + " aperçu"
         if png:
             im, anim = self._show_rx(path, png)
+            self._panel_thumb(im, hdr.get("call"))
             self._set_text(self.lb_rx_info, f"{os.path.basename(path)}   —   {hdr['call']}   —   {mode}   —   "
                                            f"{im.width}×{im.height}   —   {hdr['size'] / 1000:.1f} K" + anim)
             if not self.tx_busy:
@@ -6166,6 +6169,35 @@ class App(tk.Tk):
         else:
             self.prepare()
         self.log(tr("Émission passée sur le mode reçu :") + f" {what} ({hdr.get('call') or '?'})")
+
+    def _thumb_from_gallery(self):
+        """Au démarrage : la vignette du panneau montre la dernière image reçue (galerie)."""
+        try:
+            for e in list(self.gal_store.items if self.gal_store else []):
+                if e.get("dir") != "rx" or e.get("mode", "").endswith("aperçu"):
+                    continue
+                src = self._gallery_src(e)
+                if src and os.path.exists(src):
+                    with imgfmt.open_upright(src) as im:
+                        im.load()
+                        self._panel_thumb(im.copy(), e.get("call"))
+                    return
+        except Exception as ex:
+            self._journal(f"Vignette du panneau : {ex}\n")
+
+    def _panel_thumb(self, im, call):
+        """Vignette du panneau : dernière image reçue, avec indicatif, prénom et distance."""
+        try:
+            c = self._station_call(call) if call else ""
+            parts = [self._label(c)] if c and c != "?" else []
+            here = protocol.locator_to_latlon(self.v_loc.get().strip())
+            there = protocol.locator_to_latlon(self.known_loc.get(c, "")) if c else None
+            if here and there:
+                import stationmap
+                parts.append(f"{stationmap.distance_km(here, there):.0f} km")
+            self.panel.set_thumb(im.convert("RGB"), "\n".join(parts))      # une ligne chacun
+        except Exception as e:
+            self._journal(f"Vignette du panneau : {e}\n")
 
     def _show_rx(self, path, png):
         """Affiche une image reçue ; un GIF animé est joué en boucle.
@@ -6700,7 +6732,9 @@ class App(tk.Tk):
                              web_count=int(v_n.get() or 20), web_block=v_block.get().strip())
             self._save_conf_file()
             u = websync.page_url(self._web_cfg())
-            lb.configure(text=(tr("Page à donner à Digi-Sites :") + f" {u}") if u else "")
+            d = websync.digisites_url(self._web_cfg())
+            lb.configure(text=(tr("Adresse à donner à Digi-Sites :") + f" {d}\n" + tr("Page de vos images :")
+                               + f" {u}") if u else "")
 
         def send_page():
             store()

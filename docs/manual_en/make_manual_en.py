@@ -320,7 +320,9 @@ s.append(P("Listening starts by itself when the audio input is set (<b>Receive</
            "Nothing to choose: <b>all modes are decoded at the same time</b> — DATAC1X, DATAC1, DATAC3, DATAC4 "
            "<b>and</b> EasyPal (HamDRM), whatever mode is selected for transmission."))
 s += B(["<b>Status panel</b> (top left): callsign of the station received, radio frequency and mode, RX level, "
-        "SNR, mode, bandwidth, data rate, segments received, Signal / Sync / Frame / Image / BSR lights.",
+        "SNR, mode, bandwidth, data rate, segments received, Signal / Sync / Frame / Image / BSR lights. Right of the "
+        "table, a <b>thumbnail of the last picture received</b>, with the callsign, first name and distance of the "
+        "station; a click shows it in the RX tab.",
         "When a picture starts to arrive while the <b>TX tab</b> is displayed, HFImage switches to the <b>RX tab</b> "
         "so that you see it come in (except during your own transmissions).",
         "<b>Quick preview</b> (HFImage modes): a small picture arrives in ~20 s, then the full picture replaces it.",
@@ -569,8 +571,9 @@ s.append(P("Menu <b>Images → Website / Digi-Sites…</b>: as in EasyPal, each 
            "<b>image1</b>, with no extension as in EasyPal: this is the file Digi-Sites reads (the previous ones move to "
            "image2, image3…), with callsign, date, mode and band; your "
            "transmitted pictures go to TX1.jpg … TX5.jpg, and a <b>hfimage.html</b> page shows them. Example with "
-           "qsl.net: server <b>ftp.qsl.net</b>, empty folder, link <b>https://www.qsl.net/yourcall</b>, page for "
-           "Digi-Sites <b>https://www.qsl.net/yourcall/hfimage.html</b>."))
+           "qsl.net: server <b>ftp.qsl.net</b>, empty folder, link <b>https://www.qsl.net/yourcall</b>, address for "
+           "Digi-Sites (Setup → Edit site) <b>https://www.qsl.net/yourcall/image1</b>; page of your pictures: "
+           "https://www.qsl.net/yourcall/hfimage.html."))
 
 # ------------------------------------------------------------------ 10
 s.append(P("10. Noise, QSB and QRM", "h1"))

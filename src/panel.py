@@ -42,6 +42,16 @@ class StatusPanel(tk.Frame):
                 lab.grid(row=i, column=j, sticky="w", padx=3)
                 self.cells[(row, side)] = lab
 
+        # vignette de la dernière image reçue, dans la place libre à droite du tableau ; elle prend
+        # la place disponible sans élargir le panneau (cachée s'il n'y a pas assez de place)
+        tbl.columnconfigure(3, weight=1)
+        self.thumb = tk.Canvas(tbl, width=1, height=1, bg=BG, highlightthickness=0, cursor="hand2")
+        self.thumb.grid(row=0, column=3, rowspan=7, sticky="nsew", padx=(6, 0))
+        self.thumb.bind("<Configure>", lambda e: self._draw_thumb())
+        self.thumb.bind("<Button-1>", lambda e: self.on_thumb() if self._thumb_img is not None else None)
+        self._thumb_img, self._thumb_txt, self._thumb_ph = None, "", None
+        self.on_thumb = lambda: None
+
         # voyants
         lf = tk.Frame(self, bg=BG)
         lf.grid(row=4, column=0, columnspan=4, sticky="w", padx=6, pady=(4, 6))
@@ -75,6 +85,39 @@ class StatusPanel(tk.Frame):
         # ▾ : la fréquence se clique (menu des fréquences)
         self.freq.configure(text=f"{freq} ▾\n{sub}" if freq else "",
                             font=("TkDefaultFont", 11, "bold"))
+
+    def set_thumb(self, img, text=""):
+        """Dernière image reçue (PIL) + petite ligne (indicatif, prénom, distance)."""
+        self._thumb_img, self._thumb_txt = img, text or ""
+        self._draw_thumb()
+
+    def _draw_thumb(self):
+        c = self.thumb
+        c.delete("all")
+        im = self._thumb_img
+        w, h = c.winfo_width(), c.winfo_height()
+        if im is None or w < 60 or h < 50:
+            return
+        from PIL import Image, ImageTk
+        import tkinter.font as tkfont
+        f = tkfont.Font(family="TkDefaultFont", size=8)
+        lines = []
+        for ln in [x for x in self._thumb_txt.split("\n") if x]:
+            while ln and f.measure(ln) > w - 2:              # trop long : coupé avec « … »
+                ln = ln[:-2] + "…" if len(ln) > 2 else ""
+            lines.append(ln)
+        lh = f.metrics("linespace")
+        th = h - lh * len(lines)
+        if th < 30:
+            return
+        t = im.copy()
+        t.thumbnail((w - 2, th - 2), Image.LANCZOS)
+        self._thumb_ph = ImageTk.PhotoImage(t)
+        c.create_image(w // 2, (th - t.height) // 2, image=self._thumb_ph, anchor="n")
+        c.create_rectangle(w // 2 - t.width // 2 - 1, (th - t.height) // 2 - 1,
+                           w // 2 + (t.width + 1) // 2, (th - t.height) // 2 + t.height, outline=FG)
+        for k, ln in enumerate(lines):
+            c.create_text(w // 2, th + k * lh, text=ln, fill=FG, font=f, anchor="n")
 
     def set_call(self, call):
         self.call.configure(text=call or "—")

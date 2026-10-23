@@ -1,5 +1,10 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 1.27 — vignette dans le panneau, adresse Digi-Sites
+
+- **Panneau d'état** : la place libre à droite du tableau TX / RX montre maintenant la **vignette de la dernière image reçue**, avec l'indicatif, le prénom et la distance de la station (« F4EEH Jean — 312 km »). Elle se met à jour à chaque réception (aperçu compris) ; un clic l'affiche dans l'onglet RX. Au démarrage, elle montre la dernière image de la galerie. Elle prend la place disponible sans élargir le panneau.
+- **Site web / Digi-Sites** : la fenêtre donne maintenant la bonne adresse pour Digi-Sites, celle du fichier **image1** (`https://www.qsl.net/f4gop/image1`, vérifié par F4GOP), et en dessous l'adresse de la page de vos images.
+
 ## Version 1.26 — Digi-Sites : images nommées comme EasyPal
 
 - Site web / Digi-Sites : les images reçues sont mises en ligne sous le nom **« image1 », « image2 »… sans extension**, exactement comme EasyPal : c'est ce fichier que lit Digi-Sites. HFImage les nommait « image1.jpg » : Digi-Sites ne les trouvait pas et continuait d'afficher la dernière image déposée par EasyPal. La page hfimage.html les affiche toujours.

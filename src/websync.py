@@ -211,6 +211,12 @@ class WebSync:
                 pass                                  # pas encore d'image à ce rang
 
 
+def digisites_url(cfg):
+    """Adresse à donner à Digi-Sites : le fichier image1 lui-même (vérifié avec Digi-Sites)."""
+    base = (cfg.get("url") or "").strip()
+    return base.rstrip("/") + "/" + remote("image", 1) if base else ""
+
+
 def page_url(cfg):
     base = (cfg.get("url") or "").strip()
     if not base:
