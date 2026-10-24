@@ -110,6 +110,8 @@ def compress(img: Image.Image, width, target_bytes: int, fmt="avif"):
     img = resize_to(img, width)
     if fmt == "jpeg" and img.width * img.height >= SAMPLE_MIN_PX:
         return _compress_jpeg_sampled(img, target_bytes)
+    if fmt in ("avif", "webp") and img.width * img.height >= SAMPLE_MIN_PX_AVIF:
+        return _compress_sampled_slow(img, target_bytes, fmt)
     lo, hi, q_fast = 1, 95, 0
     while lo <= hi:
         q = (lo + hi) // 2
@@ -133,6 +135,7 @@ def compress(img: Image.Image, width, target_bytes: int, fmt="avif"):
 
 
 SAMPLE_MIN_PX = 1_500_000          # au-delà : qualité JPEG estimée sur un échantillon de la photo
+SAMPLE_MIN_PX_AVIF = 2_500_000     # AVIF / WebP : encodage lent, échantillon dès 2,5 Mpx
 
 
 def _sample(img, n=12, keep=3):
@@ -186,6 +189,34 @@ def _compress_jpeg_sampled(img, target_bytes):
         if best is None:
             best = 1
     return full(best), best, img.size
+
+
+def _compress_sampled_slow(img, target_bytes, fmt):
+    """Grande photo en AVIF / WebP (mode hybride) : chaque compression de la photo entière prend
+    plusieurs secondes. La qualité est cherchée sur un petit échantillon (1/8 de la surface), puis
+    la photo entière n'est compressée qu'une fois (ou quelques fois si elle dépasse)."""
+    m, ratio = _sample(img, n=12, keep=8)
+    lo, hi, q = 1, 95, 1
+    while lo <= hi:
+        mid = (lo + hi) // 2
+        if len(_encode(m, fmt, mid, 6)) * ratio <= target_bytes * 0.97:     # petite marge
+            q, lo = mid, mid + 1
+        else:
+            hi = mid - 1
+    d = _encode(img, fmt, q, 6)
+    if len(d) <= target_bytes:
+        return d, q, img.size
+    lo, hi, best = 1, q - 1, None                       # dépasse : on redescend sur la photo entière
+    while lo <= hi:
+        mid = (lo + hi) // 2
+        dd = _encode(img, fmt, mid, 6)
+        if len(dd) <= target_bytes:
+            best, lo = (dd, mid), mid + 1
+        else:
+            hi = mid - 1
+    if best is None:
+        best = (_encode(img, fmt, 1, 6), 1)
+    return best[0], best[1], img.size
 
 
 def bytes_for_quality(img: Image.Image, width, quality=45, fmt="avif") -> int:

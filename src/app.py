@@ -62,7 +62,7 @@ import random
 import wave
 
 APP = "HFImage F4GOP"
-VERSION = "1.50"
+VERSION = "1.51"
 
 
 def _take_profile(argv):
@@ -5189,9 +5189,13 @@ class App(tk.Tk):
             self._update_comp()
             return
         srv = self.v_hurl.get().strip() or "(lien public non réglé)"
+        slow = (fmt in ("avif", "webp") and q is not None
+                and size[0] * size[1] >= engine.SAMPLE_MIN_PX_AVIF)
         self.v_txinfo.set(f"Mode hybride\nImage déposée par FTP sur :\n{srv}\n"
                           + ("Annonce radio : ~9 s (DATAC13 robuste + DATAC0, éclair : lien par Internet)"
-                             if self.v_flash.get() else "Annonce radio : ~11 s (DATAC3)"))
+                             if self.v_flash.get() else "Annonce radio : ~11 s (DATAC3)")
+                          + ("\n" + tr("AVIF sur une grande photo : choisissez jpg ou original pour une image "
+                                        "prête tout de suite.") if slow else ""))
         self._update_comp()
 
     def _update_comp(self):

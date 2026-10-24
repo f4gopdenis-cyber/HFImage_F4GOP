@@ -1,5 +1,10 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 1.51 — grande photo en AVIF (mode hybride) préparée 5 fois plus vite
+
+- Mode hybride avec le format **avif** (ou webp) et une grande photo : la meilleure qualité est cherchée sur un **échantillon** de la photo, puis la photo entière n'est compressée qu'une fois (au lieu d'une quinzaine de fois, quelques secondes chacune). Photo de téléphone de 12 Mpx en « originale / 3000 ko » : **environ 50 s → 10 s** sur la machine d'essai.
+- Sous l'image, un conseil s'affiche dans ce cas : « AVIF sur une grande photo : choisissez jpg ou original pour une image prête tout de suite. »
+
 ## Version 1.50 — forme des images incrustées
 
 - Fenêtre « Image du correspondant » : liste **« Forme »** pour chaque image incrustée : **Rectangle** (comme avant, par défaut), **Coins arrondis**, **Rond** (centre carré de l'image, comme un médaillon) ou **Ovale**. Le cadre blanc et l'ombre suivent la forme ; pour le rond et l'ovale, la légende est dans une pastille sous l'image. La forme découpe aussi un logo, et marche avec la rotation et la perspective. Retenue pour chaque emplacement.

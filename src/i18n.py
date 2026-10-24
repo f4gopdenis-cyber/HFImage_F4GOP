@@ -1600,6 +1600,7 @@ T = [
     ("Rond", "Round", "Rund", "Redondo", "Rotondo"),
     ("Ovale", "Oval", "Oval", "Óvalo", "Ovale"),
     ("Forme", "Shape", "Form", "Forma", "Forma"),
+    ("AVIF sur une grande photo : choisissez jpg ou original pour une image prête tout de suite.", "AVIF on a large photo: choose jpg or original for a picture ready at once.", "AVIF bei einem großen Foto: jpg oder original wählen, dann ist das Bild sofort fertig.", "AVIF en una foto grande: elija jpg u original para una imagen lista al instante.", "AVIF su una foto grande: scegliete jpg o original per un'immagine pronta subito."),
     ("Attendre fréquence libre", "Wait for clear frequency", "Auf freie Frequenz warten", "Esperar frecuencia libre", "Attendere frequenza libera"),
     ("ATTENTE…", "WAITING…", "WARTEN…", "ESPERA…", "ATTESA…"),
     ("image", "picture", "Bild", "imagen", "immagine"),
