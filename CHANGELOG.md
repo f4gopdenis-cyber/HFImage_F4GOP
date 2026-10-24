@@ -1,5 +1,9 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 1.43 — listes Stations et Rx Ok : début des indicatifs toujours visible
+
+- Correction (1.40) : la liste des stations pouvait rester décalée d'un caractère vers la droite (« 4VD274 » au lieu de « 14VD274 ») après un geste horizontal de la molette ou du pavé tactile. Le défilement horizontal des listes Stations et Rx Ok est maintenant bloqué : elles s'affichent toujours depuis le début de la ligne.
+
 ## Version 1.42 — mises à jour : secours quand GitHub limite les vérifications
 
 - Quand GitHub refuse la vérification des mises à jour (« HTTP Error 403: rate limit exceeded » : 60 questions par heure au plus pour une même connexion Internet), HFImage lit la page « dernière version » du site GitHub, qui n'a pas cette limite, et trouve quand même la nouvelle version et son fichier (toujours sur la page officielle du projet ; taille vérifiée).

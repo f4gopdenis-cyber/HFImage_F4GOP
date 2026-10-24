@@ -86,5 +86,24 @@ class ListeStable(unittest.TestCase):
         self.assertLessEqual(abs(self.lst.nearest(0) - 10), 1)       # la liste ne remonte pas en haut
 
 
+    def test_jamais_decalee_a_droite(self):
+        # 1.43 : liste décalée d'un cran (molette / pavé tactile) -> « 4VD274 » pour « 14VD274 »
+        import app
+        lst = self.lst
+        lst.configure(width=6, xscrollcommand=app.App._no_xscroll(lst))
+        keys = ["14VD274", "2E1HOL", "DL7VOE"]
+        rows = [(f"{k:<8} 7.058 HYB", None) for k in keys]
+        self.sync(lst, keys, rows)
+        self.root.update()
+        lst.xview_scroll(1, "units")                     # décalage horizontal
+        self.root.update()
+        self.root.update()
+        self.assertEqual(lst.xview()[0], 0.0)
+        lst.xview_moveto(0.3)
+        self.sync(lst, keys, rows)                       # rien n'a changé : remise au début quand même
+        self.root.update()
+        self.assertEqual(lst.xview()[0], 0.0)
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -62,7 +62,7 @@ import random
 import wave
 
 APP = "HFImage F4GOP"
-VERSION = "1.42"
+VERSION = "1.43"
 
 
 def _take_profile(argv):
@@ -1920,6 +1920,9 @@ class App(tk.Tk):
         self.lst_rxok.pack(side="left", fill="both", expand=True)
         for lb in (self.lst_heard, self.lst_rxok):
             lb.bind("<ButtonRelease-1>", lambda e: e.widget.xview_moveto(0), add="+")
+            # jamais de défilement horizontal (molette, pavé tactile, glisser…) : sinon le début
+            # des indicatifs est coupé (« 4VD274 » pour « 14VD274 »)
+            lb.configure(xscrollcommand=App._no_xscroll(lb))
             lb.bind("<B1-Leave>", lambda e: "break")       # pas de défilement horizontal en glissant
         self.lst_heard.bind("<Double-Button-1>", lambda e: self._heard_detail())
         self.lst_rxok.bind("<Double-Button-1>", lambda e: self._heard_detail(self.lst_rxok))
@@ -2418,6 +2421,14 @@ class App(tk.Tk):
             self.map_win.redraw()
 
     @staticmethod
+    def _no_xscroll(lb):
+        """xscrollcommand qui ramène aussitôt la liste au début de la ligne."""
+        def cb(first, last):
+            if float(first) > 0:
+                lb.after_idle(lambda: lb.xview_moveto(0))
+        return cb
+
+    @staticmethod
     def _sync_list(lst, keys, rows):
         """Met à jour une liste (Stations, Rx Ok) sans la faire « sauter » (demande de SWLPete) :
         rien n'est touché si rien n'a changé ; sinon seules les lignes modifiées sont réécrites, et
@@ -2426,6 +2437,7 @@ class App(tk.Tk):
         old_keys = getattr(lst, "_keys", [])
         old_rows = getattr(lst, "_rows", [])
         if old_keys == list(keys) and old_rows == list(rows):
+            lst.xview_moveto(0)                         # toujours depuis le début de la ligne
             return
         sel = lst.curselection()
         sel_key = old_keys[sel[0]] if sel and sel[0] < len(old_keys) else None
