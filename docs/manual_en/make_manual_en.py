@@ -334,7 +334,8 @@ s += B(["<b>Status panel</b> (top left): callsign of the station received, radio
         "<b>Quick preview</b> (HFImage modes): a small picture arrives in ~20 s, then the full picture replaces it.",
         "<b>History</b> on the right: click to show again, double-click for full size (can be hidden, menu Windows).",
         "<b>Zoom</b>: mouse wheel on the picture to enlarge / reduce around the pointer (up to ×16), hold the left "
-        "button to move the enlarged picture, right-click to return to the whole picture.",
+        "button to move the enlarged picture. <b>Right-click</b>: “<b>Copy image</b>” (paste it with Ctrl+V into Teams, "
+        "an e-mail, WhatsApp… for a station that did not decode it) and “Back to the whole image”.",
         "<b>Automatic BSR / ACK</b> (HFImage modes): if pieces are missing at the end, HFImage asks for them (BSR); "
         "the sender sends only what is missing (FIX). Once the picture is complete, an acknowledgement (ACK) with "
         "your report goes back to the sender.",
@@ -347,7 +348,8 @@ s += B(["<b>Status panel</b> (top left): callsign of the station received, radio
         "<b>Replay RX</b>: decodes the last 15 minutes again (if a picture was missed)."])
 s.append(P("Gallery", "h2"))
 s.append(P("<b>Gallery</b> tab: the last 30, 60 or 100 pictures received (“from F4EMK”) or sent. Click: show; "
-           "double-click: full size; right-click: send the picture again, reply with this picture, show the station "
+           "double-click: full size; right-click: <b>copy image</b> (paste it with Ctrl+V into Teams, an e-mail…; an animated "
+           "GIF is copied as a still image; on Linux this needs xclip: sudo apt install xclip), send the picture again, reply with this picture, show the station "
            "on the map, open the folder, remove from the gallery."))
 s.append(img("en_gallery.png", 150, "The gallery of the last pictures received."))
 

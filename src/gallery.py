@@ -292,6 +292,7 @@ class GalleryView(tk.Frame):
         m.delete(0, "end")
         m.add_command(label=self.tr("Afficher dans l'onglet RX"), command=lambda: self._click(e))
         m.add_command(label=self.tr("Ouvrir en plein format"), command=lambda: self._full(e))
+        m.add_command(label=self.tr("Copier l'image"), command=lambda: self.app.gallery_copy(e))
         m.add_command(label=self.tr("Renvoyer cette image (onglet TX)"), command=lambda: self.app.gallery_to_tx(e))
         if e.get("dir") == "rx":
             m.add_command(label=self.tr("Répondre avec cette image (incrustée dans mon image TX)"),

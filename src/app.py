@@ -62,7 +62,7 @@ import random
 import wave
 
 APP = "HFImage F4GOP"
-VERSION = "1.37"
+VERSION = "1.38"
 
 
 def _take_profile(argv):
@@ -1372,6 +1372,7 @@ class App(tk.Tk):
         self.lst.bind("<<ListboxSelect>>", self._hist_select)
         self.lst.bind("<Double-Button-1>", lambda e: self._open_full())
         self.lb_rx.bind("<Double-Button-1>", lambda e: self._open_full())
+        self.lb_rx.menu_cb = self._rx_menu
         self.v_rxstat = tk.StringVar(value="")
         self.v_level = tk.DoubleVar(value=0)
         self.hist = []
@@ -6969,6 +6970,51 @@ class App(tk.Tk):
         if p and os.path.exists(p):
             self.load_image(p)
             self.show_tab("tx")
+
+    def copy_image(self, src):
+        """Image (PIL) ou fichier -> presse-papiers, pour la coller dans Teams, un e-mail…"""
+        import clip
+        try:
+            im = src if isinstance(src, Image.Image) else clip.load(src)
+            anim = False
+            if isinstance(src, str) and src.lower().endswith(".gif"):
+                with open(src, "rb") as f:
+                    anim = imgfmt.is_animated_gif(f.read())
+            clip.copy_image(im)
+        except Exception as e:
+            self.log_exc("Copie de l'image", e)
+            messagebox.showerror(APP, tr("Copie de l'image impossible :") + f"\n{tr(str(e))}")
+            return False
+        self.log(tr("Image copiée : collez-la avec Ctrl+V (Teams, e-mail…).") + f" ({im.width}×{im.height})"
+                 + (" — " + tr("GIF animé copié comme image fixe.") if anim else ""))
+        return True
+
+    def gallery_copy(self, e):
+        p = e.get("file")
+        src = p if p and os.path.exists(p) else self._gallery_src(e)
+        if src and os.path.exists(src):
+            try:
+                return self.copy_image(src)
+            except Exception:
+                pass
+        src = self._gallery_src(e)                     # fichier illisible : son aperçu PNG
+        if src and os.path.exists(src):
+            return self.copy_image(src)
+        return False
+
+    def _rx_menu(self, ev):
+        """Clic droit sur la grande image de l'onglet RX."""
+        v = self.lb_rx
+        m = tk.Menu(self, tearoff=0)
+        img = v.frames[0] if v.frames else v.pil
+        m.add_command(label=tr("Copier l'image"), command=lambda: self.copy_image(img),
+                      state="normal" if img is not None else "disabled")
+        if v.zoom > 1.0:
+            m.add_command(label=tr("Revenir à l'image entière"), command=v.reset_zoom)
+        try:
+            m.tk_popup(ev.x_root, ev.y_root)
+        finally:
+            m.grab_release()
 
     def gallery_folder(self, e):
         p = e.get("file")

@@ -1,5 +1,11 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 1.38 — copier une image dans le presse-papiers (VK6ATI)
+
+- Galerie, clic droit sur une image : **« Copier l'image »**. Il suffit ensuite de la coller (**Ctrl+V**) dans MS Teams, un e-mail, WhatsApp, Word, Paint… par exemple pour une station qui ne l'a pas décodée. L'image est copiée en pleine qualité (PNG).
+- Onglet RX, clic droit sur la grande image : « Copier l'image » et « Revenir à l'image entière » (après un zoom).
+- Un GIF animé est copié comme image fixe (le presse-papiers ne garde pas l'animation). Sous Linux, la copie utilise xclip (`sudo apt install xclip`).
+
 ## Version 1.37 — commandes CAT personnalisées : changement de fréquence Icom (VK6NJP)
 
 - Commandes CAT personnalisées avec un poste **Icom** (commandes CI-V « FEFE94E0… ») : HFImage trouve l'adresse du poste dans les commandes et **change la fréquence** quand on choisit une fréquence dans le menu (commande Icom standard) ; le mode du poste (LSB / USB, DATA) n'est pas touché. La fréquence choisie s'affiche dans le panneau.

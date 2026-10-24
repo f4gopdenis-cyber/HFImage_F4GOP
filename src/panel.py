@@ -143,6 +143,7 @@ class ImageView(tk.Canvas):
         self.zoom = 1.0                 # 1 = image entière dans la fenêtre
         self.view = None                # centre affiché (coordonnées dans l'image)
         self._drag = None
+        self.menu_cb = None             # clic droit : menu (sinon retour à l'image entière)
         self.bind("<Configure>", lambda e: (self._cache.clear(), self._redraw()))
         self.bind("<MouseWheel>", lambda e: self._wheel(e, 1 if e.delta > 0 else -1))   # Windows
         self.bind("<Button-4>", lambda e: self._wheel(e, 1))                            # Linux
@@ -150,7 +151,7 @@ class ImageView(tk.Canvas):
         self.bind("<ButtonPress-1>", self._drag_start, add="+")
         self.bind("<B1-Motion>", self._drag_move, add="+")
         self.bind("<ButtonRelease-1>", lambda e: setattr(self, "_drag", None), add="+")
-        self.bind("<Button-3>", lambda e: self.reset_zoom(), add="+")
+        self.bind("<Button-3>", lambda e: self.menu_cb(e) if self.menu_cb else self.reset_zoom(), add="+")
 
     def _stop(self):
         if self._job is not None:

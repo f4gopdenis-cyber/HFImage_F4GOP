@@ -341,7 +341,8 @@ s += B(["<b>Panneau d'état</b> (en haut à gauche) : indicatif de la station re
         "pour la montrer (sauf pendant vos propres émissions).",
         "<b>Aperçu rapide</b> (modes HFImage) : une petite image arrive en ~20 s, puis l'image complète la remplace.",
         "<b>Zoom</b> : molette de la souris sur l'image pour l'agrandir / la réduire autour du pointeur (jusqu'à ×16), "
-        "clic gauche maintenu pour la déplacer, clic droit pour revenir à l'image entière.",
+        "clic gauche maintenu pour la déplacer. <b>Clic droit</b> : « <b>Copier l'image</b> » (à coller avec Ctrl+V dans "
+        "Teams, un e-mail, WhatsApp… pour une station qui ne l'a pas décodée) et « Revenir à l'image entière ».",
         "<b>Historique</b> à droite : clic pour réafficher, double-clic pour le plein format (masquable par le menu Fenêtres).",
         "<b>BSR / ACK automatiques</b> : s'il manque des morceaux à la fin, HFImage les demande (BSR) ; "
         "l'émetteur ne renvoie que ce qui manque (FIX). Une fois l'image complète, un accusé (ACK) avec "
@@ -355,8 +356,9 @@ s += B(["<b>Panneau d'état</b> (en haut à gauche) : indicatif de la station re
         "<b>Relire RX</b> : redécode les 15 dernières minutes (si une image a été manquée)."])
 s.append(P("Galerie", "h2"))
 s.append(P("Onglet <b>Galerie</b> : les 30, 60 ou 100 dernières images reçues (« de F4EMK ») ou envoyées. Clic : "
-           "afficher ; double-clic : plein format ; clic droit : renvoyer l'image, voir la station sur la carte, "
-           "ouvrir le dossier, retirer de la galerie."))
+           "afficher ; double-clic : plein format ; clic droit : <b>copier l'image</b> (à coller avec Ctrl+V dans Teams, "
+           "un e-mail… ; un GIF animé est copié comme image fixe), renvoyer l'image, voir la station sur la carte, "
+           "ouvrir le dossier, retirer de la galerie. Sous Linux, la copie demande xclip (sudo apt install xclip)."))
 s.append(img("galerie.png", 160, "La galerie des dernières images reçues."))
 
 # ------------------------------------------------------------------ 5
