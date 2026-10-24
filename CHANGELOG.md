@@ -1,5 +1,10 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 1.41 — bulles sur un GIF animé reçu
+
+- Répondre avec un **GIF animé** reçu (par exemple une image avec des émoticônes animées, « Renvoyer cette image ») en y ajoutant une **bulle** : la bulle est maintenant **dessinée sur chaque image du GIF** et l'animation d'origine est gardée. Avant, le GIF repartait tel quel, sans la bulle.
+- Si la nouvelle bulle a elle aussi des émoticônes animées, elles bougent en même temps. Le GIF est réduit si besoin pour respecter la taille maximale réglée.
+
 ## Version 1.40 — listes Stations et Rx Ok stables (demande de SWLPete)
 
 - Les listes **Stations** et **Rx Ok** ne « sautent » plus à chaque nouvelle information (station qui se connecte, change de fréquence, passe en émission…) : elles restent à l'endroit où on les a fait défiler, la station sélectionnée le reste, et rien n'est réécrit quand rien n'a changé (plus de clignotement). Seules les lignes qui changent sont mises à jour ; une station qui arrive s'insère à sa place alphabétique sans décaler la partie de la liste qu'on regarde.

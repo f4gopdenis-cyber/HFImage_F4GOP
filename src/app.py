@@ -62,7 +62,7 @@ import random
 import wave
 
 APP = "HFImage F4GOP"
-VERSION = "1.40"
+VERSION = "1.41"
 
 
 def _take_profile(argv):
@@ -4839,7 +4839,12 @@ class App(tk.Tk):
                 limit = int(float(self.v_gifkb.get()) * 1000)
             except (tk.TclError, ValueError):
                 limit = 2_000_000
-            data, how = self._cz(imgfmt.gif_shrink, self.src_raw, limit)
+            if any((b.get("text") or "").strip() for b in self.bubbles):
+                # GIF animé reçu + bulles : bulles dessinées sur chaque image, animation gardée
+                data, how = self._cz(bubbles.gif_with_bubbles, self.src_raw,
+                                     json.dumps(self.bubbles, sort_keys=True), limit)
+            else:
+                data, how = self._cz(imgfmt.gif_shrink, self.src_raw, limit)
             fmt, q = "gif", None
             im0 = Image.open(io.BytesIO(data))
             size = im0.size

@@ -382,7 +382,8 @@ s.append(P("<b>Bubbles…</b> button (TX tab) or <b>Images → Speech bubbles…
            "background and text colours of your choice; <b>30 colour emoticons</b> to add to the text with one click; "
            "“<b>Animated emoticons</b>” box: in hybrid mode they move (the heart beats, the hand waves, the star spins, "
            "a wink…) and the picture goes as an animated GIF (a photo loses a little detail: 256 colours); over the air "
-           "only, they stay still. <b>Drag the bubble</b> with the mouse, and the <b>red dot</b> "
+           "only, they stay still. On a received <b>animated GIF</b> (“Send this picture again”), bubbles are drawn "
+           "on every frame and the original animation is kept. <b>Drag the bubble</b> with the mouse, and the <b>red dot</b> "
            "(the tail) towards what it points at; several bubbles are possible, right-click a bubble to delete it. The "
            "bubble is part of the picture: everyone sees it, over the air or in hybrid mode, EasyPal stations too. "
            "Bubbles are cleared when you open another picture."))

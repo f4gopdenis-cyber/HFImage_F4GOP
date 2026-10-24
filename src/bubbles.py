@@ -348,6 +348,30 @@ def make_gif(base, bubbles_json, wmax=800, max_bytes=2_000_000):
     return imgfmt.gif_shrink(data, max_bytes)
 
 
+def gif_with_bubbles(gif, bubbles_json, max_bytes=2_000_000, max_frames=240):
+    """GIF animé reçu (octets) + bulles -> GIF animé (octets, traitement) : les bulles sont
+    dessinées sur chaque image et l'animation d'origine est gardée. Si les bulles ont des
+    émoticônes animées, les images longues sont découpées (ANIM_MS) pour qu'elles bougent aussi."""
+    import json
+    import imgfmt
+    bubs = json.loads(bubbles_json)
+    src, durs = imgfmt.gif_frames(gif)
+    anim = has_anim(bubs)
+    fr, du = [], []
+    clock = 0
+    period = ANIM_FRAMES * ANIM_MS
+    for im, d in zip(src, durs):
+        parts = max(1, round(d / ANIM_MS)) if anim else 1
+        parts = min(parts, max(1, max_frames // max(1, len(src))))
+        for k in range(parts):
+            dd = d // parts + (d % parts if k == parts - 1 else 0)
+            fr.append(draw(im, bubs, (clock % period) / period if anim else None))
+            du.append(max(20, dd))
+            clock += dd
+    data = imgfmt._gif_encode(fr, du, 1.0, 255, 1)
+    return imgfmt.gif_shrink(data, max_bytes)
+
+
 def hit(W, H, bubbles, x, y, grab=10):
     """Clic en (x, y) sur une image affichée en W×H -> (indice, « pointe » / « bulle ») ou None.
     La pointe est prioritaire (petite cible) ; les bulles du dessus d'abord."""
