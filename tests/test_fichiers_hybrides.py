@@ -80,8 +80,9 @@ class Glisser(unittest.TestCase):
     def test_clic_ouvre_le_choix(self):
         app = _app()
         opened = []
+        # sans image ouverte : un clic ouvre le choix (avec une image, 1.52 : il sélectionne)
         s = types.SimpleNamespace(_cmp_press=(10, 10), tx_busy=False, lb_cmp=types.SimpleNamespace(zoom=1.0),
-                                  open_image=lambda: opened.append(1))
+                                  open_image=lambda: opened.append(1), src_img=None)
         app.App._cmp_click(s, types.SimpleNamespace(x=11, y=12))
         s._cmp_press = (10, 10)
         app.App._cmp_click(s, types.SimpleNamespace(x=80, y=12))       # glisser : non

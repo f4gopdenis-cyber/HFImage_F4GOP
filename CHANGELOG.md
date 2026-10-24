@@ -1,5 +1,11 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 1.52 — textes et logos directement sur l'image TX (demande de RK1AT)
+
+- Édition directe sur l'image de l'onglet TX, comme dans le « GMSK controller » de JQ1HDR : **clic droit** → « Ajouter un texte… » (avec les phrases toutes prêtes), « Ajouter un logo / une image du PC… » (un PNG transparent devient un logo), « Ajouter l'image d'un correspondant ». **Clic** pour sélectionner (cadre jaune), **glisser** pour déplacer, **molette** pour agrandir / réduire, **Maj + molette** pour tourner un logo, **double-clic** pour modifier un texte, **Suppr** pour enlever. Le clic droit sur l'élément choisi donne aussi style, couleurs, forme, légende, « Remettre droit ». L'aperçu suit la souris ; l'image à émettre est recalculée au relâchement.
+- Une fois une image ouverte, un clic sur l'image TX sélectionne au lieu d'ouvrir une autre image (bouton « Ouvrir une image… », glisser-déposer ou clic droit → « Ouvrir une autre image… »). Les fenêtres « Bulles… » et « Image du correspondant… » restent pour les réglages fins.
+- La taille d'un texte peut maintenant se régler finement (molette), au-delà de Petite / Moyenne / Grande.
+
 ## Version 1.51 — grande photo en AVIF (mode hybride) préparée 5 fois plus vite
 
 - Mode hybride avec le format **avif** (ou webp) et une grande photo : la meilleure qualité est cherchée sur un **échantillon** de la photo, puis la photo entière n'est compressée qu'une fois (au lieu d'une quinzaine de fois, quelques secondes chacune). Photo de téléphone de 12 Mpx en « originale / 3000 ko » : **environ 50 s → 10 s** sur la machine d'essai.

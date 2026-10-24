@@ -374,6 +374,15 @@ s.append(P("<b>Phone pictures</b>: a picture saved “lying on its side” by th
            "automatically when opened, as in Windows. The <b>⟲</b> and <b>⟳</b> buttons (bottom right of the picture, "
            "TX tab) rotate it a quarter turn left or right if needed. A rotated picture is sent as a very high quality "
            "JPEG, already upright, even in “original” mode."))
+s.append(P("Texts and logos directly on the TX picture", "h2"))
+s.append(P("Once the picture is open in the TX tab, everything is done <b>on the picture itself</b>: <b>right-click</b> → "
+           "“Add a text…”, “Add a logo / a picture from PC…” (a PNG with a transparent background becomes a logo), "
+           "“Add a correspondent's picture”. <b>Click</b> a text or a logo to select it (yellow frame); <b>drag</b> to "
+           "move it (the red dot: a bubble's tail); <b>mouse wheel</b> to enlarge or reduce it; <b>Shift + wheel</b> "
+           "to rotate a logo or picture; <b>double-click</b> a text to edit it; <b>Delete</b> key to remove it. "
+           "Right-clicking the selected item also gives its style, colours, shape and caption. The “Bubbles…” and "
+           "“Correspondent's image…” windows remain for fine settings. To open another picture: “Open image…” "
+           "button, drag and drop, or right-click → “Open another picture…”."))
 s.append(P("Speech bubbles", "h2"))
 s.append(P("<b>Bubbles…</b> button (TX tab) or <b>Images → Speech bubbles…</b>: type a text and it appears in a "
            "comic-strip bubble on the transmitted picture. Four styles: <b>speech</b> (round bubble with a tail), "

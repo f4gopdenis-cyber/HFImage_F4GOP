@@ -144,6 +144,9 @@ def _font(px):
     return trafic.font("Arial", px, bold=True)
 
 
+K_MIN, K_MAX = 0.3, 4.0
+
+
 def font_px(H, size):
     return max(MIN_PX, int(round(H * SIZES.get(size, SIZES["moyenne"]))))
 
@@ -169,7 +172,9 @@ def _wrap(text, font, max_w):
 def layout(W, H, b, scale=1.0):
     """Géométrie d'une bulle sur une image W×H (pixels ; scale = suréchantillonnage).
     -> dict : centre, demi-axes, pointe, lignes, police, boîte englobante de la bulle."""
-    fpx = font_px(H, b.get("size"))
+    # « k » : taille réglée à la molette sur l'image TX (multiplie la taille Petite / Moyenne / Grande)
+    k = min(K_MAX, max(K_MIN, float(b.get("k") or 1.0)))
+    fpx = max(MIN_PX, int(round(font_px(H, b.get("size")) * k)))
     font = _font(int(fpx * scale))
     # texte seul : lignes plus longues (légende sur toute la largeur)
     lines = _wrap(b.get("text", ""), font, (0.85 if b.get("style") == "texte" else 0.45) * W * scale)

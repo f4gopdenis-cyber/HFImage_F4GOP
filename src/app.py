@@ -62,7 +62,7 @@ import random
 import wave
 
 APP = "HFImage F4GOP"
-VERSION = "1.51"
+VERSION = "1.52"
 
 
 def _take_profile(argv):
@@ -1583,6 +1583,8 @@ class App(tk.Tk):
         # un clic (sans glisser) sur l'image TX ouvre le choix de l'image
         self.lb_cmp.bind("<ButtonPress-1>", lambda e: setattr(self, "_cmp_press", (e.x, e.y)), add="+")
         self.lb_cmp.bind("<ButtonRelease-1>", self._cmp_click, add="+")
+        import txedit
+        self.tx_editor = txedit.TxEditor(self, self.lb_cmp)     # 1.52 : textes et logos à la souris
         self.lb_src = ImageView(t)          # original : pas affiché, gardé pour la carte QSL
 
     def _build_text_window(self):
@@ -3621,8 +3623,89 @@ class App(tk.Tk):
         self._cmp_press = None
         if p0 is None or abs(e.x - p0[0]) > 4 or abs(e.y - p0[1]) > 4 or self.lb_cmp.zoom > 1.0:
             return                                    # glisser (image agrandie) : pas un clic
+        if self.src_img is not None:
+            return                                    # 1.52 : un clic sélectionne (édition directe)
         if not self.tx_busy:
             self.open_image()
+
+    # ------------------------------------------------------------- édition directe sur l'image TX (1.52)
+    @staticmethod
+    def _tr(s):
+        return tr(s)
+
+    def _edit_preview(self, size):
+        """Aperçu rapide de l'image à émettre à la taille de l'écran (édition à la souris)."""
+        c = getattr(self, "_edit_base", None)
+        if not c or c[0] is not self.src_img or c[1] != size:
+            self._edit_base = c = (self.src_img, size, self.src_img.convert("RGB").resize(size, Image.BILINEAR))
+        im = c[2]
+        if self.conf.get("pip_on") and self.pips:
+            im = self._pip_compose(im)[0]
+        im = self._tc_apply(im, cache=False)
+        return bubbles.draw(im, self.bubbles)
+
+    def _edit_ask_text(self, initial="", title=None, single=False):
+        """Petite fenêtre de saisie du texte d'une bulle (avec les phrases toutes prêtes).
+        -> texte, ou None si annulé."""
+        w = tk.Toplevel(self)
+        w.title(title or tr("Texte"))
+        w.transient(self)
+        f = ttk.Frame(w, padding=10)
+        f.pack(fill="both", expand=True)
+        res = [None]
+        if single:
+            v = tk.StringVar(value=initial)
+            ent = ttk.Entry(f, textvariable=v, width=40)
+            ent.pack(fill="x")
+            ent.focus_set()
+            get = lambda: v.get()
+        else:
+            top = ttk.Frame(f)
+            top.pack(fill="x")
+            ttk.Label(top, text=tr("Texte")).pack(side="left")
+            txt = tk.Text(f, width=40, height=4, wrap="word", font=("TkDefaultFont", 10))
+            mb = ttk.Menubutton(top, text=tr("Phrases") + " ▾")
+            mb.pack(side="right")
+            pm = tk.Menu(mb, tearoff=0)
+            mb["menu"] = pm
+            for p in self._bubble_phrases():
+                lab = self._phrase_fill(p)
+                pm.add_command(label=lab if len(lab) <= 50 else lab[:48] + "…",
+                               command=lambda p=p: (txt.delete("1.0", "end"), txt.insert("1.0", self._phrase_fill(p))))
+            txt.pack(fill="both", expand=True, pady=(4, 0))
+            txt.insert("1.0", initial)
+            txt.focus_set()
+            get = lambda: txt.get("1.0", "end").rstrip("\n")
+        b = ttk.Frame(f)
+        b.pack(fill="x", pady=(8, 0))
+
+        def ok(*_):
+            res[0] = get()
+            w.destroy()
+        ttk.Button(b, text="OK", command=ok).pack(side="right")
+        ttk.Button(b, text=tr("Annuler"), command=w.destroy).pack(side="right", padx=6)
+        w.bind("<Escape>", lambda e: w.destroy())
+        if single:
+            w.bind("<Return>", ok)
+        else:
+            w.bind("<Control-Return>", ok)
+        try:
+            w.grab_set()
+        except tk.TclError:
+            pass
+        self.wait_window(w)
+        return res[0]
+
+    def _edit_ask_file(self):
+        types = " ".join("*" + e for e in self.PIP_LOCAL_TYPES)
+        return filedialog.askopenfilename(parent=self, title=tr("Image à incruster"),
+                                          filetypes=[(tr("Images"), types), (tr("Tous les fichiers"), "*.*")])
+
+    def _edit_info(self, msg):
+        messagebox.showinfo(APP, msg)
+
+    def _edit_error(self, msg):
+        messagebox.showerror(APP, msg)
 
     IMAGE_EXTS = (".jpg", ".jpeg", ".png", ".gif", ".bmp", ".webp", ".avif", ".svg", ".svgz", ".tif", ".tiff",
                   ".jp2", ".j2k")
@@ -3759,7 +3842,11 @@ class App(tk.Tk):
         return out
 
     def _tx_source_nobubbles(self):
-        base = self._pip_source()
+        return self._tc_apply(self._pip_source())
+
+    def _tc_apply(self, base, cache=True):
+        """Bandeau « Mes conditions de trafic » sur l'image (si coché). cache=False : aperçu
+        d'édition (image réduite, refaite à chaque mouvement)."""
         if base is None or not self.conf.get("tc_on"):
             return base
         freq = audio.format_freq(self.rig_freq, True) if self.rig_freq else ""
@@ -3772,11 +3859,12 @@ class App(tk.Tk):
         key = (id(base), tuple(i for i in items if not re.match(r"\d{4}-\d\d-\d\d \d\d:\d\d", i)),
                self.conf.get("tc_pos"), self.conf.get("tc_size"), tuple(sorted(style.items())))
         c = getattr(self, "_tc_cache", None)
-        if c and c[0] == key:
+        if cache and c and c[0] == key and c[2] is base:
             return c[1]
         im = trafic.overlay(base, items, self.conf.get("tc_pos", "bas"), self.conf.get("tc_size", "normale"),
                             style, call)
-        self._tc_cache = (key, im)
+        if cache:
+            self._tc_cache = (key, im, base)
         return im
 
     # ------------------------------------------------------------- images des correspondants

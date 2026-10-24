@@ -383,6 +383,16 @@ s.append(P("<b>Photos de téléphone</b> : une photo enregistrée « couchée »
            "toute seule à l'ouverture, comme dans Windows. Les boutons <b>⟲</b> et <b>⟳</b> (en bas à droite de l'image, "
            "onglet TX) la tournent d'un quart de tour à gauche ou à droite si besoin. Une photo tournée part en JPEG "
            "très haute qualité, déjà droite, même en mode « original »."))
+s.append(P("Textes et logos directement sur l'image TX", "h2"))
+s.append(P("Une fois l'image ouverte dans l'onglet TX, tout se fait <b>sur l'image elle-même</b> : <b>clic droit</b> → "
+           "« Ajouter un texte… », « Ajouter un logo / une image du PC… » (un PNG à fond transparent devient un logo), "
+           "« Ajouter l'image d'un correspondant ». <b>Clic</b> sur un texte ou un logo : il est sélectionné (cadre "
+           "jaune) ; <b>glisser</b> pour le déplacer (le rond rouge : la pointe d'une bulle) ; <b>molette</b> pour "
+           "l'agrandir ou le réduire ; <b>Maj + molette</b> pour tourner un logo ou une image ; <b>double-clic</b> sur "
+           "un texte pour le modifier ; touche <b>Suppr</b> pour l'enlever. Le clic droit sur l'élément choisi donne "
+           "aussi son style, ses couleurs, sa forme, sa légende. Les fenêtres « Bulles… » et « Image du "
+           "correspondant… » restent là pour les réglages fins. Pour ouvrir une autre image : bouton « Ouvrir une "
+           "image… », glisser-déposer, ou clic droit → « Ouvrir une autre image… »."))
 s.append(P("Bulles de texte (BD)", "h2"))
 s.append(P("Bouton <b>Bulles…</b> (onglet TX) ou menu <b>Images → Bulles de texte…</b> : on écrit un texte, il "
            "apparaît dans une bulle de bande dessinée sur l'image émise. Cinq styles : <b>parole</b> (bulle ronde "

@@ -144,10 +144,12 @@ class ImageView(tk.Canvas):
         self.view = None                # centre affiché (coordonnées dans l'image)
         self._drag = None
         self.menu_cb = None             # clic droit : menu (sinon retour à l'image entière)
+        self.wheel_cb = None            # molette : rend True si elle a servi (édition), sinon zoom
+        self.after_draw = None          # dessin en plus après l'image (cadre de sélection…)
         self.bind("<Configure>", lambda e: (self._cache.clear(), self._redraw()))
-        self.bind("<MouseWheel>", lambda e: self._wheel(e, 1 if e.delta > 0 else -1))   # Windows
-        self.bind("<Button-4>", lambda e: self._wheel(e, 1))                            # Linux
-        self.bind("<Button-5>", lambda e: self._wheel(e, -1))
+        self.bind("<MouseWheel>", lambda e: self._wheel_any(e, 1 if e.delta > 0 else -1))   # Windows
+        self.bind("<Button-4>", lambda e: self._wheel_any(e, 1))                            # Linux
+        self.bind("<Button-5>", lambda e: self._wheel_any(e, -1))
         self.bind("<ButtonPress-1>", self._drag_start, add="+")
         self.bind("<B1-Motion>", self._drag_move, add="+")
         self.bind("<ButtonRelease-1>", lambda e: setattr(self, "_drag", None), add="+")
@@ -178,6 +180,22 @@ class ImageView(tk.Canvas):
         vx = W / 2 if hw * 2 >= W else min(max(vx, hw), W - hw)
         vy = H / 2 if hh * 2 >= H else min(max(vy, hh), H - hh)
         self.view = (vx, vy)
+
+    def _wheel_any(self, e, step):
+        if self.wheel_cb is not None and self.zoom <= 1.0 and self.wheel_cb(e, step):
+            return
+        if e.state & 0x0001:                                 # Maj + molette : réservé à l'édition
+            return
+        self._wheel(e, step)
+
+    def image_box(self):
+        """Place de l'image entière à l'écran -> (x, y, largeur, hauteur), ou None (zoom, pas d'image)."""
+        if self.pil is None or self.zoom > 1.0:
+            return None
+        w, h = max(10, self.winfo_width()), max(10, self.winfo_height())
+        r = max(min((w - 20) / self.pil.width, (h - 20) / self.pil.height), 0.01)
+        dw, dh = max(1, int(self.pil.width * r)), max(1, int(self.pil.height * r))
+        return w // 2 - dw // 2, h // 2 - dh // 2, dw, dh
 
     def _wheel(self, e, step):
         if self.pil is None:
@@ -261,6 +279,11 @@ class ImageView(tk.Canvas):
                 self._cache[key] = ph
         self._ph = ph
         self.create_image(w // 2, h // 2, image=ph)
+        if self.after_draw is not None:
+            try:
+                self.after_draw(self)
+            except Exception:
+                pass
 
     def _redraw_zoom(self, w, h):
         """Image agrandie : on ne redimensionne que la partie visible."""
