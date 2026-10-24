@@ -1565,6 +1565,8 @@ T = [
     ("copie impossible : le presse-papiers est occupé par un autre programme", "copy failed: the clipboard is in use by another program", "Kopieren fehlgeschlagen: die Zwischenablage wird von einem anderen Programm benutzt", "copia imposible: el portapapeles está ocupado por otro programa", "copia impossibile: gli appunti sono occupati da un altro programma"),
     ("Copier la carte", "Copy map", "Karte kopieren", "Copiar el mapa", "Copia la mappa"),
     ("Carte copiée : collez-la avec Ctrl+V (Teams, e-mail, forum…).", "Map copied: paste it with Ctrl+V (Teams, e-mail, forum…).", "Karte kopiert: mit Strg+V einfügen (Teams, E-Mail, Forum…).", "Mapa copiado: péguelo con Ctrl+V (Teams, correo, foro…).", "Mappa copiata: incollatela con Ctrl+V (Teams, e-mail, forum…)."),
+    ("GitHub limite le nombre de vérifications : réessayez dans une heure.", "GitHub limits the number of checks: try again in an hour.", "GitHub begrenzt die Anzahl der Prüfungen: in einer Stunde erneut versuchen.", "GitHub limita el número de comprobaciones: vuelva a intentarlo en una hora.", "GitHub limita il numero di verifiche: riprovate tra un'ora."),
+    ("page des versions GitHub illisible", "GitHub releases page unreadable", "GitHub-Versionsseite unlesbar", "página de versiones de GitHub ilegible", "pagina delle versioni GitHub illeggibile"),
     ("Attendre fréquence libre", "Wait for clear frequency", "Auf freie Frequenz warten", "Esperar frecuencia libre", "Attendere frequenza libera"),
     ("ATTENTE…", "WAITING…", "WARTEN…", "ESPERA…", "ATTESA…"),
     ("image", "picture", "Bild", "imagen", "immagine"),

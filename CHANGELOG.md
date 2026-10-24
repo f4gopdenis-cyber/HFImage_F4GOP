@@ -1,5 +1,10 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 1.42 — mises à jour : secours quand GitHub limite les vérifications
+
+- Quand GitHub refuse la vérification des mises à jour (« HTTP Error 403: rate limit exceeded » : 60 questions par heure au plus pour une même connexion Internet), HFImage lit la page « dernière version » du site GitHub, qui n'a pas cette limite, et trouve quand même la nouvelle version et son fichier (toujours sur la page officielle du projet ; taille vérifiée).
+- Si tout échoue, un message clair et traduit : « GitHub limite le nombre de vérifications : réessayez dans une heure. »
+
 ## Version 1.41 — bulles sur un GIF animé reçu
 
 - Répondre avec un **GIF animé** reçu (par exemple une image avec des émoticônes animées, « Renvoyer cette image ») en y ajoutant une **bulle** : la bulle est maintenant **dessinée sur chaque image du GIF** et l'animation d'origine est gardée. Avant, le GIF repartait tel quel, sans la bulle.

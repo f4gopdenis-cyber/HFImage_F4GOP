@@ -14,6 +14,8 @@ import os
 import re
 import subprocess
 import sys
+import urllib.error
+import urllib.parse
 import urllib.request
 
 REPO = "f4gopdenis-cyber/HFImage_F4GOP"
@@ -28,6 +30,7 @@ LINUX_BIN = "HFImage_F4GOP_Linux"                 # Linux : un seul fichier exé
 LINUX_ASSET = LINUX_BIN + ".tar.gz"               # …publié dans une archive (garde le droit d'exécution)
 ASSET_NAME = ("HFImage_F4GOP_Win7.exe" if LEGACY else "HFImage_F4GOP.exe") if WIN else LINUX_ASSET
 ALLOWED = (f"https://github.com/{REPO}/releases/download/",)
+DOWNLOAD_BASE = ALLOWED[0]
 UA = {"User-Agent": "HFImage-F4GOP-updater", "Accept": "application/vnd.github+json"}
 
 
@@ -45,8 +48,27 @@ def newer(remote, local):
     return r + (0,) * (n - len(r)) > l + (0,) * (n - len(l))
 
 
+RATE_LIMIT_MSG = "GitHub limite le nombre de vérifications : réessayez dans une heure."
+
+
 def check(timeout=10):
-    """-> dict(version, notes, url, size, sha256, page) de la dernière version publiée."""
+    """-> dict(version, notes, url, size, sha256, page) de la dernière version publiée.
+    L'API GitHub n'accepte que 60 questions par heure pour une même connexion Internet (sans
+    compte) : si elle refuse, on lit la page « dernière version » du site, qui n'a pas cette limite."""
+    try:
+        return _check_api(timeout)
+    except urllib.error.HTTPError as e:
+        if os.environ.get("HFIMAGE_UPDATE_URL"):              # essais : pas de secours
+            raise
+        try:
+            return check_page(timeout)
+        except Exception:
+            if e.code in (403, 429):
+                raise RuntimeError(RATE_LIMIT_MSG) from e
+            raise e
+
+
+def _check_api(timeout):
     req = urllib.request.Request(LATEST_URL, headers=UA)
     with urllib.request.urlopen(req, timeout=timeout) as r:
         d = json.loads(r.read().decode("utf-8"))
@@ -64,6 +86,37 @@ def check(timeout=10):
         dig = asset.get("digest") or ""
         if dig.startswith("sha256:"):
             info["sha256"] = dig.split(":", 1)[1].lower()
+    return info
+
+
+def check_page(timeout=10, page=None, opener=None):
+    """Secours sans l'API : github.com/…/releases/latest renvoie vers …/releases/tag/vX.YY ; le
+    fichier est alors à l'adresse standard …/releases/download/vX.YY/<nom>. Sa taille est lue
+    sans le télécharger (premier octet seulement). Pas de nouveautés ni d'empreinte SHA-256."""
+    op = opener or urllib.request.build_opener()
+    req = urllib.request.Request(page or PAGE_URL, headers={"User-Agent": UA["User-Agent"]})
+    with op.open(req, timeout=timeout) as r:
+        final = r.geturl()
+    m = re.search(r"/releases/tag/([^/?#]+)", final)
+    if not m:
+        raise RuntimeError("page des versions GitHub illisible")
+    tag = urllib.parse.unquote(m.group(1))
+    v = parse_version(tag)
+    info = {"version": ".".join(map(str, v)) if v else tag, "notes": "", "page": final,
+            "url": None, "size": None, "sha256": None, "pending": False}
+    url = f"{DOWNLOAD_BASE}{urllib.parse.quote(tag)}/{ASSET_NAME}"
+    try:
+        req = urllib.request.Request(url, headers={"User-Agent": UA["User-Agent"], "Range": "bytes=0-0"})
+        with op.open(req, timeout=timeout) as r:
+            cr = r.headers.get("Content-Range") or ""
+            size = int(cr.rsplit("/", 1)[1]) if "/" in cr and cr.rsplit("/", 1)[1].isdigit() else (
+                int(r.headers.get("Content-Length") or 0) if r.status == 200 else 0)
+        info["url"] = url
+        info["size"] = size or None
+    except urllib.error.HTTPError as e:
+        if e.code != 404:
+            raise
+        info["pending"] = LEGACY                # exe Windows 7 fabriqué quelques minutes après
     return info
 
 
