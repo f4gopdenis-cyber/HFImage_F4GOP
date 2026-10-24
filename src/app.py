@@ -62,7 +62,7 @@ import random
 import wave
 
 APP = "HFImage F4GOP"
-VERSION = "1.47"
+VERSION = "1.48"
 
 
 def _take_profile(argv):
@@ -3789,6 +3789,12 @@ class App(tk.Tk):
     PIP_CORNERS = ("haut-droite", "haut-gauche", "bas-droite", "bas-gauche")
 
     def _pip_caption(self, p):
+        """Légende sous l'incrustation : celle écrite par l'utilisateur, sinon « de F4EMK — +12 dB »
+        pour une image reçue, rien pour une image prise sur le PC."""
+        if p.get("cap"):
+            return str(p["cap"])
+        if p.get("local"):
+            return ""
         rep = p.get("snr")
         cap = tr("de") + f" {p.get('call') or '?'}"
         if rep is not None and self.conf.get("pip_report", True):
@@ -3834,9 +3840,14 @@ class App(tk.Tk):
     def _pip_thumb(self, path):
         cache = self.__dict__.setdefault("_pip_thumbs", {})
         if path not in cache:
-            with Image.open(path) as t:
+            t = imgfmt.open_upright(path)            # photo de téléphone « couchée » : remise droite
+            try:
                 t.seek(0)
-                cache[path] = t.convert("RGB")
+            except (AttributeError, EOFError):
+                pass
+            t = t.convert("RGB")
+            t.thumbnail((1600, 1600))                # grande photo du PC : assez pour une incrustation
+            cache[path] = t
             for k in [k for k in cache if k not in {p["path"] for p in self.pips} | {path}]:
                 del cache[k]
         return cache[path]
@@ -3883,8 +3894,23 @@ class App(tk.Tk):
             if snr is None and call in self.heard:
                 snr = self.heard[call].get("snr")
             lab = f"{call}  {time.strftime('%d/%m %H:%M', time.localtime(e.get('t', 0)))}  {e.get('mode', '')}"
-            out.append((lab, {"path": src, "call": call, "snr": snr}))
+            out.append((lab, {"path": src, "call": call, "snr": snr, "local": False}))
+        # images prises sur le PC (bouton « Image du PC… ») : gardées pour être réutilisées
+        for p in self.conf.get("pip_local") or []:
+            if isinstance(p, str) and os.path.exists(p):
+                out.append((self._pip_local_label(p), {"path": p, "call": "", "snr": None, "local": True}))
         return out
+
+    @staticmethod
+    def _pip_local_label(path):
+        return "📁 " + os.path.basename(path)
+
+    PIP_LOCAL_TYPES = (".jpg", ".jpeg", ".png", ".gif", ".bmp", ".webp", ".avif", ".tif", ".tiff")
+
+    def _pip_remember_local(self, path):
+        """Image du PC choisie : en tête de la liste des images du PC (10 au plus)."""
+        lst = [p for p in (self.conf.get("pip_local") or []) if isinstance(p, str) and p != path]
+        self.conf["pip_local"] = [path] + lst[:9]
 
     def set_pip(self, entry, add=False):
         """Galerie → « Répondre avec cette image » (elle remplace les incrustations) ou
@@ -4242,16 +4268,13 @@ class App(tk.Tk):
         f = ttk.Frame(w, padding=12)
         f.pack(fill="both", expand=True)
         cands = self._pip_candidates()
-        if not cands and not self.pips:
-            ttk.Label(f, text="Aucune image reçue pour l'instant.").pack()
-            self._translate_ui(w)
-            return
         # les images déjà incrustées restent proposées même si elles ont quitté la galerie
         known = {p["path"] for _, p in cands}
         for p in self.pips:
             if p["path"] not in known and os.path.exists(p["path"]):
-                cands.append((f"{p.get('call') or '?'}  ({os.path.basename(p['path'])})",
-                              {k: p.get(k) for k in ("path", "call", "snr")}))
+                lab = (self._pip_local_label(p["path"]) if p.get("local")
+                       else f"{p.get('call') or '?'}  ({os.path.basename(p['path'])})")
+                cands.append((lab, dict({k: p.get(k) for k in ("path", "call", "snr")}, local=bool(p.get("local")))))
         labels = [c[0] for c in cands]
         if not self.pips and cands:
             self.pips = [self._pip_new(cands[0][1], 0)]
@@ -4280,6 +4303,8 @@ class App(tk.Tk):
         b_add.pack(fill="x")
         b_del = ttk.Button(bf, text="Retirer", command=lambda: remove())
         b_del.pack(fill="x", pady=(4, 0))
+        b_pc = ttk.Button(bf, text="Image du PC…", command=lambda: add_pc())
+        b_pc.pack(fill="x", pady=(4, 0))
         ttk.Label(f, text="Image reçue").grid(row=2, column=0, sticky="w", pady=2)
         cb_img = ttk.Combobox(f, textvariable=v_img, values=labels, width=34, state="readonly")
         cb_img.grid(row=2, column=1, sticky="w", padx=6)
@@ -4290,31 +4315,39 @@ class App(tk.Tk):
         cb_s = ttk.Combobox(f, textvariable=v_s, values=list(sizes.values()), width=18, state="readonly")
         cb_s.grid(row=4, column=1, sticky="w", padx=6)
         ttk.Checkbutton(f, text="Afficher le report (dB)", variable=v_rep).grid(row=5, column=1, sticky="w", padx=6)
+        # légende libre (vide : « de F4EMK — +12 dB » pour une image reçue, rien pour une image du PC)
+        v_cap = tk.StringVar()
+        ttk.Label(f, text="Légende").grid(row=6, column=0, sticky="w", pady=2)
+        cf_ = ttk.Frame(f)
+        cf_.grid(row=6, column=1, sticky="w", padx=6)
+        e_cap = ttk.Entry(cf_, textvariable=v_cap, width=30)
+        e_cap.pack(side="left")
+        ttk.Label(cf_, text="(vide : automatique)", foreground="#555").pack(side="left", padx=4)
         # rotation et perspective de l'incrustation choisie (demande de M7WUV)
         v_rot, v_tilt = tk.DoubleVar(value=0), tk.DoubleVar(value=0)
-        ttk.Label(f, text="Rotation").grid(row=6, column=0, sticky="w", pady=2)
+        ttk.Label(f, text="Rotation").grid(row=7, column=0, sticky="w", pady=2)
         rf = ttk.Frame(f)
-        rf.grid(row=6, column=1, sticky="w", padx=6)
+        rf.grid(row=7, column=1, sticky="w", padx=6)
         sc_rot = ttk.Scale(rf, from_=-trafic.PIP_ROT_MAX, to=trafic.PIP_ROT_MAX, variable=v_rot, length=200)
         sc_rot.pack(side="left")
         lb_rot = ttk.Label(rf, text="0°", width=5)
         lb_rot.pack(side="left", padx=4)
         b_straight = ttk.Button(rf, text="Remettre droit", command=lambda: straight())
         b_straight.pack(side="left", padx=(6, 0))
-        ttk.Label(f, text="Perspective").grid(row=7, column=0, sticky="w", pady=2)
+        ttk.Label(f, text="Perspective").grid(row=8, column=0, sticky="w", pady=2)
         tf_ = ttk.Frame(f)
-        tf_.grid(row=7, column=1, sticky="w", padx=6)
+        tf_.grid(row=8, column=1, sticky="w", padx=6)
         sc_tilt = ttk.Scale(tf_, from_=-100, to=100, variable=v_tilt, length=200)
         sc_tilt.pack(side="left")
         lb_tilt = ttk.Label(tf_, text="0", width=5)
         lb_tilt.pack(side="left", padx=4)
         cv = tk.Canvas(f, bg="black", width=480, height=360, highlightthickness=0, cursor="fleur")
         cv._no_theme = True
-        cv.grid(row=8, column=0, columnspan=2, pady=(10, 0))
+        cv.grid(row=9, column=0, columnspan=2, pady=(10, 0))
         ttk.Label(f, text="Souris : cliquez sur une image pour la choisir, faites-la glisser pour la placer, "
                           "molette pour l'agrandir ou la réduire, Maj + molette pour la tourner.",
                   foreground="#555", wraplength=480, justify="left").grid(
-            row=9, column=0, columnspan=2, sticky="w", pady=(4, 0))
+            row=10, column=0, columnspan=2, sticky="w", pady=(4, 0))
 
         def label_of(p):
             return next((l for l, c in cands if c["path"] == p["path"]), p.get("call") or "?")
@@ -4334,6 +4367,7 @@ class App(tk.Tk):
                     v_img.set(label_of(p))
                     v_c.set(corners["libre"] if p.get("pos") else corners.get(p.get("corner"), corners["haut-droite"]))
                     v_s.set(sizes["libre"] if p.get("scale") else sizes.get(p.get("size"), sizes["moyenne"]))
+                    v_cap.set(p.get("cap") or "")
                     v_rot.set(float(p.get("rot") or 0))
                     v_tilt.set(round(float(p.get("tilt") or 0) * 100))
                 lb_rot.configure(text=f"{round(v_rot.get()):+d}°" if round(v_rot.get()) else "0°")
@@ -4343,6 +4377,9 @@ class App(tk.Tk):
                 st = "readonly" if self.pips else "disabled"
                 for c in (cb_img, cb_c, cb_s):
                     c.configure(state=st)
+                e_cap.state(["!disabled"] if self.pips else ["disabled"])
+                b_pc.state(["!disabled"] if len(self.pips) < self.PIP_MAX_N else ["disabled"])
+                cb_img.configure(values=labels)
                 b_add.state(["!disabled"] if len(self.pips) < self.PIP_MAX_N and cands else ["disabled"])
                 b_del.state(["!disabled"] if self.pips else ["disabled"])
             finally:
@@ -4355,6 +4392,7 @@ class App(tk.Tk):
                 p = self.pips[sel[0]]
                 if v_img.get() in labels:
                     p.update(cands[labels.index(v_img.get())][1])
+                p["cap"] = v_cap.get().strip() or None
                 ck = next((k for k, n in corners.items() if n == v_c.get()), "haut-droite")
                 sk = next((k for k, n in sizes.items() if n == v_s.get()), "moyenne")
                 if ck == "libre":
@@ -4417,6 +4455,34 @@ class App(tk.Tk):
             used = {p["path"] for p in self.pips}
             cand = next((c for _, c in cands if c["path"] not in used), cands[0][1])
             self.pips.append(self._pip_new(cand))
+            sel[0] = len(self.pips) - 1
+            v_on.set(True)
+            refresh_list()
+            preview()
+
+        def add_pc():
+            """Bouton « Image du PC… » : une image de l'ordinateur, incrustée comme celles reçues."""
+            if len(self.pips) >= self.PIP_MAX_N:
+                messagebox.showinfo(APP, tr("4 images au maximum dans l'image TX. Retirez-en une dans "
+                                            "« Image du correspondant… »."), parent=w)
+                return
+            types = " ".join("*" + e for e in self.PIP_LOCAL_TYPES)
+            path = filedialog.askopenfilename(parent=w, title=tr("Image à incruster"),
+                                              filetypes=[(tr("Images"), types), (tr("Tous les fichiers"), "*.*")])
+            if not path:
+                return
+            try:
+                self._pip_thumb(path)
+            except Exception as e:
+                messagebox.showerror(APP, tr("Image illisible :") + f" {e}", parent=w)
+                return
+            self._pip_remember_local(path)
+            cand = {"path": path, "call": "", "snr": None, "local": True}
+            lab = self._pip_local_label(path)
+            if path not in [c["path"] for _, c in cands]:
+                cands.append((lab, cand))
+                labels.append(lab)
+            self.pips.append(dict(self._pip_new(cand), cap=None))
             sel[0] = len(self.pips) - 1
             v_on.set(True)
             refresh_list()
@@ -4543,10 +4609,10 @@ class App(tk.Tk):
             if not busy[0]:
                 self.after_idle(lambda: (preview(), refresh_list()))
 
-        for var in (v_img, v_c, v_s, v_rep, v_on, v_rot, v_tilt):
+        for var in (v_img, v_c, v_s, v_rep, v_on, v_rot, v_tilt, v_cap):
             var.trace_add("write", changed)
         ttk.Button(f, text="OK", command=lambda: (store(), w.destroy(), self.prepare())).grid(
-            row=10, column=1, sticky="e", pady=(10, 0))
+            row=11, column=1, sticky="e", pady=(10, 0))
         refresh_list()
         preview()
         self._translate_ui(w)

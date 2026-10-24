@@ -452,7 +452,9 @@ s += B(["Liste <b>Images incrustées</b> : <b>Ajouter une image</b> (elle se pla
         "placer, la <b>molette</b> l'agrandit ou la réduit (10 % à 90 % de la largeur). Réglettes <b>Rotation</b> "
         "(−45° à +45°, ou Maj + molette sur l'image) et <b>Perspective</b> (l'image « penche » vers la gauche ou la droite, "
         "effet 3D) pour chaque image incrustée ; les coins qui dépassent laissent voir votre photo ; « Remettre droit » "
-        "annule les deux.",
+        "annule les deux. Bouton <b>« Image du PC… »</b> : n'importe quelle image de l'ordinateur (photo, logo, "
+        "carte QSL…) s'incruste de la même façon ; champ <b>Légende</b> pour écrire le texte de votre choix sous "
+        "l'image (vide : « de F4EMK — +12 dB » pour une image reçue, rien pour une image du PC).",
         "Galerie, clic droit : « <b>Répondre avec cette image</b> » remplace les incrustations par cette seule image ; "
         "« <b>Ajouter cette image à mon image TX</b> » l'ajoute aux autres.",
         "La disposition est gardée ; l'image émise est exactement celle de l'aperçu."])

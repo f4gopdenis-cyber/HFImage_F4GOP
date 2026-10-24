@@ -1,5 +1,11 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 1.48 — incruster une image du PC, légende libre
+
+- Fenêtre « Image du correspondant » : bouton **« Image du PC… »** pour incruster n'importe quelle image de l'ordinateur (photo, logo, carte QSL… en JPEG, PNG, GIF, BMP, WebP, AVIF) dans l'image à émettre, avec les mêmes réglages que les images reçues (position, taille, souris, rotation, perspective). Une photo de téléphone est remise droite. Les 10 dernières images du PC restent proposées dans la liste (📁).
+- Champ **« Légende »** : le texte de votre choix sous l'image incrustée. Vide : « de F4EMK — +12 dB » pour une image reçue, pas de légende pour une image du PC.
+- La fenêtre s'ouvre maintenant même sans image reçue (pour incruster une image du PC).
+
 ## Version 1.47 — logo d'hommage à VK4AES
 
 - Un clic sur « **En hommage à VK4AES** » (barre du bas, à côté du drapeau australien) ouvre maintenant une fenêtre avec le **logo d'hommage à Erik Sundstrup VK4AES** dessiné par Denis F4GOP, et la dédicace.

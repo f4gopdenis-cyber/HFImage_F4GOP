@@ -493,7 +493,9 @@ s += B(["<b>Inserted images</b> list: <b>Add an image</b> (it goes to a free cor
         "in the preview. <b>Click</b> a picture to select it (yellow frame), <b>drag</b> it to place it, the <b>mouse "
         "wheel</b> enlarges or reduces it (10 % to 90 % of the width). <b>Rotation</b> (−45° to +45°, or Shift + wheel "
         "on the picture) and <b>Perspective</b> (the picture “leans” left or right, 3D effect) sliders for each inserted "
-        "picture; the corners show your photo behind; “Straighten” resets both.",
+        "picture; the corners show your photo behind; “Straighten” resets both. <b>“Picture from PC…”</b> button: any "
+        "picture from your computer (photo, logo, QSL card…) is inserted the same way; <b>Caption</b> field for the text "
+        "of your choice under the picture (empty: “from F4EMK — +12 dB” for a received picture, nothing for a PC picture).",
         "Gallery, right-click: “<b>Reply with this image</b>” replaces the insets with this picture only; “<b>Add this "
         "image to my TX image</b>” adds it to the others.",
         "The layout is kept; the picture transmitted is exactly the preview."])
