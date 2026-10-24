@@ -249,22 +249,28 @@ PIP_SCALE = {"petite": 0.26, "moyenne": 0.34, "grande": 0.45}
 PIP_MIN, PIP_MAX = 0.10, 0.90      # taille libre : fraction de la largeur de l'image
 
 
+PIP_SHAPES = ("rect", "arrondi", "rond", "ovale")     # forme de l'incrustation
+
+
 def pip_layout(img_size, thumb_size, caption="", corner="haut-droite", size="moyenne", pos=None, scale=None,
-               logo=False):
+               logo=False, shape="rect"):
     """Place de l'incrustation -> (x, y, W, H, tw, b, fs, cap_h).
     pos = (fx, fy) entre 0 et 1 : position libre (0 = bord gauche / haut, 1 = bord droit / bas) ;
     scale = largeur libre en fraction de la largeur de l'image."""
     iw, ih = img_size
     frac = min(PIP_MAX, max(PIP_MIN, float(scale))) if scale else PIP_SCALE.get(size, 0.34)
     tw = max(40, int(iw * frac))
-    th_h = max(1, round(thumb_size[1] * tw / max(1, thumb_size[0])))
+    th_h = tw if shape == "rond" else max(1, round(thumb_size[1] * tw / max(1, thumb_size[0])))
     b = 0 if logo else max(2, tw // 60)                    # cadre (aucun pour un logo)
     fs = max(11, tw // 13)
     cap_h = int(fs * 1.45) if caption and not logo else 0
+    if cap_h and shape in ("rond", "ovale"):
+        cap_h += max(2, fs // 4)                           # légende dans une pastille sous la forme
     W, H = tw + 2 * b, th_h + 2 * b + cap_h
     if H > ih:                                             # très haute : on réduit pour qu'elle tienne
         k = ih / H
-        return pip_layout(img_size, thumb_size, caption, corner, size, pos, max(PIP_MIN, frac * k * 0.98), logo)
+        return pip_layout(img_size, thumb_size, caption, corner, size, pos, max(PIP_MIN, frac * k * 0.98), logo,
+                          shape)
     if pos is not None:
         fx, fy = (min(1.0, max(0.0, float(v))) for v in pos)
         x, y = round(fx * max(0, iw - W)), round(fy * max(0, ih - H))
@@ -301,10 +307,78 @@ def _perspective(box, tilt):
     return box.transform((W, H), Image.PERSPECTIVE, tuple(coef), Image.BICUBIC)
 
 
-def logo_on(img, logo, x, y, W, H, rot=0, tilt=0, opacity=1.0):
+def _shape_mask(size, shape, corners=None):
+    """Masque (L) lissé de la forme : « arrondi », « rond » / « ovale » (ellipse), sinon plein."""
+    W, H = size
+    k = 4                                                  # dessiné en grand puis réduit : bords lisses
+    m = Image.new("L", (W * k, H * k), 0)
+    d = ImageDraw.Draw(m)
+    if shape in ("rond", "ovale"):
+        d.ellipse((0, 0, W * k - 1, H * k - 1), fill=255)
+    elif shape == "arrondi":
+        r = max(4, min(W, H) // 8) * k
+        d.rounded_rectangle((0, 0, W * k - 1, H * k - 1), radius=r, fill=255, corners=corners)
+    else:
+        d.rectangle((0, 0, W * k, H * k), fill=255)
+    return m.resize((W, H), Image.LANCZOS)
+
+
+def _square(im):
+    """Centre carré de l'image (forme « rond »)."""
+    s = min(im.size)
+    x, y = (im.width - s) // 2, (im.height - s) // 2
+    return im.crop((x, y, x + s, y + s))
+
+
+def _shaped_box(th, caption, W, H, tw, b, fs, cap_h, shape):
+    """Incrustation avec cadre blanc découpée suivant la forme -> image RGBA."""
+    font = _font(fs)
+    box = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+    th_h = th.height
+    if shape in ("rond", "ovale"):
+        eh = th_h + 2 * b
+        frame = Image.new("RGBA", (W, eh), (255, 255, 255, 255))
+        frame.putalpha(_shape_mask((W, eh), shape))
+        box.alpha_composite(frame, (0, 0))
+        pic = th.convert("RGBA")
+        pic.putalpha(_shape_mask(pic.size, shape))
+        box.alpha_composite(pic, (b, b))
+        if caption:
+            d = ImageDraw.Draw(box)
+            pill_h = int(fs * 1.45)
+            w = d.textlength(caption, font=font)
+            pw = min(W, int(w + fs * 1.2))
+            y0 = H - pill_h
+            d.rounded_rectangle(((W - pw) // 2, y0, (W + pw) // 2, H - 1), radius=pill_h // 2,
+                                fill=(20, 20, 20, 255))
+            d.text(((W - w) / 2, y0 + (pill_h - fs) / 2 - 1), caption, font=font, fill=(255, 230, 90))
+        return box
+    # coins arrondis : cadre blanc arrondi, photo arrondie en haut (et en bas sans légende)
+    flat = Image.new("RGB", (W, H), (255, 255, 255))
+    pic = th.convert("RGBA")
+    pic.putalpha(_shape_mask(pic.size, "arrondi", None if not caption else (True, True, False, False)))
+    flat.paste(pic, (b, b), pic)
+    if caption:
+        d = ImageDraw.Draw(flat)
+        d.rectangle((0, th_h + 2 * b, W, H), fill=(20, 20, 20))
+        w = d.textlength(caption, font=font)
+        d.text(((W - w) / 2, th_h + 2 * b + (cap_h - fs) / 2 - 1), caption, font=font, fill=(255, 230, 90))
+    box = flat.convert("RGBA")
+    box.putalpha(_shape_mask((W, H), "arrondi"))
+    return box
+
+
+def logo_on(img, logo, x, y, W, H, rot=0, tilt=0, opacity=1.0, shape="rect"):
     """Logo (PNG à fond transparent, demande de RK1AT) posé directement sur l'image : ni cadre,
-    ni ombre, ni légende ; la transparence laisse voir la photo. Rotation, perspective et opacité."""
-    card = logo.convert("RGBA").resize((max(1, W), max(1, H)), Image.LANCZOS)
+    ni ombre, ni légende ; la transparence laisse voir la photo. Rotation, perspective et opacité ;
+    la forme (arrondi, rond, ovale) découpe le logo."""
+    src = logo.convert("RGBA")
+    if shape == "rond":
+        src = _square(src)
+    card = src.resize((max(1, W), max(1, H)), Image.LANCZOS)
+    if shape in ("arrondi", "rond", "ovale"):
+        a = card.getchannel("A")
+        card.putalpha(Image.composite(a, Image.new("L", a.size, 0), _shape_mask(card.size, shape)))
     if abs(float(tilt or 0)) >= 0.01:
         card = _perspective(card, tilt)
     rot = max(-PIP_ROT_MAX, min(PIP_ROT_MAX, float(rot or 0)))
@@ -327,29 +401,36 @@ def has_alpha(im):
 
 
 def pip(img, thumb, caption="", corner="haut-droite", size="moyenne", pos=None, scale=None, rot=0, tilt=0,
-        logo=False, opacity=1.0):
+        logo=False, opacity=1.0, shape="rect"):
     """Image du correspondant incrustée dans un coin, ou à l'endroit et à la taille choisis
     à la souris (cadre blanc, légende « de F4EMK — +12 dB »). rot : rotation en degrés
     (sens inverse des aiguilles d'une montre) ; tilt : perspective de -1 à 1 (0 : de face)."""
+    shape = shape if shape in PIP_SHAPES else "rect"
     if logo:
-        x, y, W, H = pip_layout(img.size, thumb.size, "", corner, size, pos, scale, logo=True)[:4]
-        return logo_on(img, thumb, x, y, W, H, rot, tilt, opacity)
+        x, y, W, H = pip_layout(img.size, thumb.size, "", corner, size, pos, scale, logo=True, shape=shape)[:4]
+        return logo_on(img, thumb, x, y, W, H, rot, tilt, opacity, shape)
     im = img.convert("RGB").copy()
     th = thumb.convert("RGB")
-    x, y, W, H, tw, b, fs, cap_h = pip_layout(im.size, th.size, caption, corner, size, pos, scale)
+    if shape == "rond":
+        th = _square(th)
+    x, y, W, H, tw, b, fs, cap_h = pip_layout(im.size, th.size, caption, corner, size, pos, scale, shape=shape)
     th = th.resize((tw, H - 2 * b - cap_h), Image.LANCZOS)
-    font = _font(fs)
-    box = Image.new("RGB", (W, H), (255, 255, 255))
-    box.paste(th, (b, b))
-    if caption:
-        d = ImageDraw.Draw(box)
-        d.rectangle((0, th.height + 2 * b, W, H), fill=(20, 20, 20))
-        w = d.textlength(caption, font=font)
-        d.text(((W - w) / 2, th.height + 2 * b + (cap_h - fs) / 2 - 1), caption, font=font, fill=(255, 230, 90))
     rot = max(-PIP_ROT_MAX, min(PIP_ROT_MAX, float(rot or 0)))
     tilt = float(tilt or 0)
-    if abs(rot) >= 0.5 or abs(tilt) >= 0.01:
-        # penchée / tournée : même centre ; les coins qui dépassent restent transparents
+    if shape != "rect":
+        box = _shaped_box(th, caption, W, H, tw, b, fs, cap_h, shape)
+    else:
+        font = _font(fs)
+        box = Image.new("RGB", (W, H), (255, 255, 255))
+        box.paste(th, (b, b))
+        if caption:
+            d = ImageDraw.Draw(box)
+            d.rectangle((0, th.height + 2 * b, W, H), fill=(20, 20, 20))
+            w = d.textlength(caption, font=font)
+            d.text(((W - w) / 2, th.height + 2 * b + (cap_h - fs) / 2 - 1), caption, font=font,
+                   fill=(255, 230, 90))
+    if shape != "rect" or abs(rot) >= 0.5 or abs(tilt) >= 0.01:
+        # forme, penchée / tournée : même centre ; ce qui dépasse de la forme reste transparent
         card = box.convert("RGBA")
         if abs(tilt) >= 0.01:
             card = _perspective(card, tilt)

@@ -62,7 +62,7 @@ import random
 import wave
 
 APP = "HFImage F4GOP"
-VERSION = "1.49"
+VERSION = "1.50"
 
 
 def _take_profile(argv):
@@ -3806,23 +3806,26 @@ class App(tk.Tk):
         if i == 0:
             return {"corner": self.conf.get("pip_corner", "haut-droite"), "size": self.conf.get("pip_size", "moyenne"),
                     "pos": self.conf.get("pip_pos"), "scale": self.conf.get("pip_scale"),
-                    "rot": self.conf.get("pip_rot", 0), "tilt": self.conf.get("pip_tilt", 0)}
+                    "rot": self.conf.get("pip_rot", 0), "tilt": self.conf.get("pip_tilt", 0),
+                    "shape": self.conf.get("pip_shape", "rect")}
         more = self.conf.get("pip_more") or []
         if i - 1 < len(more) and isinstance(more[i - 1], dict):
             d = more[i - 1]
             return {"corner": d.get("corner", "haut-gauche"), "size": d.get("size", "petite"),
-                    "pos": d.get("pos"), "scale": d.get("scale"), "rot": d.get("rot", 0), "tilt": d.get("tilt", 0)}
+                    "pos": d.get("pos"), "scale": d.get("scale"), "rot": d.get("rot", 0), "tilt": d.get("tilt", 0),
+                    "shape": d.get("shape", "rect")}
         used = {p.get("corner") for p in getattr(self, "pips", [])[:i] if not p.get("pos")}
         corner = next((c for c in self.PIP_CORNERS if c not in used), self.PIP_CORNERS[i % 4])
-        return {"corner": corner, "size": "petite", "pos": None, "scale": None, "rot": 0, "tilt": 0}
+        return {"corner": corner, "size": "petite", "pos": None, "scale": None, "rot": 0, "tilt": 0, "shape": "rect"}
 
     def _pip_save_layouts(self):
         """Garde la disposition de chaque image incrustée (dans l'ordre de la liste)."""
         for i, p in enumerate(self.pips):
-            lay = {k: p.get(k) for k in ("corner", "size", "pos", "scale", "rot", "tilt")}
+            lay = {k: p.get(k) for k in ("corner", "size", "pos", "scale", "rot", "tilt", "shape")}
             if i == 0:
                 self.conf.update(pip_corner=lay["corner"], pip_size=lay["size"], pip_pos=lay["pos"],
-                                 pip_scale=lay["scale"], pip_rot=lay["rot"] or 0, pip_tilt=lay["tilt"] or 0)
+                                 pip_scale=lay["scale"], pip_rot=lay["rot"] or 0, pip_tilt=lay["tilt"] or 0,
+                                 pip_shape=lay["shape"] or "rect")
             else:
                 more = list(self.conf.get("pip_more") or [])
                 while len(more) < i:
@@ -3860,11 +3863,13 @@ class App(tk.Tk):
                 th = self._pip_thumb(p["path"])
                 cap = self._pip_caption(p)
                 logo = bool(p.get("logo"))
-                rects.append(trafic.pip_layout(im.size, th.size, cap, p.get("corner", "haut-droite"),
-                                               p.get("size", "moyenne"), p.get("pos"), p.get("scale"), logo)[:4])
+                shape = p.get("shape") or "rect"
+                rects.append(trafic.pip_layout(im.size, th.size, "" if logo else cap, p.get("corner", "haut-droite"),
+                                               p.get("size", "moyenne"), p.get("pos"), p.get("scale"), logo,
+                                               shape)[:4])
                 im = trafic.pip(im, th, cap, p.get("corner", "haut-droite"), p.get("size", "moyenne"),
                                 p.get("pos"), p.get("scale"), p.get("rot") or 0, p.get("tilt") or 0,
-                                logo, p.get("opa", 1.0))
+                                logo, p.get("opa", 1.0), shape)
             except Exception as e:
                 self.log(f"Image du correspondant illisible : {e}")
                 rects.append(None)
@@ -3877,7 +3882,7 @@ class App(tk.Tk):
         key = (id(self.src_img), self.conf.get("pip_report", True),
                tuple((p["path"], self._pip_caption(p), p.get("corner"), p.get("size"), tuple(p.get("pos") or ()),
                       p.get("scale"), p.get("rot") or 0, p.get("tilt") or 0, bool(p.get("logo")),
-                      p.get("opa", 1.0)) for p in self.pips))
+                      p.get("opa", 1.0), p.get("shape") or "rect") for p in self.pips))
         c = getattr(self, "_pip_cache", None)
         if c and c[0] == key:
             return c[1]
@@ -4315,8 +4320,15 @@ class App(tk.Tk):
         cb_c = ttk.Combobox(f, textvariable=v_c, values=list(corners.values()), width=20, state="readonly")
         cb_c.grid(row=3, column=1, sticky="w", padx=6)
         ttk.Label(f, text="Taille").grid(row=4, column=0, sticky="w", pady=2)
-        cb_s = ttk.Combobox(f, textvariable=v_s, values=list(sizes.values()), width=18, state="readonly")
-        cb_s.grid(row=4, column=1, sticky="w", padx=6)
+        sz_f = ttk.Frame(f)
+        sz_f.grid(row=4, column=1, sticky="w", padx=6)
+        cb_s = ttk.Combobox(sz_f, textvariable=v_s, values=list(sizes.values()), width=18, state="readonly")
+        cb_s.pack(side="left")
+        shapes = {"rect": tr("Rectangle"), "arrondi": tr("Coins arrondis"), "rond": tr("Rond"), "ovale": tr("Ovale")}
+        v_shape = tk.StringVar(value=shapes["rect"])
+        ttk.Label(sz_f, text="Forme").pack(side="left", padx=(12, 4))
+        cb_shape = ttk.Combobox(sz_f, textvariable=v_shape, values=list(shapes.values()), width=14, state="readonly")
+        cb_shape.pack(side="left")
         ttk.Checkbutton(f, text="Afficher le report (dB)", variable=v_rep).grid(row=5, column=1, sticky="w", padx=6)
         # légende libre (vide : « de F4EMK — +12 dB » pour une image reçue, rien pour une image du PC)
         v_cap = tk.StringVar()
@@ -4382,6 +4394,7 @@ class App(tk.Tk):
                     v_c.set(corners["libre"] if p.get("pos") else corners.get(p.get("corner"), corners["haut-droite"]))
                     v_s.set(sizes["libre"] if p.get("scale") else sizes.get(p.get("size"), sizes["moyenne"]))
                     v_cap.set(p.get("cap") or "")
+                    v_shape.set(shapes.get(p.get("shape") or "rect", shapes["rect"]))
                     v_logo.set(bool(p.get("logo")))
                     v_opa.set(round(float(p.get("opa", 1.0)) * 100))
                     v_rot.set(float(p.get("rot") or 0))
@@ -4394,7 +4407,7 @@ class App(tk.Tk):
                 for s_ in (sc_rot, sc_tilt):
                     s_.state(["!disabled"] if self.pips else ["disabled"])
                 st = "readonly" if self.pips else "disabled"
-                for c in (cb_img, cb_c, cb_s):
+                for c in (cb_img, cb_c, cb_s, cb_shape):
                     c.configure(state=st)
                 e_cap.state(["!disabled"] if self.pips else ["disabled"])
                 b_pc.state(["!disabled"] if len(self.pips) < self.PIP_MAX_N else ["disabled"])
@@ -4412,6 +4425,7 @@ class App(tk.Tk):
                 if v_img.get() in labels:
                     p.update(cands[labels.index(v_img.get())][1])
                 p["cap"] = v_cap.get().strip() or None
+                p["shape"] = next((k for k, n in shapes.items() if n == v_shape.get()), "rect")
                 p["logo"] = bool(v_logo.get())
                 p["opa"] = round(v_opa.get()) / 100
                 lb_opa.configure(text=f"{round(v_opa.get())} %")
@@ -4634,7 +4648,7 @@ class App(tk.Tk):
             if not busy[0]:
                 self.after_idle(lambda: (preview(), refresh_list()))
 
-        for var in (v_img, v_c, v_s, v_rep, v_on, v_rot, v_tilt, v_cap, v_logo, v_opa):
+        for var in (v_img, v_c, v_s, v_rep, v_on, v_rot, v_tilt, v_cap, v_logo, v_opa, v_shape):
             var.trace_add("write", changed)
         ttk.Button(f, text="OK", command=lambda: (store(), w.destroy(), self.prepare())).grid(
             row=12, column=1, sticky="e", pady=(10, 0))

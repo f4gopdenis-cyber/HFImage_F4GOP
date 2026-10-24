@@ -456,7 +456,9 @@ s += B(["Liste <b>Images incrustées</b> : <b>Ajouter une image</b> (elle se pla
         "carte QSL…) s'incruste de la même façon ; champ <b>Légende</b> pour écrire le texte de votre choix sous "
         "l'image (vide : « de F4EMK — +12 dB » pour une image reçue, rien pour une image du PC). Case "
         "<b>« Logo »</b> : l'image est posée sans cadre, sans ombre ni légende, et la transparence d'un PNG est "
-        "gardée (cochée d'office pour un PNG à fond transparent) ; réglette <b>Opacité</b> pour un logo discret.",
+        "gardée (cochée d'office pour un PNG à fond transparent) ; réglette <b>Opacité</b> pour un logo discret. "
+        "Liste <b>Forme</b> : rectangle (habituel), coins arrondis, rond ou ovale ; le cadre blanc et l'ombre suivent "
+        "la forme, la légende est dans une pastille dessous (rond, ovale), et la forme découpe aussi un logo.",
         "Galerie, clic droit : « <b>Répondre avec cette image</b> » remplace les incrustations par cette seule image ; "
         "« <b>Ajouter cette image à mon image TX</b> » l'ajoute aux autres.",
         "La disposition est gardée ; l'image émise est exactement celle de l'aperçu."])

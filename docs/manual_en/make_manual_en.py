@@ -497,7 +497,9 @@ s += B(["<b>Inserted images</b> list: <b>Add an image</b> (it goes to a free cor
         "picture from your computer (photo, logo, QSL card…) is inserted the same way; <b>Caption</b> field for the text "
         "of your choice under the picture (empty: “from F4EMK — +12 dB” for a received picture, nothing for a PC picture). "
         "<b>“Logo”</b> box: the picture is laid without frame, shadow or caption, and a PNG's transparency is kept "
-        "(ticked automatically for a PNG with a transparent background); <b>Opacity</b> slider for a discreet logo.",
+        "(ticked automatically for a PNG with a transparent background); <b>Opacity</b> slider for a discreet logo. "
+        "<b>Shape</b> list: rectangle (usual), rounded corners, round or oval; the white frame and the shadow follow the "
+        "shape, the caption sits in a small pill below (round, oval), and the shape also cuts a logo.",
         "Gallery, right-click: “<b>Reply with this image</b>” replaces the insets with this picture only; “<b>Add this "
         "image to my TX image</b>” adds it to the others.",
         "The layout is kept; the picture transmitted is exactly the preview."])

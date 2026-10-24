@@ -1,5 +1,9 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 1.50 — forme des images incrustées
+
+- Fenêtre « Image du correspondant » : liste **« Forme »** pour chaque image incrustée : **Rectangle** (comme avant, par défaut), **Coins arrondis**, **Rond** (centre carré de l'image, comme un médaillon) ou **Ovale**. Le cadre blanc et l'ombre suivent la forme ; pour le rond et l'ovale, la légende est dans une pastille sous l'image. La forme découpe aussi un logo, et marche avec la rotation et la perspective. Retenue pour chaque emplacement.
+
 ## Version 1.49 — logo PNG transparent, hauteur des bandeaux de la carte QSL (demandes de RK1AT)
 
 - Fenêtre « Image du correspondant » : case **« Logo (sans cadre, transparence gardée) »** pour chaque image incrustée : l'image est posée directement sur la photo, sans cadre, ombre ni légende, et le **fond transparent d'un PNG est gardé**. Cochée d'office quand on choisit un PNG à fond transparent avec « Image du PC… ». Réglette **Opacité** (20 à 100 %) pour un logo discret ; position, taille, rotation et perspective comme pour les autres images.
