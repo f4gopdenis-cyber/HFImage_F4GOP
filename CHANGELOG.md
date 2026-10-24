@@ -1,5 +1,9 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 1.53 — clic sur l'image TX : ouvrir une image comme avant
+
+- Un clic sur l'image TX **à côté des textes et logos** ouvre de nouveau directement le choix d'une image, comme avant la 1.52. Un clic **sur** un texte ou un logo le sélectionne ; si un élément est sélectionné, le premier clic à côté enlève seulement la sélection.
+
 ## Version 1.52 — textes et logos directement sur l'image TX (demande de RK1AT)
 
 - Édition directe sur l'image de l'onglet TX, comme dans le « GMSK controller » de JQ1HDR : **clic droit** → « Ajouter un texte… » (avec les phrases toutes prêtes), « Ajouter un logo / une image du PC… » (un PNG transparent devient un logo), « Ajouter l'image d'un correspondant ». **Clic** pour sélectionner (cadre jaune), **glisser** pour déplacer, **molette** pour agrandir / réduire, **Maj + molette** pour tourner un logo, **double-clic** pour modifier un texte, **Suppr** pour enlever. Le clic droit sur l'élément choisi donne aussi style, couleurs, forme, légende, « Remettre droit ». L'aperçu suit la souris ; l'image à émettre est recalculée au relâchement.

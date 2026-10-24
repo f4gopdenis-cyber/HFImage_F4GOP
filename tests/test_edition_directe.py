@@ -108,13 +108,27 @@ class EditionDirecte(unittest.TestCase):
         ed.delete()
         self.assertEqual(a.pips, [])
 
-    def test_clic_ne_reouvre_pas_une_image(self):
+    def click(self, x, y):
         a = self.a
+        a._cmp_press = (x, y)
+        self.ed.press(E(x, y))
+        a._cmp_click(E(x, y))
+        self.ed.release(E(x, y))
+
+    def test_clics(self):
+        # 1.53 : clic à côté des textes / logos : ouvre une image comme avant ; sur un texte : sélection
+        a, ed = self.a, self.ed
+        ed.add_text("73")
+        ox, oy, dw, dh = self.box()
         with mock.patch.object(a, "open_image") as op:
-            ox, oy, dw, dh = self.box()
-            a._cmp_press = (ox + 5, oy + 5)
-            a._cmp_click(E(ox + 5, oy + 5))
+            self.click(ox + dw // 2, oy + dh // 2)            # sur le texte : sélection
             op.assert_not_called()
+            self.assertEqual(ed.sel, ("b", 0))
+            self.click(ox + 5, oy + 5)                        # à côté, sélection active : désélection
+            op.assert_not_called()
+            self.assertIsNone(ed.sel)
+            self.click(ox + 5, oy + 5)                        # à côté, rien de sélectionné : ouverture
+            op.assert_called_once()
 
     def test_apercu_rapide(self):
         a = self.a

@@ -391,8 +391,8 @@ s.append(P("Une fois l'image ouverte dans l'onglet TX, tout se fait <b>sur l'ima
            "l'agrandir ou le réduire ; <b>Maj + molette</b> pour tourner un logo ou une image ; <b>double-clic</b> sur "
            "un texte pour le modifier ; touche <b>Suppr</b> pour l'enlever. Le clic droit sur l'élément choisi donne "
            "aussi son style, ses couleurs, sa forme, sa légende. Les fenêtres « Bulles… » et « Image du "
-           "correspondant… » restent là pour les réglages fins. Pour ouvrir une autre image : bouton « Ouvrir une "
-           "image… », glisser-déposer, ou clic droit → « Ouvrir une autre image… »."))
+           "correspondant… » restent là pour les réglages fins. Un <b>clic à côté</b> des textes et logos ouvre une "
+           "autre image, comme avant (s'il y a une sélection, le premier clic l'enlève)."))
 s.append(P("Bulles de texte (BD)", "h2"))
 s.append(P("Bouton <b>Bulles…</b> (onglet TX) ou menu <b>Images → Bulles de texte…</b> : on écrit un texte, il "
            "apparaît dans une bulle de bande dessinée sur l'image émise. Cinq styles : <b>parole</b> (bulle ronde "

@@ -91,10 +91,11 @@ class TxEditor:
             return
         h = self.hit(e)
         if h is None:
+            # à côté : enlève la sélection s'il y en a une ; sinon le clic ouvre une image (comme avant)
+            self.app._cmp_edit_click = self.sel is not None
             if self.sel is not None:
                 self.sel = None
                 self.view._redraw()
-            self.app._cmp_edit_click = False
             return
         self.app._cmp_edit_click = True          # pas d'ouverture d'image sur ce clic
         kind, i, part = h

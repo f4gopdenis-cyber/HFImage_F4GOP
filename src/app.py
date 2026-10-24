@@ -62,7 +62,7 @@ import random
 import wave
 
 APP = "HFImage F4GOP"
-VERSION = "1.52"
+VERSION = "1.53"
 
 
 def _take_profile(argv):
@@ -3623,8 +3623,9 @@ class App(tk.Tk):
         self._cmp_press = None
         if p0 is None or abs(e.x - p0[0]) > 4 or abs(e.y - p0[1]) > 4 or self.lb_cmp.zoom > 1.0:
             return                                    # glisser (image agrandie) : pas un clic
-        if self.src_img is not None:
-            return                                    # 1.52 : un clic sélectionne (édition directe)
+        if self.src_img is not None and getattr(self, "_cmp_edit_click", False):
+            self._cmp_edit_click = False
+            return                                    # clic sur un texte / logo (ou désélection) : pas d'ouverture
         if not self.tx_busy:
             self.open_image()
 

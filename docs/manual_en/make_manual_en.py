@@ -381,8 +381,8 @@ s.append(P("Once the picture is open in the TX tab, everything is done <b>on the
            "move it (the red dot: a bubble's tail); <b>mouse wheel</b> to enlarge or reduce it; <b>Shift + wheel</b> "
            "to rotate a logo or picture; <b>double-click</b> a text to edit it; <b>Delete</b> key to remove it. "
            "Right-clicking the selected item also gives its style, colours, shape and caption. The “Bubbles…” and "
-           "“Correspondent's image…” windows remain for fine settings. To open another picture: “Open image…” "
-           "button, drag and drop, or right-click → “Open another picture…”."))
+           "“Correspondent's image…” windows remain for fine settings. A <b>click beside</b> the texts and logos opens "
+           "another picture, as before (if something is selected, the first click just deselects it)."))
 s.append(P("Speech bubbles", "h2"))
 s.append(P("<b>Bubbles…</b> button (TX tab) or <b>Images → Speech bubbles…</b>: type a text and it appears in a "
            "comic-strip bubble on the transmitted picture. Four styles: <b>speech</b> (round bubble with a tail), "
