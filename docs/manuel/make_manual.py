@@ -581,7 +581,10 @@ s += B(["<b>Rx Ok</b> : les stations qui ont bien reçu l'image, avec leur <b>re
         "« Coller la carte dans la fenêtre TX » pour l'envoyer en image. Le trait et le cadre de chaque station ont la "
         "<b>couleur de son report</b> (vert foncé : +5 dB et plus, vert clair, orange, rouge : moins de -10 dB ; "
         "légende en bas à gauche), et le report est écrit à côté de l'indicatif. Souris sur une station : prénom, "
-        "locator, distance, report et heure. « <b>Tout voir</b> » cadre la carte sur toutes les stations.",
+        "locator, distance, report et heure. « <b>Tout voir</b> » cadre la carte sur toutes les stations. "
+        "« <b>Copier la carte</b> » la met dans le presse-papiers, à coller (Ctrl+V) dans Teams, un forum, un e-mail… "
+        "Les noms de villes et de pays qui tomberaient sous une station ne sont pas écrits, pour que les indicatifs "
+        "restent lisibles quand les stations sont serrées.",
         "Pare-feu ou fournisseur d'accès qui bloque le port 1883 : HFImage essaie tout seul les autres accès du même "
         "serveur (8883 chiffré, puis 8884 et 8000 par le web) ; le journal indique celui qui a fonctionné."])
 s.append(img("carte_stations.png", 150, "La carte des stations qui ont reçu l'image."))

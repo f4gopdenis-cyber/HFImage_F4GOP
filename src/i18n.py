@@ -1563,6 +1563,8 @@ T = [
     ("GIF animé copié comme image fixe.", "Animated GIF copied as a still image.", "Animiertes GIF als Standbild kopiert.", "GIF animado copiado como imagen fija.", "GIF animata copiata come immagine fissa."),
     ("Pour copier une image sous Linux, installez xclip : sudo apt install xclip", "To copy an image on Linux, install xclip: sudo apt install xclip", "Zum Kopieren von Bildern unter Linux xclip installieren: sudo apt install xclip", "Para copiar una imagen en Linux, instale xclip: sudo apt install xclip", "Per copiare un'immagine su Linux, installate xclip: sudo apt install xclip"),
     ("copie impossible : le presse-papiers est occupé par un autre programme", "copy failed: the clipboard is in use by another program", "Kopieren fehlgeschlagen: die Zwischenablage wird von einem anderen Programm benutzt", "copia imposible: el portapapeles está ocupado por otro programa", "copia impossibile: gli appunti sono occupati da un altro programma"),
+    ("Copier la carte", "Copy map", "Karte kopieren", "Copiar el mapa", "Copia la mappa"),
+    ("Carte copiée : collez-la avec Ctrl+V (Teams, e-mail, forum…).", "Map copied: paste it with Ctrl+V (Teams, e-mail, forum…).", "Karte kopiert: mit Strg+V einfügen (Teams, E-Mail, Forum…).", "Mapa copiado: péguelo con Ctrl+V (Teams, correo, foro…).", "Mappa copiata: incollatela con Ctrl+V (Teams, e-mail, forum…)."),
     ("Attendre fréquence libre", "Wait for clear frequency", "Auf freie Frequenz warten", "Esperar frecuencia libre", "Attendere frequenza libera"),
     ("ATTENTE…", "WAITING…", "WARTEN…", "ESPERA…", "ATTESA…"),
     ("image", "picture", "Bild", "imagen", "immagine"),

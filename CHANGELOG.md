@@ -1,5 +1,10 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 1.39 — carte des stations : « Copier la carte », étiquettes plus lisibles
+
+- Carte des stations : nouveau bouton **« Copier la carte »**. La carte affichée (avec la mention du fond de carte) part dans le presse-papiers, à coller avec **Ctrl+V** dans Teams, un forum, Facebook, un e-mail…
+- Carte plus lisible quand les stations sont serrées (Angleterre, par exemple) : les **noms de villes et de pays** qui tomberaient sous un indicatif ou un point de station **ne sont plus écrits**, et les étiquettes des stations gardent un peu d'espace entre elles.
+
 ## Version 1.38 — copier une image dans le presse-papiers (VK6ATI)
 
 - Galerie, clic droit sur une image : **« Copier l'image »**. Il suffit ensuite de la coller (**Ctrl+V**) dans MS Teams, un e-mail, WhatsApp, Word, Paint… par exemple pour une station qui ne l'a pas décodée. L'image est copiée en pleine qualité (PNG).

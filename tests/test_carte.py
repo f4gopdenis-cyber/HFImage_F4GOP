@@ -34,5 +34,49 @@ class Carte(unittest.TestCase):
             self.assertLess(((cx - px) ** 2 + (cy - py) ** 2) ** 0.5, 120)
 
 
+    def test_villes_cedent_la_place(self):
+        # 1.39 : un nom de ville qui tomberait sous une étiquette de station n'est pas écrit
+        man = next(c for c in sm.load()["cities"] if c[0] == "Manchester")
+        pos = (man[2] / 100, man[1] / 100)
+        me = {"call": "F4GOP", "pos": protocol.locator_to_latlon("IN98QR")}
+        v = sm.View(pos[1], pos[0], 6, 600, 400)
+        self.assertIn("Manchester", sm.render(v, [], me).info.get("cities", []))
+        avec = sm.render(v, [{"call": "M0GRY", "pos": pos, "ok": True, "rep": -4}], me)
+        self.assertNotIn("Manchester", avec.info.get("cities", []))
+        self.assertTrue(avec.info.get("cities"))                     # les autres villes restent
+
+    def test_espace_entre_etiquettes(self):
+        items = [(100, 100, 60, 17), (100, 100, 60, 17), (100, 100, 60, 17)]
+        pl = sm._place_labels(items, 400, 300, avoid=[(100, 100)])
+        boxes = [(x, y, x + 60, y + 17) for x, y in pl]
+        for i, a in enumerate(boxes):
+            for b in boxes[i + 1:]:
+                self.assertTrue(a[2] + sm.LABEL_GAP <= b[0] or a[0] - sm.LABEL_GAP >= b[2]
+                                or a[3] + sm.LABEL_GAP <= b[1] or a[1] - sm.LABEL_GAP >= b[3], (a, b))
+
+    def test_copier_la_carte(self):
+        import tkinter as tk
+        from unittest import mock
+        import clip
+        try:
+            root = tk.Tk()
+        except tk.TclError as e:
+            raise unittest.SkipTest(str(e))
+        try:
+            me = {"call": "F4GOP", "pos": protocol.locator_to_latlon("IN98QR")}
+            st = [{"call": "G4GIM", "pos": protocol.locator_to_latlon("IO82UK"), "ok": True, "rep": 1}]
+            w = sm.MapWindow(root, lambda: (me, st))
+            w.win.geometry("600x400")
+            root.update()
+            w.set_view("*")
+            got = []
+            with mock.patch.object(clip, "copy_image", lambda im: got.append(im.size)):
+                self.assertTrue(w.copy())
+            self.assertEqual(got, [w._img.size])
+            self.assertIn("Ctrl+V", w.info.cget("text"))
+        finally:
+            root.destroy()
+
+
 if __name__ == "__main__":
     unittest.main()

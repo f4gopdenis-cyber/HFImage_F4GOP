@@ -548,7 +548,9 @@ s += B(["In the list, <b>*</b> marks a station transmitting (red) and <b>HYB</b>
         "window” to send it as a picture. Each station's line and label have the <b>colour of its report</b> (dark green: "
         "+5 dB and more, light green, orange, red: below -10 dB; legend at the bottom left), and the report is written "
         "next to the callsign. Mouse over a station: name, locator, distance, report and time. “<b>Show all</b>” fits "
-        "the map to all stations.",
+        "the map to all stations. “<b>Copy map</b>” puts it in the clipboard, to paste (Ctrl+V) into Teams, a forum, an "
+        "e-mail… City and country names that would fall under a station are not written, so callsigns stay readable "
+        "when stations are close together.",
         "Firewall or Internet provider blocking port 1883: HFImage tries the other accesses of the same server by itself "
         "(8883 encrypted, then 8884 and 8000 via the web); the log shows which one worked."])
 s.append(img("en_stations.png", 160, "Stations tab: BSR / FIX options, mode following, and the station log."))

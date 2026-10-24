@@ -106,18 +106,23 @@ def report_color(rep):
     return REPORT_COLORS[-1][1]
 
 
-def _place_labels(items, W, H, avoid=()):
+LABEL_GAP = 3          # espace minimal entre deux étiquettes (pixels)
+
+
+def _place_labels(items, W, H, avoid=(), gap=LABEL_GAP):
     """Place les étiquettes sans chevauchement. items : [(px, py, w, h)] -> [(bx, by)].
-    Essaie 8 positions autour du point, puis de plus en plus loin (avec un trait de rappel)."""
-    boxes = [(x - 7, y - 7, x + 7, y + 7) for x, y in avoid]
+    Essaie 8 positions autour du point, puis de plus en plus loin (avec un trait de rappel).
+    gap : espace gardé libre entre les étiquettes et autour des points des stations."""
+    boxes = [(x - 8, y - 8, x + 8, y + 8) for x, y in avoid]
     out = []
 
     def free(b):
         return (b[0] >= 0 and b[1] >= 0 and b[2] <= W and b[3] <= H and
-                all(b[2] < o[0] or b[0] > o[2] or b[3] < o[1] or b[1] > o[3] for o in boxes))
+                all(b[2] + gap < o[0] or b[0] - gap > o[2] or b[3] + gap < o[1] or b[1] - gap > o[3]
+                    for o in boxes))
     for px, py, w, h in items:
         pos = None
-        for dist in (9, 22, 40, 62, 90):
+        for dist in (9, 22, 40, 62, 90, 120):
             for dx, dy in ((1, 0), (-1, 0), (0, -1), (0, 1), (1, -1), (-1, -1), (1, 1), (-1, 1)):
                 bx = px + dx * dist + (0 if dx > 0 else (-w if dx < 0 else -w / 2))
                 by = py + dy * (dist * 0.6 + (h / 2 if dy else 0)) - (h / 2 if dy == 0 else (h if dy < 0 else 0))
@@ -245,6 +250,26 @@ def render(view, stations=(), me=None, lang="fr", show_lines=True, tr=lambda s: 
         if 0 <= y <= H:
             g.line([(0, y), (W, y)], fill=GRID, width=1)
 
+    # stations : points et étiquettes calculés d'abord ; les noms de pays et de villes qui
+    # tomberaient dessous ne sont pas écrits (carte lisible quand les stations sont serrées)
+    flab = _font(12)
+    shown = [s for s in list(stations) + ([me] if me and me.get("pos") else []) if s.get("pos")]
+    pts = [view.xy(s["pos"][1], s["pos"][0]) for s in shown]
+    items, texts = [], []
+    for s, (px, py) in zip(shown, pts):
+        t = s["call"] + ("" if s.get("rep") is None or s is me else f" {s['rep']:+d}")
+        texts.append(t)
+        items.append((px, py, g.textlength(t, font=flab) + 10, 17))
+    # notre station d'abord (elle garde la place à côté de son point)
+    order = sorted(range(len(shown)), key=lambda i: (shown[i] is not me, not shown[i].get("ok")))
+    placed = _place_labels([items[i] for i in order], W, H, avoid=pts)
+    busy = [(px - 7, py - 7, px + 7, py + 7) for px, py in pts]
+    for i, (bx, by) in zip(order, placed):
+        busy.append((bx - 2, by - 2, bx + items[i][2] + 2, by + items[i][3] + 2))
+
+    def hits_station(box):
+        return any(not (box[2] < b[0] or box[0] > b[2] or box[3] < b[1] or box[1] > b[3]) for b in busy)
+
     # noms des pays
     span = view.span()
     max_rank = 2 if span > 200 else (4 if span > 60 else (6 if span > 20 else 9))
@@ -256,6 +281,9 @@ def render(view, stations=(), me=None, lang="fr", show_lines=True, tr=lambda s: 
         px, py = view.xy(x / 100, y / 100)
         if 0 <= px <= W and 0 <= py <= H:
             name = (c["nf"] if lang == "fr" else c["n"]).upper()
+            tw = g.textlength(name, font=fc)
+            if hits_station((px - tw / 2, py - 7, px + tw / 2, py + 7)):
+                continue
             g.text((px, py), name, fill=(130, 130, 130), font=fc, anchor="mm")
 
     # villes
@@ -274,7 +302,10 @@ def render(view, stations=(), me=None, lang="fr", show_lines=True, tr=lambda s: 
         box = (px - 4, py - 8, px + 6 + tw, py + 8)
         if any(not (box[2] < b[0] or box[0] > b[2] or box[3] < b[1] or box[1] > b[3]) for b in taken):
             continue
+        if hits_station(box):                               # sous une station : on n'écrit pas la ville
+            continue
         taken.append(box)
+        img.info.setdefault("cities", []).append(name)
         if cap:
             _star(g, px, py, 4)
             g.text((px + 5, py - 1), name, fill="black", font=f, anchor="lm")
@@ -283,7 +314,6 @@ def render(view, stations=(), me=None, lang="fr", show_lines=True, tr=lambda s: 
             g.text((px + 4, py), name, fill="black", font=f, anchor="lm")
 
     # trajets (couleur selon le report), puis points, puis étiquettes placées sans chevauchement
-    flab = _font(12)
     if me and me.get("pos") and show_lines:
         # les moins bons d'abord : les bons reports restent visibles par-dessus
         for s in sorted(stations, key=lambda s: -999 if s.get("rep") is None else s["rep"]):
@@ -293,22 +323,10 @@ def render(view, stations=(), me=None, lang="fr", show_lines=True, tr=lambda s: 
                 for a, b in zip(path, path[1:]):
                     if abs(a[0] - b[0]) < W / 2:
                         g.line([a, b], fill=col, width=2)
-    shown = [s for s in list(stations) + ([me] if me and me.get("pos") else []) if s.get("pos")]
-    pts = []
-    for s in shown:
-        px, py = view.xy(s["pos"][1], s["pos"][0])
+    for s, (px, py) in zip(shown, pts):
         is_me = s is me
         dot = (40, 40, 40) if is_me else (report_color(s.get("rep")) if s.get("ok") else (200, 160, 0))
         g.ellipse([px - 5, py - 5, px + 5, py + 5], fill=dot, outline=(255, 255, 255))
-        pts.append((px, py))
-    items, texts = [], []
-    for s, (px, py) in zip(shown, pts):
-        t = s["call"] + ("" if s.get("rep") is None or s is me else f" {s['rep']:+d}")
-        texts.append(t)
-        items.append((px, py, g.textlength(t, font=flab) + 10, 17))
-    # notre station d'abord (elle garde la place à côté de son point)
-    order = sorted(range(len(shown)), key=lambda i: (shown[i] is not me, not shown[i].get("ok")))
-    placed = _place_labels([items[i] for i in order], W, H, avoid=pts)
     for i, (bx, by) in zip(order, placed):
         s, (px, py), (_, _, bw, bh) = shown[i], pts[i], items[i]
         is_me = s is me
@@ -384,6 +402,7 @@ class MapWindow:
         if on_paste:
             tk.Button(bar, text=tr("Coller la carte dans la fenêtre TX"),
                       command=self._paste).pack(side="left", padx=6)
+        tk.Button(bar, text=tr("Copier la carte"), command=self.copy).pack(side="left", padx=6)
         self.cv = tk.Canvas(w, bg="#bee2f7", highlightthickness=0, cursor="fleur")
         self.cv.pack(fill="both", expand=True)
         self.info = tk.Label(w, text="", anchor="w", bg="#e8f7e6")
@@ -589,6 +608,35 @@ class MapWindow:
         if s.get("info"):
             parts.append(s["info"])
         self.info.configure(text="   —   ".join(parts))
+
+    def image_to_share(self):
+        """La carte affichée, avec la mention du fond de carte (pour la partager)."""
+        if self._img is None:
+            return None
+        im = self._img.copy()
+        g = ImageDraw.Draw(im)
+        t = self.tr("Fond de carte : Natural Earth (domaine public)")
+        f = _font(10)
+        tw = g.textlength(t, font=f)
+        g.rectangle([im.width - tw - 12, im.height - 18, im.width, im.height], fill=(255, 255, 255))
+        g.text((im.width - 6, im.height - 4), t, fill=(80, 80, 80), font=f, anchor="rd")
+        return im
+
+    def copy(self):
+        """Bouton « Copier la carte » : à coller (Ctrl+V) dans Teams, un forum, un e-mail…"""
+        from tkinter import messagebox
+        import clip
+        im = self.image_to_share()
+        if im is None:
+            return False
+        try:
+            clip.copy_image(im)
+        except Exception as e:
+            messagebox.showerror("HFImage", self.tr("Copie de l'image impossible :") + f"\n{self.tr(str(e))}",
+                                 parent=self.win)
+            return False
+        self.info.configure(text=self.tr("Carte copiée : collez-la avec Ctrl+V (Teams, e-mail, forum…)."))
+        return True
 
     def _paste(self):
         if self._img is not None and self.on_paste:
