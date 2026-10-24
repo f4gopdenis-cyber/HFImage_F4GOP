@@ -78,7 +78,10 @@ DEFAULTS = {"rig": "none", "port": "", "baud": 115200, "data_bits": "default", "
             "tx_audio": "rear", "set_mode": "none", "host": "", "poll": 1,
             # « Commandes CAT personnalisées » (comme EasyPal) : hexadécimal ou texte
             "cmd_init1": "", "cmd_init2": "", "cmd_ptt_on": "", "cmd_ptt_off": "",
-            "cmd_exit1": "", "cmd_exit2": "", "cmd_delay": 200}
+            "cmd_exit1": "", "cmd_exit2": "", "cmd_delay": 200,
+            # chaînes de départ / sortie : « tx » à chaque émission (comme EasyPal), « open » au
+            # lancement et à la fermeture du programme
+            "cmd_when": "tx"}
 CUSTOM_KEYS = ("cmd_init1", "cmd_init2", "cmd_ptt_on", "cmd_ptt_off", "cmd_exit1", "cmd_exit2")
 
 
@@ -188,6 +191,12 @@ class RigBase:
         m = (mode or "").upper().replace(" ", "")
         return "LSB" in m or m in ("DIG-L", "DIGL", "PKT-L", "DATA-L", "D-L")
 
+    def before_tx(self):
+        """Juste avant de passer en émission (quelle que soit la méthode PTT)."""
+
+    def after_tx(self):
+        """Juste après le retour en réception."""
+
     def set_freq(self, hz):
         """Change la fréquence du poste (Hz)."""
         raise RuntimeError("ce pilote ne change pas la fréquence")
@@ -281,13 +290,26 @@ class CustomRig(RigBase):
             self.delay = max(0, min(5000, int(cfg.get("cmd_delay") or 0))) / 1000
         except (TypeError, ValueError):
             self.delay = 0.2
+        self.per_tx = cfg.get("cmd_when", "tx") != "open"     # comme EasyPal : à chaque émission
+        self._in_tx = False
         self.lock = threading.Lock()
         self.ser = open_port(cfg)
-        try:
+        if not self.per_tx:
+            try:
+                self._send("cmd_init1", "cmd_init2")
+            except Exception:
+                self.ser.close()
+                raise
+
+    def before_tx(self):
+        if self.per_tx and not self._in_tx:
+            self._in_tx = True
             self._send("cmd_init1", "cmd_init2")
-        except Exception:
-            self.ser.close()
-            raise
+
+    def after_tx(self):
+        if self.per_tx and self._in_tx:
+            self._in_tx = False
+            self._send("cmd_exit1", "cmd_exit2")
 
     def _send(self, *keys):
         with self.lock:
@@ -312,7 +334,10 @@ class CustomRig(RigBase):
         if self.ser is None:
             return
         try:
-            self._send("cmd_exit1", "cmd_exit2")
+            if self.per_tx:
+                self.after_tx()                          # n'envoie rien si on n'émettait pas
+            else:
+                self._send("cmd_exit1", "cmd_exit2")
         except Exception:
             pass
         try:
@@ -912,10 +937,16 @@ class Ptt:
             self.rig.set_line(self.line, on)
 
     def tx(self):
+        if self.rig is not None:
+            self.rig.before_tx()                         # chaînes de départ (commandes perso)
         self._set(True)
 
     def rx(self):
-        self._set(False)
+        try:
+            self._set(False)
+        finally:
+            if self.rig is not None:
+                self.rig.after_tx()                      # chaînes de sortie (commandes perso)
 
     def close(self):
         try:

@@ -1,5 +1,10 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 1.36 — commandes CAT personnalisées : départ / sortie à chaque émission (VK6NJP)
+
+- Commandes CAT personnalisées : comme dans EasyPal, les **chaînes de départ** partent maintenant **avant chaque émission** (avant PTT marche) et les **chaînes de sortie après** (après PTT arrêt), quelle que soit la méthode PTT. Pratique pour passer le poste en DATA ou changer le gain micro le temps de l'émission, puis tout remettre comme avant.
+- Nouveau choix dans la fenêtre Radio : « Départ / Sortie : à chaque émission (comme EasyPal) » (par défaut) ou « au lancement et à la fermeture du programme » (l'ancien fonctionnement).
+
 ## Version 1.35 — commandes CAT personnalisées : plusieurs à la suite (VK6NJP)
 
 - Commandes CAT personnalisées : une case peut contenir **plusieurs commandes à la suite**, écrites comme dans EasyPal (`\$FEFE94E0…FD\$FEFE94E0…FD\`). Elles sont envoyées l'une après l'autre, avec le délai réglé entre chacune. Avant, une case contenant plusieurs commandes était envoyée comme du texte et le poste ne la comprenait pas.

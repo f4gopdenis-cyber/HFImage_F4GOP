@@ -107,10 +107,17 @@ class RadioDialog(tk.Toplevel):
         ttk.Label(df, text="Délai entre deux commandes (ms)").pack(side="left")
         ttk.Spinbox(df, from_=0, to=2000, increment=50, textvariable=self.v["cmd_delay"], width=6).pack(
             side="left", padx=4)
+        wf = ttk.Frame(cc)
+        wf.grid(row=7, column=0, columnspan=2, sticky="w", pady=(4, 0))
+        ttk.Label(wf, text="Départ / Sortie :").pack(anchor="w")
+        ttk.Radiobutton(wf, text="à chaque émission (comme EasyPal)", value="tx",
+                        variable=self.v["cmd_when"]).pack(anchor="w")
+        ttk.Radiobutton(wf, text="au lancement et à la fermeture du programme", value="open",
+                        variable=self.v["cmd_when"]).pack(anchor="w")
         ttk.Label(cc, text="Hexadécimal (Icom CI-V : FEFE5EE01C0001FD) ou texte (Kenwood : TX1;).\n"
-                           "Départ : à l'ouverture du port ; Sortie : à la fermeture du programme.\n"
+                           "Départ avant PTT marche, Sortie après PTT arrêt.\n"
                            "Les réglages d'EasyPal (\\$…\\) se collent tels quels. Choisissez PTT « CAT ».",
-                  foreground="#555", justify="left").grid(row=7, column=0, columnspan=2, sticky="w", pady=(4, 0))
+                  foreground="#555", justify="left").grid(row=8, column=0, columnspan=2, sticky="w", pady=(4, 0))
 
         # ---- PTT
         p = ttk.LabelFrame(R, text="Méthode PTT", padding=8)
@@ -334,6 +341,9 @@ class RadioDialog(tk.Toplevel):
                     r = radio.make_rig(c)
                     try:
                         f, m = r.freq(), r.mode()
+                        if getattr(r, "per_tx", False):      # commandes perso « à chaque émission »
+                            r.before_tx()
+                            r.after_tx()
                     finally:
                         r.close()
                 if not getattr(r, "reads_freq", True):

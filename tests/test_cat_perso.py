@@ -44,7 +44,7 @@ class PortSerie(unittest.TestCase):
         master, slave = pty.openpty()
         os.set_blocking(master, False)
         port = os.ttyname(slave)
-        cfg = dict(radio.DEFAULTS, rig="custom", port=port, baud=9600, ptt="CAT", cmd_delay=10,
+        cfg = dict(radio.DEFAULTS, rig="custom", port=port, baud=9600, ptt="CAT", cmd_delay=10, cmd_when="open",
                    cmd_init1="\\$FEFE5EE0140B0000FD\\", cmd_ptt_on="FEFE5EE01C0001FD",
                    cmd_ptt_off="FEFE5EE01C0000FD", cmd_exit1="\\$FEFE5EE0140B0140FD\\")
 
@@ -73,7 +73,7 @@ class PortSerie(unittest.TestCase):
         master, slave = pty.openpty()
         os.set_blocking(master, False)
         cfg = dict(radio.DEFAULTS, rig="custom", port=os.ttyname(slave), baud=9600, ptt="CAT",
-                   cmd_delay=200, cmd_init1="\\$FEFE94E0140B0000FD\\$FEFE94E01A060101FD\\")
+                   cmd_delay=200, cmd_when="open", cmd_init1="\\$FEFE94E0140B0000FD\\$FEFE94E01A060101FD\\")
         t0 = time.time()
         rig = radio.make_rig(cfg)
         self.assertGreaterEqual(time.time() - t0, 0.35)                  # délai après chacune
@@ -82,6 +82,53 @@ class PortSerie(unittest.TestCase):
         rig.close()
         os.close(master)
         os.close(slave)
+
+    def _pty(self):
+        import pty
+        master, slave = pty.openpty()
+        os.set_blocking(master, False)
+        self.addCleanup(os.close, master)
+        self.addCleanup(os.close, slave)
+
+        def read():
+            time.sleep(0.15)
+            try:
+                return os.read(master, 4096)
+            except BlockingIOError:
+                return b""
+        return os.ttyname(slave), read
+
+    def test_a_chaque_emission(self):
+        # 1.36 (VK6NJP) : comme EasyPal, départ avant chaque émission, sortie après
+        port, read = self._pty()
+        self.assertEqual(radio.DEFAULTS["cmd_when"], "tx")
+        cfg = dict(radio.DEFAULTS, rig="custom", port=port, baud=9600, ptt="CAT", cmd_delay=10,
+                   cmd_init1="\\$FEFE94E01A060101FD\\", cmd_ptt_on="FEFE94E01C0001FD",
+                   cmd_ptt_off="FEFE94E01C0000FD", cmd_exit1="\\$FEFE94E01A060000FD\\")
+        rig = radio.make_rig(cfg)
+        self.assertEqual(read(), b"")                                      # rien à l'ouverture
+        p = radio.Ptt(cfg, rig)
+        for _ in range(2):                                                 # à chaque émission
+            p.tx()
+            self.assertEqual(read(), bytes.fromhex("FEFE94E01A060101FD" "FEFE94E01C0001FD"))
+            p.rx()
+            self.assertEqual(read(), bytes.fromhex("FEFE94E01C0000FD" "FEFE94E01A060000FD"))
+        p.rx()                                                             # pas de sortie en double
+        self.assertEqual(read(), bytes.fromhex("FEFE94E01C0000FD"))
+        rig.close()
+        self.assertEqual(read(), b"")                                      # rien à la fermeture
+
+    def test_a_chaque_emission_sans_ptt_cat(self):
+        # PTT sans CAT (VOX, RTS…) : les chaînes de départ / sortie partent quand même
+        port, read = self._pty()
+        cfg = dict(radio.DEFAULTS, rig="custom", port=port, baud=9600, ptt="VOX", cmd_delay=10,
+                   cmd_init1="FEFE94E01A060101FD", cmd_exit1="FEFE94E01A060000FD")
+        rig = radio.make_rig(cfg)
+        p = radio.Ptt(cfg, rig)
+        p.tx()
+        self.assertEqual(read(), bytes.fromhex("FEFE94E01A060101FD"))
+        rig.close()                                                        # fermé en émission
+        self.assertEqual(read(), bytes.fromhex("FEFE94E01A060000FD"))
 
     def test_ptt_vide(self):
         import pty
