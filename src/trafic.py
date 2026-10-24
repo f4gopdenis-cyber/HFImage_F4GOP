@@ -249,7 +249,8 @@ PIP_SCALE = {"petite": 0.26, "moyenne": 0.34, "grande": 0.45}
 PIP_MIN, PIP_MAX = 0.10, 0.90      # taille libre : fraction de la largeur de l'image
 
 
-def pip_layout(img_size, thumb_size, caption="", corner="haut-droite", size="moyenne", pos=None, scale=None):
+def pip_layout(img_size, thumb_size, caption="", corner="haut-droite", size="moyenne", pos=None, scale=None,
+               logo=False):
     """Place de l'incrustation -> (x, y, W, H, tw, b, fs, cap_h).
     pos = (fx, fy) entre 0 et 1 : position libre (0 = bord gauche / haut, 1 = bord droit / bas) ;
     scale = largeur libre en fraction de la largeur de l'image."""
@@ -257,13 +258,13 @@ def pip_layout(img_size, thumb_size, caption="", corner="haut-droite", size="moy
     frac = min(PIP_MAX, max(PIP_MIN, float(scale))) if scale else PIP_SCALE.get(size, 0.34)
     tw = max(40, int(iw * frac))
     th_h = max(1, round(thumb_size[1] * tw / max(1, thumb_size[0])))
-    b = max(2, tw // 60)                                   # cadre
+    b = 0 if logo else max(2, tw // 60)                    # cadre (aucun pour un logo)
     fs = max(11, tw // 13)
-    cap_h = int(fs * 1.45) if caption else 0
+    cap_h = int(fs * 1.45) if caption and not logo else 0
     W, H = tw + 2 * b, th_h + 2 * b + cap_h
     if H > ih:                                             # très haute : on réduit pour qu'elle tienne
         k = ih / H
-        return pip_layout(img_size, thumb_size, caption, corner, size, pos, max(PIP_MIN, frac * k * 0.98))
+        return pip_layout(img_size, thumb_size, caption, corner, size, pos, max(PIP_MIN, frac * k * 0.98), logo)
     if pos is not None:
         fx, fy = (min(1.0, max(0.0, float(v))) for v in pos)
         x, y = round(fx * max(0, iw - W)), round(fy * max(0, ih - H))
@@ -300,10 +301,39 @@ def _perspective(box, tilt):
     return box.transform((W, H), Image.PERSPECTIVE, tuple(coef), Image.BICUBIC)
 
 
-def pip(img, thumb, caption="", corner="haut-droite", size="moyenne", pos=None, scale=None, rot=0, tilt=0):
+def logo_on(img, logo, x, y, W, H, rot=0, tilt=0, opacity=1.0):
+    """Logo (PNG à fond transparent, demande de RK1AT) posé directement sur l'image : ni cadre,
+    ni ombre, ni légende ; la transparence laisse voir la photo. Rotation, perspective et opacité."""
+    card = logo.convert("RGBA").resize((max(1, W), max(1, H)), Image.LANCZOS)
+    if abs(float(tilt or 0)) >= 0.01:
+        card = _perspective(card, tilt)
+    rot = max(-PIP_ROT_MAX, min(PIP_ROT_MAX, float(rot or 0)))
+    if abs(rot) >= 0.5:
+        card = card.rotate(rot, resample=Image.BICUBIC, expand=True)
+    op = max(0.0, min(1.0, float(opacity if opacity is not None else 1.0)))
+    if op < 0.999:
+        card.putalpha(card.getchannel("A").point(lambda a: int(a * op)))
+    px, py = round(x + W / 2 - card.width / 2), round(y + H / 2 - card.height / 2)
+    base = img.convert("RGBA")
+    base.paste(card, (px, py), card)
+    return base.convert("RGB")
+
+
+def has_alpha(im):
+    """Image avec de la transparence (PNG à fond transparent…) ?"""
+    if im.mode in ("RGBA", "LA", "PA"):
+        return im.getchannel("A").getextrema()[0] < 255
+    return im.mode == "P" and "transparency" in im.info
+
+
+def pip(img, thumb, caption="", corner="haut-droite", size="moyenne", pos=None, scale=None, rot=0, tilt=0,
+        logo=False, opacity=1.0):
     """Image du correspondant incrustée dans un coin, ou à l'endroit et à la taille choisis
     à la souris (cadre blanc, légende « de F4EMK — +12 dB »). rot : rotation en degrés
     (sens inverse des aiguilles d'une montre) ; tilt : perspective de -1 à 1 (0 : de face)."""
+    if logo:
+        x, y, W, H = pip_layout(img.size, thumb.size, "", corner, size, pos, scale, logo=True)[:4]
+        return logo_on(img, thumb, x, y, W, H, rot, tilt, opacity)
     im = img.convert("RGB").copy()
     th = thumb.convert("RGB")
     x, y, W, H, tw, b, fs, cap_h = pip_layout(im.size, th.size, caption, corner, size, pos, scale)

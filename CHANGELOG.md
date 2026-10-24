@@ -1,5 +1,10 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 1.49 — logo PNG transparent, hauteur des bandeaux de la carte QSL (demandes de RK1AT)
+
+- Fenêtre « Image du correspondant » : case **« Logo (sans cadre, transparence gardée) »** pour chaque image incrustée : l'image est posée directement sur la photo, sans cadre, ombre ni légende, et le **fond transparent d'un PNG est gardé**. Cochée d'office quand on choisit un PNG à fond transparent avec « Image du PC… ». Réglette **Opacité** (20 à 100 %) pour un logo discret ; position, taille, rotation et perspective comme pour les autres images.
+- Carte QSL : réglettes **« Hauteur du bandeau du haut »** et **« Hauteur du bandeau du bas »** (50 à 150 %) ; le texte suit la hauteur choisie (la ligne date / fréquence / report reste dans la carte). Réglage retenu avec le style.
+
 ## Version 1.48 — incruster une image du PC, légende libre
 
 - Fenêtre « Image du correspondant » : bouton **« Image du PC… »** pour incruster n'importe quelle image de l'ordinateur (photo, logo, carte QSL… en JPEG, PNG, GIF, BMP, WebP, AVIF) dans l'image à émettre, avec les mêmes réglages que les images reçues (position, taille, souris, rotation, perspective). Une photo de téléphone est remise droite. Les 10 dernières images du PC restent proposées dans la liste (📁).

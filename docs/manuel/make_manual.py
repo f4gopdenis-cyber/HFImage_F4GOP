@@ -454,7 +454,9 @@ s += B(["Liste <b>Images incrustées</b> : <b>Ajouter une image</b> (elle se pla
         "effet 3D) pour chaque image incrustée ; les coins qui dépassent laissent voir votre photo ; « Remettre droit » "
         "annule les deux. Bouton <b>« Image du PC… »</b> : n'importe quelle image de l'ordinateur (photo, logo, "
         "carte QSL…) s'incruste de la même façon ; champ <b>Légende</b> pour écrire le texte de votre choix sous "
-        "l'image (vide : « de F4EMK — +12 dB » pour une image reçue, rien pour une image du PC).",
+        "l'image (vide : « de F4EMK — +12 dB » pour une image reçue, rien pour une image du PC). Case "
+        "<b>« Logo »</b> : l'image est posée sans cadre, sans ombre ni légende, et la transparence d'un PNG est "
+        "gardée (cochée d'office pour un PNG à fond transparent) ; réglette <b>Opacité</b> pour un logo discret.",
         "Galerie, clic droit : « <b>Répondre avec cette image</b> » remplace les incrustations par cette seule image ; "
         "« <b>Ajouter cette image à mon image TX</b> » l'ajoute aux autres.",
         "La disposition est gardée ; l'image émise est exactement celle de l'aperçu."])
@@ -508,7 +510,8 @@ s += B(["<b>Texte inclus</b> : un message joint à l'image, affiché dans « Mes
         "waterfall du correspondant (Action → Texte waterfall… → « Image… » pour une photo, un logo, votre QSL) ; "
         "« Sauve » en fait un begin.wav joué avant chaque émission, comme EasyPal.",
         "<b>IMG/QSL</b> : carte QSL avec photo de fond, indicatif, locator et report remplis automatiquement, "
-        "police et couleurs au choix."])
+        "police et couleurs au choix, <b>hauteur des bandeaux</b> du haut et du bas réglable (50 à 150 %, le texte "
+        "suit)."])
 
 # ------------------------------------------------------------------ 6 EasyPal
 s.append(PageBreak())

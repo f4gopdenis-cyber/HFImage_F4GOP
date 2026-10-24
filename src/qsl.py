@@ -23,7 +23,9 @@ FONTS = {
 }
 # style d'origine (celui des versions précédentes)
 DEFAULT_STYLE = {"font": "Arial", "call": "#ffffff", "text": "#ffffff", "accent": "#ffd166",
-                 "band": "#000000", "band_alpha": 60, "call_size": 100}
+                 "band": "#000000", "band_alpha": 60, "call_size": 100,
+                 "head_h": 100, "band_h": 100}          # hauteur des bandeaux du haut / du bas (%)
+BAND_MIN, BAND_MAX = 50, 150
 _font_name = "Arial"
 
 
@@ -85,30 +87,46 @@ def make_card(background, mycall, locator="", to_call="", freq="", report="", me
     import clocktz
     utc = utc or clocktz.fmt("%Y-%m-%d %H:%M", suffix=False)
 
+    # hauteur des bandeaux (demande de RK1AT) : le texte suit la hauteur choisie
+    kh = max(BAND_MIN, min(BAND_MAX, int(st.get("head_h") or 100))) / 100
+    kb = max(BAND_MIN, min(BAND_MAX, int(st.get("band_h") or 100))) / 100
+
+    def px(v, k):
+        return max(8, int(round(v * k)))
+
     # en-tête : indicatif + locator
-    head = max(120, int(120 * big))
+    head = int(max(120, int(120 * big)) * kh)
     if alpha:
         d.rectangle([0, 0, W, head], fill=band_top)
-    fc = _font(int(76 * big), True)
+    fc = _font(px(76 * big, kh), True)
     d.text((28, head / 2), mycall.upper(), font=fc, fill=call_c, anchor="lm")
     if locator:
-        d.text((W - 28, head / 2 - 8), locator.upper(), font=_font(34, True), fill=acc_c, anchor="rs")
-    d.text((W - 28, head / 2 + 6), "HFImage", font=_font(22), fill=_dim(text_c), anchor="ra")
+        d.text((W - 28, head / 2 - 8 * kh), locator.upper(), font=_font(px(34, kh), True), fill=acc_c, anchor="rs")
+    d.text((W - 28, head / 2 + 6 * kh), "HFImage", font=_font(px(22, kh)), fill=_dim(text_c), anchor="ra")
 
     # bandeau du bas : QSO
+    band = int(190 * kb)
     if alpha:
-        d.rectangle([0, H - 190, W, H], fill=band_bot)
-    y0 = H - 176
+        d.rectangle([0, H - band, W, H], fill=band_bot)
+    y0 = H - band + 14 * kb
     if to_call:
-        d.text((28, y0), tr(f"To : {to_call.upper()}"), font=_font(40, True), fill=acc_c)
+        d.text((28, y0), tr(f"To : {to_call.upper()}"), font=_font(px(40, kb), True), fill=acc_c)
     rows = [(tr("Date UTC") if clocktz.utc() else tr("Date"), utc), (tr("Fréquence"), freq), (tr("Report"), report)]
     x = 28
+    # date / fréquence / report : la ligne doit tenir dans la largeur de la carte
+    kr = kb
+    while True:
+        fv = _font(px(28, kr), True)
+        need = 28 + sum(max(int(220 * kr), int(d.textlength(v, font=fv)) + int(40 * kr)) for _, v in rows if v)
+        if need <= W - 10 or kr <= 0.5:
+            break
+        kr *= 0.92
     for lab, val in rows:
         if not val:
             continue
-        d.text((x, y0 + 58), lab, font=_font(18), fill=_dim(text_c))
-        d.text((x, y0 + 80), val, font=_font(28, True), fill=text_c)
-        x += max(220, int(d.textlength(val, font=_font(28, True))) + 40)
+        d.text((x, y0 + 58 * kb), lab, font=_font(px(18, kr)), fill=_dim(text_c))
+        d.text((x, y0 + 80 * kb), val, font=fv, fill=text_c)
+        x += max(int(220 * kr), int(d.textlength(val, font=fv)) + int(40 * kr))
     if message:
-        d.text((28, y0 + 128), message, font=_font(26), fill=text_c)
+        d.text((28, y0 + 128 * kb), message, font=_font(px(26, kb)), fill=text_c)
     return card

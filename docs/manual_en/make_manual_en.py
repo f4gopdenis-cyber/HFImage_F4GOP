@@ -495,7 +495,9 @@ s += B(["<b>Inserted images</b> list: <b>Add an image</b> (it goes to a free cor
         "on the picture) and <b>Perspective</b> (the picture “leans” left or right, 3D effect) sliders for each inserted "
         "picture; the corners show your photo behind; “Straighten” resets both. <b>“Picture from PC…”</b> button: any "
         "picture from your computer (photo, logo, QSL card…) is inserted the same way; <b>Caption</b> field for the text "
-        "of your choice under the picture (empty: “from F4EMK — +12 dB” for a received picture, nothing for a PC picture).",
+        "of your choice under the picture (empty: “from F4EMK — +12 dB” for a received picture, nothing for a PC picture). "
+        "<b>“Logo”</b> box: the picture is laid without frame, shadow or caption, and a PNG's transparency is kept "
+        "(ticked automatically for a PNG with a transparent background); <b>Opacity</b> slider for a discreet logo.",
         "Gallery, right-click: “<b>Reply with this image</b>” replaces the insets with this picture only; “<b>Add this "
         "image to my TX image</b>” adds it to the others.",
         "The layout is kept; the picture transmitted is exactly the preview."])
@@ -520,7 +522,8 @@ s += B(["<b>Incl. text</b>: a message attached to the picture, shown in “Recei
         "waterfall (Action → Waterfall text…); “Save” makes it a begin.wav played before each transmission, as in "
         "EasyPal.",
         "<b>IMG/QSL</b>: QSL card with background photo, callsign, locator and report filled in automatically, "
-        "font and colours of your choice."])
+        "font and colours of your choice, adjustable <b>height of the top and bottom banners</b> (50 to 150 %, the "
+        "text follows)."])
 
 # ------------------------------------------------------------------ 8
 s.append(PageBreak())

@@ -62,7 +62,7 @@ import random
 import wave
 
 APP = "HFImage F4GOP"
-VERSION = "1.48"
+VERSION = "1.49"
 
 
 def _take_profile(argv):
@@ -3845,7 +3845,7 @@ class App(tk.Tk):
                 t.seek(0)
             except (AttributeError, EOFError):
                 pass
-            t = t.convert("RGB")
+            t = t.convert("RGBA" if trafic.has_alpha(t) else "RGB")    # logo PNG : transparence gardée
             t.thumbnail((1600, 1600))                # grande photo du PC : assez pour une incrustation
             cache[path] = t
             for k in [k for k in cache if k not in {p["path"] for p in self.pips} | {path}]:
@@ -3859,10 +3859,12 @@ class App(tk.Tk):
             try:
                 th = self._pip_thumb(p["path"])
                 cap = self._pip_caption(p)
+                logo = bool(p.get("logo"))
                 rects.append(trafic.pip_layout(im.size, th.size, cap, p.get("corner", "haut-droite"),
-                                               p.get("size", "moyenne"), p.get("pos"), p.get("scale"))[:4])
+                                               p.get("size", "moyenne"), p.get("pos"), p.get("scale"), logo)[:4])
                 im = trafic.pip(im, th, cap, p.get("corner", "haut-droite"), p.get("size", "moyenne"),
-                                p.get("pos"), p.get("scale"), p.get("rot") or 0, p.get("tilt") or 0)
+                                p.get("pos"), p.get("scale"), p.get("rot") or 0, p.get("tilt") or 0,
+                                logo, p.get("opa", 1.0))
             except Exception as e:
                 self.log(f"Image du correspondant illisible : {e}")
                 rects.append(None)
@@ -3874,7 +3876,8 @@ class App(tk.Tk):
             return self.src_img
         key = (id(self.src_img), self.conf.get("pip_report", True),
                tuple((p["path"], self._pip_caption(p), p.get("corner"), p.get("size"), tuple(p.get("pos") or ()),
-                      p.get("scale"), p.get("rot") or 0, p.get("tilt") or 0) for p in self.pips))
+                      p.get("scale"), p.get("rot") or 0, p.get("tilt") or 0, bool(p.get("logo")),
+                      p.get("opa", 1.0)) for p in self.pips))
         c = getattr(self, "_pip_cache", None)
         if c and c[0] == key:
             return c[1]
@@ -4325,29 +4328,40 @@ class App(tk.Tk):
         ttk.Label(cf_, text="(vide : automatique)", foreground="#555").pack(side="left", padx=4)
         # rotation et perspective de l'incrustation choisie (demande de M7WUV)
         v_rot, v_tilt = tk.DoubleVar(value=0), tk.DoubleVar(value=0)
-        ttk.Label(f, text="Rotation").grid(row=7, column=0, sticky="w", pady=2)
+        # logo PNG à fond transparent (demande de RK1AT) : sans cadre, avec opacité
+        v_logo, v_opa = tk.BooleanVar(value=False), tk.DoubleVar(value=100)
+        lgf = ttk.Frame(f)
+        lgf.grid(row=7, column=1, sticky="w", padx=6)
+        ck_logo = ttk.Checkbutton(lgf, text="Logo (sans cadre, transparence gardée)", variable=v_logo)
+        ck_logo.pack(side="left")
+        ttk.Label(lgf, text="Opacité").pack(side="left", padx=(12, 4))
+        sc_opa = ttk.Scale(lgf, from_=20, to=100, variable=v_opa, length=110)
+        sc_opa.pack(side="left")
+        lb_opa = ttk.Label(lgf, text="100 %", width=6)
+        lb_opa.pack(side="left", padx=4)
+        ttk.Label(f, text="Rotation").grid(row=8, column=0, sticky="w", pady=2)
         rf = ttk.Frame(f)
-        rf.grid(row=7, column=1, sticky="w", padx=6)
+        rf.grid(row=8, column=1, sticky="w", padx=6)
         sc_rot = ttk.Scale(rf, from_=-trafic.PIP_ROT_MAX, to=trafic.PIP_ROT_MAX, variable=v_rot, length=200)
         sc_rot.pack(side="left")
         lb_rot = ttk.Label(rf, text="0°", width=5)
         lb_rot.pack(side="left", padx=4)
         b_straight = ttk.Button(rf, text="Remettre droit", command=lambda: straight())
         b_straight.pack(side="left", padx=(6, 0))
-        ttk.Label(f, text="Perspective").grid(row=8, column=0, sticky="w", pady=2)
+        ttk.Label(f, text="Perspective").grid(row=9, column=0, sticky="w", pady=2)
         tf_ = ttk.Frame(f)
-        tf_.grid(row=8, column=1, sticky="w", padx=6)
+        tf_.grid(row=9, column=1, sticky="w", padx=6)
         sc_tilt = ttk.Scale(tf_, from_=-100, to=100, variable=v_tilt, length=200)
         sc_tilt.pack(side="left")
         lb_tilt = ttk.Label(tf_, text="0", width=5)
         lb_tilt.pack(side="left", padx=4)
         cv = tk.Canvas(f, bg="black", width=480, height=360, highlightthickness=0, cursor="fleur")
         cv._no_theme = True
-        cv.grid(row=9, column=0, columnspan=2, pady=(10, 0))
+        cv.grid(row=10, column=0, columnspan=2, pady=(10, 0))
         ttk.Label(f, text="Souris : cliquez sur une image pour la choisir, faites-la glisser pour la placer, "
                           "molette pour l'agrandir ou la réduire, Maj + molette pour la tourner.",
                   foreground="#555", wraplength=480, justify="left").grid(
-            row=10, column=0, columnspan=2, sticky="w", pady=(4, 0))
+            row=11, column=0, columnspan=2, sticky="w", pady=(4, 0))
 
         def label_of(p):
             return next((l for l, c in cands if c["path"] == p["path"]), p.get("call") or "?")
@@ -4368,8 +4382,13 @@ class App(tk.Tk):
                     v_c.set(corners["libre"] if p.get("pos") else corners.get(p.get("corner"), corners["haut-droite"]))
                     v_s.set(sizes["libre"] if p.get("scale") else sizes.get(p.get("size"), sizes["moyenne"]))
                     v_cap.set(p.get("cap") or "")
+                    v_logo.set(bool(p.get("logo")))
+                    v_opa.set(round(float(p.get("opa", 1.0)) * 100))
                     v_rot.set(float(p.get("rot") or 0))
                     v_tilt.set(round(float(p.get("tilt") or 0) * 100))
+                lb_opa.configure(text=f"{round(v_opa.get())} %")
+                ck_logo.state(["!disabled"] if self.pips else ["disabled"])
+                sc_opa.state(["!disabled"] if self.pips and v_logo.get() else ["disabled"])
                 lb_rot.configure(text=f"{round(v_rot.get()):+d}°" if round(v_rot.get()) else "0°")
                 lb_tilt.configure(text=f"{round(v_tilt.get()):+d}" if round(v_tilt.get()) else "0")
                 for s_ in (sc_rot, sc_tilt):
@@ -4393,6 +4412,10 @@ class App(tk.Tk):
                 if v_img.get() in labels:
                     p.update(cands[labels.index(v_img.get())][1])
                 p["cap"] = v_cap.get().strip() or None
+                p["logo"] = bool(v_logo.get())
+                p["opa"] = round(v_opa.get()) / 100
+                lb_opa.configure(text=f"{round(v_opa.get())} %")
+                sc_opa.state(["!disabled"] if p["logo"] else ["disabled"])
                 ck = next((k for k, n in corners.items() if n == v_c.get()), "haut-droite")
                 sk = next((k for k, n in sizes.items() if n == v_s.get()), "moyenne")
                 if ck == "libre":
@@ -4482,7 +4505,9 @@ class App(tk.Tk):
             if path not in [c["path"] for _, c in cands]:
                 cands.append((lab, cand))
                 labels.append(lab)
-            self.pips.append(dict(self._pip_new(cand), cap=None))
+            # PNG à fond transparent : posé comme un logo (sans cadre), case déjà cochée
+            logo = self._pip_thumb(path).mode == "RGBA"
+            self.pips.append(dict(self._pip_new(cand), cap=None, logo=logo, opa=1.0))
             sel[0] = len(self.pips) - 1
             v_on.set(True)
             refresh_list()
@@ -4609,10 +4634,10 @@ class App(tk.Tk):
             if not busy[0]:
                 self.after_idle(lambda: (preview(), refresh_list()))
 
-        for var in (v_img, v_c, v_s, v_rep, v_on, v_rot, v_tilt, v_cap):
+        for var in (v_img, v_c, v_s, v_rep, v_on, v_rot, v_tilt, v_cap, v_logo, v_opa):
             var.trace_add("write", changed)
         ttk.Button(f, text="OK", command=lambda: (store(), w.destroy(), self.prepare())).grid(
-            row=11, column=1, sticky="e", pady=(10, 0))
+            row=12, column=1, sticky="e", pady=(10, 0))
         refresh_list()
         preview()
         self._translate_ui(w)
@@ -6883,15 +6908,25 @@ class App(tk.Tk):
         ttk.Label(sf, text="Opacité des bandeaux").grid(row=4, column=0, columnspan=2, sticky="w")
         ttk.Scale(sf, from_=0, to=100, variable=v_alpha, command=lambda v: refresh()).grid(
             row=4, column=2, columnspan=2, sticky="we")
+        # hauteur des bandeaux (demande de RK1AT)
+        v_hh = tk.IntVar(value=int(style.get("head_h", 100)))
+        v_bh = tk.IntVar(value=int(style.get("band_h", 100)))
+        ttk.Label(sf, text="Hauteur du bandeau du haut").grid(row=5, column=0, columnspan=2, sticky="w")
+        ttk.Scale(sf, from_=qsl.BAND_MIN, to=qsl.BAND_MAX, variable=v_hh, command=lambda v: refresh()).grid(
+            row=5, column=2, columnspan=2, sticky="we")
+        ttk.Label(sf, text="Hauteur du bandeau du bas").grid(row=6, column=0, columnspan=2, sticky="w")
+        ttk.Scale(sf, from_=qsl.BAND_MIN, to=qsl.BAND_MAX, variable=v_bh, command=lambda v: refresh()).grid(
+            row=6, column=2, columnspan=2, sticky="we")
 
         def reset_style():
             style.update(qsl.DEFAULT_STYLE)
             v_font.set(style["font"]); v_size.set(style["call_size"]); v_alpha.set(style["band_alpha"])
+            v_hh.set(style["head_h"]); v_bh.set(style["band_h"])
             for k, b in swatches.items():
                 b.configure(bg=style[k])
             refresh()
 
-        ttk.Button(sf, text="Style d'origine", command=reset_style).grid(row=5, column=0, columnspan=4,
+        ttk.Button(sf, text="Style d'origine", command=reset_style).grid(row=7, column=0, columnspan=4,
                                                                         sticky="w", pady=(6, 0))
         # ---- aperçu en direct
         pv = tk.Canvas(win, width=480, height=300, bg="#000", highlightthickness=0)
@@ -6899,7 +6934,8 @@ class App(tk.Tk):
         prev = {"job": None, "ph": None}
 
         def current_style():
-            style.update(font=v_font.get(), call_size=int(v_size.get()), band_alpha=int(v_alpha.get()))
+            style.update(font=v_font.get(), call_size=int(v_size.get()), band_alpha=int(v_alpha.get()),
+                         head_h=int(v_hh.get()), band_h=int(v_bh.get()))
             return dict(style)
 
         def build():
