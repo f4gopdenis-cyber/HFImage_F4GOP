@@ -62,7 +62,7 @@ import random
 import wave
 
 APP = "HFImage F4GOP"
-VERSION = "1.39"
+VERSION = "1.40"
 
 
 def _take_profile(argv):
@@ -2386,7 +2386,7 @@ class App(tk.Tk):
         self._heard_names = sorted(set(on) | set(self.heard))
         # colonne de l'indicatif à la largeur du plus long (PA0041SWL, F4FRC/P…) : colonnes alignées
         cw = max([7] + [len(c) for c in self._heard_names])
-        self.lst_heard.delete(0, "end")
+        rows = []
         for c in self._heard_names:
             hyb = self._is_hyb(c, on)
             tag = " HYB" if hyb else ""                                # HYB = mode hybride, après la fréquence
@@ -2396,30 +2396,67 @@ class App(tk.Tk):
                 mark = "*" if d.get("state") == "TX" else " "        # * = en émission
                 # fréquence publiée par la station ; sinon celle où on l'a entendue par radio
                 fq = d.get("freq") or h.get("freq")
-                self.lst_heard.insert("end", f"{c:<{cw}}{mark}{self._mhz(fq):>6}{tag}")
-                self.lst_heard.itemconfigure("end", fg=self._c("#c01818" if d.get("state") == "TX" else
-                                                               ("#1f4fbf" if hyb else "#062e06")))
+                rows.append((f"{c:<{cw}}{mark}{self._mhz(fq):>6}{tag}",
+                             self._c("#c01818" if d.get("state") == "TX" else ("#1f4fbf" if hyb else "#062e06"))))
             else:
-                self.lst_heard.insert("end", f"{c:<{cw}} {self._mhz(h.get('freq')):>6}{tag}")
                 # entendue par radio seulement (pas en ligne) : en gris-vert (bleu pâle si hybride)
-                self.lst_heard.itemconfigure("end", fg=self._c(("#5a78b8" if hyb else "#4a7a4a")
-                                                               if now - h["t"] < 1800 else "#8a9a8a"))
+                rows.append((f"{c:<{cw}} {self._mhz(h.get('freq')):>6}{tag}",
+                             self._c(("#5a78b8" if hyb else "#4a7a4a") if now - h["t"] < 1800 else "#8a9a8a")))
+        App._sync_list(self.lst_heard, self._heard_names, rows)
         self._rxok_names = sorted(self.rxok)
-        self.lst_rxok.delete(0, "end")
         rw = max([7] + [len(c) for c in self._rxok_names])
+        rows = []
         for c in self._rxok_names:
             rep = self.rxok[c][0]
-            self.lst_rxok.insert("end", f"{c:<{rw}}{'' if rep is None else f'{rep:+d} dB':>7}{self._name_tail(c)}")
-        # toujours affichées depuis le début de la ligne : un glisser à la souris décalait la liste
-        # vers la droite et coupait le début des indicatifs (« 4FR79 » pour « 14FR79 »)
-        self.lst_heard.xview_moveto(0)
-        self.lst_rxok.xview_moveto(0)
+            rows.append((f"{c:<{rw}}{'' if rep is None else f'{rep:+d} dB':>7}{self._name_tail(c)}", None))
+        App._sync_list(self.lst_rxok, self._rxok_names, rows)
         fr = f" - {self._mhz(self.rig_freq)}" if self.rig_freq else ""
         self._set_text(self.lb_heard, tr(f"Stations ({len(self._heard_names)})") + fr)
         self._net_status()
         self._set_text(self.lb_rxok, tr(f"Rx Ok ({len(self.rxok)})"))
         if self.map_win is not None and self.map_win.alive() and self.map_win._drag is None:
             self.map_win.redraw()
+
+    @staticmethod
+    def _sync_list(lst, keys, rows):
+        """Met à jour une liste (Stations, Rx Ok) sans la faire « sauter » (demande de SWLPete) :
+        rien n'est touché si rien n'a changé ; sinon seules les lignes modifiées sont réécrites, et
+        la station sélectionnée et la partie de la liste qu'on regarde restent les mêmes.
+        keys : indicatif de chaque ligne ; rows : [(texte, couleur ou None)]."""
+        old_keys = getattr(lst, "_keys", [])
+        old_rows = getattr(lst, "_rows", [])
+        if old_keys == list(keys) and old_rows == list(rows):
+            return
+        sel = lst.curselection()
+        sel_key = old_keys[sel[0]] if sel and sel[0] < len(old_keys) else None
+        top = lst.nearest(0) if old_keys else 0
+        top_key = old_keys[top] if 0 <= top < len(old_keys) else None
+        frac = lst.yview()[0]
+        if old_keys == list(keys):                      # mêmes stations : on réécrit les lignes changées
+            for i, (a, b) in enumerate(zip(old_rows, rows)):
+                if a != b:
+                    lst.delete(i)
+                    lst.insert(i, b[0])
+                    if b[1]:
+                        lst.itemconfigure(i, fg=b[1])
+        else:
+            lst.delete(0, "end")
+            for text, fg in rows:
+                lst.insert("end", text)
+                if fg:
+                    lst.itemconfigure("end", fg=fg)
+        lst._keys, lst._rows = list(keys), list(rows)
+        # même station en haut de la partie visible (une station qui arrive plus haut ne décale rien)
+        if top_key in keys:
+            lst.yview(keys.index(top_key))
+        else:
+            lst.yview_moveto(frac)
+        if sel_key in keys:
+            lst.selection_clear(0, "end")
+            lst.selection_set(keys.index(sel_key))
+        # toujours affichée depuis le début de la ligne : un glisser à la souris décalait la liste
+        # vers la droite et coupait le début des indicatifs (« 4FR79 » pour « 14FR79 »)
+        lst.xview_moveto(0)
 
     def _is_hyb(self, c, on=None):
         """La station est-elle en mode hybride ? (présence Internet, sinon annonce hybride

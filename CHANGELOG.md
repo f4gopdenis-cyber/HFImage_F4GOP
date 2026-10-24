@@ -1,5 +1,9 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 1.40 — listes Stations et Rx Ok stables (demande de SWLPete)
+
+- Les listes **Stations** et **Rx Ok** ne « sautent » plus à chaque nouvelle information (station qui se connecte, change de fréquence, passe en émission…) : elles restent à l'endroit où on les a fait défiler, la station sélectionnée le reste, et rien n'est réécrit quand rien n'a changé (plus de clignotement). Seules les lignes qui changent sont mises à jour ; une station qui arrive s'insère à sa place alphabétique sans décaler la partie de la liste qu'on regarde.
+
 ## Version 1.39 — carte des stations : « Copier la carte », étiquettes plus lisibles
 
 - Carte des stations : nouveau bouton **« Copier la carte »**. La carte affichée (avec la mention du fond de carte) part dans le presse-papiers, à coller avec **Ctrl+V** dans Teams, un forum, Facebook, un e-mail…
