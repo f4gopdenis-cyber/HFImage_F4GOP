@@ -62,7 +62,7 @@ import random
 import wave
 
 APP = "HFImage F4GOP"
-VERSION = "1.44"
+VERSION = "1.45"
 
 
 def _take_profile(argv):
@@ -2315,6 +2315,59 @@ class App(tk.Tk):
             return
         self._qsy(hz)
 
+    # ------------------------------------------------------------- phrases des bulles
+    DEFAULT_PHRASES = ("Bonjour de {MOI}", "Bonsoir de {MOI}", "Merci pour l'image ! 73 de {MOI}",
+                       "Image bien reçue 5/5", "Bon week-end à tous !", "{MOI} — {PRENOM} — {LOC}")
+
+    def _bubble_phrases(self):
+        """Phrases du menu « Phrases ▾ » : celles de l'utilisateur, sinon la liste de départ traduite."""
+        lst = self.conf.get("bub_phrases")
+        if isinstance(lst, list):
+            return [str(p) for p in lst if str(p).strip()]
+        return [tr(p) for p in self.DEFAULT_PHRASES]
+
+    def _phrase_fill(self, p):
+        """{MOI} / {CALL}, {PRENOM} / {NAME}, {LOC} -> indicatif, prénom, locator."""
+        call = self.mycall() or ""
+        name = self.myname() or ""
+        loc = self.v_loc.get().strip().upper() if hasattr(self, "v_loc") else ""
+        out = str(p)
+        for keys, val in ((("{MOI}", "{CALL}"), call), (("{PRENOM}", "{NAME}"), name), (("{LOC}",), loc)):
+            for k in keys:
+                out = out.replace(k, val).replace(k.lower(), val)
+        if "—" in out:                                  # sans prénom : « F4GOP — IN98QR », pas « F4GOP —  — »
+            out = " — ".join(x.strip() for x in out.split("—") if x.strip())
+        return re.sub(r"  +", " ", out).strip()
+
+    def _phrases_edit(self, parent=None):
+        """Liste des phrases des bulles, une par ligne."""
+        w = tk.Toplevel(parent or self)
+        w.title(tr("Phrases des bulles"))
+        w.transient(parent or self)
+        f = ttk.Frame(w, padding=10)
+        f.pack(fill="both", expand=True)
+        ttk.Label(f, text=tr("Une phrase par ligne. {MOI} = votre indicatif, {PRENOM} = votre prénom, "
+                             "{LOC} = votre locator."), wraplength=420, justify="left").pack(anchor="w")
+        t = tk.Text(f, width=48, height=12, font=("TkDefaultFont", 10), wrap="none")
+        t.pack(fill="both", expand=True, pady=6)
+        t.insert("1.0", "\n".join(self._bubble_phrases()))
+        b = ttk.Frame(f)
+        b.pack(fill="x")
+
+        def save():
+            self.conf["bub_phrases"] = [x.strip() for x in t.get("1.0", "end").splitlines() if x.strip()]
+            self._save_conf_file()
+            w.destroy()
+
+        def reset():
+            t.delete("1.0", "end")
+            t.insert("1.0", "\n".join(tr(p) for p in self.DEFAULT_PHRASES))
+        ttk.Button(b, text=tr("Enregistrer"), command=save).pack(side="right")
+        ttk.Button(b, text=tr("Annuler"), command=w.destroy).pack(side="right", padx=6)
+        ttk.Button(b, text=tr("Liste d'origine"), command=reset).pack(side="left")
+        self._translate_ui(w)
+        return w
+
     def _qsy_edit(self):
         """Liste des fréquences du menu, une par ligne : « 7.058 LSB »."""
         w = tk.Toplevel(self)
@@ -3860,9 +3913,44 @@ class App(tk.Tk):
         lb.pack(fill="x")
         bb = ttk.Frame(left)
         bb.pack(fill="x", pady=(4, 8))
-        ttk.Label(left, text="Texte").pack(anchor="w")
+        tf = ttk.Frame(left)
+        tf.pack(fill="x")
+        ttk.Label(tf, text="Texte").pack(side="left")
+        # phrases toutes prêtes (demande de M7WUV) : un clic les met dans la bulle
+        mb = ttk.Menubutton(tf, text=tr("Phrases") + " ▾")
+        mb.pack(side="right")
+        pmenu = tk.Menu(mb, tearoff=0)
+        mb["menu"] = pmenu
         txt = tk.Text(left, width=30, height=4, wrap="word", font=("TkDefaultFont", 10))
         txt.pack(fill="x")
+
+        def use_phrase(p):
+            if cur() is None:
+                add()
+            txt.delete("1.0", "end")
+            txt.insert("1.0", self._phrase_fill(p))
+            txt.focus_set()
+
+        def save_phrase():
+            t = txt.get("1.0", "end").strip()
+            if not t:
+                return
+            lst = self._bubble_phrases()
+            if t not in lst:
+                self.conf["bub_phrases"] = lst + [t]
+                self._save_conf_file()
+                self.log(tr("Phrase enregistrée pour les bulles :") + f" {t}")
+
+        def fill_menu():
+            pmenu.delete(0, "end")
+            for p in self._bubble_phrases():
+                label = self._phrase_fill(p).replace("\n", " ")
+                pmenu.add_command(label=label if len(label) <= 50 else label[:48] + "…",
+                                  command=lambda p=p: use_phrase(p))
+            pmenu.add_separator()
+            pmenu.add_command(label=tr("Enregistrer cette phrase"), command=save_phrase)
+            pmenu.add_command(label=tr("Modifier la liste…"), command=lambda: self._phrases_edit(w))
+        pmenu.configure(postcommand=fill_menu)
         # émoticônes : un clic l'ajoute dans le texte, à l'endroit du curseur
         emo = tk.Frame(left)
         emo.pack(anchor="w", pady=(4, 0))
@@ -3981,9 +4069,9 @@ class App(tk.Tk):
             n = len(self.bubbles)
             b = bubbles.new(tr("73 de") + f" {self.mycall() or 'F4GOP'} !",
                             cy=0.2 + 0.18 * (n % 4), cx=0.3 + 0.2 * (n % 2))
-            last = cur()
-            if last is not None:                          # même style que la précédente
-                b.update({k: last[k] for k in ("style", "size", "bg", "fg") if k in last})
+            last = cur() or self.conf.get("bub_last") or {}
+            # même style que la précédente (retenu aussi d'une image et d'une séance à l'autre)
+            b.update({k: last[k] for k in ("style", "size", "bg", "fg", "anim") if k in last})
             self.bubbles.append(b)
             sel[0] = len(self.bubbles) - 1
             refresh_list()
@@ -4079,6 +4167,10 @@ class App(tk.Tk):
 
         def close():
             self.bubbles[:] = [b for b in self.bubbles if (b.get("text") or "").strip()]
+            if self.bubbles:                              # style retenu pour les prochaines bulles
+                last = self.bubbles[-1]
+                self.conf["bub_last"] = {k: last[k] for k in ("style", "size", "bg", "fg", "anim") if k in last}
+                self._save_conf_file()
             w.destroy()
             self.prepare()
 

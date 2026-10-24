@@ -1,5 +1,11 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 1.45 — phrases toutes prêtes pour les bulles (demande de M7WUV)
+
+- Fenêtre des bulles : bouton **« Phrases ▾ »** avec des phrases toutes prêtes (« Bonjour de {MOI} », « Merci pour l'image ! 73 de {MOI} », « Image bien reçue 5/5 »…), dans la langue du programme, à mettre dans la bulle d'un clic. **{MOI}**, **{PRENOM}** et **{LOC}** (ou {CALL}, {NAME}, {LOC}) sont remplacés par l'indicatif, le prénom et le locator.
+- « **Enregistrer cette phrase** » ajoute le texte de la bulle à la liste ; « **Modifier la liste…** » pour retoucher, supprimer ou réordonner les phrases (une par ligne), avec « Liste d'origine ».
+- Une nouvelle bulle reprend le **style, la taille et les couleurs de la dernière utilisée**, même sur une autre image et après avoir relancé le programme.
+
 ## Version 1.44 — image hybride préparée plus vite
 
 - Ouvrir une grande photo pour l'émettre en mode hybride (HFImage ou EasyPal) est **2 à 3 fois plus rapide** quand elle doit être recompressée en JPEG (bandeau « Infos de ma station », bulles, rotation, taille maximale…) : la meilleure qualité est d'abord cherchée sur un échantillon de la photo, puis confirmée sur la photo entière (2 compressions au lieu d'une dizaine). L'image obtenue est exactement la même.

@@ -383,7 +383,11 @@ s.append(P("<b>Bubbles…</b> button (TX tab) or <b>Images → Speech bubbles…
            "“<b>Animated emoticons</b>” box: in hybrid mode they move (the heart beats, the hand waves, the star spins, "
            "a wink…) and the picture goes as an animated GIF (a photo loses a little detail: 256 colours); over the air "
            "only, they stay still. On a received <b>animated GIF</b> (“Send this picture again”), bubbles are drawn "
-           "on every frame and the original animation is kept. <b>Drag the bubble</b> with the mouse, and the <b>red dot</b> "
+           "on every frame and the original animation is kept. <b>Phrases ▾</b> button: ready-made phrases (“Good morning de {CALL}”, "
+           "“Thanks for the picture! 73 de {CALL}”…) put into the bubble with one click; {CALL}, {NAME} and {LOC} are "
+           "replaced by your callsign, first name and locator. “Save this phrase” adds the bubble text to the list, "
+           "“Edit the list…” lets you change it. A new bubble takes the style, size and colours of the last one used. "
+           "<b>Drag the bubble</b> with the mouse, and the <b>red dot</b> "
            "(the tail) towards what it points at; several bubbles are possible, right-click a bubble to delete it. The "
            "bubble is part of the picture: everyone sees it, over the air or in hybrid mode, EasyPal stations too. "
            "Bubbles are cleared when you open another picture."))
