@@ -269,7 +269,7 @@ s += B(["<b>Poste</b> : tapez une partie du nom dans « Rechercher » (ex. 7300,
         "<b>Commandes CAT personnalisées (comme EasyPal)</b> : on écrit soi-même les commandes envoyées au poste, en "
         "hexadécimal (Icom CI-V : FEFE5EE01C0001FD) ou en texte (Kenwood : TX1;) : <b>Départ</b> 1 et 2 (à l'ouverture "
         "du port), <b>PTT marche</b> / <b>PTT arrêt</b> (avec la méthode PTT « CAT »), <b>Sortie</b> 1 et 2 (à la fermeture "
-        "du programme) et le délai entre deux commandes. Les réglages d'EasyPal (« \\$…\\ ») se collent tels quels. "
+        "du programme) et le délai entre deux commandes. Les réglages d'EasyPal (« \\$…\\ ») se collent tels quels, même plusieurs commandes à la suite (« \\$…\\$…\\ ») : elles partent l'une après l'autre, avec le délai entre chacune. "
         "Dans ce mode, la fréquence du poste n'est pas lue.",
         "<b>Port série</b> et vitesse ; paramètres avancés si besoin (bits, stop, contrôle de flux, DTR/RTS forcés). "
         "La liste montre tous les ports actifs de Windows (Prolific, CH340, Silicon Labs, ports virtuels compris) ; "

@@ -262,7 +262,7 @@ s += B(["<b>Radio</b>: type part of the name in “Search” (e.g. 7300, FT-991,
         "<b>Custom CAT commands (as in EasyPal)</b>: you write the commands sent to the radio yourself, in hexadecimal "
         "(Icom CI-V: FEFE5EE01C0001FD) or as text (Kenwood: TX1;): <b>Initial</b> strings 1 and 2 (when the port opens), "
         "<b>PTT ON</b> / <b>PTT OFF</b> (with PTT method “CAT”), <b>Exit</b> strings 1 and 2 (when the program closes) and "
-        "the delay between commands. EasyPal settings (“\\$…\\”) can be pasted as they are. In this mode the radio "
+        "the delay between commands. EasyPal settings (“\\$…\\”) can be pasted as they are, even several commands in a row (“\\$…\\$…\\”): they are sent one after the other, with the delay between each. In this mode the radio "
         "frequency is not read.",
         "<b>Serial port</b> and speed; advanced parameters if needed (bits, stop, flow control, forced DTR / RTS). "
         "The list shows every active Windows port (Prolific, CH340, Silicon Labs and virtual ports included); you can "

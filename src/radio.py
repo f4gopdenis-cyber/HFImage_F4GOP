@@ -227,18 +227,19 @@ class RigBase:
         pass
 
 
-def parse_cmd(text):
-    """Commande écrite à la main -> octets à envoyer (None si vide).
+def parse_cmds(text):
+    """Commandes écrites à la main -> liste d'octets à envoyer l'une après l'autre ([] si vide).
     - hexadécimal (Icom CI-V…) : « FEFE5EE01C0001FD », espaces permis ; la forme d'EasyPal
-      « \\$FEFE5EE014...FD\\ » est acceptée telle quelle (copier-coller) ;
+      « \\$FEFE5EE014...FD\\ » est acceptée telle quelle (copier-coller), y compris plusieurs
+      commandes à la suite « \\$…\\$…\\ » comme dans EasyPal ;
     - sinon texte (Kenwood, Elecraft, Yaesu récents…) : « TX1; », avec \\r et \\n si besoin.
-    Plusieurs commandes peuvent se suivre, séparées par « | »."""
+    Plusieurs commandes peuvent aussi être séparées par « | »."""
     import re
     t = (text or "").strip()
     if not t:
-        return None
-    out = b""
-    for part in t.split("|"):
+        return []
+    out = []
+    for part in re.split(r"\||\\\$", t):              # « | » ou « \$ » (début de commande EasyPal)
         p = part.strip()
         if p.startswith("\\"):
             p = p[1:]
@@ -251,10 +252,15 @@ def parse_cmd(text):
         if h.lower().startswith("0x"):
             h = h[2:]
         if re.fullmatch(r"(?:[0-9A-Fa-f]{2})+", h):
-            out += bytes.fromhex(h)
+            out.append(bytes.fromhex(h))
         else:
-            out += p.replace("\\r", "\r").replace("\\n", "\n").encode("latin-1", "replace")
-    return out or None
+            out.append(p.replace("\\r", "\r").replace("\\n", "\n").encode("latin-1", "replace"))
+    return out
+
+
+def parse_cmd(text):
+    """Toutes les commandes de la case, mises bout à bout (None si vide)."""
+    return b"".join(parse_cmds(text)) or None
 
 
 class CustomRig(RigBase):
@@ -270,7 +276,7 @@ class CustomRig(RigBase):
         self.port = cfg.get("port")
         if not self.port:
             raise RuntimeError("commandes CAT personnalisées : choisissez le port série")
-        self.cmds = {k: parse_cmd(cfg.get(k)) for k in CUSTOM_KEYS}
+        self.cmds = {k: parse_cmds(cfg.get(k)) for k in CUSTOM_KEYS}
         try:
             self.delay = max(0, min(5000, int(cfg.get("cmd_delay") or 0))) / 1000
         except (TypeError, ValueError):
@@ -286,13 +292,11 @@ class CustomRig(RigBase):
     def _send(self, *keys):
         with self.lock:
             for k in keys:
-                data = self.cmds.get(k)
-                if not data:
-                    continue
-                self.ser.write(data)
-                self.ser.flush()
-                if self.delay:
-                    time.sleep(self.delay)
+                for data in self.cmds.get(k) or ():    # une commande, puis le délai, etc.
+                    self.ser.write(data)
+                    self.ser.flush()
+                    if self.delay:
+                        time.sleep(self.delay)
 
     def ptt(self, on, rear=True):
         k = "cmd_ptt_on" if on else "cmd_ptt_off"

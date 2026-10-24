@@ -1,5 +1,9 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 1.35 — commandes CAT personnalisées : plusieurs à la suite (VK6NJP)
+
+- Commandes CAT personnalisées : une case peut contenir **plusieurs commandes à la suite**, écrites comme dans EasyPal (`\$FEFE94E0…FD\$FEFE94E0…FD\`). Elles sont envoyées l'une après l'autre, avec le délai réglé entre chacune. Avant, une case contenant plusieurs commandes était envoyée comme du texte et le poste ne la comprenait pas.
+
 ## Version 1.34 — texte libre sur l'image, dossier « envoyees » allégé (demandes de RK1AT)
 
 - Bulles de texte : nouveau style **« Texte seul (sans bulle) »** : le texte est écrit directement sur l'image, bordé d'un contour (couleur « Fond ») pour rester lisible sur n'importe quelle photo ; blanc bordé de noir par défaut. Il se déplace à la souris, sur une ou plusieurs lignes, avec émoticônes (même animées).
