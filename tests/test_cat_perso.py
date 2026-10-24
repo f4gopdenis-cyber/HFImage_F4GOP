@@ -130,6 +130,43 @@ class PortSerie(unittest.TestCase):
         rig.close()                                                        # fermé en émission
         self.assertEqual(read(), bytes.fromhex("FEFE94E01A060000FD"))
 
+    def test_frequence_icom(self):
+        # 1.37 (VK6NJP) : commandes Icom CI-V -> HFImage change aussi la fréquence (commande 05)
+        port, read = self._pty()
+        cfg = dict(radio.DEFAULTS, rig="custom", port=port, baud=9600, ptt="CAT", cmd_delay=0,
+                   cmd_init1="\\$FEFE94E01A060101FD\\", cmd_ptt_on="FEFE94E01C0001FD",
+                   cmd_ptt_off="FEFE94E01C0000FD")
+        rig = radio.make_rig(cfg)
+        self.assertTrue(rig.can_qsy)
+        self.assertIsNone(rig.freq())
+        msg = rig.qsy(7058000, "LSB")
+        self.assertEqual(read(), bytes.fromhex("FEFE94E005" "0080050700" "FD"))
+        self.assertIn("7.058", msg)
+        self.assertEqual(rig.freq(), 7058000)
+        rig.qsy(14230000, "USB")
+        self.assertEqual(read(), bytes.fromhex("FEFE94E005" "0000231400" "FD"))
+        rig.close()
+
+    def test_frequence_texte_impossible(self):
+        port, read = self._pty()
+        cfg = dict(radio.DEFAULTS, rig="custom", port=port, ptt="CAT", cmd_ptt_on="TX1;", cmd_ptt_off="RX;")
+        rig = radio.make_rig(cfg)
+        self.assertFalse(rig.can_qsy)
+        with self.assertRaises(RuntimeError):
+            rig.set_freq(7058000)
+        self.assertEqual(read(), b"")
+        rig.close()
+
+    def test_messages_traduits(self):
+        import i18n
+        i18n.set_lang("en")
+        try:
+            self.assertEqual(i18n.tr("ce pilote ne change pas la fréquence"), "this driver cannot change the frequency")
+            self.assertEqual(i18n.tr("Commandes CAT personnalisées : changez la fréquence sur le poste."),
+                             "Custom CAT commands: change the frequency on the radio.")
+        finally:
+            i18n.set_lang("fr")
+
     def test_ptt_vide(self):
         import pty
         master, slave = pty.openpty()

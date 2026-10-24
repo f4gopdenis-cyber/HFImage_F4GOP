@@ -1,5 +1,11 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 1.37 — commandes CAT personnalisées : changement de fréquence Icom (VK6NJP)
+
+- Commandes CAT personnalisées avec un poste **Icom** (commandes CI-V « FEFE94E0… ») : HFImage trouve l'adresse du poste dans les commandes et **change la fréquence** quand on choisit une fréquence dans le menu (commande Icom standard) ; le mode du poste (LSB / USB, DATA) n'est pas touché. La fréquence choisie s'affiche dans le panneau.
+- Avec d'autres postes en commandes personnalisées : plus de fenêtre d'erreur, un message dans le journal invite à changer la fréquence sur le poste.
+- Les messages « ce pilote ne change pas la fréquence », etc. sont traduits.
+
 ## Version 1.36 — commandes CAT personnalisées : départ / sortie à chaque émission (VK6NJP)
 
 - Commandes CAT personnalisées : comme dans EasyPal, les **chaînes de départ** partent maintenant **avant chaque émission** (avant PTT marche) et les **chaînes de sortie après** (après PTT arrêt), quelle que soit la méthode PTT. Pratique pour passer le poste en DATA ou changer le gain micro le temps de l'émission, puis tout remettre comme avant.

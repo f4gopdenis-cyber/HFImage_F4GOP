@@ -270,7 +270,9 @@ s += B(["<b>Poste</b> : tapez une partie du nom dans « Rechercher » (ex. 7300,
         "hexadécimal (Icom CI-V : FEFE5EE01C0001FD) ou en texte (Kenwood : TX1;) : <b>Départ</b> 1 et 2, "
         "<b>PTT marche</b> / <b>PTT arrêt</b> (avec la méthode PTT « CAT »), <b>Sortie</b> 1 et 2 "
         "et le délai entre deux commandes. Comme dans EasyPal, les chaînes de départ partent <b>avant chaque émission</b> (avant PTT marche) et les chaînes de sortie <b>après</b> (après PTT arrêt), quelle que soit la méthode PTT ; on peut choisir à la place de les envoyer une seule fois, au lancement et à la fermeture du programme. Les réglages d'EasyPal (« \\$…\\ ») se collent tels quels, même plusieurs commandes à la suite (« \\$…\\$…\\ ») : elles partent l'une après l'autre, avec le délai entre chacune. "
-        "Dans ce mode, la fréquence du poste n'est pas lue.",
+        "Dans ce mode, la fréquence du poste n'est pas lue. Avec des commandes Icom (CI-V, « FEFE94E0… »), HFImage "
+        "trouve l'adresse du poste dans vos commandes et sait quand même <b>changer la fréquence</b> (menu des fréquences) ; "
+        "le mode du poste n'est pas touché. Avec d'autres postes, changez la fréquence sur le poste.",
         "<b>Port série</b> et vitesse ; paramètres avancés si besoin (bits, stop, contrôle de flux, DTR/RTS forcés). "
         "La liste montre tous les ports actifs de Windows (Prolific, CH340, Silicon Labs, ports virtuels compris) ; "
         "on peut aussi taper le nom du port, par exemple COM9.",

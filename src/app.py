@@ -62,7 +62,7 @@ import random
 import wave
 
 APP = "HFImage F4GOP"
-VERSION = "1.36"
+VERSION = "1.37"
 
 
 def _take_profile(argv):
@@ -2276,11 +2276,15 @@ class App(tk.Tk):
             try:
                 with self.rig_lock:
                     r = self._rig_open()
+                    if not getattr(r, "can_qsy", True):
+                        # commandes CAT perso sans CI-V : HFImage ne connaît pas la commande de fréquence
+                        self.ui(self.log, tr("Commandes CAT personnalisées : changez la fréquence sur le poste."))
+                        return
                     msg = r.qsy(hz, side)
                 self.ui(self.log, msg)
             except Exception as e:
                 self.ui(self.log_exc, "Changement de fréquence", e)
-                self.ui(messagebox.showerror, APP, tr("Changement de fréquence impossible :") + f"\n{e}")
+                self.ui(messagebox.showerror, APP, tr("Changement de fréquence impossible :") + f"\n{tr(str(e))}")
             self._rig_kick.set()                  # relecture tout de suite (fréquence, mode, bande)
         threading.Thread(target=run, daemon=True).start()
 
@@ -3013,7 +3017,11 @@ class App(tk.Tk):
             if r is None:
                 continue
             if not getattr(r, "reads_freq", True):
-                self._rig_kick.wait(poll)              # CAT personnalisé : port gardé ouvert, rien à lire
+                f = r.freq()                           # CAT personnalisé : fréquence envoyée par HFImage
+                if f and f != self.rig_freq:
+                    self.rig_freq = f
+                    self.ui(self._show_freq)
+                self._rig_kick.wait(poll)              # port gardé ouvert, rien à lire
                 continue
             try:
                 f = r.freq()

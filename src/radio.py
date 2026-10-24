@@ -292,6 +292,9 @@ class CustomRig(RigBase):
             self.delay = 0.2
         self.per_tx = cfg.get("cmd_when", "tx") != "open"     # comme EasyPal : à chaque émission
         self._in_tx = False
+        self.civ = self._find_civ()                    # (adresse du poste, du contrôleur) si Icom
+        self.can_qsy = self.civ is not None
+        self._hz = None
         self.lock = threading.Lock()
         self.ser = open_port(cfg)
         if not self.per_tx:
@@ -300,6 +303,34 @@ class CustomRig(RigBase):
             except Exception:
                 self.ser.close()
                 raise
+
+    def _find_civ(self):
+        """Commandes Icom CI-V (FE FE adresse contrôleur …) ? -> (adresse, contrôleur) ou None.
+        Les commandes PTT d'abord : ce sont elles qui visent le poste qui émet."""
+        for k in ("cmd_ptt_on", "cmd_ptt_off", "cmd_init1", "cmd_init2", "cmd_exit1", "cmd_exit2"):
+            for c in self.cmds.get(k) or ():
+                if len(c) >= 6 and c[0] == 0xFE and c[1] == 0xFE and c[-1] == 0xFD and c[2] != 0xFE:
+                    return c[2], c[3]
+        return None
+
+    def freq(self):
+        return self._hz                                # la dernière fréquence envoyée (non lue)
+
+    def set_freq(self, hz):
+        if not self.civ:
+            raise RuntimeError("Commandes CAT personnalisées : changez la fréquence sur le poste.")
+        s = f"{int(hz):010d}"                          # Icom : 5 octets BCD, poids faibles d'abord
+        bcd = bytes(int(s[i:i + 2], 16) for i in range(8, -1, -2))
+        data = bytes([0xFE, 0xFE, self.civ[0], self.civ[1], 0x05]) + bcd + bytes([0xFD])
+        with self.lock:
+            self.ser.write(data)
+            self.ser.flush()
+        self._hz = int(hz)
+
+    def qsy(self, hz, side=None):
+        """Fréquence seulement : le mode du poste (LSB / USB, DATA) n'est pas touché."""
+        self.set_freq(hz)
+        return f"Icom CI-V ({self.civ[0]:02X}) : {int(hz) / 1e6:.3f} MHz"
 
     def before_tx(self):
         if self.per_tx and not self._in_tx:
