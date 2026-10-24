@@ -62,7 +62,7 @@ import random
 import wave
 
 APP = "HFImage F4GOP"
-VERSION = "1.45"
+VERSION = "1.46"
 
 
 def _take_profile(argv):
@@ -3769,23 +3769,24 @@ class App(tk.Tk):
         """Disposition gardée pour l'emplacement i (0 = premier)."""
         if i == 0:
             return {"corner": self.conf.get("pip_corner", "haut-droite"), "size": self.conf.get("pip_size", "moyenne"),
-                    "pos": self.conf.get("pip_pos"), "scale": self.conf.get("pip_scale")}
+                    "pos": self.conf.get("pip_pos"), "scale": self.conf.get("pip_scale"),
+                    "rot": self.conf.get("pip_rot", 0), "tilt": self.conf.get("pip_tilt", 0)}
         more = self.conf.get("pip_more") or []
         if i - 1 < len(more) and isinstance(more[i - 1], dict):
             d = more[i - 1]
             return {"corner": d.get("corner", "haut-gauche"), "size": d.get("size", "petite"),
-                    "pos": d.get("pos"), "scale": d.get("scale")}
+                    "pos": d.get("pos"), "scale": d.get("scale"), "rot": d.get("rot", 0), "tilt": d.get("tilt", 0)}
         used = {p.get("corner") for p in getattr(self, "pips", [])[:i] if not p.get("pos")}
         corner = next((c for c in self.PIP_CORNERS if c not in used), self.PIP_CORNERS[i % 4])
-        return {"corner": corner, "size": "petite", "pos": None, "scale": None}
+        return {"corner": corner, "size": "petite", "pos": None, "scale": None, "rot": 0, "tilt": 0}
 
     def _pip_save_layouts(self):
         """Garde la disposition de chaque image incrustée (dans l'ordre de la liste)."""
         for i, p in enumerate(self.pips):
-            lay = {k: p.get(k) for k in ("corner", "size", "pos", "scale")}
+            lay = {k: p.get(k) for k in ("corner", "size", "pos", "scale", "rot", "tilt")}
             if i == 0:
                 self.conf.update(pip_corner=lay["corner"], pip_size=lay["size"], pip_pos=lay["pos"],
-                                 pip_scale=lay["scale"])
+                                 pip_scale=lay["scale"], pip_rot=lay["rot"] or 0, pip_tilt=lay["tilt"] or 0)
             else:
                 more = list(self.conf.get("pip_more") or [])
                 while len(more) < i:
@@ -3820,7 +3821,7 @@ class App(tk.Tk):
                 rects.append(trafic.pip_layout(im.size, th.size, cap, p.get("corner", "haut-droite"),
                                                p.get("size", "moyenne"), p.get("pos"), p.get("scale"))[:4])
                 im = trafic.pip(im, th, cap, p.get("corner", "haut-droite"), p.get("size", "moyenne"),
-                                p.get("pos"), p.get("scale"))
+                                p.get("pos"), p.get("scale"), p.get("rot") or 0, p.get("tilt") or 0)
             except Exception as e:
                 self.log(f"Image du correspondant illisible : {e}")
                 rects.append(None)
@@ -3832,7 +3833,7 @@ class App(tk.Tk):
             return self.src_img
         key = (id(self.src_img), self.conf.get("pip_report", True),
                tuple((p["path"], self._pip_caption(p), p.get("corner"), p.get("size"), tuple(p.get("pos") or ()),
-                      p.get("scale")) for p in self.pips))
+                      p.get("scale"), p.get("rot") or 0, p.get("tilt") or 0) for p in self.pips))
         c = getattr(self, "_pip_cache", None)
         if c and c[0] == key:
             return c[1]
@@ -4259,12 +4260,31 @@ class App(tk.Tk):
         cb_s = ttk.Combobox(f, textvariable=v_s, values=list(sizes.values()), width=18, state="readonly")
         cb_s.grid(row=4, column=1, sticky="w", padx=6)
         ttk.Checkbutton(f, text="Afficher le report (dB)", variable=v_rep).grid(row=5, column=1, sticky="w", padx=6)
+        # rotation et perspective de l'incrustation choisie (demande de M7WUV)
+        v_rot, v_tilt = tk.DoubleVar(value=0), tk.DoubleVar(value=0)
+        ttk.Label(f, text="Rotation").grid(row=6, column=0, sticky="w", pady=2)
+        rf = ttk.Frame(f)
+        rf.grid(row=6, column=1, sticky="w", padx=6)
+        sc_rot = ttk.Scale(rf, from_=-trafic.PIP_ROT_MAX, to=trafic.PIP_ROT_MAX, variable=v_rot, length=200)
+        sc_rot.pack(side="left")
+        lb_rot = ttk.Label(rf, text="0°", width=5)
+        lb_rot.pack(side="left", padx=4)
+        b_straight = ttk.Button(rf, text="Remettre droit", command=lambda: straight())
+        b_straight.pack(side="left", padx=(6, 0))
+        ttk.Label(f, text="Perspective").grid(row=7, column=0, sticky="w", pady=2)
+        tf_ = ttk.Frame(f)
+        tf_.grid(row=7, column=1, sticky="w", padx=6)
+        sc_tilt = ttk.Scale(tf_, from_=-100, to=100, variable=v_tilt, length=200)
+        sc_tilt.pack(side="left")
+        lb_tilt = ttk.Label(tf_, text="0", width=5)
+        lb_tilt.pack(side="left", padx=4)
         cv = tk.Canvas(f, bg="black", width=480, height=360, highlightthickness=0, cursor="fleur")
         cv._no_theme = True
-        cv.grid(row=6, column=0, columnspan=2, pady=(10, 0))
+        cv.grid(row=8, column=0, columnspan=2, pady=(10, 0))
         ttk.Label(f, text="Souris : cliquez sur une image pour la choisir, faites-la glisser pour la placer, "
-                          "molette pour l'agrandir ou la réduire.", foreground="#555").grid(
-            row=7, column=0, columnspan=2, sticky="w", pady=(4, 0))
+                          "molette pour l'agrandir ou la réduire, Maj + molette pour la tourner.",
+                  foreground="#555", wraplength=480, justify="left").grid(
+            row=9, column=0, columnspan=2, sticky="w", pady=(4, 0))
 
         def label_of(p):
             return next((l for l, c in cands if c["path"] == p["path"]), p.get("call") or "?")
@@ -4284,6 +4304,12 @@ class App(tk.Tk):
                     v_img.set(label_of(p))
                     v_c.set(corners["libre"] if p.get("pos") else corners.get(p.get("corner"), corners["haut-droite"]))
                     v_s.set(sizes["libre"] if p.get("scale") else sizes.get(p.get("size"), sizes["moyenne"]))
+                    v_rot.set(float(p.get("rot") or 0))
+                    v_tilt.set(round(float(p.get("tilt") or 0) * 100))
+                lb_rot.configure(text=f"{round(v_rot.get()):+d}°" if round(v_rot.get()) else "0°")
+                lb_tilt.configure(text=f"{round(v_tilt.get()):+d}" if round(v_tilt.get()) else "0")
+                for s_ in (sc_rot, sc_tilt):
+                    s_.state(["!disabled"] if self.pips else ["disabled"])
                 st = "readonly" if self.pips else "disabled"
                 for c in (cb_img, cb_c, cb_s):
                     c.configure(state=st)
@@ -4311,6 +4337,10 @@ class App(tk.Tk):
                         p["scale"] = trafic.PIP_SCALE.get(p.get("size", "moyenne"), 0.34)
                 else:
                     p["size"], p["scale"] = sk, None
+                p["rot"] = int(round(v_rot.get()))
+                p["tilt"] = round(v_tilt.get()) / 100
+                lb_rot.configure(text=f"{p['rot']:+d}°" if p["rot"] else "0°")
+                lb_tilt.configure(text=f"{round(p['tilt'] * 100):+d}" if p["tilt"] else "0")
                 self._pip_save_layouts()
             if hasattr(self, "v_pipon"):
                 self.v_pipon.set(bool(v_on.get()))
@@ -4444,6 +4474,25 @@ class App(tk.Tk):
             nW, nH = W * new / cur, H * new / cur
             set_free(pos=pos_for(cx - nW / 2, cy - nH / 2, nW, nH), scale=new)
 
+        def straight():
+            busy[0] = True
+            v_rot.set(0)
+            v_tilt.set(0)
+            busy[0] = False
+            preview()
+
+        def turn(e, step):
+            """Maj + molette : tourne l'incrustation sous la souris (ou la choisie) de 3°."""
+            i = hit(e)
+            if i is not None:
+                select(i)
+            if not self.pips:
+                return
+            busy[0] = True
+            v_rot.set(max(-trafic.PIP_ROT_MAX, min(trafic.PIP_ROT_MAX, round(v_rot.get()) + 3 * step)))
+            busy[0] = False
+            preview()
+
         def on_list(_e):
             s = lb.curselection()
             if s:
@@ -4456,15 +4505,18 @@ class App(tk.Tk):
         cv.bind("<MouseWheel>", lambda e: wheel(e, 1 if e.delta > 0 else -1))
         cv.bind("<Button-4>", lambda e: wheel(e, 1))
         cv.bind("<Button-5>", lambda e: wheel(e, -1))
+        cv.bind("<Shift-MouseWheel>", lambda e: turn(e, 1 if e.delta > 0 else -1))
+        cv.bind("<Shift-Button-4>", lambda e: turn(e, 1))
+        cv.bind("<Shift-Button-5>", lambda e: turn(e, -1))
 
         def changed(*_):
             if not busy[0]:
                 self.after_idle(lambda: (preview(), refresh_list()))
 
-        for var in (v_img, v_c, v_s, v_rep, v_on):
+        for var in (v_img, v_c, v_s, v_rep, v_on, v_rot, v_tilt):
             var.trace_add("write", changed)
         ttk.Button(f, text="OK", command=lambda: (store(), w.destroy(), self.prepare())).grid(
-            row=8, column=1, sticky="e", pady=(10, 0))
+            row=10, column=1, sticky="e", pady=(10, 0))
         refresh_list()
         preview()
         self._translate_ui(w)

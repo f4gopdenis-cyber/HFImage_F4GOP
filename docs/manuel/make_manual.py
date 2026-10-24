@@ -449,7 +449,10 @@ s += B(["Liste <b>Images incrustées</b> : <b>Ajouter une image</b> (elle se pla
         "La liste « Image reçue » change l'image de la ligne choisie.",
         "Chaque image a sa <b>position</b> et sa <b>taille</b> : un coin et une taille dans les listes, ou à la souris "
         "dans l'aperçu. <b>Cliquez</b> sur une image pour la choisir (cadre jaune), <b>faites-la glisser</b> pour la "
-        "placer, la <b>molette</b> l'agrandit ou la réduit (10 % à 90 % de la largeur).",
+        "placer, la <b>molette</b> l'agrandit ou la réduit (10 % à 90 % de la largeur). Réglettes <b>Rotation</b> "
+        "(−45° à +45°, ou Maj + molette sur l'image) et <b>Perspective</b> (l'image « penche » vers la gauche ou la droite, "
+        "effet 3D) pour chaque image incrustée ; les coins qui dépassent laissent voir votre photo ; « Remettre droit » "
+        "annule les deux.",
         "Galerie, clic droit : « <b>Répondre avec cette image</b> » remplace les incrustations par cette seule image ; "
         "« <b>Ajouter cette image à mon image TX</b> » l'ajoute aux autres.",
         "La disposition est gardée ; l'image émise est exactement celle de l'aperçu."])

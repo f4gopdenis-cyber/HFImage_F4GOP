@@ -1,5 +1,9 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 1.46 — images des correspondants tournées / en perspective (demande de M7WUV)
+
+- Fenêtre « Image du correspondant » : pour chaque image incrustée, réglettes **Rotation** (−45° à +45°, ou **Maj + molette** sur l'image) et **Perspective** (l'image « penche » vers la gauche ou la droite, effet 3D). Le cadre et la légende tournent avec l'image ; les coins qui dépassent laissent voir la photo de fond, avec l'ombre. Bouton **« Remettre droit »**. Réglages retenus pour chaque emplacement.
+
 ## Version 1.45 — phrases toutes prêtes pour les bulles (demande de M7WUV)
 
 - Fenêtre des bulles : bouton **« Phrases ▾ »** avec des phrases toutes prêtes (« Bonjour de {MOI} », « Merci pour l'image ! 73 de {MOI} », « Image bien reçue 5/5 »…), dans la langue du programme, à mettre dans la bulle d'un clic. **{MOI}**, **{PRENOM}** et **{LOC}** (ou {CALL}, {NAME}, {LOC}) sont remplacés par l'indicatif, le prénom et le locator.

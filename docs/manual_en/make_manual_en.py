@@ -491,7 +491,9 @@ s += B(["<b>Inserted images</b> list: <b>Add an image</b> (it goes to a free cor
         "received” list changes the picture of the selected line.",
         "Each picture has its own <b>position</b> and <b>size</b>: a corner and a size in the lists, or with the mouse "
         "in the preview. <b>Click</b> a picture to select it (yellow frame), <b>drag</b> it to place it, the <b>mouse "
-        "wheel</b> enlarges or reduces it (10 % to 90 % of the width).",
+        "wheel</b> enlarges or reduces it (10 % to 90 % of the width). <b>Rotation</b> (−45° to +45°, or Shift + wheel "
+        "on the picture) and <b>Perspective</b> (the picture “leans” left or right, 3D effect) sliders for each inserted "
+        "picture; the corners show your photo behind; “Straighten” resets both.",
         "Gallery, right-click: “<b>Reply with this image</b>” replaces the insets with this picture only; “<b>Add this "
         "image to my TX image</b>” adds it to the others.",
         "The layout is kept; the picture transmitted is exactly the preview."])

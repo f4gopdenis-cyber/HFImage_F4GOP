@@ -274,9 +274,36 @@ def pip_layout(img_size, thumb_size, caption="", corner="haut-droite", size="moy
     return x, y, W, H, tw, b, fs, cap_h
 
 
-def pip(img, thumb, caption="", corner="haut-droite", size="moyenne", pos=None, scale=None):
+PIP_ROT_MAX = 45          # rotation de l'incrustation : -45° à +45°
+
+
+def _perspective(box, tilt):
+    """Incrustation « penchée » (effet 3D, demande de M7WUV) : tilt de -1 à 1 ; > 0 : le bord
+    droit s'éloigne (plus petit), < 0 : le bord gauche. -> image RGBA (coins transparents)."""
+    import numpy as np
+    W, H = box.size
+    t = max(-1.0, min(1.0, float(tilt)))
+    dy = H * 0.4 * abs(t) / 2                    # le bord éloigné rapetisse jusqu'à 60 %
+    dx = W * 0.12 * abs(t)                       # et se rapproche un peu (raccourci)
+    if t > 0:
+        dst = [(0, 0), (W - dx, dy), (W - dx, H - dy), (0, H)]
+    else:
+        dst = [(dx, dy), (W, 0), (W, H), (dx, H - dy)]
+    src = [(0, 0), (W, 0), (W, H), (0, H)]
+    # PIL : pour chaque point de l'image obtenue, le point d'origine (dst -> src)
+    a, bvec = [], []
+    for (x, y), (u, v) in zip(dst, src):
+        a.append([x, y, 1, 0, 0, 0, -u * x, -u * y])
+        a.append([0, 0, 0, x, y, 1, -v * x, -v * y])
+        bvec += [u, v]
+    coef = np.linalg.solve(np.array(a, float), np.array(bvec, float))
+    return box.transform((W, H), Image.PERSPECTIVE, tuple(coef), Image.BICUBIC)
+
+
+def pip(img, thumb, caption="", corner="haut-droite", size="moyenne", pos=None, scale=None, rot=0, tilt=0):
     """Image du correspondant incrustée dans un coin, ou à l'endroit et à la taille choisis
-    à la souris (cadre blanc, légende « de F4EMK — +12 dB »)."""
+    à la souris (cadre blanc, légende « de F4EMK — +12 dB »). rot : rotation en degrés
+    (sens inverse des aiguilles d'une montre) ; tilt : perspective de -1 à 1 (0 : de face)."""
     im = img.convert("RGB").copy()
     th = thumb.convert("RGB")
     x, y, W, H, tw, b, fs, cap_h = pip_layout(im.size, th.size, caption, corner, size, pos, scale)
@@ -289,6 +316,24 @@ def pip(img, thumb, caption="", corner="haut-droite", size="moyenne", pos=None, 
         d.rectangle((0, th.height + 2 * b, W, H), fill=(20, 20, 20))
         w = d.textlength(caption, font=font)
         d.text(((W - w) / 2, th.height + 2 * b + (cap_h - fs) / 2 - 1), caption, font=font, fill=(255, 230, 90))
+    rot = max(-PIP_ROT_MAX, min(PIP_ROT_MAX, float(rot or 0)))
+    tilt = float(tilt or 0)
+    if abs(rot) >= 0.5 or abs(tilt) >= 0.01:
+        # penchée / tournée : même centre ; les coins qui dépassent restent transparents
+        card = box.convert("RGBA")
+        if abs(tilt) >= 0.01:
+            card = _perspective(card, tilt)
+        if abs(rot) >= 0.5:
+            card = card.rotate(rot, resample=Image.BICUBIC, expand=True)
+        cx, cy = x + W / 2, y + H / 2
+        px, py = round(cx - card.width / 2), round(cy - card.height / 2)
+        alpha = card.getchannel("A")
+        shadow = Image.new("RGBA", card.size, (0, 0, 0, 0))
+        shadow.putalpha(alpha.point(lambda a: a * 110 // 255))
+        base = im.convert("RGBA")
+        base.paste(shadow, (px + b * 2, py + b * 2), shadow)
+        base.paste(card, (px, py), card)
+        return base.convert("RGB")
     # ombre
     sh = Image.new("RGBA", (W, H), (0, 0, 0, 110))
     base = im.convert("RGBA")
