@@ -1,5 +1,9 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 1.47 — logo d'hommage à VK4AES
+
+- Un clic sur « **En hommage à VK4AES** » (barre du bas, à côté du drapeau australien) ouvre maintenant une fenêtre avec le **logo d'hommage à Erik Sundstrup VK4AES** dessiné par Denis F4GOP, et la dédicace.
+
 ## Version 1.46 — images des correspondants tournées / en perspective (demande de M7WUV)
 
 - Fenêtre « Image du correspondant » : pour chaque image incrustée, réglettes **Rotation** (−45° à +45°, ou **Maj + molette** sur l'image) et **Perspective** (l'image « penche » vers la gauche ou la droite, effet 3D). Le cadre et la légende tournent avec l'image ; les coins qui dépassent laissent voir la photo de fond, avec l'ombre. Bouton **« Remettre droit »**. Réglages retenus pour chaque emplacement.

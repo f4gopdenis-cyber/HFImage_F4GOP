@@ -62,7 +62,7 @@ import random
 import wave
 
 APP = "HFImage F4GOP"
-VERSION = "1.46"
+VERSION = "1.47"
 
 
 def _take_profile(argv):
@@ -938,11 +938,41 @@ class App(tk.Tk):
                               "avec l'aide de l'intelligence artificielle Claude (Anthropic).\n"
                               "Programme dédié à Erik VK4AES (SK), créateur d'EasyPal.")
 
+    TRIBUTE_LOGO = "hommage_vk4aes.jpg"
+
     def show_tribute(self):
-        """Clic sur le drapeau australien de la barre du bas : la dédicace."""
-        messagebox.showinfo(APP, tr("HFImage est dédié à la mémoire d'Erik Sundstrup VK4AES (SK), "
-                                    "radioamateur australien et créateur d'EasyPal, en hommage à son travail "
-                                    "pour l'image numérique en HF.") + "\n\n— Denis F4GOP")
+        """Clic sur le drapeau australien de la barre du bas : la dédicace, avec le logo
+        d'hommage dessiné par Denis F4GOP."""
+        text = tr("HFImage est dédié à la mémoire d'Erik Sundstrup VK4AES (SK), "
+                  "radioamateur australien et créateur d'EasyPal, en hommage à son travail "
+                  "pour l'image numérique en HF.") + "\n\n— Denis F4GOP"
+        w = getattr(self, "_tribute_win", None)
+        if w is not None and w.winfo_exists():
+            w.lift()
+            return w
+        here = getattr(sys, "_MEIPASS", os.path.dirname(os.path.abspath(__file__)))
+        try:
+            logo = Image.open(os.path.join(here, self.TRIBUTE_LOGO)).convert("RGB")
+        except Exception:
+            messagebox.showinfo(APP, text)
+            return None
+        w = self._tribute_win = tk.Toplevel(self)
+        w.title(tr("En hommage à VK4AES"))
+        w.transient(self)
+        w.resizable(False, False)
+        w.configure(bg="black")
+        ph = ImageTk.PhotoImage(logo)
+        lbl = tk.Label(w, image=ph, bg="black", bd=0)
+        lbl.image = ph
+        lbl._no_theme = True
+        lbl.pack(padx=12, pady=(12, 6))
+        t = tk.Label(w, text=text, bg="black", fg="#f2d16b", wraplength=logo.width,
+                     justify="center", font=("TkDefaultFont", 10))
+        t._no_theme = True
+        t.pack(padx=12, pady=(0, 8))
+        ttk.Button(w, text="OK", command=w.destroy).pack(pady=(0, 12))
+        w.bind("<Escape>", lambda e: w.destroy())
+        return w
 
     LICENCE_VERSION = "1.0"
 
