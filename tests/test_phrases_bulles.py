@@ -86,8 +86,9 @@ class FenetreBulles(unittest.TestCase):
                 mbs = [x for x in _walk(w) if x.winfo_class() == "TMenubutton"]
                 self.assertEqual(len(mbs), 1)
                 menu = a.nametowidget(mbs[0].cget("menu"))
-                menu.tk.call(menu, "post", 0, 0)              # postcommand : remplit le menu
-                menu.unpost()
+                # remplit le menu comme à l'ouverture (sans l'afficher : sous Windows, un menu
+                # ouvert bloque jusqu'à ce qu'on le ferme)
+                a.tk.eval(menu.cget("postcommand"))
                 labels = [menu.entrycget(i, "label") for i in range(menu.index("end") + 1)
                           if menu.type(i) == "command"]
                 self.assertIn("Good morning de M7WUV", labels)
