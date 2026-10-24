@@ -108,6 +108,8 @@ def compress(img: Image.Image, width, target_bytes: int, fmt="avif"):
     fichier plus petit à qualité égale) en remontant la qualité si la place le permet.
     Retourne (octets, qualité, (l, h))."""
     img = resize_to(img, width)
+    if fmt == "jpeg" and img.width * img.height >= SAMPLE_MIN_PX:
+        return _compress_jpeg_sampled(img, target_bytes)
     lo, hi, q_fast = 1, 95, 0
     while lo <= hi:
         q = (lo + hi) // 2
@@ -128,6 +130,62 @@ def compress(img: Image.Image, width, target_bytes: int, fmt="avif"):
     if best is None:
         best = (_encode(img, fmt, max(1, q_fast), 6), max(1, q_fast))
     return best[0], best[1], img.size
+
+
+SAMPLE_MIN_PX = 1_500_000          # au-delà : qualité JPEG estimée sur un échantillon de la photo
+
+
+def _sample(img, n=12, keep=3):
+    """Mosaïque de morceaux pris un peu partout dans l'image (1 sur `keep` d'une grille n×n),
+    en pleine résolution. -> (mosaïque, rapport de surface image / mosaïque)."""
+    tw, th = max(16, img.width // n // 16 * 16), max(16, img.height // n // 16 * 16)
+    tiles = [img.crop((i * tw, j * th, i * tw + tw, j * th + th))
+             for j in range(n) for i in range(n) if (i + j * n) % keep == 0]
+    cols = 8
+    rows = -(-len(tiles) // cols)
+    m = Image.new("RGB", (cols * tw, rows * th))
+    for k, t in enumerate(tiles):
+        m.paste(t, ((k % cols) * tw, (k // cols) * th))
+    return m, (img.width * img.height) / (len(tiles) * tw * th)
+
+
+def _compress_jpeg_sampled(img, target_bytes):
+    """Grande photo en JPEG (mode hybride) : la qualité est cherchée sur un échantillon (rapide),
+    puis confirmée sur la photo entière (2 encodages si l'estimation est juste ; sinon recherche
+    sur la photo entière à partir de là). Même résultat que la recherche complète, bien plus vite."""
+    m, ratio = _sample(img)
+    lo, hi, q = 1, 95, 1
+    while lo <= hi:
+        mid = (lo + hi) // 2
+        if len(_encode(m, "jpeg", mid, 6)) * ratio <= target_bytes:
+            q, lo = mid, mid + 1
+        else:
+            hi = mid - 1
+    cache = {}
+
+    def full(k):
+        if k not in cache:
+            cache[k] = _encode(img, "jpeg", k, 6)
+        return cache[k]
+
+    def search(lo, hi, best):
+        while lo <= hi:
+            mid = (lo + hi) // 2
+            if len(full(mid)) <= target_bytes:
+                best, lo = mid, mid + 1
+            else:
+                hi = mid - 1
+        return best
+
+    if len(full(q)) <= target_bytes:
+        best = q
+        if q < 95 and len(full(q + 1)) <= target_bytes:
+            best = search(q + 2, 95, q + 1)
+    else:
+        best = search(1, q - 1, None)
+        if best is None:
+            best = 1
+    return full(best), best, img.size
 
 
 def bytes_for_quality(img: Image.Image, width, quality=45, fmt="avif") -> int:

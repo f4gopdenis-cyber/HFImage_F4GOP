@@ -1,5 +1,9 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 1.44 — image hybride préparée plus vite
+
+- Ouvrir une grande photo pour l'émettre en mode hybride (HFImage ou EasyPal) est **2 à 3 fois plus rapide** quand elle doit être recompressée en JPEG (bandeau « Infos de ma station », bulles, rotation, taille maximale…) : la meilleure qualité est d'abord cherchée sur un échantillon de la photo, puis confirmée sur la photo entière (2 compressions au lieu d'une dizaine). L'image obtenue est exactement la même.
+
 ## Version 1.43 — listes Stations et Rx Ok : début des indicatifs toujours visible
 
 - Correction (1.40) : la liste des stations pouvait rester décalée d'un caractère vers la droite (« 4VD274 » au lieu de « 14VD274 ») après un geste horizontal de la molette ou du pavé tactile. Le défilement horizontal des listes Stations et Rx Ok est maintenant bloqué : elles s'affichent toujours depuis le début de la ligne.
