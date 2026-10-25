@@ -333,3 +333,60 @@ class SansBlocage(unittest.TestCase):
         with self.assertRaises(RuntimeError) as cm:
             app.App._rig_open_now(Stub())
         self.assertIn("pas de réponse", str(cm.exception))
+
+
+class KenwoodAI(unittest.TestCase):
+    """1.61 : poste en « AI » (messages non demandés) et retour en LSB vérifié."""
+
+    class Ser:
+        def __init__(self, data):
+            self.data, self.sent = data, []
+
+        def reset_input_buffer(self):
+            pass
+
+        def write(self, b):
+            self.sent.append(b)
+
+        @property
+        def in_waiting(self):
+            return len(self.data)
+
+        def read(self, n):
+            b, self.data = self.data[:n], self.data[n:]
+            return b
+
+    def test_message_non_demande_ignore(self):
+        s = self.Ser(b"RX0;FA00007058000;SF000007058000C;")
+        self.assertEqual(audio._query(s, "SF0;"), "SF000007058000C;")
+
+    def test_reponse_simple(self):
+        self.assertEqual(audio._query(self.Ser(b"ID024;"), "ID;"), "ID024;")
+
+    def test_refus(self):
+        self.assertEqual(audio._query(self.Ser(b"?;"), "SF0;"), "?;")
+
+    def test_retour_repete_si_ignore(self):
+        try:
+            import app
+        except ImportError as e:
+            self.skipTest(str(e))
+        logs = []
+
+        class Rig(DataAuto.Rig):
+            def set_voice(self, side):
+                self.cmds.append(side)
+                if self.cmds.count(side) >= 2:           # la 1re commande est ignorée par le poste
+                    self.m = side
+
+        class Stub:
+            log = staticmethod(logs.append)
+            ui = staticmethod(lambda fn, *a: fn(*a))
+
+            class _rig_kick:
+                set = staticmethod(lambda: None)
+        r = Rig("LSB-DATA1")
+        with mock.patch.object(app.time, "sleep", lambda s: None):
+            app.App._data_auto_off(Stub(), r, "LSB")
+        self.assertEqual((r.cmds, r.m), (["LSB", "LSB"], "LSB"))
+        self.assertTrue(any("retour en LSB." in m for m in logs), logs)

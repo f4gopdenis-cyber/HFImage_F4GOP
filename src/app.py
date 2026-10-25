@@ -62,7 +62,7 @@ import random
 import wave
 
 APP = "HFImage F4GOP"
-VERSION = "1.60"
+VERSION = "1.61"
 
 
 def _take_profile(argv):
@@ -6238,11 +6238,22 @@ class App(tk.Tk):
         """Après l'émission : retour en LSB / USB (phonie)."""
         if not side or rig is None:
             return
-        try:
-            rig.set_voice(side)
-            self.ui(self.log, "DATA auto : " + tr("retour en") + f" {side}.")
-        except Exception as e:
-            self.ui(self.log_exc, "DATA auto (retour en " + side + ")", e)
+        time.sleep(0.5)                              # le poste finit de repasser en réception
+        m = ""
+        for _ in range(3):
+            try:
+                rig.set_voice(side)
+                time.sleep(0.4)
+                m = rig.mode() or ""
+                if m and not rig.is_data(m) and rig.is_lsb(m) == (side == "LSB"):
+                    self.ui(self.log, "DATA auto : " + tr("retour en") + f" {side}.")
+                    break
+            except Exception as e:
+                m = str(e)
+            time.sleep(0.3)
+        else:
+            self.ui(self.log, "DATA auto : " + tr("retour en") + f" {side} " + tr("non confirmé") +
+                    f" ({tr('mode lu')} : {m or '?'})")
         self._rig_kick.set()
 
     def _data_auto_toggle(self):

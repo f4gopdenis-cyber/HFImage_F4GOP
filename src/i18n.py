@@ -1005,6 +1005,8 @@ T = [
      "DATA auto: el equipo pasa a LSB-DATA / USB-DATA para transmitir y vuelve a LSB / USB al final.",
      "DATA auto: la radio passa in LSB-DATA / USB-DATA per trasmettere, poi torna in LSB / USB alla fine."),
     ("DATA auto : arrêté.", "DATA auto: off.", "DATA auto: aus.", "DATA auto: apagado.", "DATA auto: spento."),
+    ("non confirmé", "not confirmed", "nicht bestätigt", "no confirmado", "non confermato"),
+    ("mode lu", "mode read", "gelesener Modus", "modo leído", "modo letto"),
     ("retour en", "back to", "zurück auf", "vuelta a", "ritorno in"),
     ("DATA auto : le poste est en", "DATA auto: the radio is in", "DATA auto: das Gerät ist in",
      "DATA auto: el equipo está en", "DATA auto: la radio è in"),

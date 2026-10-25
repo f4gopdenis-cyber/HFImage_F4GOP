@@ -1,5 +1,10 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 1.61 — DATA auto : retour en LSB vérifié
+
+- **DATA auto** : à la fin de l'image, HFImage attend que le poste soit repassé en réception, remet LSB / USB, **relit le mode** pour vérifier et recommence jusqu'à 3 fois si le poste n'a pas pris la commande. Le journal dit « retour en LSB » ou, en cas d'échec, le mode lu.
+- Kenwood en direct : un poste réglé en « AI » (informations automatiques) envoie des messages qu'on ne lui a pas demandés (RX0;, FA…;) ; HFImage pouvait les prendre pour la réponse à sa question (mode, fréquence). Il garde maintenant la bonne réponse.
+
 ## Version 1.60 — Kenwood TS-890 : bouton « DATA auto » et passage en DATA
 
 - **TS-890** : le changement de mode passe maintenant par la commande SF (fréquence et mode d'un coup, comme Hamlib et WSJT-X) au lieu de « LSB puis DATA ». Le passage en LSB-DATA / USB-DATA et le retour en LSB / USB marchent avec le bouton **DATA auto**, le réglage « Poste pas en DATA avant d'émettre » et le changement de fréquence.

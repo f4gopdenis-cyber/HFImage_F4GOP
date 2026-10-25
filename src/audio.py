@@ -411,11 +411,18 @@ def _query(ser, cmd, timeout=0.6):
     ser.reset_input_buffer()
     ser.write(cmd.encode())
     t0, buf = time.time(), b""
+    want = cmd[:2].encode()
     while time.time() - t0 < timeout:
         buf += ser.read(ser.in_waiting or 1)
         if buf.endswith(b";"):
-            break
-    return buf.decode(errors="replace")
+            # poste en « AI » (informations automatiques) : il envoie aussi des messages qu'on
+            # n'a pas demandés (RX0;, FA…;) -> on garde la réponse à notre commande
+            parts = buf.split(b";")[:-1]
+            for p in parts:
+                if p.startswith(want) or p == b"?":
+                    return (p + b";").decode(errors="replace")
+    msgs = [p for p in buf.split(b";") if p]
+    return (msgs[-1] + b";").decode(errors="replace") if msgs and buf.endswith(b";") else buf.decode(errors="replace")
 
 
 def _mode_of(model, q):
