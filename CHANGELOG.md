@@ -1,5 +1,10 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 1.56 — style Moderne : tuiles avec icônes (étape 2)
+
+- Style Moderne : les 16 boutons de gauche deviennent des **tuiles avec une icône** au-dessus du texte (émission, relecture, FIX, BSR, accord, ID, texte, WAVE, écoute, texte inclus, log, QSL, image, hybride, réglages, dossier). La tuile **ÉMISSION** est dans la couleur d'accent ; une tuile active (Écoute, Hybride…) prend la couleur d'accent, l'attente est en orange et l'émission en rouge, icône comprise.
+- Style Classique : boutons inchangés.
+
 ## Version 1.55 — style Moderne : ambiance « Vert EasyPal »
 
 - Style Moderne : nouvelle ambiance **« Vert EasyPal »**, le vert vif d'EasyPal (barre du haut, bandeaux, barre d'état) et le vert clair, en version plate et moderne. C'est l'ambiance proposée par défaut quand on choisit le style Moderne ; Sombre, Clair et Vert radio restent au choix.

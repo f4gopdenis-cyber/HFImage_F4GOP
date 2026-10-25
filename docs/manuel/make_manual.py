@@ -503,7 +503,8 @@ s.append(P("Menu <b>Réglages → Police et taille du texte</b> : « Texte en gr
 s.append(P("Style Classique ou Moderne", "h2"))
 s.append(P("Réglages → Apparence → <b>Style</b> : <b>Classique (EasyPal)</b>, le look d'origine avec ses couleurs, ou "
            "<b>Moderne</b> : tout plat (sans relief), police moderne, onglets en pastilles, bouton « ▶ Émettre » mis en "
-           "valeur, et une <b>barre du haut</b> avec l'indicatif, la fréquence en grand (clic : menu des fréquences), "
+           "valeur, boutons de gauche en <b>tuiles avec icônes</b> (la tuile ÉMISSION dans la couleur d'accent), et une "
+           "<b>barre du haut</b> avec l'indicatif, la fréquence en grand (clic : menu des fréquences), "
            "l'état (réception, émission), les stations en ligne (clic : carte) et l'heure UTC. Quatre <b>ambiances</b> : "
            "Vert EasyPal (par défaut), Sombre, Clair, Vert radio. On passe de l'un à l'autre à tout moment, sans redémarrer."))
 s.append(P("Horloge", "h2"))

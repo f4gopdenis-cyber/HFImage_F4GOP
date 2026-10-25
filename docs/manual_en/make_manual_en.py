@@ -308,7 +308,7 @@ s += B(["Separate windows always stay <b>in front of</b> the main window and are
 s.append(P("Classic or Modern style", "h2"))
 s.append(P("Settings → Appearance → <b>Style</b>: <b>Classic (EasyPal)</b>, the original look with its colours, or "
            "<b>Modern</b>: everything flat (no relief), modern font, pill-shaped tabs, highlighted “▶ Transmit” button, "
-           "and a <b>top bar</b> with your callsign, the frequency in large type (click: frequency menu), the state "
+           "left buttons as <b>tiles with icons</b> (TRANSMIT tile in the accent colour), and a <b>top bar</b> with your callsign, the frequency in large type (click: frequency menu), the state "
            "(receiving, transmitting), the stations online (click: map) and the UTC time. Four <b>ambiences</b>: "
            "EasyPal green (default), Dark, Light, Radio green. Switch at any time, without restarting."))
 s.append(P("Changing frequency", "h2"))

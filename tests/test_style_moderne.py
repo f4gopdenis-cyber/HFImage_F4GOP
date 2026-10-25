@@ -94,13 +94,33 @@ class Appli(unittest.TestCase):
         self.assertEqual((str(b.cget("relief")), str(b.cget("bg")), str(a.cget("bg"))), classic)
         self.assertFalse(a.topbar.winfo_manager())
 
+    def test_tuiles_avec_icones(self):
+        # 1.56 : style Moderne -> tuiles avec icône ; Classique -> boutons texte comme avant
+        a = self.a
+        b = a.gbtn["fix"]
+        self.assertEqual(str(b.cget("image")), "")
+        self.style(True, "Vert EasyPal")
+        self.assertNotEqual(str(b.cget("image")), "")
+        self.assertEqual(str(b.cget("compound")), "top")
+        self.assertEqual(str(a.gbtn["tx"].cget("bg")), theme.MODERN["Vert EasyPal"]["accent"])
+        self.style(False)
+        self.assertEqual(str(b.cget("image")), "")
+        self.assertEqual(str(b.cget("compound")), "none")
+
+    def test_icones(self):
+        import icons
+        for n in icons.NAMES:
+            im = icons.icon(n, 18, "#123456")
+            self.assertEqual(im.size, (18, 18))
+            self.assertGreater(im.getchannel("A").getextrema()[1], 100, n)
+
     def test_bouton_emission_en_moderne(self):
         a = self.a
         self.style(True, "Sombre")
         a._btn_color(a.gbtn["tx"], "tx")
         self.assertEqual(str(a.gbtn["tx"].cget("bg")), theme.MODERN["Sombre"]["bad"])
         a._btn_color(a.gbtn["tx"], "off")
-        self.assertEqual(str(a.gbtn["tx"].cget("bg")), theme.MODERN["Sombre"]["button"])
+        self.assertEqual(str(a.gbtn["tx"].cget("bg")), theme.MODERN["Sombre"]["accent"])    # tuile principale
 
 
 if __name__ == "__main__":

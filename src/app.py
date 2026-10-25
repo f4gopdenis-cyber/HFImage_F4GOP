@@ -62,7 +62,7 @@ import random
 import wave
 
 APP = "HFImage F4GOP"
-VERSION = "1.55"
+VERSION = "1.56"
 
 
 def _take_profile(argv):
@@ -665,6 +665,8 @@ class App(tk.Tk):
         # boutons de la grille : couleur selon leur état, dans le style choisi
         for b in getattr(self, "gbtn", {}).values():
             st = getattr(b, "_hf_state", "off")
+            if not modern:                             # Classique : boutons texte, comme avant
+                b.configure(image="", compound="none", padx=1, pady=1)
             if modern or st != "off":                  # Classique : boutons au repos laissés au thème
                 self._btn_color(b, st)
         self._topbar_show()
@@ -1247,6 +1249,7 @@ class App(tk.Tk):
             b = tk.Button(g, text=text, command=cmd, bg="white", activebackground="#e6ffe6",
                           relief="raised", bd=1, font=("TkDefaultFont", 8), padx=1, pady=1)
             b.grid(row=k // 4, column=k % 4, sticky="nsew", padx=1, pady=1)
+            b._hf_key = key
             self.gbtn[key] = b
         for c in range(4):
             g.columnconfigure(c, weight=1, uniform="b")
@@ -1276,6 +1279,15 @@ class App(tk.Tk):
     BTN_CLASSIC = {"off": ("white", "#e6ffe6", None, "raised"), "on": (BTN_ON, None, None, "sunken"),
                    "wait": ("#ffb84d", "#ffc870", None, None), "tx": ("#ff6b6b", "#ff8f8f", None, None)}
 
+    def _tile_icon(self, key, color, size=18):
+        """Icône d'une tuile (style Moderne), gardée en mémoire par couleur."""
+        import icons
+        cache = self.__dict__.setdefault("_tile_icons", {})
+        k = (key, color, size)
+        if k not in cache:
+            cache[k] = ImageTk.PhotoImage(icons.icon(key, size, color))
+        return cache[k]
+
     def _btn_color(self, b, state):
         """Couleur d'un bouton de la grille selon son état (repos, actif, attente, émission),
         dans le style en cours (Classique : couleurs d'origine ; Moderne : palette plate)."""
@@ -1284,8 +1296,13 @@ class App(tk.Tk):
         if P:
             bg, fg = {"off": (P["button"], P["button_fg"]), "on": (P["accent"], P["accent_fg"]),
                       "wait": ("#ffb84d", "#1a1a1a"), "tx": (P["bad"], "#ffffff")}[state]
+            key = getattr(b, "_hf_key", None)
+            if key == "tx" and state == "off":
+                bg, fg = P["accent"], P["accent_fg"]          # l'émission : la tuile principale
             b.configure(bg=bg, fg=fg, activebackground=P["accent"] if state == "off" else bg,
                         activeforeground=P["accent_fg"] if state == "off" else fg, relief="flat")
+            if key:                                           # tuile : icône au-dessus du texte
+                b.configure(image=self._tile_icon(key, fg), compound="top", padx=2, pady=4)
             return
         b._hf_state = state
         bg, abg, _, relief = self.BTN_CLASSIC[state]
