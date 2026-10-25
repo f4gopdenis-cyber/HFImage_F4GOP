@@ -107,6 +107,27 @@ class Appli(unittest.TestCase):
         self.assertEqual(str(b.cget("image")), "")
         self.assertEqual(str(b.cget("compound")), "none")
 
+    def test_cartes_jauges_et_listes(self):
+        # 1.57 : jauges arrondies, colonne de gauche en cartes, Rx Ok coloré selon le report
+        a = self.a
+        self.style(True, "Sombre")
+        c = a.panel.bars["SNR"][0]
+        a.panel.set_bar("SNR", 12, -10, 30, "+12 dB")
+        self.assertGreaterEqual(len(c.find_withtag("b")), 3)                # pilule : 2 ronds + 1 rectangle
+        self.assertEqual(int(a.panel.cget("highlightthickness")), 1)
+        a.rxok = {"F1UGC": (16, 0), "F5PEY": (-6, 0)}
+        a._heard_refresh()
+        cols = {a.lst_rxok.get(i).split()[0]: str(a.lst_rxok.itemcget(i, "fg")) for i in range(a.lst_rxok.size())}
+        self.assertNotEqual(cols["F1UGC"], cols["F5PEY"])
+        a.online = {"F4EEH": {"call": "F4EEH", "freq": 7058000, "state": "RX", "t": __import__("time").time()}}
+        a._heard_refresh()
+        self.assertTrue(a.lst_heard.get(0).startswith("● "))
+        self.style(False)
+        a.panel.set_bar("SNR", 12, -10, 30, "+12 dB")
+        self.assertEqual(len(c.find_withtag("b")), 1)                       # Classique : barre rectangle
+        self.assertEqual(int(a.panel.cget("highlightthickness")), 0)
+        self.assertFalse(a.lst_heard.get(0).startswith("● "))
+
     def test_icones(self):
         import icons
         for n in icons.NAMES:

@@ -1,5 +1,12 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 1.57 — style Moderne : cartes, jauges, listes colorées (étape 3)
+
+- Style Moderne : la colonne de gauche est présentée en **cartes** (bordure fine, marges) ; jauges **RX / SNR arrondies** dans la couleur d'accent ; voyants sans contour.
+- Liste des stations : **●** devant les stations en ligne, **○** devant celles entendues seulement par radio.
+- **Rx Ok** : chaque report est **coloré** selon sa valeur, avec les mêmes couleurs que la légende de la carte (vert foncé +5 dB et plus, vert clair, orange, rouge).
+- Style Classique : inchangé (vérifié au pixel près).
+
 ## Version 1.56 — style Moderne : tuiles avec icônes (étape 2)
 
 - Style Moderne : les 16 boutons de gauche deviennent des **tuiles avec une icône** au-dessus du texte (émission, relecture, FIX, BSR, accord, ID, texte, WAVE, écoute, texte inclus, log, QSL, image, hybride, réglages, dossier). La tuile **ÉMISSION** est dans la couleur d'accent ; une tuile active (Écoute, Hybride…) prend la couleur d'accent, l'attente est en orange et l'émission en rouge, icône comprise.

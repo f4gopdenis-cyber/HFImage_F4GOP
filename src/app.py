@@ -62,7 +62,7 @@ import random
 import wave
 
 APP = "HFImage F4GOP"
-VERSION = "1.56"
+VERSION = "1.57"
 
 
 def _take_profile(argv):
@@ -529,11 +529,11 @@ class App(tk.Tk):
         lpw = tk.PanedWindow(left, orient="vertical", **pw)
         lpw.pack(fill="both", expand=True, pady=(4, 0))
         self.panes["left"] = lpw
-        wfbox = tk.Frame(lpw, bg="#000")
+        wfbox = self._wfbox = tk.Frame(lpw, bg="#000")
         self.wf = Waterfall(wfbox, height=200)
         self.wf.pack(fill="both", expand=True)
         lpw.add(wfbox, minsize=90, stretch="always")
-        sbox = tk.Frame(lpw, bg=GREEN)
+        sbox = self._sbox = tk.Frame(lpw, bg=GREEN)
         lpw.add(sbox, minsize=80, stretch="never", height=170)
         self._stations_box(sbox)
 
@@ -670,6 +670,7 @@ class App(tk.Tk):
             if modern or st != "off":                  # Classique : boutons au repos laissés au thème
                 self._btn_color(b, st)
         self._topbar_show()
+        self._cards(self.look.palette())
         self.conf.update(theme=th, font_family=fam, font_size=size)
         if hasattr(self, "v_msize") and self.v_msize.get() != size:
             self.v_msize.set(size)
@@ -748,6 +749,26 @@ class App(tk.Tk):
         o = lab("online", padx=(0, 12), cursor="hand2")
         o.bind("<Button-1>", lambda e: self.show_map())
         lab("clock", side="right", padx=(0, 16), font=("TkDefaultFont", 11, "bold"))
+
+    def _cards(self, P):
+        """Style Moderne : colonne de gauche en « cartes » (bordure fine, marges) ; Classique : comme avant."""
+        if not hasattr(self, "_st_box"):
+            return
+        try:
+            self.panel.set_modern(P)
+            m = 4 if P else 0
+            self.panel.pack_configure(padx=m, pady=(m, 0))
+            self._grid_frame.pack_configure(padx=m, pady=(6, 0))
+            lpw = self.panes["left"]
+            for w in (self._wfbox, self._sbox):
+                lpw.paneconfigure(w, padx=m, pady=(3 if P else 0))
+            for w in (self.panel, self._st_box):
+                if P:
+                    w.configure(highlightthickness=1, highlightbackground=P["border"], highlightcolor=P["border"])
+            if P:
+                self._grid_frame.configure(bg=P["bg"])
+        except (tk.TclError, AttributeError):
+            pass
 
     def _topbar_show(self):
         if not hasattr(self, "topbar"):
@@ -1232,7 +1253,7 @@ class App(tk.Tk):
 
     # ---------------------------------------------------------------- boutons
     def _button_grid(self, parent):
-        g = tk.Frame(parent, bg=GREEN)
+        g = self._grid_frame = tk.Frame(parent, bg=GREEN)
         g.pack(fill="x", pady=(6, 0))
         self.gbtn = {}
         spec = [
@@ -2053,7 +2074,7 @@ class App(tk.Tk):
 
     # ------------------------------------------------- stations entendues / Rx Ok (EasyPal)
     def _stations_box(self, parent):
-        box = tk.Frame(parent, bg=GREEN, bd=2, relief="groove")
+        box = self._st_box = tk.Frame(parent, bg=GREEN, bd=2, relief="groove")
         box.pack(fill="both", expand=True)
         head = tk.Frame(box, bg=GREEN)
         head.pack(fill="x")
@@ -2608,6 +2629,7 @@ class App(tk.Tk):
         self._heard_names = sorted(set(on) | set(self.heard))
         # colonne de l'indicatif à la largeur du plus long (PA0041SWL, F4FRC/P…) : colonnes alignées
         cw = max([7] + [len(c) for c in self._heard_names])
+        P = self.look.palette() if hasattr(self, "look") else None
         rows = []
         for c in self._heard_names:
             hyb = self._is_hyb(c, on)
@@ -2618,11 +2640,13 @@ class App(tk.Tk):
                 mark = "*" if d.get("state") == "TX" else " "        # * = en émission
                 # fréquence publiée par la station ; sinon celle où on l'a entendue par radio
                 fq = d.get("freq") or h.get("freq")
-                rows.append((f"{c:<{cw}}{mark}{self._mhz(fq):>6}{tag}",
+                dot = ("● " if P else "")                                  # Moderne : ● en ligne
+                rows.append((f"{dot}{c:<{cw}}{mark}{self._mhz(fq):>6}{tag}",
                              self._c("#c01818" if d.get("state") == "TX" else ("#1f4fbf" if hyb else "#062e06"))))
             else:
                 # entendue par radio seulement (pas en ligne) : en gris-vert (bleu pâle si hybride)
-                rows.append((f"{c:<{cw}} {self._mhz(h.get('freq')):>6}{tag}",
+                dot = ("○ " if P else "")                                  # Moderne : ○ entendue par radio
+                rows.append((f"{dot}{c:<{cw}} {self._mhz(h.get('freq')):>6}{tag}",
                              self._c(("#5a78b8" if hyb else "#4a7a4a") if now - h["t"] < 1800 else "#8a9a8a")))
         App._sync_list(self.lst_heard, self._heard_names, rows)
         self._rxok_names = sorted(self.rxok)
@@ -2630,7 +2654,15 @@ class App(tk.Tk):
         rows = []
         for c in self._rxok_names:
             rep = self.rxok[c][0]
-            rows.append((f"{c:<{rw}}{'' if rep is None else f'{rep:+d} dB':>7}{self._name_tail(c)}", None))
+            if P and rep is not None:
+                # Moderne : couleur selon le report (mêmes couleurs que la légende de la carte)
+                col = "#%02x%02x%02x" % stationmap.report_color(rep)
+                if P["dark"]:                                     # fond sombre : couleur éclaircie
+                    h_, l_, s_ = theme._hls(col)
+                    col = theme._from_hls(h_, max(l_, 0.6), s_)
+                rows.append((f"{c:<{rw}}{f'{rep:+d} dB':>7}{self._name_tail(c)}", col))
+            else:
+                rows.append((f"{c:<{rw}}{'' if rep is None else f'{rep:+d} dB':>7}{self._name_tail(c)}", None))
         App._sync_list(self.lst_rxok, self._rxok_names, rows)
         fr = f" - {self._mhz(self.rig_freq)}" if self.rig_freq else ""
         self._set_text(self.lb_heard, tr(f"Stations ({len(self._heard_names)})") + fr)

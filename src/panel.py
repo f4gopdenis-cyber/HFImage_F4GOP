@@ -64,18 +64,61 @@ class StatusPanel(tk.Frame):
                                                                                    padx=(1, 5))
             self.leds[name] = (c, oval)
 
+    modern = None                # palette du style Moderne (None : Classique)
+
+    def set_modern(self, P):
+        """Style Moderne : jauges arrondies, voyants sans contour ; None : comme EasyPal."""
+        self.modern = P
+        for name, (c, val, unit) in self.bars.items():
+            if P:
+                c.configure(highlightthickness=0, bg=P["panel"], height=10)
+            else:
+                c.configure(highlightthickness=1, bg="#e8f7e6", height=12)
+            last = getattr(self, "_bar_last", {}).get(name)
+            if last:
+                self.set_bar(name, *last)
+            else:
+                self._track(c)
+        for name, (c, oval) in self.leds.items():
+            fill = c.itemcget(oval, "fill")
+            c.itemconfigure(oval, outline=fill if P else FG)
+
+    def _track(self, c):
+        c.delete("t")
+        P = self.modern
+        if P:
+            self._pill(c, 1, 1, 109, 10, P["field"], "t")
+
+    @staticmethod
+    def _pill(c, x0, y0, x1, y1, color, tag):
+        r = (y1 - y0) / 2
+        if x1 - x0 < 2 * r:
+            x1 = x0 + 2 * r
+        c.create_oval(x0, y0, x0 + 2 * r, y1, fill=color, outline="", tags=tag)
+        c.create_oval(x1 - 2 * r, y0, x1, y1, fill=color, outline="", tags=tag)
+        c.create_rectangle(x0 + r, y0, x1 - r, y1, fill=color, outline="", tags=tag)
+
     def set_bar(self, name, value, lo, hi, text):
         c, val, unit = self.bars[name]
+        self.__dict__.setdefault("_bar_last", {})[name] = (value, lo, hi, text)
         c.delete("b")
+        P = self.modern
+        if P:
+            self._track(c)
         if value is not None:
             f = max(0.0, min(1.0, (value - lo) / (hi - lo)))
             col = LED_RED if name == "RX" and value > -3 else ("#2f9e2f" if f > 0.25 else LED_AMBER)
-            c.create_rectangle(1, 1, 1 + f * 108, 12, fill=col, outline="", tags="b")
+            if P:                                   # jauge arrondie, couleur d'accent
+                col = P["bad"] if name == "RX" and value > -3 else (P["accent"] if f > 0.25 else "#ffb84d")
+                if f > 0.01:
+                    self._pill(c, 1, 1, 1 + max(10, f * 108), 10, col, "b")
+            else:
+                c.create_rectangle(1, 1, 1 + f * 108, 12, fill=col, outline="", tags="b")
         val.configure(text=text)
 
     def set_led(self, name, color):
         c, oval = self.leds[name]
-        c.itemconfigure(oval, fill=color)
+        c.itemconfigure(oval, fill=color, outline=color if self.modern else FG)
 
     def set_cell(self, row, side, text):
         self.cells[(row, side)].configure(text=text)
