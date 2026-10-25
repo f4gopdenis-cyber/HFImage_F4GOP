@@ -988,6 +988,8 @@ T = [
      "La salida «{0}» no funciona; se usa «{1}» (ajuste actualizado).",
      "L'uscita «{0}» non funziona; usata «{1}» al suo posto (impostazione aggiornata)."),
     # 1.59 : DATA auto, Icom (adresse CI-V), Hamlib 4.7.2
+    ("Couleur de l'ambiance", "Theme colour", "Farbe des Stils", "Color del ambiente", "Colore dell'ambiente"),
+    ("Couleur…", "Colour…", "Farbe…", "Color…", "Colore…"),
     ("DATA auto", "DATA auto", "DATA auto", "DATA auto", "DATA auto"),
     ("Allumé : le poste passe en LSB-DATA (ou USB-DATA) au moment d'émettre, puis revient tout seul en LSB (ou USB) "
      "à la fin de l'image.",

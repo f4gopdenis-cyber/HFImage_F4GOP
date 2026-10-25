@@ -1,5 +1,9 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 1.63 — style Moderne : ambiance « Personnalisée »
+
+- Réglages → Apparence → Style **Moderne** : nouvelle ambiance **Personnalisée**, avec un bouton **Couleur…** à côté de l'ambiance. On choisit **une seule couleur** et HFImage en tire toute la palette : barre du haut, bandeaux et barre d'état dans cette couleur, fonds très clairs de la même teinte, bouton « Émettre », onglets et jauges dans une version plus foncée, texte noir ou blanc selon ce qui se lit le mieux. Les couleurs d'état (attente orange, émission rouge, reports) ne changent pas. La couleur est gardée d'un lancement à l'autre.
+
 ## Version 1.62 — liste des postes rangée
 
 - Fenêtre « Poste radio » : la liste des postes est rangée **par fabricant** (ordre alphabétique, chaque marque en un seul groupe) puis **par modèle** dans l'ordre naturel (TS-480, TS-590, TS-890S, TS-990S, TS-2000 ; IC-705, IC-7300, IC-7300MK2, IC-7610…). Avant, elle suivait les numéros de Hamlib et plusieurs postes étaient hors de leur groupe (Kenwood, Icom, Yaesu, Elecraft, Xiegu…).

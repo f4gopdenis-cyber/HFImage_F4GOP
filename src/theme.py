@@ -41,6 +41,53 @@ MODERN = {
                        fg="#e6f4ec", muted="#8fb3a0", border="#1f4434", button="#1b3d2e", button_fg="#e6f4ec",
                        accent="#2fd17a", accent_fg="#06110a", bad="#ff6b6b", dark=True, top="#0a1611"),
 }
+# 1.63 : ambiance « Personnalisée » : toute la palette tirée d'une seule couleur choisie
+MODERN_CUSTOM = "Personnalisée"
+MODERN_CUSTOM_DEFAULT = "#3a8ee6"
+
+
+def _lum(hx):
+    """Luminance relative (WCAG) d'une couleur « #rrggbb »."""
+    def ch(v):
+        v /= 255
+        return v / 12.92 if v <= 0.03928 else ((v + 0.055) / 1.055) ** 2.4
+    r, g, b = (int(hx[i:i + 2], 16) for i in (1, 3, 5))
+    return 0.2126 * ch(r) + 0.7152 * ch(g) + 0.0722 * ch(b)
+
+
+def _contrast(a, b):
+    la, lb = sorted((_lum(a), _lum(b)), reverse=True)
+    return (la + 0.05) / (lb + 0.05)
+
+
+def _readable_on(bg, dark="#111111", light="#ffffff"):
+    """Texte noir ou blanc : celui qui se lit le mieux sur `bg`."""
+    return dark if _contrast(bg, dark) >= _contrast(bg, light) else light
+
+
+def modern_custom(color):
+    """Palette du style Moderne tirée d'une seule couleur : barres dans cette couleur, fonds
+    très clairs de la même teinte, accent plus foncé, texte noir ou blanc selon le contraste."""
+    try:
+        h, l, s = _hls(color)
+    except (ValueError, IndexError, TypeError):
+        color = MODERN_CUSTOM_DEFAULT
+        h, l, s = _hls(color)
+    st = min(s, 0.55)                                    # fonds : teinte douce
+    bar = color
+    bar_fg = _readable_on(bar)
+    accent = _from_hls(h, min(l, 0.36), max(s, 0.45) if s > 0.05 else 0)
+    while _contrast(accent, "#ffffff") < 4.5:            # texte blanc lisible sur l'accent
+        ah, al, as_ = _hls(accent)
+        accent = _from_hls(ah, al - 0.04, as_)
+    fg = _from_hls(h, 0.12, min(s, 0.6))
+    return dict(bg=_from_hls(h, 0.94, st), panel=_from_hls(h, 0.87, st), field="#ffffff", bar=bar,
+                bar_fg=bar_fg, fg=fg, muted=_from_hls(h, 0.34, min(s, 0.35)),
+                border=_from_hls(h, 0.72, st), button="#ffffff", button_fg=fg, accent=accent,
+                accent_fg="#ffffff", bad="#e53935", dark=False, top=bar, top_fg=bar_fg,
+                top_muted=_from_hls(h, 0.22 if bar_fg != "#ffffff" else 0.85, min(s, 0.5)))
+
+
 MODERN_FONTS = ("Segoe UI", "Inter", "Noto Sans", "DejaVu Sans")
 # réglages de forme gardés pour revenir au style Classique
 SHAPE_OPTS = ("relief", "borderwidth", "highlightthickness", "sashrelief", "sashwidth", "selectcolor",
@@ -194,6 +241,7 @@ class Appearance:
         self.text = None                # couleur du texte choisie (None : celle du thème)
         self.bold = False               # tout le texte en gras
         self.modern = None              # style Moderne : nom de l'ambiance (None : Classique)
+        self.modern_custom = MODERN_CUSTOM_DEFAULT      # couleur de l'ambiance « Personnalisée »
         self.map = make_mapper(self.theme)
         self.named = {}
         for n in ("TkDefaultFont", "TkTextFont", "TkFixedFont", "TkMenuFont", "TkHeadingFont",
@@ -212,6 +260,8 @@ class Appearance:
 
     def palette(self):
         """Palette du style Moderne en cours (None : style Classique)."""
+        if self.modern == MODERN_CUSTOM:
+            return modern_custom(self.modern_custom)
         return MODERN.get(self.modern) if self.modern else None
 
     def modern_font(self):
@@ -221,7 +271,8 @@ class Appearance:
             have = set()
         return next((f for f in MODERN_FONTS if f.lower() in have), None)
 
-    def set(self, theme=None, custom=None, family=None, scale=None, text=None, bold=None, modern=False):
+    def set(self, theme=None, custom=None, family=None, scale=None, text=None, bold=None, modern=False,
+            modern_rgb=None):
         if theme is not None:
             self.theme = theme
         if custom is not None:
@@ -234,8 +285,10 @@ class Appearance:
             self.text = text or None             # "" : couleur du thème
         if bold is not None:
             self.bold = bool(bold)
+        if modern_rgb:                           # (nom différent de la fonction modern_color)
+            self.modern_custom = modern_rgb
         if modern is not False:
-            self.modern = modern if modern in MODERN else None
+            self.modern = modern if modern in MODERN or modern == MODERN_CUSTOM else None
         P = self.palette()
         if P:
             base = lambda c, opt: modern_color(P, c, opt, "field")       # éléments de listes, etc.

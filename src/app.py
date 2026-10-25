@@ -62,7 +62,7 @@ import random
 import wave
 
 APP = "HFImage F4GOP"
-VERSION = "1.62"
+VERSION = "1.63"
 
 
 def _take_profile(argv):
@@ -655,14 +655,17 @@ class App(tk.Tk):
         if hasattr(self, "v_lookstyle"):
             self.conf["look_style"] = "moderne" if self.v_lookstyle.get() == tr("Moderne") else "classique"
             amb = self._modern_names.get(self.v_modern.get(), self.v_modern.get())
-            if amb in theme.MODERN:
+            if amb in theme.MODERN or amb == theme.MODERN_CUSTOM:
                 self.conf["modern_theme"] = amb
         if self.conf.get("look_style") == "moderne":
-            modern = self.conf.get("modern_theme") if self.conf.get("modern_theme") in theme.MODERN else "Vert EasyPal"
+            modern = self.conf.get("modern_theme")
+            if modern not in theme.MODERN and modern != theme.MODERN_CUSTOM:
+                modern = "Vert EasyPal"
         self.look.set(theme=th if th in theme.THEMES or th == "Personnalisée" else "Vert EasyPal",
                       custom=self.conf.get("theme_color"), family=fam,
                       scale=theme.FONT_SIZES.get(size, 1.0), text=self.conf.get("text_color") or "",
-                      bold=bool(self.conf.get("font_bold")), modern=modern)
+                      bold=bool(self.conf.get("font_bold")), modern=modern,
+                      modern_rgb=self.conf.get("modern_color") or theme.MODERN_CUSTOM_DEFAULT)
         # boutons de la grille : couleur selon leur état, dans le style choisi
         for b in getattr(self, "gbtn", {}).values():
             st = getattr(b, "_hf_state", "off")
@@ -704,6 +707,19 @@ class App(tk.Tk):
         if c and c[1]:
             self.conf["theme_color"] = c[1]
             self.v_theme.set(tr("Personnalisée"))
+            self._apply_look()
+
+    def _pick_modern_color(self):
+        """Style Moderne, ambiance « Personnalisée » : une seule couleur, le reste en découle."""
+        from tkinter import colorchooser
+        c = colorchooser.askcolor(color=self.conf.get("modern_color") or theme.MODERN_CUSTOM_DEFAULT,
+                                  parent=self.win_conf, title=tr("Couleur de l'ambiance"))
+        if c and c[1]:
+            self.conf["modern_color"] = c[1]
+            self.v_lookstyle.set(tr("Moderne"))
+            self.v_modern.set(tr(theme.MODERN_CUSTOM))
+            if hasattr(self, "_style_ui"):
+                self._style_ui()
             self._apply_look()
 
     def _pick_text_color(self):
@@ -3054,7 +3070,7 @@ class App(tk.Tk):
         stf.grid(row=3, column=1, columnspan=4, sticky="w", padx=4, pady=(8, 0))
         self.v_lookstyle = tk.StringVar(value=tr("Moderne") if self.conf.get("look_style") == "moderne"
                                         else tr("Classique (EasyPal)"))
-        self._modern_names = {tr(n): n for n in theme.MODERN}
+        self._modern_names = {tr(n): n for n in list(theme.MODERN) + [theme.MODERN_CUSTOM]}
         self.v_modern = tk.StringVar(value=tr(self.conf.get("modern_theme", "Vert EasyPal")))
         cb_st = ttk.Combobox(stf, textvariable=self.v_lookstyle, values=[tr("Classique (EasyPal)"), tr("Moderne")],
                              state="readonly", width=18)
@@ -3063,11 +3079,15 @@ class App(tk.Tk):
         cb_am = ttk.Combobox(stf, textvariable=self.v_modern, values=list(self._modern_names), state="readonly",
                              width=12)
         cb_am.pack(side="left")
+        bt_amc = ttk.Button(stf, text="Couleur…", command=self._pick_modern_color)
+        bt_amc.pack(side="left", padx=(4, 0))
 
         def style_ui(*_):
             moderne = self.v_lookstyle.get() == tr("Moderne")
             cb_am.configure(state="readonly" if moderne else "disabled")
+            bt_amc.configure(state="normal" if moderne else "disabled")
             cb_t.configure(state="disabled" if moderne else "readonly")     # couleurs : style Classique
+        self._style_ui = style_ui
         style_ui()
         for cb in (cb_st, cb_am):
             cb.bind("<<ComboboxSelected>>", lambda e: (style_ui(), self._apply_look()))
