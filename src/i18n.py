@@ -1000,6 +1000,43 @@ T = [
      "las conexiones HTTPS también puede ser la causa (autorice HFImage)",
      "certificato di sicurezza del sito rifiutato: controlla data e ora del PC; anche un antivirus che analizza le "
      "connessioni HTTPS può esserne la causa (autorizza HFImage)"),
+    ("Partager le poste avec d'autres logiciels (WSJT-X, logger…)",
+     "Share the radio with other programs (WSJT-X, logger…)",
+     "Gerät mit anderen Programmen teilen (WSJT-X, Logbuch…)",
+     "Compartir el equipo con otros programas (WSJT-X, logger…)",
+     "Condividi la radio con altri programmi (WSJT-X, logger…)"),
+    ("Dans l'autre logiciel : poste « Hamlib NET rigctl », serveur",
+     "In the other program: radio “Hamlib NET rigctl”, server",
+     "Im anderen Programm: Gerät „Hamlib NET rigctl“, Server",
+     "En el otro programa: equipo «Hamlib NET rigctl», servidor",
+     "Nell'altro programma: radio «Hamlib NET rigctl», server"),
+    ("Lancez HFImage en premier.", "Start HFImage first.", "HFImage zuerst starten.",
+     "Inicie HFImage primero.", "Avvia HFImage per primo."),
+    ("Pour partager, choisissez le modèle exact du poste dans la liste.",
+     "To share, choose the exact radio model in the list.",
+     "Zum Teilen das genaue Gerätemodell in der Liste wählen.",
+     "Para compartir, elija el modelo exacto del equipo en la lista.",
+     "Per condividere, scegli il modello esatto della radio nell'elenco."),
+    ("Partage possible avec les postes de la liste Hamlib et les Kenwood.",
+     "Sharing is possible with the radios of the Hamlib list and Kenwood radios.",
+     "Teilen ist mit den Geräten der Hamlib-Liste und Kenwood-Geräten möglich.",
+     "Se puede compartir con los equipos de la lista Hamlib y los Kenwood.",
+     "Condivisione possibile con le radio dell'elenco Hamlib e le Kenwood."),
+    ("Poste partagé : dans WSJT-X ou le logger, poste « Hamlib NET rigctl », serveur",
+     "Radio shared: in WSJT-X or the logger, radio “Hamlib NET rigctl”, server",
+     "Gerät geteilt: in WSJT-X oder im Logbuch Gerät „Hamlib NET rigctl“, Server",
+     "Equipo compartido: en WSJT-X o el logger, equipo «Hamlib NET rigctl», servidor",
+     "Radio condivisa: in WSJT-X o nel logger, radio «Hamlib NET rigctl», server"),
+    ("partage du poste : le port {0} est déjà pris (un autre rigctld, ou HFImage ouvert deux fois ?). Fermez-le ou "
+     "choisissez un autre port.",
+     "radio sharing: port {0} is already in use (another rigctld, or HFImage open twice?). Close it or choose "
+     "another port.",
+     "Geräte-Teilen: Port {0} ist schon belegt (ein anderes rigctld, oder HFImage zweimal offen?). Schließen oder "
+     "anderen Port wählen.",
+     "compartir el equipo: el puerto {0} ya está ocupado (¿otro rigctld, o HFImage abierto dos veces?). Ciérrelo o "
+     "elija otro puerto.",
+     "condivisione della radio: la porta {0} è già occupata (un altro rigctld, o HFImage aperto due volte?). "
+     "Chiudilo o scegli un'altra porta."),
     ("DATA auto", "DATA auto", "DATA auto", "DATA auto", "DATA auto"),
     ("Allumé : le poste passe en LSB-DATA (ou USB-DATA) au moment d'émettre, puis revient tout seul en LSB (ou USB) "
      "à la fin de l'image.",

@@ -1,5 +1,11 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 1.65 — partage du poste avec WSJT-X / logger ; « en émission » fiable
+
+- **Partager le poste avec d'autres logiciels** (Réglages → Poste radio) : un port COM ne sert qu'à un seul programme à la fois. Case cochée, HFImage garde le port du poste et l'ouvre aux autres logiciels du PC : dans WSJT-X, JTDX ou le logger, choisir le poste **« Hamlib NET rigctl »**, serveur **127.0.0.1:4532**. Tous lisent et changent la fréquence et passent en émission en même temps. Lancer HFImage en premier. Pour les postes de la liste Hamlib et les Kenwood (modèle exact ; ils passent alors par Hamlib) ; le port peut être changé.
+- Liste des stations : le « * » (en émission) ne s'affiche que si la station a donné de ses nouvelles depuis moins de 90 s (une station qui émet republie son état chaque minute) ; un état « en émission » oublié disparaît tout seul.
+- Présence Internet : l'heure prise en compte est celle de **ce PC** (heure de réception), plus celle du PC de l'autre station : une station dont l'horloge retarde de plus de 5 min apparaît tout de suite, et une station dont l'horloge avance disparaît bien quand elle n'est plus en ligne.
+
 ## Version 1.64 — mises à jour : erreur de certificat ; FT-991A dans la liste
 
 - **Recherche des mises à jour** : sur certains PC, Windows n'a pas encore le certificat racine dont GitHub a besoin (il ne le télécharge qu'à la première visite du site dans un navigateur) et HFImage affichait « CERTIFICATE_VERIFY_FAILED ». HFImage embarque maintenant la liste de certificats de Mozilla (certifi), utilisée **en plus** de ceux de Windows, avec une vérification toujours complète. Vaut aussi pour l'installation de Hamlib, la traduction des messages, les images du mode hybride et les sites des stations. Si l'erreur persiste (date du PC fausse, antivirus qui analyse le HTTPS), le message l'explique clairement.

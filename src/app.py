@@ -63,7 +63,7 @@ import random
 import wave
 
 APP = "HFImage F4GOP"
-VERSION = "1.64"
+VERSION = "1.65"
 
 
 def _take_profile(argv):
@@ -378,6 +378,18 @@ class HybridJob:
 def sd():
     import sounddevice
     return sounddevice
+
+
+TX_FRESH_S = 90             # une station en émission republie son état chaque minute
+
+
+def on_air(d, now=None):
+    """Station en ligne en train d'émettre ? Son état « TX » doit être récent : heure de
+    réception sur CE PC (l'horloge du PC de l'autre station peut être fausse)."""
+    if d.get("state") != "TX":
+        return False
+    now = now or time.time()
+    return now - float(d.get("seen") or d.get("t") or 0) <= TX_FRESH_S
 
 
 class App(tk.Tk):
@@ -1383,7 +1395,7 @@ class App(tk.Tk):
         if self.rig_freq:
             mine = self.mycall()
             for d in self.online.values():
-                if d.get("state") != "TX" or now - float(d.get("seen") or d.get("t") or 0) > 120:
+                if not on_air(d, now):
                     continue
                 call = str(d.get("call") or "").upper()
                 try:
@@ -2648,7 +2660,8 @@ class App(tk.Tk):
         now = time.time()
         for c in [c for c, h in self.heard.items() if now - h["t"] > HEARD_KEEP_S]:
             del self.heard[c]
-        for k in [k for k, d in self.online.items() if now - float(d.get("t", 0)) > presence.STALE_S]:
+        for k in [k for k, d in self.online.items()
+                  if now - float(d.get("seen") or d.get("t") or 0) > presence.STALE_S]:
             del self.online[k]
         # stations en ligne (Internet, avec LEUR fréquence) + stations entendues par radio
         on = {str(d["call"]).upper(): d for d in self.online.values()}
@@ -2663,12 +2676,13 @@ class App(tk.Tk):
             h = self.heard.get(c, {})
             if c in on:
                 d = on[c]
-                mark = "*" if d.get("state") == "TX" else " "        # * = en émission
+                tx = on_air(d, now)
+                mark = "*" if tx else " "                             # * = en émission
                 # fréquence publiée par la station ; sinon celle où on l'a entendue par radio
                 fq = d.get("freq") or h.get("freq")
                 dot = ("● " if P else "")                                  # Moderne : ● en ligne
                 rows.append((f"{dot}{c:<{cw}}{mark}{self._mhz(fq):>6}{tag}",
-                             self._c("#c01818" if d.get("state") == "TX" else ("#1f4fbf" if hyb else "#062e06"))))
+                             self._c("#c01818" if tx else ("#1f4fbf" if hyb else "#062e06"))))
             else:
                 # entendue par radio seulement (pas en ligne) : en gris-vert (bleu pâle si hybride)
                 dot = ("○ " if P else "")                                  # Moderne : ○ entendue par radio
@@ -2768,7 +2782,7 @@ class App(tk.Tk):
         if d:
             parts.append(tr("en ligne") + (f", {audio.format_freq(d['freq'], True)}" if d.get("freq") else "")
                          + (f" {d['mode']}" if d.get("mode") else "")
-                         + (" — " + tr("en émission") if d.get("state") == "TX" else ""))
+                         + (" — " + tr("en émission") if on_air(d) else ""))
         if self._is_hyb(c):
             parts.append(tr("en mode hybride (image par Internet)"))
         loc = h.get("loc") or self.known_loc.get(c)
@@ -3341,6 +3355,9 @@ class App(tk.Tk):
             r._sig = radio.cat_signature(cfg)
             self.rig = r
             self.ui(self.log, f"Liaison CAT : {r.model or 'poste'} ({r.port})")
+            if cfg.get("share") and radio.can_share(cfg) and getattr(r, "kind", "") == "hamlib":
+                self.ui(self.log, tr("Poste partagé : dans WSJT-X ou le logger, poste « Hamlib NET rigctl », "
+                                     "serveur") + f" 127.0.0.1:{radio.share_port(cfg)}")
             return r
 
     def _rig_open_now(self):
@@ -6841,7 +6858,7 @@ class App(tk.Tk):
         mine = self.mycall()
         cands = set()
         for d in self.online.values():
-            if d.get("state") != "TX" or time.time() - float(d.get("seen") or d.get("t") or 0) > 300:
+            if not on_air(d):
                 continue
             call = str(d.get("call") or "").upper()
             if not call or call == mine:

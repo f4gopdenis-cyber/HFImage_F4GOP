@@ -101,7 +101,9 @@ DEFAULTS = {"rig": "none", "port": "", "baud": 115200, "data_bits": "default", "
             # lancement et à la fermeture du programme
             "cmd_when": "tx",
             # Icom : adresse CI-V (hexadécimal, « 94 », « B6 »…), vide = celle du modèle
-            "civ": ""}
+            "civ": "",
+            # 1.65 : partage du poste avec d'autres logiciels (WSJT-X, logger…) par Hamlib NET rigctl
+            "share": False, "share_port": 4532}
 CUSTOM_KEYS = ("cmd_init1", "cmd_init2", "cmd_ptt_on", "cmd_ptt_off", "cmd_exit1", "cmd_exit2")
 
 
@@ -126,9 +128,32 @@ def from_conf(conf):
 def cat_signature(cfg):
     """Ce qui oblige à rouvrir la liaison CAT quand ça change."""
     keys = ("rig", "port", "baud", "data_bits", "stop_bits", "handshake", "dtr", "rts", "host", "civ",
-            "ptt", "ptt_port") + CUSTOM_KEYS
+            "ptt", "ptt_port", "share", "share_port") + CUSTOM_KEYS
     # (PTT : DTR / RTS du port CAT confié à rigctld, ou ligne gardée basse à l'ouverture du port)
     return tuple(str(cfg.get(k)) for k in keys)
+
+
+def can_share(cfg):
+    """Le poste peut-il être partagé (rigctld de HFImage ouvert aux autres logiciels) ?
+    Postes Hamlib, et Kenwood pilotés en direct dont le modèle est connu (ils passent alors par Hamlib)."""
+    e = rig_entry(cfg["rig"])
+    return e["kind"] == "hamlib" or (e["kind"] == "kenwood" and e.get("model_id") is not None)
+
+
+def effective(cfg):
+    """rig_entry, en tenant compte du partage (Kenwood en direct -> Hamlib quand on partage)."""
+    e = dict(rig_entry(cfg["rig"]))
+    if cfg.get("share") and e["kind"] == "kenwood" and e.get("model_id") is not None:
+        e["kind"] = "hamlib"
+    return e
+
+
+def share_port(cfg):
+    try:
+        p = int(cfg.get("share_port") or 4532)
+    except (TypeError, ValueError):
+        p = 4532
+    return p if 1024 <= p <= 65535 else 4532
 
 
 def describe(cfg):
@@ -146,6 +171,8 @@ def describe(cfg):
     elif p == "CAT":
         p += " (" + ("arrière / data" if cfg["tx_audio"] == "rear" else "avant / micro") + ")"
     parts.append("PTT " + p)
+    if cfg.get("share") and can_share(cfg):
+        parts.append(f"partagé sur 127.0.0.1:{share_port(cfg)}")
     return " — ".join(parts)
 
 
@@ -760,10 +787,18 @@ class HamlibRig(RigctlRig):
         if self.proc is not None:
             try:
                 self.proc.kill()
-            except OSError:
+                self.proc.wait(timeout=3)
+            except (OSError, subprocess.TimeoutExpired):
                 pass
-        tport = _free_port()
         port = cfg["port"]
+        if cfg.get("share"):
+            # partage : port fixe (4532, celui de Hamlib NET rigctl), sur le PC seulement
+            tport = share_port(cfg)
+            if not _port_free(tport):
+                raise RuntimeError(f"partage du poste : le port {tport} est déjà pris (un autre rigctld, "
+                                   "ou HFImage ouvert deux fois ?). Fermez-le ou choisissez un autre port.")
+        else:
+            tport = _free_port()
         args = [exe, "-m", str(model_id), "-r", _hamlib_port(port), "-s", str(int(cfg.get("baud") or 9600)),
                 "-T", "127.0.0.1", "-t", str(tport)]
         if civ is not None:
@@ -1010,7 +1045,7 @@ class HamlibMissing(RuntimeError):
 
 def make_rig(cfg):
     """Ouvre la liaison CAT selon les réglages. -> RigBase ou None (pas de CAT)."""
-    e = rig_entry(cfg["rig"])
+    e = effective(cfg)
     k = e["kind"]
     if k == "none":
         return None
@@ -1042,7 +1077,7 @@ class Ptt:
         self.method = cfg.get("ptt", "VOX")
         self.ser = None
         self.line = None
-        e = rig_entry(cfg["rig"])
+        e = effective(cfg)
         if self.method == "CAT":
             if rig is None:
                 raise RuntimeError("PTT par CAT : choisissez d'abord le poste (liaison CAT)")
@@ -1232,6 +1267,17 @@ def _hamlib_port(port):
     if p.upper().startswith("COM") and p[3:].isdigit() and int(p[3:]) >= 10:
         return "\\\\.\\" + p
     return p
+
+
+def _port_free(p):
+    s = socket.socket()
+    try:
+        s.bind(("127.0.0.1", p))
+        return True
+    except OSError:
+        return False
+    finally:
+        s.close()
 
 
 def _free_port():

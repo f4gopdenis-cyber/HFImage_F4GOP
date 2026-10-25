@@ -229,8 +229,10 @@ class Presence:
                 d = json.loads(msg.payload.decode("utf-8"))
                 if not isinstance(d, dict) or not d.get("call"):
                     return
-                if time.time() - float(d.get("t", 0)) > STALE_S:
-                    return                                     # présence ancienne (programme planté)
+                if getattr(msg, "retain", False) and time.time() - float(d.get("t", 0)) > STALE_S:
+                    # présence gardée par le serveur et ancienne (programme planté). Un message reçu en
+                    # direct est toujours pris, même si l'horloge du PC de la station est fausse.
+                    return
                 self.on_station(call_t, d)                     # clé = indicatif du sujet
             elif msg.topic.startswith(f"{BASE}/hyb/"):
                 if len(msg.payload) <= 2048:

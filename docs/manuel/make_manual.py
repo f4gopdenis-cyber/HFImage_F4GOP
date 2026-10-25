@@ -283,6 +283,12 @@ s += B(["<b>Poste</b> : tapez une partie du nom dans « Rechercher » (ex. 7300,
         "est dans la liste (Hamlib 4.7.2) ; avec un Hamlib plus ancien (Linux), HFImage le pilote comme un IC-7300 "
         "à l'adresse B6. Si le poste ne répond pas : « CI-V USB Port » sur « Unlink from [REMOTE] », ou essayez "
         "l'autre port COM du poste.",
+        "<b>Partager le poste avec d'autres logiciels</b> (WSJT-X, JTDX, logger…) : un port COM ne sert qu'à un seul "
+        "programme à la fois. Case cochée, HFImage garde le port du poste et l'ouvre aux autres logiciels du PC : "
+        "dans WSJT-X ou le logger, choisissez le poste <b>« Hamlib NET rigctl »</b>, serveur <b>127.0.0.1:4532</b>. "
+        "Tous lisent et changent la fréquence et passent en émission en même temps. <b>Lancez HFImage en premier.</b> "
+        "Pour les postes de la liste Hamlib et les Kenwood (choisir le modèle exact) ; pas pour les commandes CAT "
+        "personnalisées ni le TCI (qui accepte déjà plusieurs logiciels).",
         "<b>Méthode PTT</b> : CAT (recommandé), DTR ou RTS (y compris sur le port d'une interface à côté du poste), "
         "ou VOX.",
         "<b>Source audio en émission</b> : « Arrière / Data » (audio USB, ACC) ou « Avant / Micro ». Choisissez "

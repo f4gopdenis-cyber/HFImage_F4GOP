@@ -275,6 +275,12 @@ s += B(["<b>Radio</b>: type part of the name in “Search” (e.g. 7300, FT-991,
         "only if the address was changed in the radio (Set → Connectors → CI-V). The <b>IC-7300MK2</b> is in the list "
         "(Hamlib 4.7.2); with an older Hamlib (Linux), HFImage drives it as an IC-7300 at address B6. If the radio "
         "does not answer: “CI-V USB Port” set to “Unlink from [REMOTE]”, or try the radio's other COM port.",
+        "<b>Share the radio with other programs</b> (WSJT-X, JTDX, logger…): a COM port can serve only one program at "
+        "a time. With the box ticked, HFImage keeps the radio's port and opens it to the other programs of the PC: in "
+        "WSJT-X or the logger, choose the radio <b>“Hamlib NET rigctl”</b>, server <b>127.0.0.1:4532</b>. They all read "
+        "and change the frequency and transmit at the same time. <b>Start HFImage first.</b> For the radios of the "
+        "Hamlib list and Kenwood radios (choose the exact model); not for custom CAT commands or TCI (which already "
+        "accepts several programs).",
         "<b>PTT method</b>: CAT (recommended), DTR or RTS (also on the port of an interface next to the radio), "
         "or VOX.",
         "<b>Transmit audio source</b>: “Rear / Data” (USB audio, ACC) or “Front / Mic”. Choose “Front / Mic” if your "

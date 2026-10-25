@@ -86,6 +86,20 @@ class RadioDialog(tk.Toplevel):
         self.e_civ.pack(side="left", padx=4)
         self.lb_civ = ttk.Label(cf, text="", foreground="#555")
         self.lb_civ.pack(side="left")
+        # 1.65 : partage du poste avec WSJT-X, un logger… (Hamlib NET rigctl sur 127.0.0.1:4532)
+        shf = ttk.Frame(c)
+        shf.grid(row=4, column=0, columnspan=2, sticky="w", pady=(6, 0))
+        self.v_share = tk.BooleanVar(value=bool(cfg.get("share")))
+        self.cb_share = ttk.Checkbutton(shf, text="Partager le poste avec d'autres logiciels (WSJT-X, logger…)",
+                                        variable=self.v_share, command=self._update)
+        self.cb_share.pack(anchor="w")
+        spf = ttk.Frame(shf)
+        spf.pack(anchor="w")
+        ttk.Label(spf, text="Port").pack(side="left", padx=(20, 4))
+        self.e_shport = ttk.Spinbox(spf, from_=1024, to=65535, textvariable=self.v["share_port"], width=7)
+        self.e_shport.pack(side="left")
+        self.lb_share = ttk.Label(shf, text="", foreground="#555", wraplength=330, justify="left")
+        self.lb_share.pack(anchor="w", padx=(20, 0))
         sp = ttk.LabelFrame(c, text="Paramètres du port série", padding=6)
         sp.grid(row=2, column=0, columnspan=2, sticky="we", pady=(4, 0))
         self.serial_frame = sp
@@ -245,6 +259,11 @@ class RadioDialog(tk.Toplevel):
         c["ptt_port"] = "" if pp in ("", self.ptt_names[""]) else pp
         c["port"] = port_name(c["port"])
         c["civ"] = c["civ"].strip().upper()
+        c["share"] = bool(self.v_share.get()) if hasattr(self, "v_share") else bool(c.get("share"))
+        try:
+            c["share_port"] = int(c["share_port"])
+        except (TypeError, ValueError):
+            c["share_port"] = 4532
         c["host"] = c["host"].strip()
         return c
 
@@ -294,7 +313,20 @@ class RadioDialog(tk.Toplevel):
         # source audio : sert au PTT CAT (TX1; / TX0;) et au contrôle du mode DATA (dès que le CAT est relié)
         self._state(self.audio_frame, c["ptt"] == "CAT" or kind != "none")
         self.cb_pttport.configure(state="normal" if c["ptt"] in ("DTR", "RTS") else "disabled")
-        if kind == "hamlib":
+        sh_ok = radio.can_share(c)
+        self.cb_share.configure(state="normal" if sh_ok else "disabled")
+        self.e_shport.configure(state="normal" if sh_ok and c["share"] else "disabled")
+        if sh_ok and c["share"]:
+            self.lb_share.configure(text=tr("Dans l'autre logiciel : poste « Hamlib NET rigctl », serveur") +
+                                    f" 127.0.0.1:{radio.share_port(c)}. " +
+                                    tr("Lancez HFImage en premier."))
+        elif kind == "kenwood" and not sh_ok:
+            self.lb_share.configure(text=tr("Pour partager, choisissez le modèle exact du poste dans la liste."))
+        elif sh_ok:
+            self.lb_share.configure(text="")
+        else:
+            self.lb_share.configure(text=tr("Partage possible avec les postes de la liste Hamlib et les Kenwood."))
+        if radio.effective(c)["kind"] == "hamlib":
             exe = radio.find_rigctld()
             if exe and radio.hamlib_outdated(exe):
                 self.lb_hamlib.configure(text=tr("Ancienne version de Hamlib : mise à jour conseillée "
