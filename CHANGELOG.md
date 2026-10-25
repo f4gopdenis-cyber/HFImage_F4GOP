@@ -1,5 +1,10 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 1.64 — mises à jour : erreur de certificat ; FT-991A dans la liste
+
+- **Recherche des mises à jour** : sur certains PC, Windows n'a pas encore le certificat racine dont GitHub a besoin (il ne le télécharge qu'à la première visite du site dans un navigateur) et HFImage affichait « CERTIFICATE_VERIFY_FAILED ». HFImage embarque maintenant la liste de certificats de Mozilla (certifi), utilisée **en plus** de ceux de Windows, avec une vérification toujours complète. Vaut aussi pour l'installation de Hamlib, la traduction des messages, les images du mode hybride et les sites des stations. Si l'erreur persiste (date du PC fausse, antivirus qui analyse le HTTPS), le message l'explique clairement.
+- Liste des postes : les postes pilotés par la même entrée Hamlib que leur version de base sont affichés ensemble : **Yaesu FT-991 / FT-991A**, FT-817 / FT-817ND, FT-857 / FT-857D, FT-897 / FT-897D, FT-891 / FT-891D, FT-2000 / FT-2000D, FTDX-3000 / FTDX-3000D. Taper « 991A » dans Rechercher trouve le poste.
+
 ## Version 1.63 — style Moderne : ambiance « Personnalisée »
 
 - Réglages → Apparence → Style **Moderne** : nouvelle ambiance **Personnalisée**, avec un bouton **Couleur…** à côté de l'ambiance. On choisit **une seule couleur** et HFImage en tire toute la palette : barre du haut, bandeaux et barre d'état dans cette couleur, fonds très clairs de la même teinte, bouton « Émettre », onglets et jauges dans une version plus foncée, texte noir ou blanc selon ce qui se lit le mieux. Les couleurs d'état (attente orange, émission rouge, reports) ne changent pas. La couleur est gardée d'un lancement à l'autre.

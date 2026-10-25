@@ -17,6 +17,7 @@ HFImage F4GOP s'appuie sur les composants libres suivants. Leurs licences s'appl
 | [Pillow](https://python-pillow.org/) (avec libavif, libwebp, libjpeg) | Images AVIF / WebP / JPEG / GIF | MIT-CMU (HPND) et licences des bibliothèques |
 | [python-sounddevice](https://github.com/spatialaudio/python-sounddevice) / [PortAudio](http://www.portaudio.com/) | Son | MIT |
 | [pySerial](https://github.com/pyserial/pyserial) | CAT / PTT | BSD-3-Clause |
+| [certifi](https://github.com/certifi/python-certifi) | Liste des certificats racine (Mozilla) pour les connexions HTTPS, en plus de ceux de Windows | MPL-2.0 |
 | [Hamlib](https://github.com/Hamlib/Hamlib) | Commande de plus de 300 postes (`rigctld`). **Pas inclus dans l'exe** : téléchargé à la demande depuis les Releases officielles de Hamlib, sans modification. La liste des modèles (`src/riglist.py`) en est tirée | LGPL-2.1 (bibliothèque), GPL-2.0 (rigctld) |
 | [comtypes](https://github.com/enthought/comtypes) | Liaison avec OmniRig | MIT |
 | [tkinterdnd2](https://github.com/Eliav2/tkinterdnd2) / [tkdnd](https://github.com/petasis/tkdnd) | Glisser-déposer de fichiers sur la fenêtre | MIT / BSD |

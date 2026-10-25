@@ -2,6 +2,7 @@ numpy==2.1.3
 pillow>=11.3
 sounddevice>=0.5
 pyserial>=3.5
+certifi
 comtypes>=1.4 ; sys_platform == "win32"
 paho-mqtt==2.1.0
 resvg_py>=0.5

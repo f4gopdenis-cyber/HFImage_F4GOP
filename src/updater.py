@@ -8,6 +8,7 @@
 
 Seuls les fichiers publiés sur github.com/f4gopdenis-cyber/HFImage_F4GOP sont acceptés.
 """
+import netssl
 import hashlib
 import json
 import os
@@ -70,7 +71,7 @@ def check(timeout=10):
 
 def _check_api(timeout):
     req = urllib.request.Request(LATEST_URL, headers=UA)
-    with urllib.request.urlopen(req, timeout=timeout) as r:
+    with netssl.urlopen(req, timeout) as r:
         d = json.loads(r.read().decode("utf-8"))
     asset = next((a for a in d.get("assets", []) if a.get("name") == ASSET_NAME), None)
     if asset is None and not LEGACY and WIN:   # la version Windows 7 ne prend jamais l'exe normal
@@ -137,7 +138,7 @@ def download(info, progress=lambda f: None, stop=None):
     h = hashlib.sha256()
     got = 0
     req = urllib.request.Request(url, headers={"User-Agent": UA["User-Agent"]})
-    with urllib.request.urlopen(req, timeout=30) as r, open(part, "wb") as f:
+    with netssl.urlopen(req, 30) as r, open(part, "wb") as f:
         total = info.get("size") or int(r.headers.get("Content-Length") or 0)
         while True:
             if stop is not None and stop.is_set():

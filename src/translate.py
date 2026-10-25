@@ -5,6 +5,7 @@ traduit, pour l'afficher dans sa langue (l'original reste affiché en dessous).
 La traduction passe par un service gratuit sur Internet (Google Traduction, puis
 MyMemory en secours). Sans Internet, rien n'est traduit et le message s'affiche tel quel.
 """
+import netssl
 import json
 import re
 import threading
@@ -24,7 +25,7 @@ def worth(text):
 
 def _get(url):
     req = urllib.request.Request(url, headers={"User-Agent": UA})
-    with urllib.request.urlopen(req, timeout=TIMEOUT) as r:
+    with netssl.urlopen(req, TIMEOUT) as r:
         return json.loads(r.read().decode("utf-8"))
 
 

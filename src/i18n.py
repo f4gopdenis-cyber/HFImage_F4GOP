@@ -990,6 +990,16 @@ T = [
     # 1.59 : DATA auto, Icom (adresse CI-V), Hamlib 4.7.2
     ("Couleur de l'ambiance", "Theme colour", "Farbe des Stils", "Color del ambiente", "Colore dell'ambiente"),
     ("Couleur…", "Colour…", "Farbe…", "Color…", "Colore…"),
+    ("certificat de sécurité du site refusé : vérifiez la date et l'heure du PC ; un antivirus qui analyse les "
+     "connexions HTTPS peut aussi en être la cause (autorisez HFImage)",
+     "the site's security certificate was refused: check the PC's date and time; an antivirus that scans HTTPS "
+     "connections can also cause this (allow HFImage)",
+     "Sicherheitszertifikat der Website abgelehnt: Datum und Uhrzeit des PCs prüfen; auch ein Virenscanner, der "
+     "HTTPS-Verbindungen prüft, kann die Ursache sein (HFImage zulassen)",
+     "certificado de seguridad del sitio rechazado: compruebe la fecha y la hora del PC; un antivirus que analiza "
+     "las conexiones HTTPS también puede ser la causa (autorice HFImage)",
+     "certificato di sicurezza del sito rifiutato: controlla data e ora del PC; anche un antivirus che analizza le "
+     "connessioni HTTPS può esserne la causa (autorizza HFImage)"),
     ("DATA auto", "DATA auto", "DATA auto", "DATA auto", "DATA auto"),
     ("Allumé : le poste passe en LSB-DATA (ou USB-DATA) au moment d'émettre, puis revient tout seul en LSB (ou USB) "
      "à la fin de l'image.",

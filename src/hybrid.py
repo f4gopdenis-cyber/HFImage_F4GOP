@@ -11,7 +11,6 @@ import io
 import re
 import ipaddress
 import socket
-import ssl
 import sys
 import time
 import urllib.error
@@ -339,7 +338,8 @@ def download(url: str, size: int, crc: int, timeout=20, from_air=False) -> bytes
     if from_air:
         _check_public_url(url)
     req = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
-    ctx = ssl.create_default_context()
+    import netssl
+    ctx = netssl.context()
     handlers = [urllib.request.HTTPSHandler(context=ctx)]
     if from_air:
         handlers.append(_PublicRedirect())

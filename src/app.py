@@ -3,6 +3,7 @@
 
 Onglets : Émission, Réception, Simulation, Réglages.
 """
+import netssl
 import io
 import json
 import os
@@ -62,7 +63,7 @@ import random
 import wave
 
 APP = "HFImage F4GOP"
-VERSION = "1.63"
+VERSION = "1.64"
 
 
 def _take_profile(argv):
@@ -7833,7 +7834,7 @@ class App(tk.Tk):
                 info = updater.check()
             except Exception as e:
                 if not quiet:
-                    self.ui(messagebox.showinfo, APP, tr("Impossible de vérifier les mises à jour :") + f"\n{tr(str(e))}")
+                    self.ui(messagebox.showinfo, APP, tr("Impossible de vérifier les mises à jour :") + f"\n{tr(netssl.explain(e))}")
                 else:
                     self.ui(self.log, f"Mise à jour : vérification sur GitHub impossible ({e})")
                 return

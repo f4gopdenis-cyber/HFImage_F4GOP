@@ -9,9 +9,9 @@ station EasyPal (adresse de son image1).
 Sécurité : les adresses viennent d'autres stations : http / https seulement, serveurs publics
 seulement (jamais l'ordinateur ni le réseau de la maison), 5 Mo au plus par image.
 """
+import netssl
 import email.utils
 import io
-import ssl
 import threading
 import time
 import tkinter as tk
@@ -41,7 +41,7 @@ def fetch(url, etag="", lastmod="", timeout=15):
     if lastmod:
         headers["If-Modified-Since"] = lastmod
     req = urllib.request.Request(url, headers=headers)
-    opener = urllib.request.build_opener(urllib.request.HTTPSHandler(context=ssl.create_default_context()),
+    opener = urllib.request.build_opener(urllib.request.HTTPSHandler(context=netssl.context()),
                                          hybrid._PublicRedirect())
     try:
         with opener.open(req, timeout=timeout) as r:

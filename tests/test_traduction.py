@@ -32,16 +32,16 @@ class FakeResp:
 
 class Traduction(unittest.TestCase):
     def test_google(self):
-        with mock.patch.object(translate.urllib.request, "urlopen", lambda req, timeout: FakeResp(GOOGLE)):
+        with mock.patch.object(translate.urllib.request, "urlopen", lambda req, timeout, **k: FakeResp(GOOGLE)):
             out = translate.translate("Bonjour Denis, merci pour la belle image. 73", "en")
         self.assertEqual(out, ("Hello Denis, thanks for the nice picture. 73", "fr"))
 
     def test_deja_dans_la_bonne_langue(self):
-        with mock.patch.object(translate.urllib.request, "urlopen", lambda req, timeout: FakeResp(GOOGLE)):
+        with mock.patch.object(translate.urllib.request, "urlopen", lambda req, timeout, **k: FakeResp(GOOGLE)):
             self.assertIsNone(translate.translate("Bonjour Denis, merci pour la belle image.", "fr"))
 
     def test_secours_mymemory(self):
-        def urlopen(req, timeout):
+        def urlopen(req, timeout, **k):
             if "googleapis" in req.full_url:
                 raise OSError("bloqué")
             self.assertIn("langpair=Autodetect%7Cen", req.full_url)
@@ -50,13 +50,13 @@ class Traduction(unittest.TestCase):
             self.assertEqual(translate.translate("Bonjour Denis, merci", "en"), ("Hello Denis", "fr"))
 
     def test_sans_internet(self):
-        def urlopen(req, timeout):
+        def urlopen(req, timeout, **k):
             raise OSError("pas de réseau")
         with mock.patch.object(translate.urllib.request, "urlopen", urlopen):
             self.assertIsNone(translate.translate("Bonjour Denis, merci pour l'image", "en"))
 
     def test_rien_a_traduire(self):
-        def urlopen(req, timeout):
+        def urlopen(req, timeout, **k):
             raise AssertionError("pas d'appel réseau pour si peu")
         with mock.patch.object(translate.urllib.request, "urlopen", urlopen):
             for t in ("73", "F4GOP", "", "  ", "5/9 73"):

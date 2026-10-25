@@ -52,14 +52,22 @@ def rig_keys():
     return [k for k, _ in SPECIAL] + [f"hamlib:{num}" for num in order]
 
 
+# postes pilotés par la même entrée Hamlib que leur version de base : noms affichés ensemble
+# (« 991A » trouve alors le FT-991 dans la recherche, comme dans WSJT-X où il n'y a que le FT-991)
+MODEL_ALSO = {1035: "FT-991 / FT-991A", 1022: "FT-857 / FT-857D", 1023: "FT-897 / FT-897D",
+              1020: "FT-817 / FT-817ND", 1037: "FTDX-3000 / FTDX-3000D", 1029: "FT-2000 / FT-2000D",
+              1036: "FT-891 / FT-891D"}
+
+
 def rig_label(key):
     for k, n in SPECIAL:
         if k == key:
             return n
     if key.startswith("hamlib:"):
         try:
-            mfg, mod = _BY_ID[int(key[7:])]
-            return f"{mfg} {mod}"
+            num = int(key[7:])
+            mfg, mod = _BY_ID[num]
+            return f"{mfg} {MODEL_ALSO.get(num, mod)}"
         except (KeyError, ValueError):
             pass
     return key
@@ -1176,7 +1184,8 @@ def install_hamlib(progress=lambda f: None):
     import urllib.request
     req = urllib.request.Request(HAMLIB_URL, headers={"User-Agent": "HFImage-F4GOP"})
     h, buf = hashlib.sha256(), io.BytesIO()
-    with urllib.request.urlopen(req, timeout=30) as r:
+    import netssl
+    with netssl.urlopen(req, 30) as r:
         total = int(r.headers.get("Content-Length") or 0)
         while True:
             b = r.read(128 * 1024)
