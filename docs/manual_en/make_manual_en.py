@@ -398,7 +398,10 @@ s += N(["<b>TX</b> tab → <b>Open image…</b> (JPG, PNG, GIF, WebP, AVIF, SVG,
         "If stations ask for missing pieces (BSR), <b>FIX</b> sends only what is missing (automatically by default)."])
 s.append(P("<b>Opening a picture</b>: one click in the large picture of the TX tab opens the file chooser; you can also "
            "<b>drag a picture</b> from Windows Explorer anywhere onto the window (another file type is offered for "
-           "sending)."))
+           "sending). A picture found on the Internet: in the web browser, right-click the picture → “Copy image”, "
+           "then <b>Ctrl+V</b> in HFImage (TX tab) or right-click the TX picture → <b>“Paste image”</b> (also in the "
+           "Images menu). A screenshot is pasted the same way; the pasted picture is saved in the “collées” folder of "
+           "the pictures."))
 s.append(P("<b>Phone pictures</b>: a picture saved “lying on its side” by the phone is turned the right way up "
            "automatically when opened, as in Windows. The <b>⟲</b> and <b>⟳</b> buttons (bottom right of the picture, "
            "TX tab) rotate it a quarter turn left or right if needed. A rotated picture is sent as a very high quality "

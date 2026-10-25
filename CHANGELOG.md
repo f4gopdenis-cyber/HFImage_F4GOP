@@ -1,5 +1,9 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 1.67 — coller une image dans l'onglet TX
+
+- **Coller une image** (demande de G0GOO) : une image copiée dans le navigateur (clic droit → « Copier l'image »), une capture d'écran ou un fichier image copié dans l'Explorateur se colle dans l'onglet TX par **Ctrl+V**, par le clic droit sur l'image TX → **« Coller l'image »**, ou par le menu **Images**. L'image collée est enregistrée en PNG dans le dossier « collées » des images. Dans une case de texte, Ctrl+V colle toujours le texte.
+
 ## Version 1.66 — logo incrusté gardé au redémarrage
 
 - Image TX : le **logo** et les autres **images du PC** incrustés (avec leur place, taille, rotation, inclinaison, forme, opacité) **restent en place** à la fermeture du programme : plus besoin de les remettre à chaque démarrage (demande de F4EEH). Les images reçues d'un correspondant, propres à chaque QSO, ne sont pas gardées. Si le fichier du logo a été déplacé ou effacé, il est simplement ignoré.

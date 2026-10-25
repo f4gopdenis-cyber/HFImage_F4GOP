@@ -398,7 +398,10 @@ s += N(["Onglet <b>TX</b> → <b>Ouvrir une image…</b> (JPG, PNG, GIF, WebP, A
 s.append(img("tx.png", 165, "L'onglet TX : mode Auto, robustesse, image compressée et durée d'émission."))
 s.append(P("<b>Ouvrir une image</b> : un clic dans la grande image de l'onglet TX ouvre le choix du fichier ; on peut "
            "aussi <b>glisser une image</b> depuis l'Explorateur Windows n'importe où sur la fenêtre (un autre type de "
-           "fichier est proposé à l'envoi)."))
+           "fichier est proposé à l'envoi). Image trouvée sur Internet : dans le navigateur, clic droit sur l'image → "
+           "« Copier l'image », puis <b>Ctrl+V</b> dans HFImage (onglet TX) ou clic droit sur l'image TX → "
+           "<b>« Coller l'image »</b> (aussi dans le menu Images). Une capture d'écran se colle de la même façon ; "
+           "l'image collée est enregistrée dans le dossier « collées » des images."))
 s.append(P("<b>Photos de téléphone</b> : une photo enregistrée « couchée » par le téléphone est remise droite "
            "toute seule à l'ouverture, comme dans Windows. Les boutons <b>⟲</b> et <b>⟳</b> (en bas à droite de l'image, "
            "onglet TX) la tournent d'un quart de tour à gauche ou à droite si besoin. Une photo tournée part en JPEG "

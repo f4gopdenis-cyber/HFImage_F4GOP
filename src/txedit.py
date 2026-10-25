@@ -371,9 +371,13 @@ class TxEditor:
         a, tr = self.app, self.app._tr
         m = tk.Menu(self.view, tearoff=0)
         keep = m._keep = []                       # variables des cases du menu (gardées en vie)
+        # 1.67 : image copiée dans le navigateur (clic droit → « Copier l'image »), demande de G0GOO
+        m.add_command(label=tr("Coller l'image (Ctrl+V)"), command=a.paste_image,
+                      state="disabled" if a.tx_busy else "normal")
         if a.src_img is None:
             m.add_command(label=tr("Ouvrir une image…"), command=a.open_image)
         else:
+            m.add_separator()
             if self.active():
                 h = self.hit(e)
                 if h is not None:

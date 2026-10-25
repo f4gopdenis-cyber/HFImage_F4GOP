@@ -63,7 +63,7 @@ import random
 import wave
 
 APP = "HFImage F4GOP"
-VERSION = "1.66"
+VERSION = "1.67"
 
 
 def _take_profile(argv):
@@ -494,6 +494,8 @@ class App(tk.Tk):
         self.after(1700, lambda: self.dock.restore(self.conf.get("detached")))   # fenêtres séparées
         self.after(20000, self._auto_clean)        # anciennes images (puis toutes les 6 h)
         self.protocol("WM_DELETE_WINDOW", self._quit)
+        self.bind_all("<Control-v>", self._ctrl_v, add="+")         # 1.67 : coller une image (onglet TX)
+        self.bind_all("<Control-V>", self._ctrl_v, add="+")
         self.journal_devices()
         self.log(f"{APP} {VERSION} prêt. Images reçues : {self.conf['folder']}")
 
@@ -1003,6 +1005,7 @@ class App(tk.Tk):
         m.add_cascade(label="Action", menu=a)
         i = tk.Menu(m, tearoff=0)
         i.add_command(label="Ouvrir une image…", command=self.open_image)
+        i.add_command(label="Coller l'image (Ctrl+V)", command=self.paste_image)
         i.add_command(label="Envoyer un fichier…", command=self.send_file)
         i.add_command(label="Mes conditions de trafic…", command=self.trafic_dialog)
         i.add_command(label="Image du correspondant…", command=self.pip_dialog)
@@ -3995,6 +3998,61 @@ class App(tk.Tk):
         if not p:
             return
         self.load_image(p)
+
+    PASTE_EXT = (".jpg", ".jpeg", ".png", ".svg", ".svgz", ".bmp", ".gif", ".webp", ".avif", ".tif", ".tiff")
+
+    def _ctrl_v(self, e):
+        """Ctrl+V : colle une image dans l'onglet TX (dans une case de texte, Ctrl+V colle le texte)."""
+        try:
+            cls = e.widget.winfo_class()
+        except (AttributeError, tk.TclError):
+            cls = ""
+        if cls in ("Entry", "TEntry", "Text", "TCombobox", "Spinbox", "TSpinbox"):
+            return None
+        if not self._tab_shown("tx") and not self.dock.detached("tx"):
+            return None
+        self.paste_image()
+        return "break"
+
+    def paste_image(self):
+        """Image copiée (navigateur : clic droit → « Copier l'image », capture d'écran, ou fichier
+        copié dans l'explorateur) -> image à émettre. L'image est enregistrée en PNG dans le dossier
+        « collées » des images, pour garder un fichier (nom repris pour l'envoi, galerie…)."""
+        if self.tx_busy:
+            return
+        try:
+            from PIL import ImageGrab
+            data = ImageGrab.grabclipboard()
+        except Exception as e:
+            data = None
+            self.log(f"Presse-papiers illisible : {e}")
+        if isinstance(data, list):                       # fichier(s) copié(s) dans l'explorateur
+            files = [f for f in data if isinstance(f, str) and f.lower().endswith(self.PASTE_EXT)
+                     and os.path.isfile(f)]
+            if files:
+                self.show_tab("tx")
+                self.load_image(files[0])
+                return
+            data = None
+        if not isinstance(data, Image.Image):
+            messagebox.showinfo(APP, tr("Le presse-papiers ne contient pas d'image.") + "\n\n" +
+                                tr("Dans le navigateur : clic droit sur l'image → « Copier l'image », puis Ctrl+V "
+                                   "ou clic droit sur l'image TX → « Coller l'image »."))
+            return
+        im = data
+        if im.mode not in ("RGB", "RGBA", "L"):
+            im = im.convert("RGBA" if "A" in im.getbands() else "RGB")
+        folder = os.path.join(self.v_folder.get() if hasattr(self, "v_folder") else DEFAULT_OUT, "collées")
+        try:
+            os.makedirs(folder, exist_ok=True)
+            p = os.path.join(folder, time.strftime("collee_%Y%m%d_%H%M%S.png"))
+            im.save(p)
+        except OSError as e:
+            messagebox.showerror(APP, tr("Image collée : enregistrement impossible") + f"\n{e}")
+            return
+        self.show_tab("tx")
+        self.load_image(p)
+        self.log(tr("Image collée :") + f" {im.width}×{im.height}")
 
     def load_image(self, p):
         try:

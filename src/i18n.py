@@ -1037,6 +1037,24 @@ T = [
      "elija otro puerto.",
      "condivisione della radio: la porta {0} è già occupata (un altro rigctld, o HFImage aperto due volte?). "
      "Chiudilo o scegli un'altra porta."),
+    ("Coller l'image (Ctrl+V)", "Paste image (Ctrl+V)", "Bild einfügen (Strg+V)", "Pegar imagen (Ctrl+V)",
+     "Incolla immagine (Ctrl+V)"),
+    ("Le presse-papiers ne contient pas d'image.", "The clipboard does not contain an image.",
+     "Die Zwischenablage enthält kein Bild.", "El portapapeles no contiene ninguna imagen.",
+     "Gli appunti non contengono un'immagine."),
+    ("Dans le navigateur : clic droit sur l'image → « Copier l'image », puis Ctrl+V ou clic droit sur l'image TX → "
+     "« Coller l'image ».",
+     "In the web browser: right-click the picture → “Copy image”, then Ctrl+V or right-click the TX picture → "
+     "“Paste image”.",
+     "Im Browser: Rechtsklick auf das Bild → „Bild kopieren“, dann Strg+V oder Rechtsklick auf das TX-Bild → "
+     "„Bild einfügen“.",
+     "En el navegador: clic derecho en la imagen → «Copiar imagen», luego Ctrl+V o clic derecho en la imagen TX → "
+     "«Pegar imagen».",
+     "Nel browser: clic destro sull'immagine → «Copia immagine», poi Ctrl+V o clic destro sull'immagine TX → "
+     "«Incolla immagine»."),
+    ("Image collée : enregistrement impossible", "Pasted image: cannot be saved", "Eingefügtes Bild: Speichern unmöglich",
+     "Imagen pegada: no se puede guardar", "Immagine incollata: salvataggio impossibile"),
+    ("Image collée :", "Image pasted:", "Bild eingefügt:", "Imagen pegada:", "Immagine incollata:"),
     ("DATA auto", "DATA auto", "DATA auto", "DATA auto", "DATA auto"),
     ("Allumé : le poste passe en LSB-DATA (ou USB-DATA) au moment d'émettre, puis revient tout seul en LSB (ou USB) "
      "à la fin de l'image.",
