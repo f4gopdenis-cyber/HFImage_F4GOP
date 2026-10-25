@@ -374,24 +374,33 @@ KENWOOD_MODES = {"1": "LSB", "2": "USB", "3": "CW", "4": "FM", "5": "AM", "6": "
                  "K": "LSB-DATA3", "L": "USB-DATA3", "M": "FM-DATA3", "N": "AM-DATA3"}
 
 
-def open_serial(port, baud):
-    """Ouvre le port série avec un message clair en cas d'échec."""
+def open_serial(port, baud, dtr=None, rts=None):
+    """Ouvre le port série avec un message clair en cas d'échec.
+    dtr / rts : état des lignes dès l'ouverture (None : comme d'habitude, hautes)."""
     import serial
     if not port:
         raise RuntimeError("aucun port COM choisi (onglet Réglages)")
     try:
-        return serial.Serial(port, baud, timeout=0.5, write_timeout=1)
+        ser = serial.Serial(None, baud, timeout=0.5, write_timeout=1)
+        ser.port = port
+        if dtr is not None:
+            ser.dtr = bool(dtr)
+        if rts is not None:
+            ser.rts = bool(rts)
+        ser.open()
+        return ser
     except serial.SerialException as e:
         msg = str(e)
         if not sys.platform.startswith("win") and ("Permission denied" in msg or "Errno 13" in msg):
             raise RuntimeError(
                 f"{port} : accès refusé. Sous Linux, ajoutez votre compte au groupe « dialout » "
                 "(sudo usermod -aG dialout $USER), puis fermez la session et reconnectez-vous.") from e
-        if "Access is denied" in msg or "Accès refusé" in msg or "PermissionError" in msg or "13" in msg:
+        if ("Access is denied" in msg or "Accès refusé" in msg or "PermissionError" in msg
+                or "Errno 13" in msg or "(13," in msg):
             raise RuntimeError(
-                f"{port} est déjà utilisé par un autre programme (ARCP, logger, WSJT-X…). "
-                "Fermez-le, ou utilisez l'autre port COM virtuel du poste "
-                "(les TS-890/990 en créent deux : Standard et Enhanced).") from e
+                f"{port} est déjà utilisé par un autre programme (ARCP, RS-BA1, logger, WSJT-X…). "
+                "Fermez-le, ou utilisez l'autre port COM virtuel du poste (les TS-890/990, IC-7610, "
+                "IC-7300MK2… en créent deux).") from e
         if "FileNotFoundError" in msg or "cannot find" in msg.lower() or "introuvable" in msg.lower():
             raise RuntimeError(f"{port} n'existe pas (poste éteint, câble USB débranché ?)") from e
         raise RuntimeError(f"impossible d'ouvrir {port} : {msg}") from e

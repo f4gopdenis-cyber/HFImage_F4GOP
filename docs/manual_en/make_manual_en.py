@@ -267,8 +267,14 @@ s += B(["<b>Radio</b>: type part of the name in “Search” (e.g. 7300, FT-991,
         "and can still <b>change the frequency</b> (frequency menu); the radio mode is left alone. With other radios, change "
         "the frequency on the radio.",
         "<b>Serial port</b> and speed; advanced parameters if needed (bits, stop, flow control, forced DTR / RTS). "
-        "The list shows every active Windows port (Prolific, CH340, Silicon Labs and virtual ports included); you can "
-        "also type the port name, e.g. COM9.",
+        "The list shows every active Windows port (Prolific, CH340, Silicon Labs and virtual ports included) "
+        "<b>with its description</b>: useful when the radio creates two COM ports (TS-890/990, IC-7610, IC-7300MK2…); "
+        "you can also type the port name, e.g. COM9. With DTR or RTS PTT on the CAT port, the line stays low when the "
+        "port opens (the radio does not go into transmit at start-up).",
+        "<b>CI-V address (Icom)</b>: empty = the model's address (IC-7300: 94, IC-7300MK2: B6, IC-7610: 98). Fill it "
+        "only if the address was changed in the radio (Set → Connectors → CI-V). The <b>IC-7300MK2</b> is in the list "
+        "(Hamlib 4.7.2); with an older Hamlib (Linux), HFImage drives it as an IC-7300 at address B6. If the radio "
+        "does not answer: “CI-V USB Port” set to “Unlink from [REMOTE]”, or try the radio's other COM port.",
         "<b>PTT method</b>: CAT (recommended), DTR or RTS (also on the port of an interface next to the radio), "
         "or VOX.",
         "<b>Transmit audio source</b>: “Rear / Data” (USB audio, ACC) or “Front / Mic”. Choose “Front / Mic” if your "
@@ -293,6 +299,13 @@ s += tip("Kenwood TS-890 / TS-990: DATA audio source = USB Audio, <b>DATA VOX OF
          "COM port at 115200 baud, source “Rear / Data”. The radio switches to LSB-DATA or USB-DATA by itself. The "
          "port must be free: close ARCP or your logger, or go through OmniRig. If the input and output of the USB codec "
          "have the same name in Windows, HFImage always picks the right one.", "Kenwood")
+s.append(P("“DATA auto” button: image in DATA, comments on voice", "h2"))
+s.append(P("The <b>DATA auto</b> button, next to “Transmit” (TX tab), is green when active. For each transmission the "
+           "radio switches from <b>LSB to LSB-DATA</b> (or USB to USB-DATA), sends the image, then <b>goes back to LSB</b> "
+           "(or USB) by itself at the end, or if the transmission is stopped: you can comment on the image on the "
+           "microphone straight away. It needs a CAT link that reads the mode (Kenwood, Icom and others through Hamlib, "
+           "FLRig, OmniRig, TCI); not with custom CAT commands. If the radio is already in DATA, or in another mode "
+           "(FM, CW…), HFImage leaves it alone. Button off: nothing changes."))
 s.append(P("Layout: separate windows", "h2"))
 s.append(P("Menu <b>Windows</b>: tick an area to turn it into a <b>separate window</b>, placed and sized wherever you want, "
            "even on another screen: <b>panel and buttons</b>, <b>waterfall</b>, <b>stations heard</b>, <b>Stations</b> tab and "

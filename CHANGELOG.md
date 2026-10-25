@@ -1,5 +1,24 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 1.59 — vérification : ports COM, Icom (IC-7300MK2, IC-7610), bouton « DATA auto »
+
+**Nouveau**
+- Bouton **DATA auto** (onglet TX, à côté de « Émettre ») : allumé, le poste passe de **LSB à LSB-DATA** (ou USB à USB-DATA) au moment d'envoyer l'image, puis **revient tout seul en LSB** (ou USB) à la fin ou si l'on arrête l'émission — pour commenter l'image au micro aussitôt après. Kenwood, Icom et autres par Hamlib, FLRig, OmniRig, TCI ; réglage gardé d'un lancement à l'autre.
+
+**Icom**
+- **IC-7300MK2** ajouté : Hamlib passe en **4.7.2** (mise à jour proposée dans la fenêtre « Poste radio » à ceux qui ont l'ancienne). Avant, un MK2 réglé en « IC-7300 » ne répondait pas (adresse CI-V B6h au lieu de 94h). Avec un Hamlib plus ancien (Linux, WSJT-X), le MK2 est piloté comme un IC-7300 à l'adresse B6h.
+- Nouvelle case **Adresse CI-V (Icom)** (vide = celle du modèle), pour les postes dont l'adresse a été changée.
+- Poste qui ne répond pas : message avec l'adresse CI-V attendue, le réglage « CI-V USB Port » et le conseil d'essayer l'autre port COM (IC-7610, IC-7300MK2…).
+
+**Corrections**
+- Poste pas en DATA : le **premier clic sur « Émettre » ne faisait rien** (erreur interne après le passage en DATA) ; le réglage « Mode : USB / Data » donnait aussi un faux compte rendu. Corrigé.
+- PTT par **RTS / DTR sur le port du CAT** (Kenwood en direct, commandes personnalisées) : la ligne montait à l'ouverture du port et le poste **passait en émission au lancement**. Elle reste maintenant basse ; le port d'une interface PTT séparée s'ouvre aussi lignes basses.
+- Hamlib : forcer la ligne DTR / RTS qui sert au PTT (ou RTS avec le contrôle de flux matériel) **empêchait rigctld de démarrer**. Corrigé.
+- Ports **COM13, COM113…** : un port absent était annoncé « déjà utilisé par un autre programme ».
+- **Pendant l'émission**, la fréquence n'est plus relue : une erreur de lecture (HF qui remonte dans le câble USB) coupait la liaison CAT et le poste pouvait **rester en émission**. Le retour en réception est répété 3 fois, avec une alerte s'il échoue.
+- Poste qui ne répond pas : la fenêtre ne se **fige** plus 8 à 15 s à chaque clic sur « Émettre », et une émission avec PTT RTS / DTR n’**attend** plus 8 s la liaison CAT.
+- Fenêtre « Poste radio » : les ports COM sont listés **avec leur description** (ex. « COM5 — Silicon Labs … Enhanced »), pour choisir le bon quand le poste en crée deux.
+
 ## Version 1.58 — style Moderne : boutons de gauche compacts
 
 - Style Moderne : les 16 boutons de gauche redeviennent **compacts**, plats et **sans icône** (aussi peu hauts qu'en style Classique), pour laisser toute sa place au waterfall. ÉMISSION reste dans la couleur d'accent, et les couleurs d'état (actif, attente, émission) sont gardées.

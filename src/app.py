@@ -62,7 +62,7 @@ import random
 import wave
 
 APP = "HFImage F4GOP"
-VERSION = "1.58"
+VERSION = "1.59"
 
 
 def _take_profile(argv):
@@ -444,6 +444,7 @@ class App(tk.Tk):
         self.rig_freq = self.rig_mode = None
         self.radio_cfg = radio.from_conf(self.conf)     # poste, CAT, PTT (fenêtre « Poste radio »)
         self.rig_lock = threading.RLock()
+        self._rig_err = None                       # (heure, erreur) du dernier échec d'ouverture CAT
         self._rig_hold = 0                               # > 0 : liaison CAT prêtée (tests)
         self._rig_kick = threading.Event()
         self._closing = False
@@ -669,6 +670,7 @@ class App(tk.Tk):
                 b.configure(image="", compound="none", padx=1, pady=1)
             if modern or st != "off":                  # Classique : boutons au repos laissés au thème
                 self._btn_color(b, st)
+        self._data_auto_paint()
         self._topbar_show()
         self._cards(self.look.palette())
         self.conf.update(theme=th, font_family=fam, font_size=size)
@@ -1716,6 +1718,13 @@ class App(tk.Tk):
         self.btn_comp.pack(side="left", padx=4)
         ttk.Button(bt, text="■ Arrêter", command=lambda: self.stop_tx.set()).pack(side="left")
         ttk.Button(bt, text="WAV…", command=self.save_wav).pack(side="left", padx=(4, 0))
+        # « DATA auto » : LSB -> LSB-DATA pour l'image, retour en LSB à la fin (commenter au micro)
+        self.bt_dauto = tk.Button(bt, text="DATA auto", command=self._data_auto_toggle, cursor="hand2",
+                                  padx=4, pady=0)
+        self.bt_dauto.pack(side="left", padx=(4, 0))
+        self._data_auto_paint()
+        tip(self.bt_dauto, "Allumé : le poste passe en LSB-DATA (ou USB-DATA) au moment d'émettre, puis "
+                           "revient tout seul en LSB (ou USB) à la fin de l'image.")
         # mode hybride : déposer l'image d'avance (l'annonce part tout de suite à l'émission)
         self.btn_pre = ttk.Button(bt, text="⇪ Déposer", command=self.hyb_preupload)
         tip(self.btn_pre, "Mode hybride : met l'image sur le serveur tout de suite ; à votre tour, "
@@ -3230,6 +3239,7 @@ class App(tk.Tk):
         self._save_conf_file()
         self._radio_summary()
         self.log("Poste radio : " + radio.describe(self.radio_cfg))
+        self._rig_err = None
         if radio.cat_signature(old) != radio.cat_signature(cfg):
             self._rig_close()
             self._rig_kick.set()
@@ -3312,6 +3322,24 @@ class App(tk.Tk):
             self.ui(self.log, f"Liaison CAT : {r.model or 'poste'} ({r.port})")
             return r
 
+    def _rig_open_now(self):
+        """Comme _rig_open, sans bloquer la fenêtre : si la liaison vient d'échouer, ou si le fil de
+        fond est justement en train de l'ouvrir, on donne tout de suite la dernière erreur."""
+        if self.rig is not None and self.rig._sig == radio.cat_signature(self.radio_cfg):
+            return self.rig
+        err = self._rig_err
+        if err and time.time() - err[0] < 30:
+            raise err[1]
+        if not self.rig_lock.acquire(timeout=0.3):
+            raise RuntimeError(tr("liaison CAT en cours d'ouverture, réessayez dans quelques secondes"))
+        try:
+            return self._rig_open()
+        except Exception as e:
+            self._rig_err = (time.time(), e)
+            raise
+        finally:
+            self.rig_lock.release()
+
     def _rig_loop(self):
         """Fil de fond : garde la liaison CAT ouverte et lit fréquence / mode régulièrement."""
         last_err, n, last_msg = 0.0, 0, ""
@@ -3324,6 +3352,11 @@ class App(tk.Tk):
                     self._rig_close()
                 self._rig_kick.wait(1)
                 continue
+            if self.tx_busy:
+                # pendant l'émission, on ne lit pas le poste : une erreur de lecture (HF dans le
+                # câble USB…) fermerait la liaison et le poste ne recevrait plus l'arrêt du PTT
+                self._rig_kick.wait(0.5)
+                continue
             if self.rig is None or self.rig._sig != radio.cat_signature(cfg):
                 if time.time() - last_err < 10 and not self._rig_kick.is_set():
                     self._rig_kick.wait(1)
@@ -3331,8 +3364,10 @@ class App(tk.Tk):
                 try:
                     self._rig_open()
                     last_msg = ""
+                    self._rig_err = None
                 except Exception as e:
                     last_err = time.time()
+                    self._rig_err = (last_err, e)
                     if str(e) != last_msg:
                         last_msg = str(e)
                         self.ui(self.log, f"Fréquence non lue : {e}")
@@ -3357,7 +3392,7 @@ class App(tk.Tk):
                     self.rig_freq = f
                 self.ui(self._show_freq)
             except Exception as e:
-                if self.rig is r and not self._rig_hold:
+                if self.rig is r and not self._rig_hold and not self.tx_busy:
                     self._rig_close()
                     last_err = time.time()
                     self.ui(self.log, f"Liaison CAT perdue : {e}")
@@ -5880,15 +5915,17 @@ class App(tk.Tk):
         if kind == "none":
             return True
         try:
-            r = self._rig_open()
+            r = self._rig_open_now()
             if r is None or not getattr(r, "reads_freq", True):
                 return True                          # CAT personnalisé : ni mode ni fréquence à contrôler
+            if self.conf.get("data_auto"):
+                return True                          # « DATA auto » : passage en DATA au moment d'émettre
             if cfg.get("set_mode") in ("usb", "data"):
                 m = r.mode() or ""
                 want_data = cfg["set_mode"] == "data"
                 if (r.is_data(m) if want_data else m.upper() == "USB"):
                     return True
-                msg, ok = r.set_mode(cfg["set_mode"])
+                ok, msg = r.set_mode(cfg["set_mode"])
                 self.log(msg)
                 if not ok:
                     return messagebox.askyesno(APP, msg + "\n\nÉmettre quand même ?")
@@ -5927,7 +5964,7 @@ class App(tk.Tk):
                          "automatique en DATA : Réglages → « Poste pas en DATA avant d'émettre ».")
             if act == "switch":
                 try:
-                    msg, ok2 = r.set_mode("data")
+                    ok2, msg = r.set_mode("data")
                 except Exception as e:
                     msg, ok2 = f"Passage en DATA impossible : {e}", False
                 self.log(msg)
@@ -6116,7 +6153,7 @@ class App(tk.Tk):
         return out
 
     def _tx_thread(self, job):
-        ptt = None
+        ptt = rig = data_back = None
         try:
             make_chunks, dur, mode, what = self._job_audio(job)
             if mode:
@@ -6124,14 +6161,15 @@ class App(tk.Tk):
             self.ui(self.log, f"Émission {what} : {_fmt_s(dur)}")
             self.ui(self._panel_tx, job, mode)
             cfg = job["ptt"]
+            rig = None
+            if cfg["ptt"] == "CAT":
+                rig = self._rig_open()
+            elif radio.rig_entry(cfg["rig"])["kind"] != "none":
+                # PTT sans CAT : la liaison si elle est ouverte, sans attendre un poste qui ne répond pas
+                r = self.rig
+                rig = r if r is not None and r._sig == radio.cat_signature(cfg) else None
+            data_back = self._data_auto_on(rig, job)
             if cfg["ptt"] != "VOX":
-                rig = None
-                if cfg["ptt"] == "CAT" or radio.rig_entry(cfg["rig"])["kind"] != "none":
-                    try:
-                        rig = self._rig_open()
-                    except Exception:
-                        if cfg["ptt"] == "CAT":
-                            raise
                 ptt = radio.Ptt(cfg, rig)
                 ptt.tx()
                 time.sleep(0.2)
@@ -6165,10 +6203,62 @@ class App(tk.Tk):
         finally:
             if ptt:
                 try:
-                    ptt.close()
-                except Exception:
-                    pass
+                    err = ptt.close()
+                except Exception as e:
+                    err = e
+                if err:
+                    self.ui(self.log_exc, "PTT (retour en réception)", err)
+                    self.ui(messagebox.showwarning, APP, tr("Le retour en réception a échoué : le poste est "
+                                                            "peut-être resté en émission. Vérifiez-le.")
+                            + f"\n\n{err}")
+            self._data_auto_off(rig, data_back)
             self.ui(self._tx_done, job["relisten"])
+
+    # ------------------------------------------------------------- « DATA auto »
+    def _data_auto_on(self, rig, job):
+        """Bouton « DATA auto » : LSB / USB -> LSB-DATA / USB-DATA juste avant d'émettre.
+        -> bande latérale à remettre après l'émission (« LSB » / « USB »), ou None."""
+        if not self.conf.get("data_auto") or rig is None or not getattr(rig, "reads_freq", True):
+            return None
+        try:
+            m = (rig.mode() or "").upper().replace(" ", "")
+            if not m or rig.is_data(m):
+                return None                          # déjà en DATA (ou mode inconnu) : rien à faire
+            if m not in ("LSB", "USB"):
+                self.ui(self.log, tr("DATA auto : le poste est en") + f" {m}, " + tr("mode laissé tel quel."))
+                return None
+            ok, msg = rig.set_mode("data")
+            self.ui(self.log, "DATA auto : " + msg)
+            return m if ok else None
+        except Exception as e:
+            self.ui(self.log_exc, "DATA auto", e)
+            return None
+
+    def _data_auto_off(self, rig, side):
+        """Après l'émission : retour en LSB / USB (phonie)."""
+        if not side or rig is None:
+            return
+        try:
+            rig.set_voice(side)
+            self.ui(self.log, "DATA auto : " + tr("retour en") + f" {side}.")
+        except Exception as e:
+            self.ui(self.log_exc, "DATA auto (retour en " + side + ")", e)
+        self._rig_kick.set()
+
+    def _data_auto_toggle(self):
+        self.conf["data_auto"] = not self.conf.get("data_auto")
+        self._save_conf_file()
+        self._data_auto_paint()
+        if self.conf["data_auto"]:
+            self.log(tr("DATA auto : le poste passe en LSB-DATA / USB-DATA pour émettre, puis revient en "
+                        "LSB / USB à la fin."))
+        else:
+            self.log(tr("DATA auto : arrêté."))
+
+    def _data_auto_paint(self):
+        b = getattr(self, "bt_dauto", None)
+        if b is not None:
+            self._btn_color(b, "on" if self.conf.get("data_auto") else "off")
 
     def _play_fallback(self, player, dev_label):
         """Joue sur la sortie choisie ; si elle échoue ou reste muette, essaie le

@@ -987,6 +987,83 @@ T = [
      "Ausgang „{0}“ funktioniert nicht; stattdessen „{1}“ verwendet (Einstellung aktualisiert).",
      "La salida «{0}» no funciona; se usa «{1}» (ajuste actualizado).",
      "L'uscita «{0}» non funziona; usata «{1}» al suo posto (impostazione aggiornata)."),
+    # 1.59 : DATA auto, Icom (adresse CI-V), Hamlib 4.7.2
+    ("DATA auto", "DATA auto", "DATA auto", "DATA auto", "DATA auto"),
+    ("Allumé : le poste passe en LSB-DATA (ou USB-DATA) au moment d'émettre, puis revient tout seul en LSB (ou USB) "
+     "à la fin de l'image.",
+     "On: the radio switches to LSB-DATA (or USB-DATA) when transmitting, then goes back to LSB (or USB) by itself "
+     "at the end of the image.",
+     "Ein: das Gerät schaltet beim Senden auf LSB-DATA (oder USB-DATA) und am Ende des Bildes von selbst zurück "
+     "auf LSB (oder USB).",
+     "Encendido: el equipo pasa a LSB-DATA (o USB-DATA) al transmitir y vuelve solo a LSB (o USB) al final de "
+     "la imagen.",
+     "Acceso: la radio passa in LSB-DATA (o USB-DATA) in trasmissione, poi torna da sola in LSB (o USB) alla fine "
+     "dell'immagine."),
+    ("DATA auto : le poste passe en LSB-DATA / USB-DATA pour émettre, puis revient en LSB / USB à la fin.",
+     "DATA auto: the radio switches to LSB-DATA / USB-DATA to transmit, then back to LSB / USB at the end.",
+     "DATA auto: das Gerät schaltet zum Senden auf LSB-DATA / USB-DATA und am Ende zurück auf LSB / USB.",
+     "DATA auto: el equipo pasa a LSB-DATA / USB-DATA para transmitir y vuelve a LSB / USB al final.",
+     "DATA auto: la radio passa in LSB-DATA / USB-DATA per trasmettere, poi torna in LSB / USB alla fine."),
+    ("DATA auto : arrêté.", "DATA auto: off.", "DATA auto: aus.", "DATA auto: apagado.", "DATA auto: spento."),
+    ("retour en", "back to", "zurück auf", "vuelta a", "ritorno in"),
+    ("DATA auto : le poste est en", "DATA auto: the radio is in", "DATA auto: das Gerät ist in",
+     "DATA auto: el equipo está en", "DATA auto: la radio è in"),
+    ("mode laissé tel quel.", "mode left unchanged.", "Modus unverändert.", "modo sin cambios.",
+     "modo lasciato invariato."),
+    ("Le retour en réception a échoué : le poste est peut-être resté en émission. Vérifiez-le.",
+     "Switching back to receive failed: the radio may still be transmitting. Please check it.",
+     "Zurückschalten auf Empfang fehlgeschlagen: das Gerät sendet eventuell noch. Bitte prüfen.",
+     "La vuelta a recepción ha fallado: el equipo puede seguir transmitiendo. Compruébelo.",
+     "Il ritorno in ricezione non è riuscito: la radio potrebbe essere ancora in trasmissione. Controllala."),
+    ("liaison CAT en cours d'ouverture, réessayez dans quelques secondes",
+     "CAT link is opening, try again in a few seconds", "CAT-Verbindung wird geöffnet, in einigen Sekunden erneut versuchen",
+     "enlace CAT abriéndose, inténtelo de nuevo en unos segundos",
+     "collegamento CAT in apertura, riprova tra qualche secondo"),
+    ("Adresse CI-V (Icom)", "CI-V address (Icom)", "CI-V-Adresse (Icom)", "Dirección CI-V (Icom)",
+     "Indirizzo CI-V (Icom)"),
+    ("vide = celle du modèle", "empty = model default", "leer = Standard des Modells", "vacío = la del modelo",
+     "vuoto = quello del modello"),
+    ("Adresse CI-V : deux chiffres hexadécimaux (par exemple 94 ou B6), ou vide.",
+     "CI-V address: two hexadecimal digits (for example 94 or B6), or empty.",
+     "CI-V-Adresse: zwei Hexadezimalziffern (z. B. 94 oder B6) oder leer.",
+     "Dirección CI-V: dos cifras hexadecimales (por ejemplo 94 o B6), o vacío.",
+     "Indirizzo CI-V: due cifre esadecimali (ad esempio 94 o B6), o vuoto."),
+    ("Ancienne version de Hamlib : mise à jour conseillée (nouveaux postes, dont l'IC-7300MK2).",
+     "Old Hamlib version: update recommended (new radios, including the IC-7300MK2).",
+     "Alte Hamlib-Version: Aktualisierung empfohlen (neue Geräte, u. a. IC-7300MK2).",
+     "Versión antigua de Hamlib: se recomienda actualizar (equipos nuevos, incluido el IC-7300MK2).",
+     "Vecchia versione di Hamlib: aggiornamento consigliato (nuove radio, tra cui l'IC-7300MK2)."),
+    ("Mettre à jour Hamlib", "Update Hamlib", "Hamlib aktualisieren", "Actualizar Hamlib", "Aggiorna Hamlib"),
+    ("{0} : pas de réponse du poste sur {1} à {2} bauds{3} — vérifiez le port, la vitesse et le réglage CAT du poste{4}",
+     "{0}: no answer from the radio on {1} at {2} baud{3} — check the port, the speed and the radio's CAT settings{4}",
+     "{0}: keine Antwort des Geräts an {1} mit {2} Baud{3} — Port, Geschwindigkeit und CAT-Einstellung des Geräts prüfen{4}",
+     "{0}: el equipo no responde en {1} a {2} baudios{3} — compruebe el puerto, la velocidad y el ajuste CAT del equipo{4}",
+     "{0}: nessuna risposta dalla radio su {1} a {2} baud{3} — controlla porta, velocità e impostazione CAT della radio{4}"),
+    (". Icom : l'adresse CI-V du poste doit être {0}h (menu Set → Connectors → CI-V) ; « CI-V USB Port » sur « Unlink "
+     "from [REMOTE] » ; certains Icom (IC-7610, IC-7300MK2…) créent deux ports COM : essayez l'autre",
+     ". Icom: the radio's CI-V address must be {0}h (menu Set → Connectors → CI-V); “CI-V USB Port” set to “Unlink "
+     "from [REMOTE]”; some Icoms (IC-7610, IC-7300MK2…) create two COM ports: try the other one",
+     ". Icom: die CI-V-Adresse des Geräts muss {0}h sein (Menü Set → Connectors → CI-V); „CI-V USB Port“ auf „Unlink "
+     "from [REMOTE]“; manche Icom (IC-7610, IC-7300MK2…) haben zwei COM-Ports: den anderen versuchen",
+     ". Icom: la dirección CI-V del equipo debe ser {0}h (menú Set → Connectors → CI-V); «CI-V USB Port» en «Unlink "
+     "from [REMOTE]»; algunos Icom (IC-7610, IC-7300MK2…) crean dos puertos COM: pruebe el otro",
+     ". Icom: l'indirizzo CI-V della radio deve essere {0}h (menu Set → Connectors → CI-V); «CI-V USB Port» su «Unlink "
+     "from [REMOTE]»; alcune Icom (IC-7610, IC-7300MK2…) creano due porte COM: prova l'altra"),
+    (". Icom : « CI-V USB Port » sur « Unlink from [REMOTE] » ; certains Icom (IC-7610, IC-7300MK2…) créent deux "
+     "ports COM : essayez l'autre",
+     ". Icom: “CI-V USB Port” set to “Unlink from [REMOTE]”; some Icoms (IC-7610, IC-7300MK2…) create two COM "
+     "ports: try the other one",
+     ". Icom: „CI-V USB Port“ auf „Unlink from [REMOTE]“; manche Icom (IC-7610, IC-7300MK2…) haben zwei COM-Ports: "
+     "den anderen versuchen",
+     ". Icom: «CI-V USB Port» en «Unlink from [REMOTE]»; algunos Icom (IC-7610, IC-7300MK2…) crean dos puertos "
+     "COM: pruebe el otro",
+     ". Icom: «CI-V USB Port» su «Unlink from [REMOTE]»; alcune Icom (IC-7610, IC-7300MK2…) creano due porte COM: "
+     "prova l'altra"),
+    ("{0} : Hamlib (rigctld) ne démarre pas — {1}", "{0}: Hamlib (rigctld) does not start — {1}",
+     "{0}: Hamlib (rigctld) startet nicht — {1}", "{0}: Hamlib (rigctld) no arranca — {1}",
+     "{0}: Hamlib (rigctld) non si avvia — {1}"),
+    ("le poste ne répond pas", "the radio does not answer", "das Gerät antwortet nicht", "el equipo no responde",
+     "la radio non risponde"),
     # erreurs fréquentes (audio / hybride / CAT)
     ("le serveur renvoie une page web (erreur 404 ?) au lieu de l'image : fichier absent à ce lien",
      "the server returns a web page (404 error?) instead of the image: no file at this link",
@@ -995,16 +1072,16 @@ T = [
      "il server restituisce una pagina web (errore 404?) invece dell'immagine: nessun file a questo link"),
     ("téléchargement refusé : HTTP {0}", "download refused: HTTP {0}", "Download verweigert: HTTP {0}",
      "descarga rechazada: HTTP {0}", "download rifiutato: HTTP {0}"),
-    ("{0} est déjà utilisé par un autre programme (ARCP, logger, WSJT-X…). Fermez-le, ou utilisez l'autre port "
-     "COM virtuel du poste (les TS-890/990 en créent deux : Standard et Enhanced).",
-     "{0} is already used by another program (ARCP, logger, WSJT-X…). Close it, or use the radio's other "
-     "virtual COM port (the TS-890/990 create two: Standard and Enhanced).",
-     "{0} wird bereits von einem anderen Programm benutzt (ARCP, Logger, WSJT-X…). Schließen oder den anderen "
-     "virtuellen COM-Port verwenden (TS-890/990 haben zwei: Standard und Enhanced).",
-     "{0} ya está en uso por otro programa (ARCP, logger, WSJT-X…). Ciérrelo o use el otro puerto COM "
-     "virtual del equipo (los TS-890/990 crean dos: Standard y Enhanced).",
-     "{0} è già usata da un altro programma (ARCP, logger, WSJT-X…). Chiudilo o usa l'altra porta COM "
-     "virtuale della radio (i TS-890/990 ne creano due: Standard ed Enhanced)."),
+    ("{0} est déjà utilisé par un autre programme (ARCP, RS-BA1, logger, WSJT-X…). Fermez-le, ou utilisez l'autre "
+     "port COM virtuel du poste (les TS-890/990, IC-7610, IC-7300MK2… en créent deux).",
+     "{0} is already used by another program (ARCP, RS-BA1, logger, WSJT-X…). Close it, or use the radio's other "
+     "virtual COM port (the TS-890/990, IC-7610, IC-7300MK2… create two).",
+     "{0} wird bereits von einem anderen Programm benutzt (ARCP, RS-BA1, Logger, WSJT-X…). Schließen oder den "
+     "anderen virtuellen COM-Port verwenden (TS-890/990, IC-7610, IC-7300MK2… haben zwei).",
+     "{0} ya está en uso por otro programa (ARCP, RS-BA1, logger, WSJT-X…). Ciérrelo o use el otro puerto COM "
+     "virtual del equipo (los TS-890/990, IC-7610, IC-7300MK2… crean dos).",
+     "{0} è già usata da un altro programma (ARCP, RS-BA1, logger, WSJT-X…). Chiudilo o usa l'altra porta COM "
+     "virtuale della radio (TS-890/990, IC-7610, IC-7300MK2… ne creano due)."),
     ("{0} n'existe pas (poste éteint, câble USB débranché ?)", "{0} does not exist (radio off, USB cable unplugged?)",
      "{0} existiert nicht (Gerät aus, USB-Kabel getrennt?)", "{0} no existe (¿equipo apagado, cable USB desconectado?)",
      "{0} non esiste (radio spenta, cavo USB scollegato?)"),

@@ -81,7 +81,9 @@ DEFAULTS = {"rig": "none", "port": "", "baud": 115200, "data_bits": "default", "
             "cmd_exit1": "", "cmd_exit2": "", "cmd_delay": 200,
             # chaînes de départ / sortie : « tx » à chaque émission (comme EasyPal), « open » au
             # lancement et à la fermeture du programme
-            "cmd_when": "tx"}
+            "cmd_when": "tx",
+            # Icom : adresse CI-V (hexadécimal, « 94 », « B6 »…), vide = celle du modèle
+            "civ": ""}
 CUSTOM_KEYS = ("cmd_init1", "cmd_init2", "cmd_ptt_on", "cmd_ptt_off", "cmd_exit1", "cmd_exit2")
 
 
@@ -105,11 +107,10 @@ def from_conf(conf):
 
 def cat_signature(cfg):
     """Ce qui oblige à rouvrir la liaison CAT quand ça change."""
-    keys = ("rig", "port", "baud", "data_bits", "stop_bits", "handshake", "dtr", "rts", "host") + CUSTOM_KEYS
-    sig = tuple(str(cfg.get(k)) for k in keys)
-    if rig_entry(cfg["rig"])["kind"] == "hamlib":       # PTT DTR/RTS du port CAT confié à rigctld
-        sig += (cfg.get("ptt"), cfg.get("ptt_port"))
-    return sig
+    keys = ("rig", "port", "baud", "data_bits", "stop_bits", "handshake", "dtr", "rts", "host", "civ",
+            "ptt", "ptt_port") + CUSTOM_KEYS
+    # (PTT : DTR / RTS du port CAT confié à rigctld, ou ligne gardée basse à l'ouverture du port)
+    return tuple(str(cfg.get(k)) for k in keys)
 
 
 def describe(cfg):
@@ -135,7 +136,18 @@ def open_port(cfg, port=None):
     """Ouvre un port série avec tous les paramètres choisis (comme WSJT-X)."""
     import serial
     port = port or cfg.get("port")
-    ser = audio.open_serial(port, int(cfg.get("baud") or 9600))
+    hs = cfg.get("handshake")
+    lines = {}
+    for line in ("dtr", "rts"):
+        v = cfg.get(line)
+        if v in ("high", "low") and not (line == "rts" and hs == "hardware"):
+            lines[line] = v == "high"
+    # PTT par DTR / RTS sur ce même port : la ligne reste basse dès l'ouverture (sinon le poste
+    # passerait en émission au lancement du programme)
+    pl = ptt_line_on(cfg, port)
+    if pl:
+        lines[pl] = False
+    ser = audio.open_serial(port, int(cfg.get("baud") or 9600), **lines)
     try:
         db = cfg.get("data_bits")
         if str(db) in ("7", "8"):
@@ -150,14 +162,29 @@ def open_port(cfg, port=None):
             ser.xonxoff, ser.rtscts = True, False
         elif hs == "hardware":
             ser.xonxoff, ser.rtscts = False, True
-        for line, attr in (("dtr", "dtr"), ("rts", "rts")):
-            v = cfg.get(line)
-            if v in ("high", "low") and not (line == "rts" and hs == "hardware"):
-                setattr(ser, attr, v == "high")
+        for line, on in lines.items():
+            setattr(ser, line, on)
     except Exception:
         ser.close()
         raise
     return ser
+
+
+def ptt_line_on(cfg, port):
+    """« dtr » / « rts » si le PTT passe par cette ligne du port `port`, sinon None."""
+    if cfg.get("ptt") in ("DTR", "RTS") and port and (cfg.get("ptt_port") or cfg.get("port")) == port:
+        return cfg["ptt"].lower()
+    return None
+
+
+def civ_addr(cfg):
+    """Adresse CI-V choisie (« 94 », « B6h », « 0xB6 »…) -> entier, ou None (celle du modèle)."""
+    t = str(cfg.get("civ") or "").strip().upper().replace("0X", "").rstrip("H").strip()
+    try:
+        v = int(t, 16) if t else None
+    except ValueError:
+        return None
+    return v if v is not None and 0 < v < 0xE0 else None
 
 
 # ------------------------------------------------------------------ pilotes
@@ -204,6 +231,10 @@ class RigBase:
     def set_sideband(self, side):
         """« LSB » ou « USB » (sans DATA)."""
         raise RuntimeError("ce pilote ne change pas la bande latérale")
+
+    def set_voice(self, side):
+        """Retour en phonie : « LSB » ou « USB » sans DATA (après une émission en « DATA auto »)."""
+        self.set_sideband(side)
 
     def qsy(self, hz, side=None):
         """Va sur la fréquence `hz`. side (« LSB » / « USB ») : bande latérale voulue sur cette
@@ -477,6 +508,18 @@ class KenwoodRig(RigBase):
         else:
             self.write("MD1;" if lsb else "MD2;")
 
+    def set_voice(self, side):
+        lsb = side == "LSB"
+        if self.model == "TS-990S":
+            cmds = ["OM01;" if lsb else "OM02;"]
+        elif self.model == "TS-890S":
+            cmds = ["OM01;" if lsb else "OM02;", "DA0;"]
+        else:
+            cmds = ["MD1;" if lsb else "MD2;", "DA0;"]
+        for c in cmds:
+            self.write(c)
+            time.sleep(0.15)
+
     def ptt(self, on, rear=True):
         if on:
             self.write("TX1;" if rear else "TX0;")
@@ -628,47 +671,31 @@ class RigctlRig(RigBase):
 class HamlibRig(RigctlRig):
     """Tous les postes Hamlib : HFImage lance rigctld (caché) et lui parle en local."""
     kind = "hamlib"
+    # poste inconnu d'un Hamlib trop ancien (Linux, WSJT-X…) -> modèle proche + adresse CI-V
+    FALLBACK = {3094: (3073, 0xB6)}                      # IC-7300MK2 -> IC-7300 à l'adresse B6h
 
     def __init__(self, cfg, model_id, label):
         exe = find_rigctld()
         if not exe:
             raise HamlibMissing()
         self.proc = None
-        tport = _free_port()
+        self.logf = None
         port = cfg.get("port") or ""
         if not port:
             raise RuntimeError("aucun port COM choisi pour le poste")
-        args = [exe, "-m", str(model_id), "-r", _hamlib_port(port), "-s", str(int(cfg.get("baud") or 9600)),
-                "-T", "127.0.0.1", "-t", str(tport)]
-        conf = []
-        if str(cfg.get("data_bits")) in ("7", "8"):
-            conf.append(f"data_bits={cfg['data_bits']}")
-        if str(cfg.get("stop_bits")) in ("1", "2"):
-            conf.append(f"stop_bits={cfg['stop_bits']}")
-        hs = {"none": "None", "xonxoff": "XONXOFF", "hardware": "Hardware"}.get(cfg.get("handshake"))
-        if hs:
-            conf.append(f"serial_handshake={hs}")
-        for line in ("dtr", "rts"):
-            v = {"high": "ON", "low": "OFF"}.get(cfg.get(line))
-            if v:
-                conf.append(f"{line}_state={v}")
-        if conf:
-            args += ["--set-conf=" + ",".join(conf)]
-        # PTT par DTR / RTS sur le port CAT : géré par Hamlib (le port lui appartient)
-        if cfg.get("ptt") in ("DTR", "RTS") and (cfg.get("ptt_port") or port) == port:
-            args += ["-P", cfg["ptt"], "-p", _hamlib_port(port)]
-        flags = 0x08000000 if sys.platform.startswith("win") else 0        # CREATE_NO_WINDOW
         self.logpath = os.path.join(os.path.dirname(exe) if os.access(os.path.dirname(exe), os.W_OK)
                                     else os.path.expanduser("~"), "rigctld_hfimage.log")
+        civ = civ_addr(cfg)
         try:
-            self.logf = open(self.logpath, "wb")
-        except OSError:
-            self.logf = subprocess.DEVNULL
-        # sortie d'erreur dans un fichier (un tuyau non lu finirait par bloquer rigctld)
-        self.proc = subprocess.Popen(args, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
-                                     stderr=self.logf, creationflags=flags)
-        _kill_with_us(self.proc)
-        try:
+            tport = self._start(exe, cfg, model_id, civ)
+            if model_id in self.FALLBACK and civ is None:
+                for _ in range(12):                          # rigctld trop ancien : il s'arrête aussitôt
+                    if self.proc.poll() is not None:
+                        break
+                    time.sleep(0.1)
+                if self.proc.poll() is not None:             # il ne connaît pas ce modèle
+                    old, civ = self.FALLBACK[model_id]
+                    tport = self._start(exe, cfg, old, civ)
             t0 = time.time()
             while True:
                 if self.proc.poll() is not None:
@@ -678,8 +705,9 @@ class HamlibRig(RigctlRig):
                     super().__init__(cfg, "127.0.0.1", tport, label)
                     break
                 except RuntimeError:
-                    if time.time() - t0 > 8:
-                        raise
+                    if time.time() - t0 > 15:
+                        raise RuntimeError(f"{label} : Hamlib (rigctld) ne démarre pas — "
+                                           + (self._last_err() or "le poste ne répond pas"))
                     time.sleep(0.4)
             try:
                 f = self.freq()
@@ -689,11 +717,61 @@ class HamlibRig(RigctlRig):
                 err = self._last_err()
                 raise RuntimeError(f"{label} : pas de réponse du poste sur {port} à {cfg.get('baud')} bauds"
                                    + (f" (Hamlib : {err})" if err else "")
-                                   + " — vérifiez le port, la vitesse et le réglage CAT du poste")
+                                   + " — vérifiez le port, la vitesse et le réglage CAT du poste"
+                                   + (icom_hint(label, civ) if "Icom" in label else ""))
         except Exception:
             self.close()
             raise
         self.port = port
+
+    def _start(self, exe, cfg, model_id, civ):
+        """Lance rigctld -> port TCP local."""
+        if self.proc is not None:
+            try:
+                self.proc.kill()
+            except OSError:
+                pass
+        tport = _free_port()
+        port = cfg["port"]
+        args = [exe, "-m", str(model_id), "-r", _hamlib_port(port), "-s", str(int(cfg.get("baud") or 9600)),
+                "-T", "127.0.0.1", "-t", str(tport)]
+        if civ is not None:
+            args += ["-c", f"0x{civ:02X}"]
+        conf = []
+        if str(cfg.get("data_bits")) in ("7", "8"):
+            conf.append(f"data_bits={cfg['data_bits']}")
+        if str(cfg.get("stop_bits")) in ("1", "2"):
+            conf.append(f"stop_bits={cfg['stop_bits']}")
+        hs = {"none": "None", "xonxoff": "XONXOFF", "hardware": "Hardware"}.get(cfg.get("handshake"))
+        if hs:
+            conf.append(f"serial_handshake={hs}")
+        pl = ptt_line_on(cfg, port)
+        for line in ("dtr", "rts"):
+            v = {"high": "ON", "low": "OFF"}.get(cfg.get(line))
+            # Hamlib refuse de démarrer si on force la ligne du PTT, ou RTS avec le contrôle matériel
+            if v and line != pl and not (line == "rts" and hs == "Hardware"):
+                conf.append(f"{line}_state={v}")
+        if conf:
+            args += ["--set-conf=" + ",".join(conf)]
+        # PTT par DTR / RTS sur le port CAT : géré par Hamlib (le port lui appartient)
+        if pl:
+            args += ["-P", cfg["ptt"], "-p", _hamlib_port(port)]
+        flags = 0x08000000 if sys.platform.startswith("win") else 0        # CREATE_NO_WINDOW
+        lf = getattr(self, "logf", None)
+        if lf not in (None, subprocess.DEVNULL):
+            try:
+                lf.close()
+            except OSError:
+                pass
+        try:
+            self.logf = open(self.logpath, "wb")
+        except OSError:
+            self.logf = subprocess.DEVNULL
+        # sortie d'erreur dans un fichier (un tuyau non lu finirait par bloquer rigctld)
+        self.proc = subprocess.Popen(args, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
+                                     stderr=self.logf, creationflags=flags)
+        _kill_with_us(self.proc)
+        return tport
 
     def _last_err(self):
         try:
@@ -949,11 +1027,10 @@ class Ptt:
             elif rig is not None and rig.port == port:
                 raise RuntimeError(f"PTT {self.method} : le port {port} est déjà utilisé par le CAT")
             else:
-                import serial
-                try:
-                    self.ser = serial.Serial(port, 9600, timeout=0.2)
-                except serial.SerialException as ex:
-                    raise RuntimeError(f"PTT : impossible d'ouvrir {port} : {ex}")
+                try:                                     # lignes basses dès l'ouverture
+                    self.ser = audio.open_serial(port, 9600, dtr=False, rts=False)
+                except RuntimeError as ex:
+                    raise RuntimeError(f"PTT {self.method} : {ex}")
                 self.ser.rts = False
                 self.ser.dtr = False
 
@@ -973,29 +1050,41 @@ class Ptt:
         self._set(True)
 
     def rx(self):
+        """Retour en réception : la commande est répétée si elle échoue (sinon le poste
+        resterait en émission)."""
         try:
-            self._set(False)
+            for i in range(3):
+                try:
+                    self._set(False)
+                    break
+                except Exception:
+                    if i == 2:
+                        raise
+                    time.sleep(0.4)
         finally:
             if self.rig is not None:
                 self.rig.after_tx()                      # chaînes de sortie (commandes perso)
 
     def close(self):
+        """-> None, ou l'erreur du retour en réception (le poste est peut-être resté en émission)."""
+        err = None
         try:
             self.rx()
-        except Exception:
-            pass
+        except Exception as e:
+            err = e
         if self.ser is not None:
             try:
                 self.ser.close()
             except Exception:
                 pass
             self.ser = None
+        return err
 
 
 # ------------------------------------------------------------------ Hamlib : installation
 HAMLIB_URL = (f"https://github.com/Hamlib/Hamlib/releases/download/{HAMLIB_VERSION}/"
               f"hamlib-w64-{HAMLIB_VERSION}.zip")
-HAMLIB_SHA256 = "2a7bfae280ec8aef1d42558b73eaef7f5f0d1dfa9fd8463c15adde5fdec63851"
+HAMLIB_SHA256 = "8553bc6c5c6032e8debf99c017e98f58fed7e07e7c25d04815dc3e8bbe3304c7"
 HAMLIB_FILES = ("rigctld.exe", "libhamlib-4.dll", "libgcc_s_seh-1.dll", "libwinpthread-1.dll", "libusb-1.0.dll")
 
 
@@ -1013,7 +1102,7 @@ def find_rigctld():
     if not sys.platform.startswith("win"):
         import shutil
         return shutil.which("rigctld")
-    cands = [os.path.join(hamlib_dir(), "rigctld.exe")]
+    cands = [os.path.join(hamlib_dir(), "rigctld.exe")] + _old_own_rigctld()
     pf = [os.environ.get(v) for v in ("ProgramFiles", "ProgramFiles(x86)", "LOCALAPPDATA")]
     for root in [r"C:\WSJT\wsjtx\bin", r"C:\WSJT\wsjtx-improved\bin", r"C:\JTDX64\bin", r"C:\JTDX\bin"]:
         cands += [os.path.join(root, "rigctld-wsjtx.exe"), os.path.join(root, "rigctld.exe")]
@@ -1030,6 +1119,29 @@ def find_rigctld():
         if c and os.path.isfile(c):
             return c
     return None
+
+
+def _old_own_rigctld():
+    """rigctld des versions de Hamlib téléchargées par d'anciennes versions d'HFImage (la plus récente
+    d'abord) : il reste utilisable en attendant la mise à jour."""
+    base = os.path.dirname(hamlib_dir())
+    try:
+        dirs = [d for d in os.listdir(base) if d.startswith("hamlib-") and d != os.path.basename(hamlib_dir())]
+    except OSError:
+        return []
+
+    def ver(d):
+        try:
+            return tuple(int(x) for x in d[7:].split("."))
+        except ValueError:
+            return ()
+    return [os.path.join(base, d, "rigctld.exe") for d in sorted(dirs, key=ver, reverse=True)]
+
+
+def hamlib_outdated(exe=None):
+    """Windows : le rigctld utilisé est celui d'une ancienne version d'HFImage -> True."""
+    exe = exe or find_rigctld()
+    return bool(exe) and exe in _old_own_rigctld()
 
 
 def install_hamlib(progress=lambda f: None):
@@ -1064,6 +1176,22 @@ def install_hamlib(progress=lambda f: None):
     if not os.path.isfile(os.path.join(dest, "rigctld.exe")):
         raise RuntimeError("rigctld.exe absent de l'archive Hamlib")
     return dest
+
+
+ICOM_CIV = {"IC-7300": 0x94, "IC-7300MK2": 0xB6, "IC-7610": 0x98, "IC-705": 0xA4, "IC-9700": 0xA2,
+            "IC-7100": 0x88, "IC-7851": 0x8E, "IC-7850/7851": 0x8E, "IC-7600": 0x7A, "IC-7700": 0x74,
+            "IC-7000": 0x70, "IC-7200": 0x76, "IC-7410": 0x80, "IC-9100": 0x7C, "IC-905": 0xAC}
+
+
+def icom_hint(label, civ=None):
+    """Conseils quand un Icom ne répond pas."""
+    mod = label.replace("Icom", "").strip()
+    a = civ if civ is not None else ICOM_CIV.get(mod)
+    t = ". Icom : "
+    if a is not None:
+        t += f"l'adresse CI-V du poste doit être {a:02X}h (menu Set → Connectors → CI-V) ; "
+    return t + ("« CI-V USB Port » sur « Unlink from [REMOTE] » ; certains Icom (IC-7610, IC-7300MK2…) "
+                "créent deux ports COM : essayez l'autre")
 
 
 def _hamlib_port(port):

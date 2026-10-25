@@ -11,6 +11,20 @@ from i18n import tr
 BAUDS = [1200, 2400, 4800, 9600, 19200, 38400, 57600, 115200]
 
 
+def port_label(port, desc):
+    """« COM5 — Silicon Labs CP210x … » pour la liste (le port seul s'il n'y a pas de description)."""
+    d = (desc or "").strip()
+    if not d or d.lower() in ("n/a", port.lower()):
+        return port
+    d = d.replace(f"({port})", "").strip()
+    return f"{port} — {d}"
+
+
+def port_name(text):
+    """Texte de la liste -> nom du port (« COM5 — … » -> « COM5 »)."""
+    return (text or "").split(" — ")[0].strip()
+
+
 class RadioDialog(tk.Toplevel):
     def __init__(self, app):
         super().__init__(app)
@@ -57,12 +71,21 @@ class RadioDialog(tk.Toplevel):
         c.pack(fill="x", pady=(8, 0))
         self.cat_frame = c
         ttk.Label(c, text="Port série").grid(row=0, column=0, sticky="w")
-        ports = [p for p, _ in audio.ports_list()]
-        self.cb_port = ttk.Combobox(c, textvariable=self.v["port"], values=ports, width=12)
+        # port + description (« COM5 — Silicon Labs … Enhanced ») : aide à choisir le bon port quand
+        # le poste en crée deux (TS-890/990, IC-7610, IC-7300MK2…)
+        ports = [port_label(p, d) for p, d in audio.ports_list()]
+        self.cb_port = ttk.Combobox(c, textvariable=self.v["port"], values=ports, width=34)
         self.cb_port.grid(row=0, column=1, sticky="w", padx=4, pady=2)
         ttk.Label(c, text="Serveur réseau").grid(row=1, column=0, sticky="w")
         self.e_host = ttk.Entry(c, textvariable=self.v["host"], width=20)
         self.e_host.grid(row=1, column=1, sticky="w", padx=4, pady=2)
+        cf = ttk.Frame(c)
+        cf.grid(row=3, column=0, columnspan=2, sticky="w", pady=(4, 0))
+        ttk.Label(cf, text="Adresse CI-V (Icom)").pack(side="left")
+        self.e_civ = ttk.Entry(cf, textvariable=self.v["civ"], width=6)
+        self.e_civ.pack(side="left", padx=4)
+        self.lb_civ = ttk.Label(cf, text="", foreground="#555")
+        self.lb_civ.pack(side="left")
         sp = ttk.LabelFrame(c, text="Paramètres du port série", padding=6)
         sp.grid(row=2, column=0, columnspan=2, sticky="we", pady=(4, 0))
         self.serial_frame = sp
@@ -131,7 +154,7 @@ class RadioDialog(tk.Toplevel):
         self.ptt_names = {"": tr("Même port que le CAT")}
         self.v_pttport = tk.StringVar(value=self.v["ptt_port"].get() or self.ptt_names[""])
         self.cb_pttport = ttk.Combobox(p, textvariable=self.v_pttport, values=[self.ptt_names[""]] + ports,
-                                       width=20)
+                                       width=28)
         self.cb_pttport.grid(row=1, column=1, sticky="w", padx=4, pady=(4, 0))
         ttk.Label(p, text="DTR / RTS : interface PTT à côté du poste\n(sur un autre port COM, ou celui du CAT).",
                   foreground="#555", justify="left").grid(row=2, column=0, columnspan=2, sticky="w", pady=(4, 0))
@@ -218,9 +241,10 @@ class RadioDialog(tk.Toplevel):
             c["cmd_delay"] = 200
         for k in radio.CUSTOM_KEYS:
             c[k] = c[k].strip()
-        pp = self.v_pttport.get().strip()
+        pp = port_name(self.v_pttport.get())
         c["ptt_port"] = "" if pp in ("", self.ptt_names[""]) else pp
-        c["port"] = c["port"].strip()
+        c["port"] = port_name(c["port"])
+        c["civ"] = c["civ"].strip().upper()
         c["host"] = c["host"].strip()
         return c
 
@@ -256,6 +280,12 @@ class RadioDialog(tk.Toplevel):
         self.cb_port.configure(state="normal" if serial_on else "disabled")
         net = {"flrig": "127.0.0.1:12345", "netrigctl": "127.0.0.1:4532", "tci": "127.0.0.1:40001"}
         self.e_host.configure(state="normal" if kind in net else "disabled")
+        icom = kind == "hamlib" and radio.rig_label(c["rig"]).startswith("Icom")
+        self.e_civ.configure(state="normal" if icom else "disabled")
+        mod = radio.rig_label(c["rig"]).replace("Icom", "").strip()
+        dflt = radio.ICOM_CIV.get(mod)
+        self.lb_civ.configure(text=(tr("vide = celle du modèle") + (f" ({dflt:02X})" if dflt else ""))
+                              if icom else "")
         if kind in net and (not self.v["host"].get() or self.v["host"].get() in net.values()):
             self.v["host"].set(net[kind])
         if kind not in net and self.v["host"].get() in net.values():
@@ -266,7 +296,13 @@ class RadioDialog(tk.Toplevel):
         self.cb_pttport.configure(state="normal" if c["ptt"] in ("DTR", "RTS") else "disabled")
         if kind == "hamlib":
             exe = radio.find_rigctld()
-            if exe:
+            if exe and radio.hamlib_outdated(exe):
+                self.lb_hamlib.configure(text=tr("Ancienne version de Hamlib : mise à jour conseillée "
+                                                 "(nouveaux postes, dont l'IC-7300MK2).") +
+                                         f" → Hamlib {radio.HAMLIB_VERSION}")
+                self.bt_hamlib.configure(text=tr("Mettre à jour Hamlib"))
+                self.bt_hamlib.grid()
+            elif exe:
                 own = exe.startswith(radio.hamlib_dir())
                 self.lb_hamlib.configure(text=tr("Hamlib trouvé :") + " " +
                                          (f"Hamlib {radio.HAMLIB_VERSION} (HFImage)" if own else exe))
@@ -274,6 +310,7 @@ class RadioDialog(tk.Toplevel):
             else:
                 self.lb_hamlib.configure(text=tr("Ce poste passe par Hamlib, qui n'est pas encore installé "
                                                  "(téléchargement unique de 3 Mo depuis GitHub)."))
+                self.bt_hamlib.configure(text=tr("Installer Hamlib"))
                 self.bt_hamlib.grid()
         else:
             self.lb_hamlib.configure(text=tr({"none": "Pas de liaison CAT : fréquence non lue, PTT par VOX ou "
@@ -417,6 +454,10 @@ class RadioDialog(tk.Toplevel):
             except ValueError as e:
                 messagebox.showerror("HFImage", f"{k} : {e}", parent=self)
                 return
+        if c["civ"] and radio.civ_addr(c) is None:
+            messagebox.showerror("HFImage", tr("Adresse CI-V : deux chiffres hexadécimaux (par exemple 94 ou B6), "
+                                               "ou vide."), parent=self)
+            return
         if c["ptt"] in ("DTR", "RTS") and not (c["ptt_port"] or c["port"]):
             messagebox.showerror("HFImage", tr("PTT par DTR / RTS : choisissez le port de l'interface."),
                                  parent=self)

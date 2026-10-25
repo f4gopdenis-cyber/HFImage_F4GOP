@@ -104,6 +104,7 @@ class AvantEmission(unittest.TestCase):
         class Stub:
             conf = {"data_action": action}
             _rig_open = staticmethod(lambda: rig)
+            _rig_open_now = staticmethod(lambda: rig)
             log = staticmethod(logs.append)
             _rig_status = app.App._rig_status
         cfg = {"rig": "hamlib:2041", "ptt": ptt, "tx_audio": tx_audio, "set_mode": "none"}
@@ -118,6 +119,9 @@ class AvantEmission(unittest.TestCase):
         ok, rig, logs = self.run_check("RTS", "rear")
         self.assertTrue(ok)
         self.assertEqual(rig.mode(), "LSB-DATA1")
+        # 1.59 : le journal reçoit le texte (et non True / False, qui faisait échouer l'émission)
+        self.assertTrue(all(isinstance(m, str) for m in logs), logs)
+        self.assertTrue(any("passé en" in m for m in logs), logs)
 
     def test_ptt_cat(self):
         ok, rig, _ = self.run_check("CAT", "rear", start="2")

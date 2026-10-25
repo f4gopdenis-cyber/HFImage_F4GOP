@@ -274,8 +274,15 @@ s += B(["<b>Poste</b> : tapez une partie du nom dans « Rechercher » (ex. 7300,
         "trouve l'adresse du poste dans vos commandes et sait quand même <b>changer la fréquence</b> (menu des fréquences) ; "
         "le mode du poste n'est pas touché. Avec d'autres postes, changez la fréquence sur le poste.",
         "<b>Port série</b> et vitesse ; paramètres avancés si besoin (bits, stop, contrôle de flux, DTR/RTS forcés). "
-        "La liste montre tous les ports actifs de Windows (Prolific, CH340, Silicon Labs, ports virtuels compris) ; "
-        "on peut aussi taper le nom du port, par exemple COM9.",
+        "La liste montre tous les ports actifs de Windows (Prolific, CH340, Silicon Labs, ports virtuels compris), "
+        "<b>avec leur description</b> : utile quand le poste crée deux ports COM (TS-890/990, IC-7610, IC-7300MK2…) ; "
+        "on peut aussi taper le nom du port, par exemple COM9. Avec un PTT par DTR ou RTS sur le port du CAT, "
+        "la ligne reste basse à l'ouverture du port (le poste ne passe pas en émission au lancement).",
+        "<b>Adresse CI-V (Icom)</b> : vide = l'adresse du modèle (IC-7300 : 94, IC-7300MK2 : B6, IC-7610 : 98). "
+        "À remplir seulement si l'adresse a été changée dans le poste (Set → Connectors → CI-V). L'<b>IC-7300MK2</b> "
+        "est dans la liste (Hamlib 4.7.2) ; avec un Hamlib plus ancien (Linux), HFImage le pilote comme un IC-7300 "
+        "à l'adresse B6. Si le poste ne répond pas : « CI-V USB Port » sur « Unlink from [REMOTE] », ou essayez "
+        "l'autre port COM du poste.",
         "<b>Méthode PTT</b> : CAT (recommandé), DTR ou RTS (y compris sur le port d'une interface à côté du poste), "
         "ou VOX.",
         "<b>Source audio en émission</b> : « Arrière / Data » (audio USB, ACC) ou « Avant / Micro ». Choisissez "
@@ -300,6 +307,13 @@ s += tip("Kenwood TS-890 / TS-990 : source audio DATA = USB Audio, <b>DATA VOX s
          "virtuel du poste à 115200 bauds, source « Arrière / Data ». Le poste passe tout seul en LSB-DATA ou USB-DATA. "
          "Le port doit être libre : fermez ARCP ou le logger, ou passez par OmniRig. Si l'entrée et la sortie du codec "
          "USB portent le même nom dans Windows, HFImage prend toujours la bonne.", "Kenwood")
+s.append(P("Bouton « DATA auto » : image en DATA, commentaire en phonie", "h2"))
+s.append(P("Le bouton <b>DATA auto</b>, à côté de « Émettre » (onglet TX), est vert quand il est actif. À chaque émission, "
+           "le poste passe de <b>LSB à LSB-DATA</b> (ou de USB à USB-DATA), envoie l'image, puis <b>revient tout seul en "
+           "LSB</b> (ou USB) à la fin, ou si l'on arrête l'émission : on peut aussitôt commenter l'image au micro. "
+           "Il faut une liaison CAT qui lit le mode (Kenwood, Icom et autres par Hamlib, FLRig, OmniRig, TCI) ; "
+           "pas avec les commandes CAT personnalisées. Si le poste est déjà en DATA, ou dans un autre mode (FM, CW…), "
+           "HFImage n'y touche pas. Bouton éteint : rien ne change."))
 s.append(P("Disposition : fenêtres séparées", "h2"))
 s.append(P("Menu <b>Fenêtres</b> : cochez une zone pour en faire une <b>fenêtre séparée</b>, à placer et dimensionner où vous "
            "voulez, même sur un autre écran : <b>panneau et boutons</b>, <b>waterfall</b>, <b>stations entendues</b>, onglet "

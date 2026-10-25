@@ -23,6 +23,7 @@ class Offre(unittest.TestCase):
         class Stub:
             conf = {}
             _rig_open = staticmethod(missing)
+            _rig_open_now = staticmethod(missing)
             log = staticmethod(logs.append)
             log_exc = staticmethod(lambda *a: logs.append(a))
             ui = staticmethod(lambda fn, *a: fn(*a))
