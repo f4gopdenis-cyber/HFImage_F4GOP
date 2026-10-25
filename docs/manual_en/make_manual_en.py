@@ -292,7 +292,7 @@ s += B(["<b>Switch to DATA automatically (USB-DATA / LSB-DATA)</b>: the default.
         "The log shows it (“TS-890S switched to LSB-DATA1 by CAT”).",
         "<b>Ask</b>: a window offers to switch to DATA, transmit anyway or cancel.",
         "<b>Transmit without asking</b>: the radio stays in its mode; the log reminds you at each transmission."])
-s.append(P("Kenwood TS-990: a single command (LSB-D1 or USB-D1). TS-890, TS-590, TS-480: LSB or USB, then DATA. Other "
+s.append(P("Kenwood TS-990: a single command (LSB-D1 or USB-D1). TS-890: SF command (frequency and mode at once, like Hamlib). TS-590, TS-480: LSB or USB, then DATA. Other "
            "radios: PKTLSB / PKTUSB (Hamlib), DIG-L / DIG-U (OmniRig), FLRig's DATA mode. With RTS, DTR or VOX PTT, a "
            "failed switch to DATA is only reported in the log and does not block the transmission."))
 s += tip("Kenwood TS-890 / TS-990: DATA audio source = USB Audio, <b>DATA VOX OFF</b>, CAT PTT on the radio's virtual "

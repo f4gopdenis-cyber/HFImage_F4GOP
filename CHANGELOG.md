@@ -1,5 +1,10 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 1.60 — Kenwood TS-890 : bouton « DATA auto » et passage en DATA
+
+- **TS-890** : le changement de mode passe maintenant par la commande SF (fréquence et mode d'un coup, comme Hamlib et WSJT-X) au lieu de « LSB puis DATA ». Le passage en LSB-DATA / USB-DATA et le retour en LSB / USB marchent avec le bouton **DATA auto**, le réglage « Poste pas en DATA avant d'émettre » et le changement de fréquence.
+- **DATA auto** : si la vérification du passage en DATA échoue, le poste est quand même remis en LSB / USB à la fin de l'émission (il pouvait rester en DATA).
+
 ## Version 1.59 — vérification : ports COM, Icom (IC-7300MK2, IC-7610), bouton « DATA auto »
 
 **Nouveau**

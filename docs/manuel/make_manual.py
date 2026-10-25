@@ -300,7 +300,7 @@ s += B(["<b>Passer en DATA automatiquement (USB-DATA / LSB-DATA)</b> : le régla
         "en <b>USB-DATA</b>. Le journal l'indique (« TS-890S passé en LSB-DATA1 par CAT »).",
         "<b>Demander</b> : une fenêtre propose de passer en DATA, d'émettre quand même ou d'annuler.",
         "<b>Émettre sans rien dire</b> : le poste reste dans son mode ; le journal le rappelle à chaque émission."])
-s.append(P("Kenwood TS-990 : une seule commande (LSB-D1 ou USB-D1). TS-890, TS-590, TS-480 : LSB ou USB, puis DATA. "
+s.append(P("Kenwood TS-990 : une seule commande (LSB-D1 ou USB-D1). TS-890 : commande SF (fréquence et mode d'un coup, comme Hamlib). TS-590, TS-480 : LSB ou USB, puis DATA. "
            "Autres postes : PKTLSB / PKTUSB (Hamlib), DIG-L / DIG-U (OmniRig), mode DATA de FLRig. Avec un PTT par RTS, "
            "DTR ou VOX, un échec du passage en DATA est seulement signalé dans le journal, sans bloquer l'émission."))
 s += tip("Kenwood TS-890 / TS-990 : source audio DATA = USB Audio, <b>DATA VOX sur OFF</b>, PTT CAT sur le port COM "
