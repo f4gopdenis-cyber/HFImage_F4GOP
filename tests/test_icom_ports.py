@@ -390,3 +390,20 @@ class KenwoodAI(unittest.TestCase):
             app.App._data_auto_off(Stub(), r, "LSB")
         self.assertEqual((r.cmds, r.m), (["LSB", "LSB"], "LSB"))
         self.assertTrue(any("retour en LSB." in m for m in logs), logs)
+
+
+class ListeRangee(unittest.TestCase):
+    """1.62 : liste des postes rangée par fabricant puis par modèle (ordre naturel)."""
+
+    def test_fabricants_groupes(self):
+        mfg = [radio.rig_label(k).split(" ")[0] for k in radio.rig_keys() if k.startswith("hamlib:")]
+        groups = [m for i, m in enumerate(mfg) if i == 0 or mfg[i - 1] != m]
+        self.assertEqual(len(groups), len(set(groups)), "un fabricant coupé en deux")
+
+    def test_ordre_kenwood_icom(self):
+        labs = [radio.rig_label(k) for k in radio.rig_keys()]
+        for a, b in (("Kenwood TS-890S", "Kenwood TS-990S"), ("Kenwood TS-990S", "Kenwood TS-2000"),
+                     ("Icom IC-705", "Icom IC-7300"), ("Icom IC-7300", "Icom IC-7300MK2"),
+                     ("Icom IC-7300MK2", "Icom IC-7610"), ("Elecraft K3", "Icom IC-7300")):
+            self.assertLess(labs.index(a), labs.index(b), (a, b))
+        self.assertNotIn("Rhode&Schwarz", " ".join(labs))

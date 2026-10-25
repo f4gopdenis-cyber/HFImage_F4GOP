@@ -34,12 +34,22 @@ if not sys.platform.startswith("win"):
     SPECIAL = [s for s in SPECIAL if not s[0].startswith("omnirig")]      # OmniRig : Windows seulement
 # Kenwood pilotés en direct (commandes ASCII éprouvées) ; les autres passent par Hamlib
 KENWOOD_NATIVE = {"TS-990S", "TS-890S", "TS-590S", "TS-590SG", "TS-2000", "TS-480"}
-_BY_ID = {num: (mfg, mod) for num, mfg, mod, _ in RIGS}
+# noms de fabricants écrits de deux façons dans Hamlib -> un seul groupe dans la liste
+MFG_FIX = {"Rhode&Schwarz": "Rohde&Schwarz", "N2ADR James Ahlstrom": "N2ADR"}
+_BY_ID = {num: (MFG_FIX.get(mfg, mfg), mod) for num, mfg, mod, _ in RIGS}
+
+
+def _natural(text):
+    """Tri naturel : « TS-480 » < « TS-890S » < « TS-990S » < « TS-2000 », « IC-705 » < « IC-7300 »."""
+    import re
+    return [(0, int(t), "") if t.isdigit() else (1, 0, t.lower()) for t in re.findall(r"\d+|\D+", text)]
 
 
 def rig_keys():
-    """Toutes les clés : entrées spéciales puis les postes Hamlib (« hamlib:2039 »)."""
-    return [k for k, _ in SPECIAL] + [f"hamlib:{num}" for num, *_ in RIGS]
+    """Toutes les clés : entrées spéciales puis les postes Hamlib (« hamlib:2039 »), rangés par
+    fabricant (ordre alphabétique) puis par modèle (ordre naturel)."""
+    order = sorted(_BY_ID, key=lambda n: (_BY_ID[n][0].lower(), _natural(_BY_ID[n][1]), n))
+    return [k for k, _ in SPECIAL] + [f"hamlib:{num}" for num in order]
 
 
 def rig_label(key):

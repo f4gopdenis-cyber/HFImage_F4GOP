@@ -1,5 +1,9 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 1.62 — liste des postes rangée
+
+- Fenêtre « Poste radio » : la liste des postes est rangée **par fabricant** (ordre alphabétique, chaque marque en un seul groupe) puis **par modèle** dans l'ordre naturel (TS-480, TS-590, TS-890S, TS-990S, TS-2000 ; IC-705, IC-7300, IC-7300MK2, IC-7610…). Avant, elle suivait les numéros de Hamlib et plusieurs postes étaient hors de leur groupe (Kenwood, Icom, Yaesu, Elecraft, Xiegu…).
+
 ## Version 1.61 — DATA auto : retour en LSB vérifié
 
 - **DATA auto** : à la fin de l'image, HFImage attend que le poste soit repassé en réception, remet LSB / USB, **relit le mode** pour vérifier et recommence jusqu'à 3 fois si le poste n'a pas pris la commande. Le journal dit « retour en LSB » ou, en cas d'échec, le mode lu.
