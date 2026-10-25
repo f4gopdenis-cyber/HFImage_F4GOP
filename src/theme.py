@@ -22,6 +22,77 @@ THEMES = {
     "Nuit": "night",
 }
 BASE_GREEN = "#33d633"
+
+# ---------------------------------------------------------------- style « Moderne » (1.54)
+# Tout plat (sans relief 3D), une seule couleur d'accent, police moderne, barre du haut.
+# Trois ambiances ; le style « Classique » reste celui d'EasyPal, avec ses couleurs ci-dessus.
+MODERN = {
+    "Sombre": dict(bg="#1d2127", panel="#242931", field="#1a1e24", bar="#2b313a", bar_fg="#e9edf2",
+                   fg="#e3e7ec", muted="#98a3af", border="#363d47", button="#2f3640", button_fg="#e3e7ec",
+                   accent="#2fbf71", accent_fg="#ffffff", bad="#ff5d6c", dark=True, top="#15191e"),
+    "Clair": dict(bg="#eef1f5", panel="#f8fafc", field="#ffffff", bar="#ffffff", bar_fg="#1c2430",
+                  fg="#1c2430", muted="#6b7684", border="#d8dee6", button="#e7ecf2", button_fg="#1c2430",
+                  accent="#2f7de1", accent_fg="#ffffff", bad="#e0414f", dark=False, top="#ffffff"),
+    "Vert radio": dict(bg="#10231b", panel="#143024", field="#0e1f17", bar="#18382a", bar_fg="#e6f4ec",
+                       fg="#e6f4ec", muted="#8fb3a0", border="#1f4434", button="#1b3d2e", button_fg="#e6f4ec",
+                       accent="#2fd17a", accent_fg="#06110a", bad="#ff6b6b", dark=True, top="#0a1611"),
+}
+MODERN_FONTS = ("Segoe UI", "Inter", "Noto Sans", "DejaVu Sans")
+# réglages de forme gardés pour revenir au style Classique
+SHAPE_OPTS = ("relief", "borderwidth", "highlightthickness", "sashrelief", "sashwidth", "selectcolor",
+              "overrelief")
+
+
+def modern_role(c, opt):
+    """Couleur d'origine (palette EasyPal) -> rôle dans le style Moderne."""
+    h, l, s = _hls(c)
+    green = s > 0.15 and 0.17 < h < 0.5
+    if opt in ("background", "activebackground", "highlightbackground", "troughcolor", "readonlybackground"):
+        if l < 0.06:
+            return "keep"                        # noir : image, waterfall
+        if green and l < 0.42:
+            return "border"
+        if green and l < 0.62:
+            return "bar"
+        if green:
+            return "panel"
+        if l > 0.97:
+            return "field"
+        if s < 0.12:
+            return "bg"
+        return "keep"
+    if opt == "selectbackground":
+        return "accent"
+    if opt in ("foreground", "activeforeground", "insertbackground", "disabledforeground"):
+        if s < 0.25 and l > 0.85:
+            return "bar_fg"
+        if (s < 0.25 and l < 0.5) or l < 0.2:
+            return "fg"
+        return "color"
+    return "keep"
+
+
+def modern_color(P, c, opt, bg_role=None, cls=""):
+    """Couleur d'origine -> couleur du style Moderne (bg_role : rôle du fond du widget)."""
+    r = modern_role(c, opt)
+    if cls == "Button" and opt == "background" and r in ("field", "bg", "panel", "bar"):
+        return P["button"]
+    if cls == "Button" and opt == "foreground" and r in ("fg", "bar_fg"):
+        return P["button_fg"]
+    if r == "keep":
+        return c
+    if r == "color":                             # rouge d'alerte, bleu « HYB »… : gardés, éclaircis si sombre
+        if P["dark"]:
+            h, l, s = _hls(c)
+            return _from_hls(h, max(l, 0.66), s)
+        return c
+    if r == "bar" and cls == "Button":
+        return P["button"]
+    if r in ("fg", "bar_fg") and bg_role == "bar" and cls != "Button":
+        return P["bar_fg"]                       # texte posé sur une barre de titre
+    if r == "bar_fg" and bg_role != "bar":
+        return P["fg"]
+    return P[r]
 # taille du texte en points (9 = taille normale de Windows) -> facteur appliqué aux polices
 FONT_SIZES = {str(p): p / 9.0 for p in range(8, 15)}
 OLD_SIZES = {"Petite": "8", "Normale": "9", "Grande": "11", "Très grande": "13"}   # anciens réglages
@@ -118,6 +189,7 @@ class Appearance:
         self.theme, self.custom, self.family, self.scale = "Vert EasyPal", None, None, 1.0
         self.text = None                # couleur du texte choisie (None : celle du thème)
         self.bold = False               # tout le texte en gras
+        self.modern = None              # style Moderne : nom de l'ambiance (None : Classique)
         self.map = make_mapper(self.theme)
         self.named = {}
         for n in ("TkDefaultFont", "TkTextFont", "TkFixedFont", "TkMenuFont", "TkHeadingFont",
@@ -134,7 +206,18 @@ class Appearance:
         self.ttk_theme0 = self.style.theme_use()
         self.ttk_fg0 = {st: self.style.lookup(st, "foreground") for st in TTK_TEXT}
 
-    def set(self, theme=None, custom=None, family=None, scale=None, text=None, bold=None):
+    def palette(self):
+        """Palette du style Moderne en cours (None : style Classique)."""
+        return MODERN.get(self.modern) if self.modern else None
+
+    def modern_font(self):
+        try:
+            have = {f.lower() for f in tkfont.families(self.root)}
+        except tk.TclError:
+            have = set()
+        return next((f for f in MODERN_FONTS if f.lower() in have), None)
+
+    def set(self, theme=None, custom=None, family=None, scale=None, text=None, bold=None, modern=False):
         if theme is not None:
             self.theme = theme
         if custom is not None:
@@ -147,7 +230,13 @@ class Appearance:
             self.text = text or None             # "" : couleur du thème
         if bold is not None:
             self.bold = bool(bold)
-        base = make_mapper(self.theme, self.custom)
+        if modern is not False:
+            self.modern = modern if modern in MODERN else None
+        P = self.palette()
+        if P:
+            base = lambda c, opt: modern_color(P, c, opt, "field")       # éléments de listes, etc.
+        else:
+            base = make_mapper(self.theme, self.custom)
         txt = self.text
 
         def mapper(c, opt):
@@ -165,11 +254,18 @@ class Appearance:
         new = int(round(abs(size) * self.scale)) or 1
         return -new if size < 0 else new
 
+    def _family(self):
+        """Police choisie ; en style Moderne sans choix : une police moderne (Segoe UI…)."""
+        if self.family:
+            return self.family
+        return self.modern_font() if self.modern else None
+
     def _named_fonts(self):
+        fam_sel = self._family()
         for n, (f, a) in self.named.items():
             fam = a["family"]
-            if self.family and n != "TkFixedFont":
-                fam = self.family
+            if fam_sel and n != "TkFixedFont":
+                fam = fam_sel
             f.configure(family=fam, size=self._size(a["size"]),
                         weight="bold" if self.bold else a.get("weight", "normal"))
 
@@ -187,12 +283,13 @@ class Appearance:
             size = int(rest[0])
         except ValueError:
             return None
+        fam_sel = self._family()
         if fam.lower() in MONO:
             new_fam = fam                                  # listes alignées : on garde le chasse fixe
         elif fam in self.named or fam.startswith("Tk"):
-            new_fam = self.family or self.named.get("TkDefaultFont", (None, {"family": fam}))[1]["family"]
+            new_fam = fam_sel or self.named.get("TkDefaultFont", (None, {"family": fam}))[1]["family"]
         else:
-            new_fam = self.family or fam
+            new_fam = fam_sel or fam
         styles = [s for s in rest[1:] if s != "normal"]
         if self.bold and "bold" not in styles:
             styles.append("bold")
@@ -241,20 +338,64 @@ class Appearance:
                         o["font"] = str(w.cget("font"))
                     except tk.TclError:
                         pass
+                shape = {}
+                for opt in SHAPE_OPTS:
+                    if opt in keys:
+                        try:
+                            shape[opt] = str(w.cget(opt))
+                        except tk.TclError:
+                            pass
+                o["_shape"] = shape
                 self.orig[w] = o
+            P = self.palette()
+            cls = w.winfo_class()
+            bg_role = modern_role(o["background"], "background") if P and "background" in o else None
             for opt, c in o.items():
+                if opt == "_shape":
+                    continue
                 try:
                     if opt == "font":
                         f = self._font(c)
                         if f is not None:
                             w.configure(font=f)
+                    elif P:
+                        new = modern_color(P, c, opt, bg_role, cls)
+                        if opt == "activebackground" and cls == "Button":
+                            new = P["accent"]
+                        elif opt == "activeforeground" and cls == "Button":
+                            new = P["accent_fg"]
+                        w.configure(**{opt: new})
                     else:
                         w.configure(**{opt: self.map(c, opt)})
                 except tk.TclError:
                     pass
+            try:
+                if P:
+                    self._flat(w, cls, P, bg_role)
+                elif o.get("_shape"):
+                    w.configure(**o["_shape"])             # style Classique : formes d'origine
+            except tk.TclError:
+                pass
         # les widgets détruits ne gardent pas leurs réglages
         for w in [w for w in self.orig if not self._alive(w)]:
             del self.orig[w]
+
+    @staticmethod
+    def _flat(w, cls, P, bg_role):
+        """Style Moderne : plus de relief 3D, bordures fines."""
+        if cls == "Button":
+            w.configure(relief="flat", bd=0, highlightthickness=0, overrelief="flat")
+        elif cls in ("Checkbutton", "Radiobutton"):
+            w.configure(bd=0, highlightthickness=0,
+                        selectcolor=P["field"] if bg_role != "bar" else P["bar"])
+        elif cls in ("Listbox", "Text", "Entry", "Spinbox"):
+            w.configure(relief="flat", bd=0, highlightthickness=1, highlightbackground=P["border"],
+                        highlightcolor=P["accent"])
+        elif cls == "Panedwindow":
+            w.configure(sashrelief="flat")
+        elif cls in ("Frame", "Label", "Labelframe", "Canvas", "Scale"):
+            if str(w.cget("relief")) not in ("flat", ""):
+                w.configure(relief="flat")
 
     @staticmethod
     def _alive(w):
@@ -264,8 +405,71 @@ class Appearance:
             return False
 
     # ---------------------------------------------------------------- ttk
+    def _ttk_modern(self, P):
+        s = self.style
+        if "hfmoderne" not in s.theme_names():
+            s.theme_create("hfmoderne", parent="clam")
+        s.theme_use("hfmoderne")
+        fam = self._family() or "TkDefaultFont"
+        size = max(8, int(round(9 * self.scale)))
+        s.configure(".", background=P["bg"], foreground=P["fg"], fieldbackground=P["field"], bordercolor=P["border"],
+                    lightcolor=P["bg"], darkcolor=P["bg"], troughcolor=P["field"], selectbackground=P["accent"],
+                    selectforeground=P["accent_fg"], insertcolor=P["fg"], focuscolor=P["accent"])
+        for st in ("TFrame", "TLabelframe", "TLabelframe.Label", "TLabel", "TCheckbutton", "TRadiobutton"):
+            s.configure(st, background=P["bg"], foreground=P["fg"])
+        s.configure("TLabelframe", bordercolor=P["border"])
+        for st in ("TCheckbutton", "TRadiobutton"):
+            s.configure(st, padding=(0, 2, 4, 2), indicatormargin=(0, 0, 4, 0), indicatorbackground=P["field"],
+                        indicatorforeground=P["accent_fg"], upperbordercolor=P["border"],
+                        lowerbordercolor=P["border"])
+        for st in ("TCheckbutton", "TRadiobutton"):
+            s.map(st, background=[("active", P["bg"])],
+                  indicatorbackground=[("selected", P["accent"]), ("disabled", P["bg"])],
+                  indicatorforeground=[("selected", P["accent_fg"])])
+        s.configure("TButton", background=P["button"], foreground=P["button_fg"], borderwidth=0, relief="flat",
+                    padding=(10, 4), bordercolor=P["button"], lightcolor=P["button"], darkcolor=P["button"])
+        s.map("TButton", background=[("disabled", P["bg"]), ("active", P["accent"])],
+              foreground=[("disabled", P["muted"]), ("active", P["accent_fg"])])
+        s.configure("Accent.TButton", background=P["accent"], foreground=P["accent_fg"], padding=(14, 5),
+                    font=(fam, size + 1, "bold"), bordercolor=P["accent"], lightcolor=P["accent"],
+                    darkcolor=P["accent"])
+        s.map("Accent.TButton", background=[("disabled", P["button"]), ("active", P["accent"])],
+              foreground=[("disabled", P["muted"]), ("active", P["accent_fg"])])
+        s.configure("TNotebook", background=P["bg"], borderwidth=0, tabmargins=(6, 6, 6, 0), bordercolor=P["bg"],
+                    lightcolor=P["bg"], darkcolor=P["bg"])
+        s.configure("TNotebook.Tab", background=P["bg"], foreground=P["muted"], padding=(18, 6), borderwidth=0,
+                    font=(fam, size + 1, "bold"), bordercolor=P["bg"], lightcolor=P["bg"], darkcolor=P["bg"])
+        s.map("TNotebook.Tab", background=[("selected", P["accent"]), ("active", P["button"])],
+              foreground=[("selected", P["accent_fg"]), ("active", P["fg"])], padding=[("selected", (18, 6))],
+              expand=[("selected", (0, 0, 0, 0))], lightcolor=[("selected", P["accent"])],
+              bordercolor=[("selected", P["accent"])])
+        for st in ("TEntry", "TCombobox", "TSpinbox"):
+            s.configure(st, fieldbackground=P["field"], foreground=P["fg"], background=P["button"],
+                        bordercolor=P["border"], lightcolor=P["field"], darkcolor=P["field"], arrowcolor=P["fg"],
+                        insertcolor=P["fg"])
+        s.map("TCombobox", fieldbackground=[("readonly", P["field"]), ("disabled", P["bg"])],
+              foreground=[("readonly", P["fg"]), ("disabled", P["muted"])],
+              background=[("readonly", P["button"])], bordercolor=[("focus", P["accent"])])
+        s.map("TEntry", fieldbackground=[("disabled", P["bg"])], foreground=[("disabled", P["muted"])],
+              bordercolor=[("focus", P["accent"])])
+        s.configure("Treeview", background=P["field"], fieldbackground=P["field"], foreground=P["fg"],
+                    bordercolor=P["border"])
+        s.map("Treeview", background=[("selected", P["accent"])], foreground=[("selected", P["accent_fg"])])
+        s.configure("Treeview.Heading", background=P["bar"], foreground=P["bar_fg"], bordercolor=P["border"],
+                    relief="flat")
+        s.configure("Horizontal.TProgressbar", background=P["accent"], troughcolor=P["field"],
+                    bordercolor=P["border"], lightcolor=P["accent"], darkcolor=P["accent"])
+        s.configure("Horizontal.TScale", background=P["button"], troughcolor=P["field"], bordercolor=P["border"])
+        for o in ("Vertical", "Horizontal"):
+            s.configure(f"{o}.TScrollbar", background=P["button"], troughcolor=P["bg"], arrowcolor=P["muted"],
+                        bordercolor=P["bg"], lightcolor=P["button"], darkcolor=P["button"])
+        s.configure("TMenubutton", background=P["button"], foreground=P["button_fg"], bordercolor=P["border"])
+
     def _ttk(self):
         s = self.style
+        P = self.palette()
+        if P:
+            return self._ttk_modern(P)
         if self.theme == "Nuit":
             if s.theme_use() != "clam":
                 s.theme_use("clam")

@@ -1,5 +1,11 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 1.54 — style Moderne (étape 1 de la refonte)
+
+- Réglages → Apparence → **Style** : **Classique (EasyPal)** (le look d'origine, par défaut) ou **Moderne**, avec trois **ambiances** : **Sombre**, **Clair**, **Vert radio**. Passage de l'un à l'autre à tout moment, sans redémarrer ; le style Classique revient exactement comme avant.
+- Style Moderne : tout plat (plus de relief 3D sur les boutons, cadres, listes, journal), une couleur d'accent, police moderne (Segoe UI sous Windows), onglets RX / TX / Stations / Galerie en pastilles, listes et cases sobres, bouton **▶ Émettre** mis en valeur, boutons de la grille colorés selon leur état (actif, attente, émission).
+- Nouvelle **barre du haut** (style Moderne) : indicatif, prénom et locator, **fréquence en grand** (clic : menu des fréquences), **état** (Réception, Attente, Émission), **stations en ligne** (clic : carte) et heure UTC.
+
 ## Version 1.53 — clic sur l'image TX : ouvrir une image comme avant
 
 - Un clic sur l'image TX **à côté des textes et logos** ouvre de nouveau directement le choix d'une image, comme avant la 1.52. Un clic **sur** un texte ou un logo le sélectionne ; si un élément est sélectionné, le premier clic à côté enlève seulement la sélection.

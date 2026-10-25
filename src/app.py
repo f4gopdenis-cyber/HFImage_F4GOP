@@ -62,7 +62,7 @@ import random
 import wave
 
 APP = "HFImage F4GOP"
-VERSION = "1.53"
+VERSION = "1.54"
 
 
 def _take_profile(argv):
@@ -98,6 +98,7 @@ DEFAULTS = {
     "hyb_width": "originale", "hyb_kb": 3000, "hyb_fmt": "original", "gif_kb": 2000, "hyb_rx_max_mb": 200, "hyb_keep": 3,
     "net_on": True, "net_host": presence.DEFAULT_HOST, "net_port": presence.DEFAULT_PORT,
     "update_check": True,
+    "look_style": "classique", "modern_theme": "Sombre",
     "theme": "Vert EasyPal", "theme_color": "#3a8ee6", "font_family": "(par défaut)", "font_size": "9",
     "locator": "", "bsr_auto": True, "fix_auto": True, "ack_auto": True, "listen_after": True, "follow_mode": True,
     "cwid": False, "cat_freq": True, "lang": "", "msg_translate": True, "wait_free": True, "hyb_flash": True,
@@ -508,6 +509,7 @@ class App(tk.Tk):
         self.upd_close.bind("<Button-1>", lambda e: self.upd_bar.pack_forget())
         self.upd_info = None
         self.upd_busy = False
+        self._build_topbar()
         # séparateurs réglables à la souris (positions gardées d'une session à l'autre)
         pw = dict(bg=GREEN_DARK, sashwidth=6, sashrelief="raised", bd=0, opaqueresize=True)
         self.panes = {}
@@ -648,10 +650,24 @@ class App(tk.Tk):
         fam = self.v_font.get() if hasattr(self, "v_font") else self.conf.get("font_family")
         size = self._size_names.get(self.v_fsize.get(), "9") if hasattr(self, "v_fsize") \
             else theme.size_name(self.conf.get("font_size", "9"))
+        modern = None
+        if hasattr(self, "v_lookstyle"):
+            self.conf["look_style"] = "moderne" if self.v_lookstyle.get() == tr("Moderne") else "classique"
+            amb = self._modern_names.get(self.v_modern.get(), self.v_modern.get())
+            if amb in theme.MODERN:
+                self.conf["modern_theme"] = amb
+        if self.conf.get("look_style") == "moderne":
+            modern = self.conf.get("modern_theme") if self.conf.get("modern_theme") in theme.MODERN else "Sombre"
         self.look.set(theme=th if th in theme.THEMES or th == "Personnalisée" else "Vert EasyPal",
                       custom=self.conf.get("theme_color"), family=fam,
                       scale=theme.FONT_SIZES.get(size, 1.0), text=self.conf.get("text_color") or "",
-                      bold=bool(self.conf.get("font_bold")))
+                      bold=bool(self.conf.get("font_bold")), modern=modern)
+        # boutons de la grille : couleur selon leur état, dans le style choisi
+        for b in getattr(self, "gbtn", {}).values():
+            st = getattr(b, "_hf_state", "off")
+            if modern or st != "off":                  # Classique : boutons au repos laissés au thème
+                self._btn_color(b, st)
+        self._topbar_show()
         self.conf.update(theme=th, font_family=fam, font_size=size)
         if hasattr(self, "v_msize") and self.v_msize.get() != size:
             self.v_msize.set(size)
@@ -703,6 +719,83 @@ class App(tk.Tk):
         if hasattr(self, "sw_text"):
             c = self.conf.get("text_color") or ""
             self.sw_text.configure(bg=c or "#d9d9d9", text="" if c else tr("thème"))
+
+    # ------------------------------------------------------------------ barre du haut (style Moderne, 1.54)
+    def _build_topbar(self):
+        """Barre du haut du style Moderne : indicatif, fréquence en grand, état, stations en ligne,
+        heure. Cachée en style Classique."""
+        bar = self.topbar = tk.Frame(self, height=52)
+        bar._no_theme = True
+        self.tb = {}
+
+        def lab(key, side="left", padx=(0, 0), font=None, cursor=None):
+            w = tk.Label(bar, text="", font=font or ("TkDefaultFont", 10), cursor=cursor or "")
+            w._no_theme = True
+            w.pack(side=side, padx=padx, pady=8)
+            self.tb[key] = w
+            return w
+        lab("logo", padx=(14, 6), font=("TkDefaultFont", 10, "bold")).configure(text=" HF ")
+        lab("app", padx=(0, 18), font=("TkDefaultFont", 13, "bold")).configure(text="HFImage")
+        lab("call", padx=(0, 6), font=("TkDefaultFont", 13, "bold"))
+        lab("who", padx=(0, 22))
+        f = lab("freq", padx=(0, 4), font=("TkDefaultFont", 18, "bold"), cursor="hand2")
+        f.bind("<Button-1>", lambda e: self._freq_menu(e))
+        m = lab("mode", padx=(0, 22), cursor="hand2")
+        m.bind("<Button-1>", lambda e: self._freq_menu(e))
+        lab("state", padx=(0, 12), font=("TkDefaultFont", 10, "bold"))
+        o = lab("online", padx=(0, 12), cursor="hand2")
+        o.bind("<Button-1>", lambda e: self.show_map())
+        lab("clock", side="right", padx=(0, 16), font=("TkDefaultFont", 11, "bold"))
+
+    def _topbar_show(self):
+        if not hasattr(self, "topbar"):
+            return
+        P = self.look.palette()
+        if not P:
+            self.topbar.pack_forget()
+            return
+        fam = self.look._family() or "TkDefaultFont"
+        k = self.look.scale
+        top = P["top"]
+        self.topbar.configure(bg=top, highlightthickness=1, highlightbackground=P["border"])
+        fonts = {"logo": (fam, int(10 * k), "bold"), "app": (fam, int(13 * k), "bold"),
+                 "call": (fam, int(13 * k), "bold"), "who": (fam, int(10 * k)),
+                 "freq": (fam, int(18 * k), "bold"), "mode": (fam, int(10 * k)),
+                 "state": (fam, int(10 * k), "bold"), "online": (fam, int(10 * k)),
+                 "clock": (fam, int(11 * k), "bold")}
+        for key, w in self.tb.items():
+            w.configure(bg=top, fg=P["fg"], font=fonts[key])
+        self.tb["logo"].configure(bg=P["accent"], fg=P["accent_fg"])
+        for key in ("who", "mode", "online"):
+            self.tb[key].configure(fg=P["muted"])
+        if not self.topbar.winfo_manager():
+            self.topbar.pack(fill="x", before=self._main_pane)
+        self._topbar_update()
+
+    def _topbar_update(self):
+        """Contenu de la barre du haut (appelé chaque seconde par l'horloge)."""
+        if not hasattr(self, "topbar") or not self.topbar.winfo_manager():
+            return
+        P = self.look.palette() or theme.MODERN["Sombre"]
+        tb = self.tb
+        tb["call"].configure(text=self.mycall() or "—")
+        who = " · ".join(x for x in (self.myname(), self.v_loc.get().strip().upper()) if x)
+        tb["who"].configure(text=who)
+        fr = self.rig_freq
+        tb["freq"].configure(text=f"{fr / 1e6:.3f}" if fr else "—.———")
+        tb["mode"].configure(text=("MHz · " + str(self.rig_mode)) if fr and self.rig_mode else ("MHz" if fr else tr("Fréquence ▾")))
+        if self.tx_busy:
+            st, bg, fg = "●  " + tr("ÉMISSION"), P["bad"], "#ffffff"
+        elif getattr(self, "_wait_job", None):
+            st, bg, fg = "●  " + tr("ATTENTE…"), "#ffb84d", "#1a1a1a"
+        elif self.rx_stream is not None:
+            st, bg, fg = "●  " + tr("RÉCEPTION"), P["accent"], P["accent_fg"]
+        else:
+            st, bg, fg = "●  " + tr("Réception arrêtée"), P["button"], P["muted"]
+        tb["state"].configure(text=f" {st} ", bg=bg, fg=fg)
+        n = len({str(d.get("call")).upper() for d in self.online.values()}) if getattr(self, "online", None) else 0
+        tb["online"].configure(text=f"🌐 {n} " + tr("en ligne") if self.net is not None else "")
+        tb["clock"].configure(text=time.strftime("%H:%M", time.gmtime()) + " UTC")
 
     def _c(self, color):
         """Couleur de texte d'origine adaptée au thème (éléments de listes)."""
@@ -1178,7 +1271,30 @@ class App(tk.Tk):
 
 
     def _btn_on(self, key, on):
-        self.gbtn[key].configure(bg=BTN_ON if on else "white", relief="sunken" if on else "raised")
+        self._btn_color(self.gbtn[key], "on" if on else "off")
+
+    BTN_CLASSIC = {"off": ("white", "#e6ffe6", None, "raised"), "on": (BTN_ON, None, None, "sunken"),
+                   "wait": ("#ffb84d", "#ffc870", None, None), "tx": ("#ff6b6b", "#ff8f8f", None, None)}
+
+    def _btn_color(self, b, state):
+        """Couleur d'un bouton de la grille selon son état (repos, actif, attente, émission),
+        dans le style en cours (Classique : couleurs d'origine ; Moderne : palette plate)."""
+        P = self.look.palette() if hasattr(self, "look") else None
+        b._hf_state = state
+        if P:
+            bg, fg = {"off": (P["button"], P["button_fg"]), "on": (P["accent"], P["accent_fg"]),
+                      "wait": ("#ffb84d", "#1a1a1a"), "tx": (P["bad"], "#ffffff")}[state]
+            b.configure(bg=bg, fg=fg, activebackground=P["accent"] if state == "off" else bg,
+                        activeforeground=P["accent_fg"] if state == "off" else fg, relief="flat")
+            return
+        b._hf_state = state
+        bg, abg, _, relief = self.BTN_CLASSIC[state]
+        kw = {"bg": bg}
+        if abg:
+            kw["activebackground"] = abg
+        if relief:
+            kw["relief"] = relief
+        b.configure(**kw)
 
     def _btn_emission(self):
         if getattr(self, "_wait_job", None):
@@ -1235,7 +1351,7 @@ class App(tk.Tk):
         self._wait_job = {"fn": fn, "what": what, "t0": time.time(), "free": None,
                           "delay": random.uniform(2.0, 6.0), "who": who}
         self._set_text(self.gbtn["tx"], "ATTENTE…")
-        self.gbtn["tx"].configure(bg="#ffb84d", activebackground="#ffc870")
+        self._btn_color(self.gbtn["tx"], "wait")
         self.log(tr("Fréquence occupée") + f" ({who}) : " + tr("émission en attente") + f" ({what}). "
                  + tr("Clic sur ÉMISSION : annuler ; clic droit : émettre tout de suite."))
         self._wait_tick()
@@ -1270,7 +1386,7 @@ class App(tk.Tk):
         self._wait_job = None
         if not self.tx_busy:
             self._set_text(self.gbtn["tx"], "ÉMISSION")
-            self.gbtn["tx"].configure(bg="white", activebackground="#e6ffe6")
+            self._btn_color(self.gbtn["tx"], "off")
             self.v_state.set("RÉCEPTION" if self.rx_stream is not None else "")
 
     def _wait_go(self):
@@ -1556,7 +1672,8 @@ class App(tk.Tk):
         self.pb_tx.pack(side="top", fill="x", pady=(0, 3))
         bt = tk.Frame(bb, bg=GREEN)
         bt.pack(side="top", fill="x")
-        ttk.Button(bt, text="▶ Émettre", command=lambda: self._tx_when_free(self.transmit, tr("image"))).pack(side="left")
+        ttk.Button(bt, text="▶ Émettre", style="Accent.TButton",
+                   command=lambda: self._tx_when_free(self.transmit, tr("image"))).pack(side="left")
         self.btn_comp = ttk.Button(bt, text="+ Compléter", command=lambda: self.transmit(complement=True))
         self.btn_comp.pack(side="left", padx=4)
         ttk.Button(bt, text="■ Arrêter", command=lambda: self.stop_tx.set()).pack(side="left")
@@ -2873,6 +2990,29 @@ class App(tk.Tk):
         ttk.Button(tcf, text="Choisir…", command=self._pick_text_color).pack(side="left", padx=4)
         ttk.Button(tcf, text="Couleur du thème", command=self._reset_text_color).pack(side="left")
         self._text_swatch()
+        # 1.54 : style Classique (EasyPal) ou Moderne (plat, barre du haut), 3 ambiances
+        ttk.Label(af, text="Style").grid(row=3, column=0, sticky="w", pady=(8, 0))
+        stf = ttk.Frame(af)
+        stf.grid(row=3, column=1, columnspan=4, sticky="w", padx=4, pady=(8, 0))
+        self.v_lookstyle = tk.StringVar(value=tr("Moderne") if self.conf.get("look_style") == "moderne"
+                                        else tr("Classique (EasyPal)"))
+        self._modern_names = {tr(n): n for n in theme.MODERN}
+        self.v_modern = tk.StringVar(value=tr(self.conf.get("modern_theme", "Sombre")))
+        cb_st = ttk.Combobox(stf, textvariable=self.v_lookstyle, values=[tr("Classique (EasyPal)"), tr("Moderne")],
+                             state="readonly", width=18)
+        cb_st.pack(side="left")
+        ttk.Label(stf, text="Ambiance").pack(side="left", padx=(12, 4))
+        cb_am = ttk.Combobox(stf, textvariable=self.v_modern, values=list(self._modern_names), state="readonly",
+                             width=12)
+        cb_am.pack(side="left")
+
+        def style_ui(*_):
+            moderne = self.v_lookstyle.get() == tr("Moderne")
+            cb_am.configure(state="readonly" if moderne else "disabled")
+            cb_t.configure(state="disabled" if moderne else "readonly")     # couleurs : style Classique
+        style_ui()
+        for cb in (cb_st, cb_am):
+            cb.bind("<<ComboboxSelected>>", lambda e: (style_ui(), self._apply_look()))
 
         nf = ttk.LabelFrame(colR, text="Internet : stations en ligne (comme EasyPal)", padding=8)
         nf.pack(fill="x", pady=(10, 0))
@@ -3214,6 +3354,7 @@ class App(tk.Tk):
 
     def _clock(self):
         self.lb_clock.configure(text=self._clock_text())
+        self._topbar_update()
         if int(time.time()) % 15 == 0 and any(not m["acks"] for m in self.sent_msgs.values()):
             self._msg_sent_refresh()                # « en attente » -> « pas d'accusé » au bout de 3 min
         # liste des stations : fréquence affichée et couleurs selon l'ancienneté
@@ -5371,7 +5512,7 @@ class App(tk.Tk):
         self.stop_tx.clear()
         self.v_state.set("ÉMISSION EN COURS")
         self._set_text(self.gbtn["tx"], "STOP")
-        self.gbtn["tx"].configure(bg="#ff6b6b", activebackground="#ff8f8f")
+        self._btn_color(self.gbtn["tx"], "tx")
         if job["kind"] in ("image", "text", "hybrid", "file"):
             self.show_tab("tx", focus=False)
         threading.Thread(target=self._tx_thread, args=(job,), daemon=True).start()
@@ -6010,7 +6151,7 @@ class App(tk.Tk):
     def _tx_done(self, relisten):
         self.tx_busy = False
         self._set_text(self.gbtn["tx"], "ÉMISSION")
-        self.gbtn["tx"].configure(bg="white", activebackground="#e6ffe6")
+        self._btn_color(self.gbtn["tx"], "off")
         self.pb_tx.configure(value=0)
         self.v_state.set("Réception arrêtée")
         self.log("Fin d'émission.")

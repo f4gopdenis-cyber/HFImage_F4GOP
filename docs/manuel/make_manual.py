@@ -500,6 +500,12 @@ s.append(P("Police, taille et gras", "h2"))
 s.append(P("Menu <b>Réglages → Police et taille du texte</b> : « Texte en gras » et la taille, de 8 à 14 points "
            "(9 = normale), appliqués tout de suite à tout le programme, listes comprises. Le choix de la police et des "
            "couleurs est dans Réglages → Apparence (case « Gras » aussi)."))
+s.append(P("Style Classique ou Moderne", "h2"))
+s.append(P("Réglages → Apparence → <b>Style</b> : <b>Classique (EasyPal)</b>, le look d'origine avec ses couleurs, ou "
+           "<b>Moderne</b> : tout plat (sans relief), police moderne, onglets en pastilles, bouton « ▶ Émettre » mis en "
+           "valeur, et une <b>barre du haut</b> avec l'indicatif, la fréquence en grand (clic : menu des fréquences), "
+           "l'état (réception, émission), les stations en ligne (clic : carte) et l'heure UTC. Trois <b>ambiances</b> : "
+           "Sombre, Clair, Vert radio. On passe de l'un à l'autre à tout moment, sans redémarrer."))
 s.append(P("Horloge", "h2"))
 s.append(P("L'horloge en bas à droite affiche l'heure de Windows (heure d'été comprise). Un clic dessus passe à "
            "« heure de Windows + UTC », puis « UTC seule », puis revient. Ce choix vaut pour tout le programme : "
