@@ -501,19 +501,31 @@ class KenwoodRig(RigBase):
     def set_freq(self, hz):
         self.write(f"FA{int(hz):011d};")
 
+    def _sf_mode(self, code):
+        """TS-890 : le mode se change par la commande SF (fréquence + mode), comme Hamlib :
+        on relit « SF0…; » et on le renvoie avec le nouveau code (1 LSB, 2 USB, C LSB-DATA, D USB-DATA)."""
+        r = self.query("SF0;")
+        if r.startswith("SF0") and len(r) >= 16 and r.endswith(";"):
+            self.write(r[:14] + code + r[15:])
+        else:
+            self.write(f"OM0{code};")
+
     def set_sideband(self, side):
         lsb = side == "LSB"
-        if self.model in ("TS-990S", "TS-890S"):
+        if self.model == "TS-890S":
+            self._sf_mode("1" if lsb else "2")
+        elif self.model == "TS-990S":
             self.write("OM01;" if lsb else "OM02;")
         else:
             self.write("MD1;" if lsb else "MD2;")
 
     def set_voice(self, side):
         lsb = side == "LSB"
+        if self.model == "TS-890S":
+            self._sf_mode("1" if lsb else "2")
+            return
         if self.model == "TS-990S":
             cmds = ["OM01;" if lsb else "OM02;"]
-        elif self.model == "TS-890S":
-            cmds = ["OM01;" if lsb else "OM02;", "DA0;"]
         else:
             cmds = ["MD1;" if lsb else "MD2;", "DA0;"]
         for c in cmds:
@@ -534,7 +546,8 @@ class KenwoodRig(RigBase):
         if self.model == "TS-990S":
             cmds = [("OM0C;" if lsb else "OM0D;")] if which == "data" else ["OM02;"]
         elif self.model == "TS-890S":
-            cmds = [("OM01;" if lsb else "OM02;"), "DA1;" if which == "data" else "DA0;"]
+            self._sf_mode(("C" if lsb else "D") if which == "data" else "2")
+            cmds = []
         else:
             cmds = [("MD1;" if lsb else "MD2;"), "DA1;" if which == "data" else "DA0;"]
         for c in cmds:

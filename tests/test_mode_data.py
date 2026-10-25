@@ -32,6 +32,10 @@ class FakeKenwood(radio.KenwoodRig):
             self.base, self.data = cmd[2], False
         elif cmd.startswith("DA"):
             self.data = cmd[2] == "1"
+        elif cmd.startswith("SF0") and len(cmd) == 16:     # TS-890 : mode par SF (comme Hamlib)
+            c = cmd[14]
+            self.base, self.data = {"1": ("1", False), "2": ("2", False), "C": ("1", True),
+                                    "D": ("2", True)}[c]
 
     def query(self, cmd, timeout=0.6):
         code = {("1", False): "1", ("2", False): "2", ("1", True): "C", ("2", True): "D"}[(self.base, self.data)]
@@ -59,8 +63,9 @@ class Kenwood(unittest.TestCase):
         self.check("TS-990S", "2", "USB-DATA1", ["OM0D;"])
 
     def test_ts890(self):
-        self.check("TS-890S", "1", "LSB-DATA1", ["OM01;", "DA1;"])
-        self.check("TS-890S", "2", "USB-DATA1", ["OM02;", "DA1;"])
+        # 1.60 : le TS-890 change de mode par SF (fréquence gardée), comme Hamlib
+        self.check("TS-890S", "1", "LSB-DATA1", ["SF0" + "0" * 11 + "C;"])
+        self.check("TS-890S", "2", "USB-DATA1", ["SF0" + "0" * 11 + "D;"])
 
     def test_ts590(self):
         self.check("TS-590SG", "1", "LSB-DATA1", ["MD1;", "DA1;"])

@@ -6229,7 +6229,7 @@ class App(tk.Tk):
                 return None
             ok, msg = rig.set_mode("data")
             self.ui(self.log, "DATA auto : " + msg)
-            return m if ok else None
+            return m                                 # commande partie : retour en LSB / USB après, toujours
         except Exception as e:
             self.ui(self.log_exc, "DATA auto", e)
             return None

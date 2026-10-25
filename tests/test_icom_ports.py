@@ -286,7 +286,8 @@ class DataAuto(unittest.TestCase):
         k = radio.KenwoodRig.__new__(radio.KenwoodRig)
         k.write = sent.append
         with mock.patch.object(radio.time, "sleep", lambda s: None):
-            for model, want in (("TS-990S", ["OM01;"]), ("TS-890S", ["OM01;", "DA0;"]),
+            k.query = lambda c: "SF000007058000C;"
+            for model, want in (("TS-990S", ["OM01;"]), ("TS-890S", ["SF000007058000" + "1;"]),
                                 ("TS-590SG", ["MD1;", "DA0;"])):
                 sent.clear()
                 k.model = model
