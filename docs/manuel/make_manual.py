@@ -504,8 +504,8 @@ s.append(P("Style Classique ou Moderne", "h2"))
 s.append(P("Réglages → Apparence → <b>Style</b> : <b>Classique (EasyPal)</b>, le look d'origine avec ses couleurs, ou "
            "<b>Moderne</b> : tout plat (sans relief), police moderne, onglets en pastilles, bouton « ▶ Émettre » mis en "
            "valeur, et une <b>barre du haut</b> avec l'indicatif, la fréquence en grand (clic : menu des fréquences), "
-           "l'état (réception, émission), les stations en ligne (clic : carte) et l'heure UTC. Trois <b>ambiances</b> : "
-           "Sombre, Clair, Vert radio. On passe de l'un à l'autre à tout moment, sans redémarrer."))
+           "l'état (réception, émission), les stations en ligne (clic : carte) et l'heure UTC. Quatre <b>ambiances</b> : "
+           "Vert EasyPal (par défaut), Sombre, Clair, Vert radio. On passe de l'un à l'autre à tout moment, sans redémarrer."))
 s.append(P("Horloge", "h2"))
 s.append(P("L'horloge en bas à droite affiche l'heure de Windows (heure d'été comprise). Un clic dessus passe à "
            "« heure de Windows + UTC », puis « UTC seule », puis revient. Ce choix vaut pour tout le programme : "

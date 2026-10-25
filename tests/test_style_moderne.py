@@ -24,8 +24,19 @@ class Palette(unittest.TestCase):
         red = theme.modern_color(P, "#c01818", "foreground")
         self.assertNotEqual(red, P["fg"])                                    # couleur d'alerte gardée
 
-    def test_trois_ambiances(self):
-        self.assertEqual(set(theme.MODERN), {"Sombre", "Clair", "Vert radio"})
+    def test_ambiances(self):
+        self.assertEqual(set(theme.MODERN), {"Vert EasyPal", "Sombre", "Clair", "Vert radio"})
+        self.assertEqual(list(theme.MODERN)[0], "Vert EasyPal")              # en tête de liste
+        P = theme.MODERN["Vert EasyPal"]
+        self.assertEqual(P["bar"], "#33d633")                               # le vert EasyPal d'origine
+
+    def test_par_defaut(self):
+        try:
+            import app
+        except (ImportError, OSError) as e:
+            raise unittest.SkipTest(str(e))
+        self.assertEqual(app.DEFAULTS["modern_theme"], "Vert EasyPal")
+        self.assertEqual(app.DEFAULTS["look_style"], "classique")
 
 
 class Appli(unittest.TestCase):

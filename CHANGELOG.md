@@ -1,5 +1,9 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 1.55 — style Moderne : ambiance « Vert EasyPal »
+
+- Style Moderne : nouvelle ambiance **« Vert EasyPal »**, le vert vif d'EasyPal (barre du haut, bandeaux, barre d'état) et le vert clair, en version plate et moderne. C'est l'ambiance proposée par défaut quand on choisit le style Moderne ; Sombre, Clair et Vert radio restent au choix.
+
 ## Version 1.54 — style Moderne (étape 1 de la refonte)
 
 - Réglages → Apparence → **Style** : **Classique (EasyPal)** (le look d'origine, par défaut) ou **Moderne**, avec trois **ambiances** : **Sombre**, **Clair**, **Vert radio**. Passage de l'un à l'autre à tout moment, sans redémarrer ; le style Classique revient exactement comme avant.

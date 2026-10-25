@@ -62,7 +62,7 @@ import random
 import wave
 
 APP = "HFImage F4GOP"
-VERSION = "1.54"
+VERSION = "1.55"
 
 
 def _take_profile(argv):
@@ -98,7 +98,7 @@ DEFAULTS = {
     "hyb_width": "originale", "hyb_kb": 3000, "hyb_fmt": "original", "gif_kb": 2000, "hyb_rx_max_mb": 200, "hyb_keep": 3,
     "net_on": True, "net_host": presence.DEFAULT_HOST, "net_port": presence.DEFAULT_PORT,
     "update_check": True,
-    "look_style": "classique", "modern_theme": "Sombre",
+    "look_style": "classique", "modern_theme": "Vert EasyPal",
     "theme": "Vert EasyPal", "theme_color": "#3a8ee6", "font_family": "(par défaut)", "font_size": "9",
     "locator": "", "bsr_auto": True, "fix_auto": True, "ack_auto": True, "listen_after": True, "follow_mode": True,
     "cwid": False, "cat_freq": True, "lang": "", "msg_translate": True, "wait_free": True, "hyb_flash": True,
@@ -657,7 +657,7 @@ class App(tk.Tk):
             if amb in theme.MODERN:
                 self.conf["modern_theme"] = amb
         if self.conf.get("look_style") == "moderne":
-            modern = self.conf.get("modern_theme") if self.conf.get("modern_theme") in theme.MODERN else "Sombre"
+            modern = self.conf.get("modern_theme") if self.conf.get("modern_theme") in theme.MODERN else "Vert EasyPal"
         self.look.set(theme=th if th in theme.THEMES or th == "Personnalisée" else "Vert EasyPal",
                       custom=self.conf.get("theme_color"), family=fam,
                       scale=theme.FONT_SIZES.get(size, 1.0), text=self.conf.get("text_color") or "",
@@ -764,10 +764,10 @@ class App(tk.Tk):
                  "state": (fam, int(10 * k), "bold"), "online": (fam, int(10 * k)),
                  "clock": (fam, int(11 * k), "bold")}
         for key, w in self.tb.items():
-            w.configure(bg=top, fg=P["fg"], font=fonts[key])
+            w.configure(bg=top, fg=P.get("top_fg", P["fg"]), font=fonts[key])
         self.tb["logo"].configure(bg=P["accent"], fg=P["accent_fg"])
         for key in ("who", "mode", "online"):
-            self.tb[key].configure(fg=P["muted"])
+            self.tb[key].configure(fg=P.get("top_muted", P["muted"]))
         if not self.topbar.winfo_manager():
             self.topbar.pack(fill="x", before=self._main_pane)
         self._topbar_update()
@@ -776,7 +776,7 @@ class App(tk.Tk):
         """Contenu de la barre du haut (appelé chaque seconde par l'horloge)."""
         if not hasattr(self, "topbar") or not self.topbar.winfo_manager():
             return
-        P = self.look.palette() or theme.MODERN["Sombre"]
+        P = self.look.palette() or theme.MODERN["Vert EasyPal"]
         tb = self.tb
         tb["call"].configure(text=self.mycall() or "—")
         who = " · ".join(x for x in (self.myname(), self.v_loc.get().strip().upper()) if x)
@@ -2997,7 +2997,7 @@ class App(tk.Tk):
         self.v_lookstyle = tk.StringVar(value=tr("Moderne") if self.conf.get("look_style") == "moderne"
                                         else tr("Classique (EasyPal)"))
         self._modern_names = {tr(n): n for n in theme.MODERN}
-        self.v_modern = tk.StringVar(value=tr(self.conf.get("modern_theme", "Sombre")))
+        self.v_modern = tk.StringVar(value=tr(self.conf.get("modern_theme", "Vert EasyPal")))
         cb_st = ttk.Combobox(stf, textvariable=self.v_lookstyle, values=[tr("Classique (EasyPal)"), tr("Moderne")],
                              state="readonly", width=18)
         cb_st.pack(side="left")

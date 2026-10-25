@@ -27,6 +27,10 @@ BASE_GREEN = "#33d633"
 # Tout plat (sans relief 3D), une seule couleur d'accent, police moderne, barre du haut.
 # Trois ambiances ; le style « Classique » reste celui d'EasyPal, avec ses couleurs ci-dessus.
 MODERN = {
+    "Vert EasyPal": dict(bg="#e3f5e3", panel="#c8edc8", field="#ffffff", bar="#33d633", bar_fg="#062e06",
+                         fg="#0b2a0f", muted="#3f6b45", border="#8fd68f", button="#ffffff", button_fg="#0b2a0f",
+                         accent="#1f9e2f", accent_fg="#ffffff", bad="#e53935", dark=False, top="#33d633",
+                         top_fg="#062e06", top_muted="#14501c"),
     "Sombre": dict(bg="#1d2127", panel="#242931", field="#1a1e24", bar="#2b313a", bar_fg="#e9edf2",
                    fg="#e3e7ec", muted="#98a3af", border="#363d47", button="#2f3640", button_fg="#e3e7ec",
                    accent="#2fbf71", accent_fg="#ffffff", bad="#ff5d6c", dark=True, top="#15191e"),
