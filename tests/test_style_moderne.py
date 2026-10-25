@@ -94,14 +94,15 @@ class Appli(unittest.TestCase):
         self.assertEqual((str(b.cget("relief")), str(b.cget("bg")), str(a.cget("bg"))), classic)
         self.assertFalse(a.topbar.winfo_manager())
 
-    def test_tuiles_avec_icones(self):
-        # 1.56 : style Moderne -> tuiles avec icône ; Classique -> boutons texte comme avant
+    def test_tuiles_compactes(self):
+        # 1.58 (choix de F4GOP) : style Moderne -> boutons plats compacts, sans icône
         a = self.a
         b = a.gbtn["fix"]
         self.assertEqual(str(b.cget("image")), "")
         self.style(True, "Vert EasyPal")
-        self.assertNotEqual(str(b.cget("image")), "")
-        self.assertEqual(str(b.cget("compound")), "top")
+        self.assertEqual(str(b.cget("image")), "")
+        self.assertEqual(str(b.cget("relief")), "flat")
+        self.assertEqual(int(b.cget("pady")), 3)
         self.assertEqual(str(a.gbtn["tx"].cget("bg")), theme.MODERN["Vert EasyPal"]["accent"])
         self.style(False)
         self.assertEqual(str(b.cget("image")), "")

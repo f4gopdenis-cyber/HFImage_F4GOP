@@ -1,5 +1,9 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 1.58 — style Moderne : boutons de gauche compacts
+
+- Style Moderne : les 16 boutons de gauche redeviennent **compacts**, plats et **sans icône** (aussi peu hauts qu'en style Classique), pour laisser toute sa place au waterfall. ÉMISSION reste dans la couleur d'accent, et les couleurs d'état (actif, attente, émission) sont gardées.
+
 ## Version 1.57 — style Moderne : cartes, jauges, listes colorées (étape 3)
 
 - Style Moderne : la colonne de gauche est présentée en **cartes** (bordure fine, marges) ; jauges **RX / SNR arrondies** dans la couleur d'accent ; voyants sans contour.

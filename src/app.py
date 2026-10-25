@@ -62,7 +62,7 @@ import random
 import wave
 
 APP = "HFImage F4GOP"
-VERSION = "1.57"
+VERSION = "1.58"
 
 
 def _take_profile(argv):
@@ -1322,8 +1322,8 @@ class App(tk.Tk):
                 bg, fg = P["accent"], P["accent_fg"]          # l'émission : la tuile principale
             b.configure(bg=bg, fg=fg, activebackground=P["accent"] if state == "off" else bg,
                         activeforeground=P["accent_fg"] if state == "off" else fg, relief="flat")
-            if key:                                           # tuile : icône au-dessus du texte
-                b.configure(image=self._tile_icon(key, fg), compound="top", padx=2, pady=4)
+            if key:                                           # 1.58 : boutons plats compacts, sans icône
+                b.configure(image="", compound="none", padx=1, pady=3)
             return
         b._hf_state = state
         bg, abg, _, relief = self.BTN_CLASSIC[state]

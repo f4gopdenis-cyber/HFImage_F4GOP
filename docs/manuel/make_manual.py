@@ -503,7 +503,7 @@ s.append(P("Menu <b>Réglages → Police et taille du texte</b> : « Texte en gr
 s.append(P("Style Classique ou Moderne", "h2"))
 s.append(P("Réglages → Apparence → <b>Style</b> : <b>Classique (EasyPal)</b>, le look d'origine avec ses couleurs, ou "
            "<b>Moderne</b> : tout plat (sans relief), police moderne, onglets en pastilles, bouton « ▶ Émettre » mis en "
-           "valeur, boutons de gauche en <b>tuiles avec icônes</b> (la tuile ÉMISSION dans la couleur d'accent), colonne de gauche en "
+           "valeur, boutons de gauche plats et compacts (ÉMISSION dans la couleur d'accent), colonne de gauche en "
            "<b>cartes</b> (jauges RX / SNR arrondies, voyants sans contour), stations marquées ● (en ligne) ou ○ (entendues "
            "par radio), Rx Ok coloré selon le report (mêmes couleurs que la carte), et une <b>barre du haut</b> avec l'indicatif, la fréquence en grand (clic : menu des fréquences), "
            "l'état (réception, émission), les stations en ligne (clic : carte) et l'heure UTC. Quatre <b>ambiances</b> : "
