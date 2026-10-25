@@ -1,5 +1,9 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 1.66 — logo incrusté gardé au redémarrage
+
+- Image TX : le **logo** et les autres **images du PC** incrustés (avec leur place, taille, rotation, inclinaison, forme, opacité) **restent en place** à la fermeture du programme : plus besoin de les remettre à chaque démarrage (demande de F4EEH). Les images reçues d'un correspondant, propres à chaque QSO, ne sont pas gardées. Si le fichier du logo a été déplacé ou effacé, il est simplement ignoré.
+
 ## Version 1.65 — partage du poste avec WSJT-X / logger ; « en émission » fiable
 
 - **Partager le poste avec d'autres logiciels** (Réglages → Poste radio) : un port COM ne sert qu'à un seul programme à la fois. Case cochée, HFImage garde le port du poste et l'ouvre aux autres logiciels du PC : dans WSJT-X, JTDX ou le logger, choisir le poste **« Hamlib NET rigctl »**, serveur **127.0.0.1:4532**. Tous lisent et changent la fréquence et passent en émission en même temps. Lancer HFImage en premier. Pour les postes de la liste Hamlib et les Kenwood (modèle exact ; ils passent alors par Hamlib) ; le port peut être changé.

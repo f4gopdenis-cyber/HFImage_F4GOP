@@ -63,7 +63,7 @@ import random
 import wave
 
 APP = "HFImage F4GOP"
-VERSION = "1.65"
+VERSION = "1.66"
 
 
 def _take_profile(argv):
@@ -425,6 +425,7 @@ class App(tk.Tk):
         self.audio_q = queue.Queue()
         self._photos = {}
         self.pips = []              # images des correspondants incrustées dans l'image TX
+        self._pip_keep_load()       # 1.66 : logos et images du PC gardés d'un lancement à l'autre
         self.bubbles = []           # bulles de texte (BD) dessinées sur l'image TX
 
         self.sent_images = {}       # id -> Transmission émise (pour répondre aux BSR)
@@ -4170,6 +4171,21 @@ class App(tk.Tk):
         corner = next((c for c in self.PIP_CORNERS if c not in used), self.PIP_CORNERS[i % 4])
         return {"corner": corner, "size": "petite", "pos": None, "scale": None, "rot": 0, "tilt": 0, "shape": "rect"}
 
+    PIP_KEEP_KEYS = ("path", "call", "snr", "local", "logo", "opa", "cap", "corner", "size", "pos", "scale",
+                     "rot", "tilt", "shape")
+
+    def _pip_keep_load(self):
+        """Au lancement : remet les logos et images du PC incrustés à la dernière fermeture
+        (les images reçues d'un correspondant, elles, changent à chaque QSO)."""
+        for d in self.conf.get("pip_keep") or []:
+            if isinstance(d, dict) and d.get("path") and os.path.exists(str(d["path"])) \
+                    and len(self.pips) < self.PIP_MAX_N:
+                self.pips.append({k: d.get(k) for k in self.PIP_KEEP_KEYS if k in d})
+
+    def _pip_keep_save(self):
+        self.conf["pip_keep"] = [{k: p.get(k) for k in self.PIP_KEEP_KEYS if k in p}
+                                 for p in getattr(self, "pips", []) if p.get("local") or p.get("logo")]
+
     def _pip_save_layouts(self):
         """Garde la disposition de chaque image incrustée (dans l'ordre de la liste)."""
         for i, p in enumerate(self.pips):
@@ -6054,6 +6070,10 @@ class App(tk.Tk):
         return res["act"], bool(remember.get())
 
     def _save_conf_file(self):
+        try:
+            self._pip_keep_save()
+        except Exception:
+            pass
         try:
             with open(CONF_PATH, "w", encoding="utf-8") as f:
                 json.dump(self.conf, f, indent=1)
@@ -7955,6 +7975,7 @@ class App(tk.Tk):
     def _save_layout(self):
         """Taille de la fenêtre et des zones, pour la prochaine ouverture."""
         try:
+            self._pip_keep_save()                     # logos incrustés gardés pour le prochain lancement
             zoomed = self.state() == "zoomed"
             if not zoomed:
                 self.conf["win_geom"] = self.geometry()
