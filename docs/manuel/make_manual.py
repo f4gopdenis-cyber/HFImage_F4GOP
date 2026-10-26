@@ -239,7 +239,7 @@ s.append(P("Ouvrez <b>Réglages</b> (bouton ou menu). Les réglages sont enregis
 s.append(img("reglages.png", 165, "La fenêtre des réglages."))
 s.append(P("Station", "h2"))
 s.append(P("Indicatif et <b>locator</b> (6 caractères, ex. IN98QR) : ils servent aux annonces, à la carte "
-           "des stations et à la carte QSL. Langue de l'interface : français, English, Deutsch, Español, Italiano."))
+           "des stations et à la carte QSL. Langue de l'interface : français, English, Deutsch, Español, Italiano, chinois simplifié (traduit par Yang BH2RMX et BD4QXR)."))
 s.append(P("<b>Prénom</b> : affiché à côté de votre indicatif dans la liste Rx Ok des autres "
            "utilisateurs (« F4GOP  +5 dB  Denis »). Ne l'écrivez pas dans la case <b>Indicatif</b> : par radio, "
            "l'indicatif est limité à 8 caractères, et « F4LTX CHRIS » arrivait coupé en « F4LTX CH » "

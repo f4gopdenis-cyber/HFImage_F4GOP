@@ -233,7 +233,7 @@ s.append(P("Open <b>Settings</b> (button or menu). Settings are saved automatica
 s.append(img("en_settings.png", 165, "The Settings window."))
 s.append(P("Station", "h2"))
 s.append(P("Callsign and <b>locator</b> (6 characters, e.g. IN98QR): used in the announcements, the station map "
-           "and the QSL card. Interface language: English, Français, Deutsch, Español, Italiano."))
+           "and the QSL card. Interface language: English, Français, Deutsch, Español, Italiano, Simplified Chinese (translated by Yang BH2RMX and BD4QXR)."))
 s.append(P("<b>First name</b>: shown next to your callsign in the other users' Rx Ok list "
            "(“F4GOP  +5 dB  Denis”). Do not type it in the <b>Callsign</b> box: over the air the callsign is limited "
            "to 8 characters, and “M7WUV ANDY” arrived cut to “M7WUV AN” (the same station appeared twice). "

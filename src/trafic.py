@@ -132,6 +132,12 @@ LINUX_ALIAS = {"Arial": "Liberation Sans", "Times New Roman": "Liberation Serif"
 
 
 def font(family="Arial", size=24, bold=True, italic=False):
+    import i18n
+    for f in i18n.cjk_fonts(bold):                   # chinois : police avec les caractères chinois
+        try:
+            return ImageFont.truetype(f, size)
+        except OSError:
+            pass
     fs = fonts()
     files = fs.get(family) or fs.get(LINUX_ALIAS.get(family, "")) or BUILTIN.get(family)
     if files:
@@ -152,7 +158,9 @@ def _rgb(c, default=(255, 255, 255)):
 
 
 def _font(size):
-    for f in ("arialbd.ttf", "Arial Bold.ttf", "DejaVuSans-Bold.ttf", "LiberationSans-Bold.ttf"):
+    import i18n
+    for f in i18n.cjk_fonts(True) + ("arialbd.ttf", "Arial Bold.ttf", "DejaVuSans-Bold.ttf",
+                                       "LiberationSans-Bold.ttf"):
         try:
             return ImageFont.truetype(f, size)
         except OSError:

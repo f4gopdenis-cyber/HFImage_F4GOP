@@ -41,8 +41,9 @@ _font_name = "Arial"
 
 def _font(size, bold=False):
     reg, bd = FONTS.get(_font_name, FONTS["Arial"])
-    names = ([bd, "arialbd.ttf", "segoeuib.ttf", "DejaVuSans-Bold.ttf"] if bold
-             else [reg, "arial.ttf", "segoeui.ttf", "DejaVuSans.ttf"])
+    import i18n
+    names = list(i18n.cjk_fonts(bold)) + ([bd, "arialbd.ttf", "segoeuib.ttf", "DejaVuSans-Bold.ttf"] if bold
+                                          else [reg, "arial.ttf", "segoeui.ttf", "DejaVuSans.ttf"])
     for n in names:
         try:
             return ImageFont.truetype(n, size)

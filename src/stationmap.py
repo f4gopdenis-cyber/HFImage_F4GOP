@@ -41,7 +41,9 @@ VIEWS = {
 
 
 def _font(size, bold=False):
-    names = (["arialbd.ttf", "DejaVuSans-Bold.ttf"] if bold else ["arial.ttf", "DejaVuSans.ttf"])
+    import i18n
+    names = list(i18n.cjk_fonts(bold)) + (["arialbd.ttf", "DejaVuSans-Bold.ttf"] if bold
+                                          else ["arial.ttf", "DejaVuSans.ttf"])
     for n in names:
         try:
             return ImageFont.truetype(n, size)

@@ -7,8 +7,10 @@ si elles correspondent à un texte connu.
 """
 import re
 
-LANGS = {"fr": "Français", "en": "English", "de": "Deutsch", "es": "Español", "it": "Italiano"}
-ORDER = ("fr", "en", "de", "es", "it")
+LANGS = {"fr": "Français", "en": "English", "de": "Deutsch", "es": "Español", "it": "Italiano",
+         "zh": "中文 (简体)"}
+ORDER = ("fr", "en", "de", "es", "it", "zh")
+# 1.71 : chinois simplifié, dans un fichier à part (i18n_zh.py) ; un texte absent reste en anglais
 
 T = [
     # ------------------------------------------------------------ onglets, menus
@@ -1834,8 +1836,13 @@ _tmpl = []
 def _build():
     global _static, _tmpl
     _static, _tmpl = {}, []
+    try:
+        from i18n_zh import ZH
+    except ImportError:
+        ZH = {}
     for row in T:
         fr = row[0]
+        row = tuple(row) + (ZH.get(fr) or row[1],)            # colonne chinoise (sinon l'anglais)
         if "{0}" in fr:
             parts = re.split(r"\{(\d)\}", fr)
             rx = ""
@@ -1849,6 +1856,18 @@ def _build():
 
 
 _build()
+
+
+# polices avec les caractères chinois, pour les textes dessinés dans les images (QSL, carte, bulles…)
+CJK_FONTS = {False: ("msyh.ttc", "msyh.ttf", "simhei.ttf", "simsun.ttc", "NotoSansCJK-Regular.ttc",
+                     "NotoSansSC-Regular.otf", "wqy-microhei.ttc", "DroidSansFallbackFull.ttf"),
+             True: ("msyhbd.ttc", "msyhbd.ttf", "simhei.ttf", "NotoSansCJK-Bold.ttc", "NotoSansSC-Bold.otf",
+                    "wqy-microhei.ttc", "msyh.ttc", "DroidSansFallbackFull.ttf")}
+
+
+def cjk_fonts(bold=False):
+    """Langue chinoise : polices à essayer d'abord pour dessiner du texte (sinon ())."""
+    return CJK_FONTS[bool(bold)] if _lang == "zh" else ()
 
 
 def set_lang(code):

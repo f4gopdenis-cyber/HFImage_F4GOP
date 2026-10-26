@@ -1,5 +1,10 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 1.71 — interface en chinois (中文)
+
+- Nouvelle langue : **chinois simplifié** (中文), dans Réglages → Langue, choisie automatiquement sur un Windows en chinois. Traduction de **Yang BH2RMX**, avec **BD4QXR** — merci à eux ! Les textes encore sans traduction s'affichent en anglais.
+- En chinois, les textes dessinés dans les images (carte QSL, carte des stations, bulles, texte dans le waterfall) utilisent une police qui a les caractères chinois (Microsoft YaHei sous Windows ; Noto CJK ou WenQuanYi sous Linux).
+
 ## Version 1.70 — soutenir HFImage
 
 - Menu **Infos → « Soutenir HFImage (don)… »** : ouvre la page PayPal de F4GOP (paypal.me/F4GOP) dans le navigateur. HFImage reste gratuit ; rien ne s'affiche tout seul.

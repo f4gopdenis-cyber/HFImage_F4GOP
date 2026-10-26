@@ -29,7 +29,8 @@ FALLBACK = ("DejaVuSans-Bold.ttf", "DejaVuSans.ttf")
 
 
 def _font(name, size):
-    for f in FONTS.get(name, ()) + FALLBACK:
+    import i18n
+    for f in i18n.cjk_fonts(True) + FONTS.get(name, ()) + FALLBACK:
         try:
             return ImageFont.truetype(f, size)
         except OSError:
