@@ -8,8 +8,8 @@ si elles correspondent à un texte connu.
 import re
 
 LANGS = {"fr": "Français", "en": "English", "de": "Deutsch", "es": "Español", "it": "Italiano",
-         "zh": "中文 (简体)"}
-ORDER = ("fr", "en", "de", "es", "it", "zh")
+         "zh": "中文 (简体)", "ru": "Русский"}
+ORDER = ("fr", "en", "de", "es", "it", "zh", "ru")
 # 1.71 : chinois simplifié, dans un fichier à part (i18n_zh.py) ; un texte absent reste en anglais
 
 T = [
@@ -1840,9 +1840,13 @@ def _build():
         from i18n_zh import ZH
     except ImportError:
         ZH = {}
+    try:
+        from i18n_ru import RU                                # 1.74 : russe (Yuri)
+    except ImportError:
+        RU = {}
     for row in T:
         fr = row[0]
-        row = tuple(row) + (ZH.get(fr) or row[1],)            # colonne chinoise (sinon l'anglais)
+        row = tuple(row) + (ZH.get(fr) or row[1], RU.get(fr) or row[1])   # chinois, russe (sinon l'anglais)
         if "{0}" in fr:
             parts = re.split(r"\{(\d)\}", fr)
             rx = ""
@@ -1863,6 +1867,15 @@ CJK_FONTS = {False: ("msyh.ttc", "msyh.ttf", "simhei.ttf", "simsun.ttc", "NotoSa
                      "NotoSansSC-Regular.otf", "wqy-microhei.ttc", "DroidSansFallbackFull.ttf"),
              True: ("msyhbd.ttc", "msyhbd.ttf", "simhei.ttf", "NotoSansCJK-Bold.ttc", "NotoSansSC-Bold.otf",
                     "wqy-microhei.ttc", "msyh.ttc", "DroidSansFallbackFull.ttf")}
+
+
+# libellés courts des 16 boutons de la grille de gauche, pour les langues aux mots longs
+SHORT = {"ru": {"Relire RX": "Повтор", "Envoi Texte": "Текст", "Log Station": "Журнал", "Image…": "Изобр."}}
+
+
+def tr_short(s):
+    """Libellé court d'un bouton de la grille (sinon la traduction normale)."""
+    return SHORT.get(_lang, {}).get(s) or tr(s)
 
 
 def cjk_fonts(bold=False):

@@ -63,7 +63,7 @@ import random
 import wave
 
 APP = "HFImage F4GOP"
-VERSION = "1.73"
+VERSION = "1.74"
 
 
 def _take_profile(argv):
@@ -905,7 +905,8 @@ class App(tk.Tk):
                 continue
             if isinstance(t, str) and t:
                 orig = self._orig.setdefault(key, t)
-                w.configure(text=tr(orig))
+                # boutons de la grille de gauche : libellé court si la langue en a un (russe…)
+                w.configure(text=i18n.tr_short(orig) if getattr(w, "_hf_key", None) else tr(orig))
 
     def set_language(self, code):
         i18n.set_lang(code)

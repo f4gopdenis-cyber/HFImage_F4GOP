@@ -1,5 +1,10 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 1.74 — interface en russe (Русский)
+
+- Nouvelle langue : **russe** (Русский), dans Réglages → Langue, choisie automatiquement sur un Windows en russe. Traduction de **Yuri** — merci ! Les textes encore sans traduction s'affichent en anglais.
+- Grille des 16 boutons de gauche : libellés courts en russe quand le mot ne tient pas dans le bouton (« Повтор », « Текст », « Журнал », « Изобр. »).
+
 ## Version 1.73 — Hamlib NET rigctl sous Linux : fréquence lue
 
 - Poste « Hamlib NET rigctl » (un rigctld déjà lancé, 127.0.0.1:4532) : avec certaines versions de Hamlib (celles de distributions Linux), rigctld répond à la lecture de fréquence par la fréquence **et** le VFO ; toutes les réponses suivantes étaient alors décalées d'une ligne : fréquence non lue (« Hamlib NET rigctl : ? »), mode faux, alors que le PTT marchait (signalé par F4EEI). Les lignes en trop sont maintenant ignorées.
