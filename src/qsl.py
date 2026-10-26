@@ -26,6 +26,16 @@ DEFAULT_STYLE = {"font": "Arial", "call": "#ffffff", "text": "#ffffff", "accent"
                  "band": "#000000", "band_alpha": 60, "call_size": 100,
                  "head_h": 100, "band_h": 100}          # hauteur des bandeaux du haut / du bas (%)
 BAND_MIN, BAND_MAX = 50, 150
+# 1.68 : blocs de texte déplaçables à la souris (style["pos"] : bloc -> [dx, dy] en fraction de la carte)
+BLOCKS = ("call", "loc", "to", "info", "msg")
+
+
+def _offset(st, key):
+    try:
+        dx, dy = (st.get("pos") or {}).get(key) or (0, 0)
+        return max(-1.0, min(1.0, float(dx))) * W, max(-1.0, min(1.0, float(dy))) * H
+    except (TypeError, ValueError):
+        return 0.0, 0.0
 _font_name = "Arial"
 
 
@@ -65,8 +75,10 @@ def _dim(rgb, k=0.75):
 
 
 def make_card(background, mycall, locator="", to_call="", freq="", report="", message="",
-              utc=None, style=None):
-    """Retourne une image PIL 960×600. style : police et couleurs (voir DEFAULT_STYLE)."""
+              utc=None, style=None, boxes=None):
+    """Retourne une image PIL 960×600. style : police et couleurs (voir DEFAULT_STYLE), et
+    style["pos"] : décalage de chaque bloc de texte. boxes (dict) : reçoit le cadre de chaque
+    bloc (x0, y0, x1, y1), pour le déplacer à la souris."""
     global _font_name
     st = dict(DEFAULT_STYLE, **(style or {}))
     _font_name = st["font"]
@@ -98,11 +110,21 @@ def make_card(background, mycall, locator="", to_call="", freq="", report="", me
     head = int(max(120, int(120 * big)) * kh)
     if alpha:
         d.rectangle([0, 0, W, head], fill=band_top)
+    box = {} if boxes is None else boxes
+
+    def text(key, xy, txt, font, fill, anchor="la"):
+        ox, oy = _offset(st, key)
+        xy = (xy[0] + ox, xy[1] + oy)
+        d.text(xy, txt, font=font, fill=fill, anchor=anchor)
+        b = d.textbbox(xy, txt, font=font, anchor=anchor)
+        o = box.get(key)
+        box[key] = b if o is None else (min(o[0], b[0]), min(o[1], b[1]), max(o[2], b[2]), max(o[3], b[3]))
+
     fc = _font(px(76 * big, kh), True)
-    d.text((28, head / 2), mycall.upper(), font=fc, fill=call_c, anchor="lm")
+    text("call", (28, head / 2), mycall.upper(), fc, call_c, "lm")
     if locator:
-        d.text((W - 28, head / 2 - 8 * kh), locator.upper(), font=_font(px(34, kh), True), fill=acc_c, anchor="rs")
-    d.text((W - 28, head / 2 + 6 * kh), "HFImage", font=_font(px(22, kh)), fill=_dim(text_c), anchor="ra")
+        text("loc", (W - 28, head / 2 - 8 * kh), locator.upper(), _font(px(34, kh), True), acc_c, "rs")
+    text("loc", (W - 28, head / 2 + 6 * kh), "HFImage", _font(px(22, kh)), _dim(text_c), "ra")
 
     # bandeau du bas : QSO
     band = int(190 * kb)
@@ -110,7 +132,7 @@ def make_card(background, mycall, locator="", to_call="", freq="", report="", me
         d.rectangle([0, H - band, W, H], fill=band_bot)
     y0 = H - band + 14 * kb
     if to_call:
-        d.text((28, y0), tr(f"To : {to_call.upper()}"), font=_font(px(40, kb), True), fill=acc_c)
+        text("to", (28, y0), tr(f"To : {to_call.upper()}"), _font(px(40, kb), True), acc_c)
     rows = [(tr("Date UTC") if clocktz.utc() else tr("Date"), utc), (tr("Fréquence"), freq), (tr("Report"), report)]
     x = 28
     # date / fréquence / report : la ligne doit tenir dans la largeur de la carte
@@ -124,9 +146,9 @@ def make_card(background, mycall, locator="", to_call="", freq="", report="", me
     for lab, val in rows:
         if not val:
             continue
-        d.text((x, y0 + 58 * kb), lab, font=_font(px(18, kr)), fill=_dim(text_c))
-        d.text((x, y0 + 80 * kb), val, font=fv, fill=text_c)
+        text("info", (x, y0 + 58 * kb), lab, _font(px(18, kr)), _dim(text_c))
+        text("info", (x, y0 + 80 * kb), val, fv, text_c)
         x += max(int(220 * kr), int(d.textlength(val, font=fv)) + int(40 * kr))
     if message:
-        d.text((28, y0 + 128 * kb), message, font=_font(px(26, kb)), fill=text_c)
+        text("msg", (28, y0 + 128 * kb), message, _font(px(26, kb)), text_c)
     return card

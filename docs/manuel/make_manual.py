@@ -557,7 +557,9 @@ s += B(["<b>Texte inclus</b> : un message joint à l'image, affiché dans « Mes
         "« Sauve » en fait un begin.wav joué avant chaque émission, comme EasyPal.",
         "<b>IMG/QSL</b> : carte QSL avec photo de fond, indicatif, locator et report remplis automatiquement, "
         "police et couleurs au choix, <b>hauteur des bandeaux</b> du haut et du bas réglable (50 à 150 %, le texte "
-        "suit)."])
+        "suit). Les <b>textes se déplacent à la souris</b> dans l'aperçu (indicatif, locator, correspondant, "
+        "date / fréquence / report, message) : cadre jaune au survol, place gardée pour les cartes suivantes, bouton "
+        "« Textes à leur place d'origine »."])
 
 # ------------------------------------------------------------------ 6 EasyPal
 s.append(PageBreak())

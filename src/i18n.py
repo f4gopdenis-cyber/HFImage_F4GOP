@@ -1055,6 +1055,11 @@ T = [
     ("Image collée : enregistrement impossible", "Pasted image: cannot be saved", "Eingefügtes Bild: Speichern unmöglich",
      "Imagen pegada: no se puede guardar", "Immagine incollata: salvataggio impossibile"),
     ("Image collée :", "Image pasted:", "Bild eingefügt:", "Imagen pegada:", "Immagine incollata:"),
+    ("Textes à leur place d'origine", "Texts back to their original place", "Texte an ihren ursprünglichen Platz",
+     "Textos a su lugar original", "Testi al loro posto originale"),
+    ("Glissez les textes à la souris pour les placer.", "Drag the texts with the mouse to place them.",
+     "Texte mit der Maus ziehen, um sie zu platzieren.", "Arrastre los textos con el ratón para colocarlos.",
+     "Trascina i testi con il mouse per posizionarli."),
     ("DATA auto", "DATA auto", "DATA auto", "DATA auto", "DATA auto"),
     ("Allumé : le poste passe en LSB-DATA (ou USB-DATA) au moment d'émettre, puis revient tout seul en LSB (ou USB) "
      "à la fin de l'image.",

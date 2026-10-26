@@ -63,7 +63,7 @@ import random
 import wave
 
 APP = "HFImage F4GOP"
-VERSION = "1.67"
+VERSION = "1.68"
 
 
 def _take_profile(argv):
@@ -7434,42 +7434,110 @@ class App(tk.Tk):
 
         def reset_style():
             style.update(qsl.DEFAULT_STYLE)
+            style["pos"] = {}
             v_font.set(style["font"]); v_size.set(style["call_size"]); v_alpha.set(style["band_alpha"])
             v_hh.set(style["head_h"]); v_bh.set(style["band_h"])
             for k, b in swatches.items():
                 b.configure(bg=style[k])
             refresh()
 
-        ttk.Button(sf, text="Style d'origine", command=reset_style).grid(row=7, column=0, columnspan=4,
+        ttk.Button(sf, text="Style d'origine", command=reset_style).grid(row=7, column=0, columnspan=2,
                                                                         sticky="w", pady=(6, 0))
+
+        def reset_pos():
+            style["pos"] = {}
+            refresh()
+        ttk.Button(sf, text="Textes à leur place d'origine", command=reset_pos).grid(
+            row=7, column=2, columnspan=2, sticky="w", pady=(6, 0))
         # ---- aperçu en direct
-        pv = tk.Canvas(win, width=480, height=300, bg="#000", highlightthickness=0)
-        pv.grid(row=0, column=2, rowspan=8, padx=8, pady=8, sticky="n")
-        prev = {"job": None, "ph": None}
+        pvf = ttk.Frame(win)
+        pvf.grid(row=0, column=2, rowspan=8, padx=8, pady=8, sticky="n")
+        pv = tk.Canvas(pvf, width=480, height=300, bg="#000", highlightthickness=0)
+        pv.pack()
+        ttk.Label(pvf, text="Glissez les textes à la souris pour les placer.", foreground="#555").pack(
+            anchor="w", pady=(4, 0))
+        prev = {"job": None, "ph": None, "boxes": {}, "drag": None, "hover": None}
+        KP = 480 / qsl.W                                  # aperçu -> carte : ½
 
         def current_style():
             style.update(font=v_font.get(), call_size=int(v_size.get()), band_alpha=int(v_alpha.get()),
                          head_h=int(v_hh.get()), band_h=int(v_bh.get()))
             return dict(style)
 
-        def build():
+        def build(boxes=None):
             return qsl.make_card(bg["img"], self.mycall() or "NOCALL", self.v_loc.get().strip(),
                                  fields["to"].get(), fields["freq"].get(), fields["report"].get(),
-                                 fields["msg"].get(), fields["utc"].get(), style=current_style())
+                                 fields["msg"].get(), fields["utc"].get(), style=current_style(), boxes=boxes)
 
         def draw():
             prev["job"] = None
             if not win.winfo_exists():
                 return
-            im = build().resize((480, 300), Image.LANCZOS)
+            boxes = {}
+            im = build(boxes).resize((480, 300), Image.BILINEAR if prev["drag"] else Image.LANCZOS)
+            prev["boxes"] = boxes
             prev["ph"] = ImageTk.PhotoImage(im)
             pv.delete("all")
             pv.create_image(0, 0, image=prev["ph"], anchor="nw")
+            frame()
 
-        def refresh(*_):
+        def frame():
+            """Cadre jaune autour du texte survolé ou déplacé."""
+            pv.delete("sel")
+            k = (prev["drag"] or {}).get("key") or prev["hover"]
+            b = prev["boxes"].get(k)
+            if b:
+                pv.create_rectangle(b[0] * KP - 3, b[1] * KP - 3, b[2] * KP + 3, b[3] * KP + 3,
+                                    outline="#ffd400", width=2, dash=(4, 2), tags="sel")
+
+        def refresh(*_, delay=150):
             if prev["job"] is not None:
                 win.after_cancel(prev["job"])
-            prev["job"] = win.after(150, draw)
+            prev["job"] = win.after(delay, draw)
+
+        def hit(e):
+            x, y = e.x / KP, e.y / KP
+            for k in reversed(qsl.BLOCKS):                 # le bloc dessiné en dernier d'abord
+                b = prev["boxes"].get(k)
+                if b and b[0] - 6 <= x <= b[2] + 6 and b[1] - 6 <= y <= b[3] + 6:
+                    return k
+            return None
+
+        def on_move(e):
+            if prev["drag"]:
+                return
+            k = hit(e)
+            if k != prev["hover"]:
+                prev["hover"] = k
+                pv.configure(cursor="fleur" if k else "")
+                frame()
+
+        def on_press(e):
+            k = hit(e)
+            if k:
+                dx, dy = (style.get("pos") or {}).get(k) or (0, 0)
+                prev["drag"] = {"key": k, "x": e.x, "y": e.y, "dx": float(dx), "dy": float(dy)}
+
+        def on_drag(e):
+            g = prev["drag"]
+            if not g:
+                return
+            pos = dict(style.get("pos") or {})
+            pos[g["key"]] = [round(max(-1.0, min(1.0, g["dx"] + (e.x - g["x"]) / 480)), 4),
+                             round(max(-1.0, min(1.0, g["dy"] + (e.y - g["y"]) / 300)), 4)]
+            style["pos"] = pos
+            refresh(delay=30)
+
+        def on_release(e):
+            if prev["drag"]:
+                prev["drag"] = None
+                refresh(delay=10)
+
+        pv.bind("<Motion>", on_move)
+        pv.bind("<ButtonPress-1>", on_press)
+        pv.bind("<B1-Motion>", on_drag)
+        pv.bind("<ButtonRelease-1>", on_release)
+        pv.bind("<Leave>", lambda e: (prev.update(hover=None), frame()) if not prev["drag"] else None)
 
         cbf.bind("<<ComboboxSelected>>", refresh)
         for v in fields.values():

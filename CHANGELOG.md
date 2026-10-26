@@ -1,5 +1,9 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 1.68 — carte QSL : textes déplacés à la souris
+
+- **IMG/QSL** : dans l'aperçu de la carte, les **textes se déplacent à la souris** : indicatif, locator (avec « HFImage »), correspondant (« To : »), ligne date / fréquence / report, message. Cadre jaune au survol, la carte se redessine pendant le déplacement ; les places sont **gardées** pour les cartes suivantes (en proportion de la carte, quelle que soit la photo de fond). Bouton **« Textes à leur place d'origine »** ; « Style d'origine » remet aussi les textes en place. Les bandeaux ne bougent pas.
+
 ## Version 1.67 — coller une image dans l'onglet TX
 
 - **Coller une image** (demande de G0GOO) : une image copiée dans le navigateur (clic droit → « Copier l'image »), une capture d'écran ou un fichier image copié dans l'Explorateur se colle dans l'onglet TX par **Ctrl+V**, par le clic droit sur l'image TX → **« Coller l'image »**, ou par le menu **Images**. L'image collée est enregistrée en PNG dans le dossier « collées » des images. Dans une case de texte, Ctrl+V colle toujours le texte.
