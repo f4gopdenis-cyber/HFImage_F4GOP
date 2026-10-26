@@ -627,6 +627,8 @@ class RigctlRig(RigBase):
         self.model = label or "Hamlib rigctld"
         self.lock = threading.Lock()
         self.sock = None
+        self.vfo_mode = None                 # rigctld lancé avec --vfo (-o) : VFO à donner à chaque commande
+        self.last_reply = ""                 # dernière réponse illisible (pour le journal)
         self._connect()
 
     def _connect(self, tries=1):
@@ -671,11 +673,26 @@ class RigctlRig(RigBase):
             except OSError:
                 pass
 
+    def _check_vfo_mode(self):
+        """« \\chk_vfo » : 1 si rigctld attend le VFO dans chaque commande (option --vfo / -o)."""
+        try:
+            self._drain()
+            self.sock.sendall(b"\\chk_vfo\n")
+            line = self._readline()
+            self.vfo_mode = line.strip().endswith("1")
+        except (OSError, RuntimeError):
+            self.vfo_mode = False
+            raise
+
     def cmd(self, c, nlines=1):
         with self.lock:
             if self.sock is None:
                 self._connect()
             try:
+                if self.vfo_mode is None:
+                    self._check_vfo_mode()
+                if self.vfo_mode and c[:1] in "fmFMT":
+                    c = c[:1] + " currVFO" + c[1:]           # « f » -> « f currVFO », « T 1 » -> « T currVFO 1 »
                 self._drain()
                 self.sock.sendall((c + "\n").encode())
                 out = []
@@ -706,6 +723,7 @@ class RigctlRig(RigBase):
         try:
             return int(float(r[0].replace(",", ".")))
         except (ValueError, IndexError):
+            self.last_reply = (r[0] if r else "(rien)")[:60]
             return None
 
     def mode(self):

@@ -63,7 +63,7 @@ import random
 import wave
 
 APP = "HFImage F4GOP"
-VERSION = "1.74"
+VERSION = "1.75"
 
 
 def _take_profile(argv):
@@ -3432,7 +3432,9 @@ class App(tk.Tk):
                 if n % max(1, 5 // poll) == 0:
                     self.rig_mode = r.mode()
                 if f is None and self.rig_freq is None:
-                    raise RuntimeError("le poste ne donne pas sa fréquence")
+                    rep = getattr(r, "last_reply", "")
+                    raise RuntimeError("le poste ne donne pas sa fréquence" +
+                                       (f" (réponse : {rep})" if rep else ""))
                 if f is not None:
                     self.rig_freq = f
                 self.ui(self._show_freq)

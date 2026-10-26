@@ -1,5 +1,10 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 1.75 — Hamlib NET rigctl : mode VFO et diagnostic
+
+- « Hamlib NET rigctl » : un rigctld lancé avec l'option **--vfo** (-o) attend le VFO dans chaque commande (« f currVFO ») ; HFImage le demande à rigctld (« \chk_vfo ») et s'y adapte. Sans ça, la fréquence n'était pas lue.
+- Fréquence non lue : la réponse exacte de rigctld est maintenant affichée (Tester le CAT, journal « Liaison CAT perdue … (réponse : …) »), pour trouver la cause plus vite.
+
 ## Version 1.74 — interface en russe (Русский)
 
 - Nouvelle langue : **russe** (Русский), dans Réglages → Langue, choisie automatiquement sur un Windows en russe. Traduction de **Yuri** — merci ! Les textes encore sans traduction s'affichent en anglais.

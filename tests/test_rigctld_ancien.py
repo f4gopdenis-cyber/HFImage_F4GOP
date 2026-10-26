@@ -47,3 +47,58 @@ class RigctldAncien(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class RigctldVfo(unittest.TestCase):
+    """1.75 : rigctld lancé avec --vfo (-o) : chaque commande doit porter le VFO (« f currVFO »)."""
+
+    def setUp(self):
+        self.srv = socket.socket()
+        self.srv.bind(("127.0.0.1", 0))
+        self.srv.listen(1)
+        self.port = self.srv.getsockname()[1]
+        self.got = []
+        threading.Thread(target=self.serve, daemon=True).start()
+
+    def tearDown(self):
+        self.srv.close()
+
+    def serve(self):
+        c, _ = self.srv.accept()
+        f = c.makefile("rwb")
+        for line in f:
+            cmd = line.decode().strip()
+            self.got.append(cmd)
+            if cmd == "\\chk_vfo":
+                f.write(b"1\n")
+            elif cmd == "f currVFO":
+                f.write(b"7058000\n")
+            elif cmd == "m currVFO":
+                f.write(b"PKTLSB\n2400\n")
+            elif cmd.startswith(("T currVFO", "F currVFO", "M currVFO")):
+                f.write(b"RPRT 0\n")
+            else:
+                f.write(b"RPRT -1\n")
+            f.flush()
+        c.close()
+
+    def test_vfo_ajoute(self):
+        r = radio.make_rig(dict(radio.DEFAULTS, rig="netrigctl", host=f"127.0.0.1:{self.port}"))
+        try:
+            self.assertEqual(r.freq(), 7058000)
+            self.assertEqual(r.mode(), "PKTLSB")
+            r.ptt(True)
+            r.set_freq(7060000)
+        finally:
+            r.close()
+        self.assertIn("T currVFO 3", self.got)
+        self.assertIn("F currVFO 7060000", self.got)
+
+    def test_reponse_gardee_pour_le_journal(self):
+        r = radio.make_rig(dict(radio.DEFAULTS, rig="netrigctl", host=f"127.0.0.1:{self.port}"))
+        try:
+            r.vfo_mode = False                       # force « f » seul : le faux serveur répond RPRT -1
+            self.assertIsNone(r.freq())
+            self.assertEqual(r.last_reply, "RPRT -1")
+        finally:
+            r.close()

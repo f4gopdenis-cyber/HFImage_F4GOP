@@ -1064,6 +1064,8 @@ T = [
      "Trascina i testi con il mouse per posizionarli."),
     ("Soutenir HFImage (don)…", "Support HFImage (donation)…", "HFImage unterstützen (Spende)…",
      "Apoyar HFImage (donación)…", "Sostieni HFImage (donazione)…"),
+    ("réponse à la lecture de fréquence :", "reply to the frequency query:", "Antwort auf die Frequenzabfrage:",
+     "respuesta a la lectura de frecuencia:", "risposta alla lettura della frequenza:"),
     ("DATA auto", "DATA auto", "DATA auto", "DATA auto", "DATA auto"),
     ("Allumé : le poste passe en LSB-DATA (ou USB-DATA) au moment d'émettre, puis revient tout seul en LSB (ou USB) "
      "à la fin de l'image.",

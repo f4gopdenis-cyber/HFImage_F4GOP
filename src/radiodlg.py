@@ -421,6 +421,8 @@ class RadioDialog(tk.Toplevel):
                     self.app.ui(self._show, self.bt_cat, True, txt)
                     return
                 txt = f"{r.model} : {audio.format_freq(f) + ' kHz' if f else '?'} {m or ''}"
+                if not f and getattr(r, "last_reply", ""):
+                    txt += " — " + tr("réponse à la lecture de fréquence :") + f" {r.last_reply}"
                 self.app.ui(self.app.log, "Test CAT : " + txt)
                 self.app.ui(self._show, self.bt_cat, bool(f), txt)
             except Exception as e:
