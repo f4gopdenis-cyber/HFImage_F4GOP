@@ -246,7 +246,7 @@ def overlay(img, items, pos="bas", size="normale", style=None, call=""):
 PIP_SCALE = {"petite": 0.26, "moyenne": 0.34, "grande": 0.45}
 
 
-PIP_MIN, PIP_MAX = 0.10, 0.90      # taille libre : fraction de la largeur de l'image
+PIP_MIN, PIP_MAX = 0.04, 0.90      # taille libre : fraction de la largeur de l'image (1.69 : 4 %, petit logo)
 
 
 PIP_SHAPES = ("rect", "arrondi", "rond", "ovale")     # forme de l'incrustation
@@ -259,7 +259,7 @@ def pip_layout(img_size, thumb_size, caption="", corner="haut-droite", size="moy
     scale = largeur libre en fraction de la largeur de l'image."""
     iw, ih = img_size
     frac = min(PIP_MAX, max(PIP_MIN, float(scale))) if scale else PIP_SCALE.get(size, 0.34)
-    tw = max(40, int(iw * frac))
+    tw = max(20 if logo else 40, int(iw * frac))
     th_h = tw if shape == "rond" else max(1, round(thumb_size[1] * tw / max(1, thumb_size[0])))
     b = 0 if logo else max(2, tw // 60)                    # cadre (aucun pour un logo)
     fs = max(11, tw // 13)

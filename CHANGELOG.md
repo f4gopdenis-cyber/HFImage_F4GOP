@@ -1,5 +1,9 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 1.69 — logo encore plus petit
+
+- Image TX : un logo (ou une image incrustée) se réduit maintenant jusqu'à **4 %** de la largeur de l'image, au lieu de 10 % (demande de M7WUV) : sur une grande photo, le logo peut rester discret. Molette sur le logo, ou réglage « Libre (molette) ».
+
 ## Version 1.68 — carte QSL : textes déplacés à la souris
 
 - **IMG/QSL** : dans l'aperçu de la carte, les **textes se déplacent à la souris** : indicatif, locator (avec « HFImage »), correspondant (« To : »), ligne date / fréquence / report, message. Cadre jaune au survol, la carte se redessine pendant le déplacement ; les places sont **gardées** pour les cartes suivantes (en proportion de la carte, quelle que soit la photo de fond). Bouton **« Textes à leur place d'origine »** ; « Style d'origine » remet aussi les textes en place. Les bandeaux ne bougent pas.
