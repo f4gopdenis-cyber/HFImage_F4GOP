@@ -1,5 +1,9 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 1.73 — Hamlib NET rigctl sous Linux : fréquence lue
+
+- Poste « Hamlib NET rigctl » (un rigctld déjà lancé, 127.0.0.1:4532) : avec certaines versions de Hamlib (celles de distributions Linux), rigctld répond à la lecture de fréquence par la fréquence **et** le VFO ; toutes les réponses suivantes étaient alors décalées d'une ligne : fréquence non lue (« Hamlib NET rigctl : ? »), mode faux, alors que le PTT marchait (signalé par F4EEI). Les lignes en trop sont maintenant ignorées.
+
 ## Version 1.72 — mode choisi à la main gardé
 
 - « Passer en émission sur le mode reçu » : un mode **choisi à la main** dans l'onglet TX (par exemple « Auto ») est maintenant **gardé 10 minutes**, même si d'autres images EasyPal arrivent entre-temps (demande de G0GOO : sur 7,058 MHz, chaque image EasyPal reçue remettait l'émission en EasyPal). Pour choisir toujours soi-même : décocher l'option (onglet Stations).

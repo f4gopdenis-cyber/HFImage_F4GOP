@@ -651,11 +651,32 @@ class RigctlRig(RigBase):
         line, self.buf = self.buf.split(b"\n", 1)
         return line.decode(errors="replace").strip()
 
+    def _drain(self):
+        """Jette les lignes en trop d'une réponse précédente : certains rigctld (versions de Hamlib
+        des distributions Linux) répondent à « f » par la fréquence ET le VFO ; sans ça, toutes
+        les réponses suivantes seraient décalées d'une ligne (fréquence non lue, F4EEI)."""
+        self.buf = b""
+        try:
+            self.sock.setblocking(False)
+            while True:
+                if not self.sock.recv(4096):
+                    break
+        except (BlockingIOError, InterruptedError):
+            pass
+        except OSError:
+            pass
+        finally:
+            try:
+                self.sock.settimeout(3)
+            except OSError:
+                pass
+
     def cmd(self, c, nlines=1):
         with self.lock:
             if self.sock is None:
                 self._connect()
             try:
+                self._drain()
                 self.sock.sendall((c + "\n").encode())
                 out = []
                 for _ in range(nlines):
@@ -683,7 +704,7 @@ class RigctlRig(RigBase):
     def freq(self):
         r = self.cmd("f")
         try:
-            return int(float(r[0]))
+            return int(float(r[0].replace(",", ".")))
         except (ValueError, IndexError):
             return None
 
