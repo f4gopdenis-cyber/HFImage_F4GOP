@@ -1060,6 +1060,8 @@ T = [
     ("Glissez les textes à la souris pour les placer.", "Drag the texts with the mouse to place them.",
      "Texte mit der Maus ziehen, um sie zu platzieren.", "Arrastre los textos con el ratón para colocarlos.",
      "Trascina i testi con il mouse per posizionarli."),
+    ("Soutenir HFImage (don)…", "Support HFImage (donation)…", "HFImage unterstützen (Spende)…",
+     "Apoyar HFImage (donación)…", "Sostieni HFImage (donazione)…"),
     ("DATA auto", "DATA auto", "DATA auto", "DATA auto", "DATA auto"),
     ("Allumé : le poste passe en LSB-DATA (ou USB-DATA) au moment d'émettre, puis revient tout seul en LSB (ou USB) "
      "à la fin de l'image.",

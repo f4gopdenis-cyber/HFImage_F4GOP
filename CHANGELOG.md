@@ -1,5 +1,9 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 1.70 — soutenir HFImage
+
+- Menu **Infos → « Soutenir HFImage (don)… »** : ouvre la page PayPal de F4GOP (paypal.me/F4GOP) dans le navigateur. HFImage reste gratuit ; rien ne s'affiche tout seul.
+
 ## Version 1.69 — logo encore plus petit
 
 - Image TX : un logo (ou une image incrustée) se réduit maintenant jusqu'à **4 %** de la largeur de l'image, au lieu de 10 % (demande de M7WUV) : sur une grande photo, le logo peut rester discret. Molette sur le logo, ou réglage « Libre (molette) ».

@@ -63,7 +63,7 @@ import random
 import wave
 
 APP = "HFImage F4GOP"
-VERSION = "1.69"
+VERSION = "1.70"
 
 
 def _take_profile(argv):
@@ -86,6 +86,7 @@ def _take_profile(argv):
 PROFILE = _take_profile(sys.argv)
 CONF_MAIN = os.path.join(os.path.expanduser("~"), ".hfimage.json")
 CONF_PATH = os.path.join(os.path.expanduser("~"), f".hfimage_{PROFILE}.json") if PROFILE else CONF_MAIN
+DONATE_URL = "https://www.paypal.com/paypalme/F4GOP"     # 1.70 : menu Infos → Soutenir HFImage (don)
 DEFAULT_OUT = os.path.join(os.path.expanduser("~"), "Documents", "HFImage")
 if PROFILE:
     DEFAULT_OUT = os.path.join(DEFAULT_OUT, PROFILE)
@@ -1048,6 +1049,7 @@ class App(tk.Tk):
         n.add_command(label="Rechercher une mise à jour", command=lambda: self.update_check(quiet=False))
         n.add_command(label="Page du programme sur GitHub",
                       command=lambda: __import__("webbrowser").open(f"https://github.com/{updater.REPO}"))
+        n.add_command(label="Soutenir HFImage (don)…", command=lambda: webbrowser.open(DONATE_URL))
         n.add_separator()
         n.add_command(label="À propos…", command=self._about)
         n.add_command(label="Licence (GNU GPL v3)", command=self._license)
