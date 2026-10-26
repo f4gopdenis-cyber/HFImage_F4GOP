@@ -1,5 +1,9 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 1.72 — mode choisi à la main gardé
+
+- « Passer en émission sur le mode reçu » : un mode **choisi à la main** dans l'onglet TX (par exemple « Auto ») est maintenant **gardé 10 minutes**, même si d'autres images EasyPal arrivent entre-temps (demande de G0GOO : sur 7,058 MHz, chaque image EasyPal reçue remettait l'émission en EasyPal). Pour choisir toujours soi-même : décocher l'option (onglet Stations).
+
 ## Version 1.71 — interface en chinois (中文)
 
 - Nouvelle langue : **chinois simplifié** (中文), dans Réglages → Langue, choisie automatiquement sur un Windows en chinois. Traduction de **Yang BH2RMX**, avec **BD4QXR** — merci à eux ! Les textes encore sans traduction s'affichent en anglais.

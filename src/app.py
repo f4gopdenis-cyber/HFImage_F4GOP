@@ -63,7 +63,7 @@ import random
 import wave
 
 APP = "HFImage F4GOP"
-VERSION = "1.71"
+VERSION = "1.72"
 
 
 def _take_profile(argv):
@@ -1664,7 +1664,7 @@ class App(tk.Tk):
         self._radio_widgets = [w for lab, w in widgets if lab not in ("Format", "Mode")]
         for lab, w in widgets:
             w._ro = lab in ("Mode", "Robustesse")
-        widgets[0][1].bind("<<ComboboxSelected>>", self._mode_changed)
+        widgets[0][1].bind("<<ComboboxSelected>>", self._mode_chosen)
         for _, w in widgets[1:]:
             w.bind("<<ComboboxSelected>>", lambda e: self.prepare())
             w.bind("<Return>", lambda e: self.prepare())
@@ -4119,6 +4119,14 @@ class App(tk.Tk):
         """Format choisi -> nom interne (« jpg » = JPEG)."""
         f = self.v_fmt.get()
         return {"jpg": "jpeg"}.get(f, f)
+
+    MODE_KEEP_S = 600       # mode choisi à la main : gardé 10 min malgré « passer sur le mode reçu »
+
+    def _mode_chosen(self, _e=None):
+        """Mode choisi à la main dans l'onglet TX (G0GOO) : il n'est plus changé par les images
+        reçues pendant 10 minutes."""
+        self._mode_manual_t = time.time()
+        self._mode_changed()
 
     def _mode_changed(self, _e=None):
         self._drm_hyb_mode()
@@ -7057,6 +7065,8 @@ class App(tk.Tk):
             return
         if path and os.sep + "relecture" + os.sep in path:
             return                                   # décodage d'un fichier WAV : pas de changement
+        if time.time() - getattr(self, "_mode_manual_t", 0) < self.MODE_KEEP_S:
+            return                                   # mode choisi à la main il y a moins de 10 min
         cur = self.v_mode.get()
         if drm:
             changes = []

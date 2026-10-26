@@ -622,7 +622,9 @@ s.append(P("Avec « <b>Passer en émission sur le mode reçu</b> » coché (ongl
 s += B(["réception EasyPal → mode <b>EasyPal</b> ; quand l'image est complète, le mode A / B / E, la largeur et la QAM "
         "de la station reçue sont repris aussi (sauf annonce hybride, toujours en E / QAM4) ;",
         "réception HFImage (DATAC) alors qu'on est en EasyPal → mode <b>Auto</b>.",
-        "Rien ne change pendant vos émissions ni lors du décodage d'un fichier WAV. Chaque changement est noté dans le journal."])
+        "Rien ne change pendant vos émissions ni lors du décodage d'un fichier WAV. Chaque changement est noté dans le journal.",
+        "Un mode <b>choisi à la main</b> dans l'onglet TX est gardé <b>10 minutes</b>, même si d'autres images arrivent "
+        "dans l'autre famille de modes. Pour choisir toujours soi-même : décochez l'option."])
 
 # ------------------------------------------------------------------ 6
 s.append(PageBreak())

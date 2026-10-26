@@ -519,7 +519,9 @@ s.append(P("With “<b>Switch transmission to the received mode</b>” ticked (S
 s += B(["EasyPal received → mode <b>EasyPal</b>; when the picture is complete, the A / B / E mode, width and QAM of "
         "the station received are also taken over (except for hybrid announcements, always E / QAM4);",
         "HFImage (DATAC) received while in EasyPal → mode <b>Auto</b>.",
-        "Nothing changes during your own transmissions or when decoding a WAV file. Each change is written in the log."])
+        "Nothing changes during your own transmissions or when decoding a WAV file. Each change is written in the log.",
+        "A mode <b>chosen by hand</b> in the TX tab is kept for <b>10 minutes</b>, even if other pictures arrive in the "
+        "other family of modes. To always choose yourself: untick the option."])
 
 # ------------------------------------------------------------------ 7
 s.append(P("7. Adding to your picture", "h1"))
