@@ -15,6 +15,15 @@ Programme Windows de F4GOP (Denis, IN98QR) pour envoyer et recevoir des photos p
 - **Linux 64 bits** (Ubuntu 22.04+, Debian 12, Mint 21…) : prenez **HFImage_F4GOP_Linux.tar.gz** dans la même page, ouvrez l'archive et lancez **HFImage_F4GOP_Linux** (un seul fichier). Pour piloter le poste par Hamlib : `sudo apt install libhamlib-utils` ; pour les ports série : `sudo usermod -aG dialout $USER` puis reconnexion. OmniRig n'existe que sous Windows.
 - Ensuite, le programme se met à jour tout seul : un bandeau apparaît quand une nouvelle version est publiée, un clic suffit.
 
+## Soutenir HFImage / Support HFImage
+
+HFImage est **gratuit** et le restera. Si le programme vous plaît et que vous voulez soutenir son développement, un don est possible par PayPal :
+👉 **[paypal.me/F4GOP](https://www.paypal.com/paypalme/F4GOP)**
+
+*HFImage is **free** and will stay free. If you enjoy it and wish to support its development, you can make a donation with PayPal:* 👉 **[paypal.me/F4GOP](https://www.paypal.com/paypalme/F4GOP)**
+
+Merci ! / Thank you! — 73, Denis F4GOP
+
 ## Ce que fait le programme
 
 ### Images
