@@ -1,5 +1,9 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 1.77 — Hamlib NET rigctl : « RPRT -1 » au démarrage
+
+- « Hamlib NET rigctl » : certains rigctld répondent « RPRT -1 » à la lecture de fréquence tant qu'aucun logiciel ne leur a demandé le VFO (la fréquence se lisait dès qu'un autre logiciel s'était connecté — signalé par F4EEI). HFImage fait maintenant comme ces logiciels : il demande le VFO (puis l'état du poste) une fois, et relit la fréquence.
+
 ## Version 1.76 — site web sur un autre serveur FTP
 
 - **Site web / Digi-Sites** : nouvelle case **« Autre serveur FTP pour le site »** (serveur, port, identifiant, mot de passe, FTPS). Les images reçues partent alors sur ce serveur (le mur d'un club, par exemple), comme le « FTP Upload » d'EasyPal, pendant que le mode hybride reste sur son serveur (demande de VK6NJP). Case décochée : rien ne change. Nouveau bouton **« Tester le serveur »**.

@@ -720,6 +720,19 @@ class RigctlRig(RigBase):
 
     def freq(self):
         r = self.cmd("f")
+        if r and r[0].startswith("RPRT") and not getattr(self, "_vfo_woken", False):
+            # rigctld répond « RPRT -1 » tant qu'aucun logiciel ne lui a demandé le VFO (F4EEI : ça
+            # marchait dès qu'un autre logiciel s'était connecté) : on fait comme eux, une seule fois
+            self._vfo_woken = True
+            for wake in ("v", "\\dump_state"):
+                try:
+                    self.cmd(wake)
+                except RuntimeError:
+                    pass
+                time.sleep(0.2)
+                r = self.cmd("f")
+                if r and not r[0].startswith("RPRT"):
+                    break
         try:
             return int(float(r[0].replace(",", ".")))
         except (ValueError, IndexError):
