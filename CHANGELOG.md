@@ -1,5 +1,9 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 1.80 — russe : nouveaux textes de Yuri
+
+- Traduction russe des 7 textes ajoutés depuis la dernière traduction (site web sur un autre serveur FTP, test du serveur, réponse du poste à la lecture de fréquence), par Yuri.
+
 ## Version 1.79 — S-mètre du TS-890
 
 - S-mètre : le TS-890 refuse la commande « SM0; » (il attend « SM; ») ; le S-mètre apparaissait puis laissait aussitôt la place à la fréquence (signalé par F4GOP). HFImage essaie maintenant les deux commandes et garde celle à laquelle le poste répond. Si le S-mètre reste illisible, la réponse du poste est notée dans le journal.

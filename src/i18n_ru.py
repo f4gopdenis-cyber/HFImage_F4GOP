@@ -1070,4 +1070,11 @@ RU = {
     'S-mètre du poste (lu par CAT, en réception). Cliquez pour changer de fréquence.': 'S-метр трансивера (читается по CAT, на приёме). Щёлкните, чтобы сменить частоту.',
     'S-mètre non lu par CAT sur ce poste : fréquence affichée à la place.': 'S-метр этого трансивера не читается по CAT: вместо него показана частота.',
     'réponse': 'ответ',
+    'réponse à la lecture de fréquence :': 'ответ на запрос о частоте:',
+    'Autre serveur FTP pour le site (sinon : celui du mode hybride)': 'Другой FTP-сервер для веб-сайта (иначе — сервер гибридного режима)',
+    'Test du serveur du site en cours…': 'Тестирование веб сайта сервера…',
+    'Site web : serveur OK, dépôt FTP et lecture par le lien public réussis.': 'Веб-сайт: сервер в порядке, загрузка по FTP и чтение через публичную ссылку прошли успешно.',
+    'Lien public à corriger :': 'Публичная ссылка для исправления:',
+    'Test du serveur du site échoué :': 'Тест серверной части веб-сайта не пройден:',
+    'Renseignez le serveur FTP et le lien public du dossier.': 'Введите данные FTP-сервера и публичную ссылку на папку.',
 }
