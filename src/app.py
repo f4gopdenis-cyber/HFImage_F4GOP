@@ -63,7 +63,7 @@ import random
 import wave
 
 APP = "HFImage F4GOP"
-VERSION = "1.77"
+VERSION = "1.78"
 
 
 def _take_profile(argv):
@@ -598,6 +598,9 @@ class App(tk.Tk):
             w.configure(cursor="hand2")
             w.bind("<Button-1>", self._freq_menu)
             tip(w, "Cliquez pour changer de fréquence")
+        self.panel.smeter.configure(cursor="hand2")
+        self.panel.smeter.bind("<Button-1>", self._freq_menu)
+        tip(self.panel.smeter, "S-mètre du poste (lu par CAT, en réception). Cliquez pour changer de fréquence.")
         self.lb_freq.pack(side="right", padx=12)
 
         self._tab_conf()            # fenêtres Réglages et Texte (cachées)
@@ -841,7 +844,9 @@ class App(tk.Tk):
         tb["who"].configure(text=who)
         fr = self.rig_freq
         tb["freq"].configure(text=f"{fr / 1e6:.3f}" if fr else "—.———")
-        tb["mode"].configure(text=("MHz · " + str(self.rig_mode)) if fr and self.rig_mode else ("MHz" if fr else tr("Fréquence ▾")))
+        band = audio.band_of(fr) if fr else ""
+        sub = " · ".join(x for x in ("MHz", str(self.rig_mode or ""), band or "") if x)
+        tb["mode"].configure(text=sub if fr else tr("Fréquence ▾"))
         if self.tx_busy:
             st, bg, fg = "●  " + tr("ÉMISSION"), P["bad"], "#ffffff"
         elif getattr(self, "_wait_job", None):
@@ -3360,6 +3365,7 @@ class App(tk.Tk):
                 return None
             r = radio.make_rig(cfg)
             r._sig = radio.cat_signature(cfg)
+            self._sm_reset()
             self.rig = r
             self.ui(self.log, f"Liaison CAT : {r.model or 'poste'} ({r.port})")
             if cfg.get("share") and radio.can_share(cfg) and getattr(r, "kind", "") == "hamlib":
@@ -3400,6 +3406,9 @@ class App(tk.Tk):
             if self.tx_busy:
                 # pendant l'émission, on ne lit pas le poste : une erreur de lecture (HF dans le
                 # câble USB…) fermerait la liaison et le poste ne recevrait plus l'arrêt du PTT
+                if getattr(self, "_sm_val", None) is not None and not self._sm_frozen:
+                    self._sm_frozen = True                 # S-mètre figé et grisé pendant l'émission
+                    self.ui(self.panel.set_smeter, self._sm_val, True)
                 self._rig_kick.wait(0.5)
                 continue
             if self.rig is None or self.rig._sig != radio.cat_signature(cfg):
@@ -3438,6 +3447,7 @@ class App(tk.Tk):
                 if f is not None:
                     self.rig_freq = f
                 self.ui(self._show_freq)
+                self._smeter_read(r)
             except Exception as e:
                 if self.rig is r and not self._rig_hold and not self.tx_busy:
                     self._rig_close()
@@ -3446,16 +3456,52 @@ class App(tk.Tk):
             n += 1
             self._rig_kick.wait(poll)
 
+    # ---- S-mètre du poste (1.78) : une petite lecture CAT de plus, avec la fréquence, en réception
+    def _sm_reset(self):
+        self._sm_val, self._sm_ok, self._sm_fail, self._sm_off, self._sm_frozen = None, False, 0, False, False
+
+    def _smeter_wanted(self):
+        r = self.rig
+        return (r is not None and bool(self.radio_cfg.get("smeter", True)) and getattr(r, "has_smeter", False)
+                and not getattr(self, "_sm_off", False))
+
+    def _smeter_read(self, r):
+        """Appelé par le fil du poste après la fréquence. Si le poste n'a jamais répondu au S-mètre
+        après 3 essais, on ne le lui demande plus (fréquence affichée à la place)."""
+        if not hasattr(self, "_sm_off"):
+            self._sm_reset()
+        if self._sm_off or not self.radio_cfg.get("smeter", True) or not getattr(r, "has_smeter", False):
+            return
+        try:
+            db = r.smeter()
+        except Exception:
+            db = None
+        if db is None:
+            if not self._sm_ok:
+                self._sm_fail += 1
+                if self._sm_fail >= 3:
+                    self._sm_off = True
+                    self.ui(self._show_freq)
+                    self.ui(self.log, "S-mètre non lu par CAT sur ce poste : fréquence affichée à la place.")
+            return
+        self._sm_ok = True
+        if db != self._sm_val or self._sm_frozen:
+            self._sm_val, self._sm_frozen = db, False
+            self.ui(self.panel.set_smeter, db)
+
     def _show_freq(self):
         f = self.rig_freq
         if not f:
+            self.panel.show_smeter(False)
             self.panel.set_freq("", "")
             self.lb_freq.configure(text="")
             return
         band = audio.band_of(f)
         sub = " · ".join(x for x in (self.rig_mode or "", band) if x)
+        # S-mètre à la place de la fréquence dans le panneau : elle reste en haut / dans la barre d'état
+        self.panel.show_smeter(self._smeter_wanted())
         self.panel.set_freq(audio.format_freq(f), sub)
-        self.lb_freq.configure(text=f"{audio.format_freq(f, True)}  {self.rig_mode or ''}")
+        self.lb_freq.configure(text=f"{audio.format_freq(f, True)}  {sub}")
 
     def _clock_text(self):
         """Horloge : heure de Windows (locale, heure d'été comprise), et/ou UTC — clic pour changer."""

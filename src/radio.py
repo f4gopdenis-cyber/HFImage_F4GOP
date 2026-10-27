@@ -103,7 +103,9 @@ DEFAULTS = {"rig": "none", "port": "", "baud": 115200, "data_bits": "default", "
             # Icom : adresse CI-V (hexadécimal, « 94 », « B6 »…), vide = celle du modèle
             "civ": "",
             # 1.65 : partage du poste avec d'autres logiciels (WSJT-X, logger…) par Hamlib NET rigctl
-            "share": False, "share_port": 4532}
+            "share": False, "share_port": 4532,
+            # 1.78 : S-mètre du poste dans le panneau (lu par CAT avec la fréquence, en réception)
+            "smeter": True}
 CUSTOM_KEYS = ("cmd_init1", "cmd_init2", "cmd_ptt_on", "cmd_ptt_off", "cmd_exit1", "cmd_exit2")
 
 
@@ -232,6 +234,23 @@ def civ_addr(cfg):
     return v if v is not None and 0 < v < 0xE0 else None
 
 
+def kenwood_db(raw, model):
+    """Valeur brute du S-mètre Kenwood (SM) -> dB par rapport à S9."""
+    full = 70 if model in ("TS-890S", "TS-990S") else 30
+    s9 = full / 2
+    raw = max(0, min(full, raw))
+    return round(-54 + 54 * raw / s9) if raw <= s9 else round(60 * (raw - s9) / (full - s9))
+
+
+def s_text(db):
+    """dB par rapport à S9 -> « S7 », « S9 », « S9+20 »."""
+    if db is None:
+        return "S —"
+    if db < 5:
+        return f"S{max(0, min(9, round(9 + db / 6)))}"
+    return f"S9+{min(60, max(10, int(db / 10 + 0.5) * 10))}"
+
+
 # ------------------------------------------------------------------ pilotes
 class RigBase:
     kind = "none"
@@ -242,6 +261,13 @@ class RigBase:
         return None
 
     def mode(self):
+        return None
+
+    has_smeter = False
+
+    def smeter(self):
+        """S-mètre en dB par rapport à S9 (comme Hamlib STRENGTH : -54 = S0, 0 = S9, 20 = S9+20),
+        ou None si le poste ne le donne pas."""
         return None
 
     def ptt(self, on, rear=True):
@@ -543,6 +569,15 @@ class KenwoodRig(RigBase):
     def mode(self):
         return audio._mode_of(self.model, self.query)[0]
 
+    has_smeter = True
+
+    def smeter(self):
+        """« SM0; » -> « SM0nnnn; » : 0-70 (S9 = 35) sur TS-890 / TS-990, 0-30 (S9 = 15) sur les autres."""
+        r = self.query("SM0;", 0.4)
+        if not (r.startswith("SM") and r.endswith(";") and r[-5:-1].isdigit()):
+            return None
+        return kenwood_db(int(r[-5:-1]), self.model)
+
     def set_freq(self, hz):
         self.write(f"FA{int(hz):011d};")
 
@@ -691,7 +726,7 @@ class RigctlRig(RigBase):
             try:
                 if self.vfo_mode is None:
                     self._check_vfo_mode()
-                if self.vfo_mode and c[:1] in "fmFMT":
+                if self.vfo_mode and c[:1] in "fmFMTl":
                     c = c[:1] + " currVFO" + c[1:]           # « f » -> « f currVFO », « T 1 » -> « T currVFO 1 »
                 self._drain()
                 self.sock.sendall((c + "\n").encode())
@@ -742,6 +777,19 @@ class RigctlRig(RigBase):
     def mode(self):
         r = self.cmd("m", 2)
         return r[0] if r and not r[0].startswith("RPRT") else None
+
+    has_smeter = True
+
+    def smeter(self):
+        """« l STRENGTH » : dB par rapport à S9, calibré par Hamlib pour chaque poste."""
+        try:
+            r = self.cmd("l STRENGTH")
+        except RuntimeError:
+            return None
+        try:
+            return int(round(float(r[0].replace(",", "."))))
+        except (ValueError, IndexError):
+            return None
 
     def set_freq(self, hz):
         if not self._ok(f"F {int(hz)}"):

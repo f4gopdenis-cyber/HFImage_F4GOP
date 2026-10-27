@@ -65,6 +65,10 @@ class RadioDialog(tk.Toplevel):
         self.bt_hamlib = ttk.Button(g, text="Installer Hamlib", command=self._install_hamlib)
         self.bt_hamlib.grid(row=4, column=0, columnspan=2, sticky="w")
         self.pb = ttk.Progressbar(g, length=200, maximum=100)
+        # 1.78 : S-mètre du poste dans le panneau (décoché : rien de plus n'est demandé au poste)
+        self.v_smeter = tk.BooleanVar(value=bool(cfg.get("smeter", True)))
+        ttk.Checkbutton(g, text="Afficher le S-mètre du poste", variable=self.v_smeter).grid(
+            row=6, column=0, columnspan=2, sticky="w", pady=(6, 0))
 
         # ---- liaison CAT
         c = ttk.LabelFrame(L, text="Liaison CAT", padding=8)
@@ -264,6 +268,7 @@ class RadioDialog(tk.Toplevel):
             c["share_port"] = int(c["share_port"])
         except (TypeError, ValueError):
             c["share_port"] = 4532
+        c["smeter"] = bool(self.v_smeter.get()) if hasattr(self, "v_smeter") else bool(c.get("smeter", True))
         c["host"] = c["host"].strip()
         return c
 

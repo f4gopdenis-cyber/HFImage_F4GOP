@@ -1847,6 +1847,10 @@ T = [
     ("Texte en gras", "Bold text", "Fettschrift", "Texto en negrita", "Testo in grassetto"),
     ("Police et taille du texte", "Text font and size", "Schrift und Textgröße", "Fuente y tamaño del texto", "Carattere e dimensione del testo"),
     ("Police, couleurs…", "Font, colours…", "Schrift, Farben…", "Fuente, colores…", "Carattere, colori…"),
+    ('S-mètre', 'S-meter', 'S-Meter', 'S-meter', 'S-meter'),
+    ('Afficher le S-mètre du poste', "Show the radio's S-meter", 'S-Meter des Geräts anzeigen', 'Mostrar el S-meter del equipo', 'Mostra lo S-meter della radio'),
+    ('S-mètre du poste (lu par CAT, en réception). Cliquez pour changer de fréquence.', 'Radio S-meter (read by CAT, on receive). Click to change frequency.', 'S-Meter des Geräts (per CAT gelesen, bei Empfang). Klicken, um die Frequenz zu ändern.', 'S-meter del equipo (leído por CAT, en recepción). Haga clic para cambiar de frecuencia.', 'S-meter della radio (letto via CAT, in ricezione). Clicca per cambiare frequenza.'),
+    ('S-mètre non lu par CAT sur ce poste : fréquence affichée à la place.', 'S-meter not readable by CAT on this radio: frequency shown instead.', 'S-Meter dieses Geräts per CAT nicht lesbar: stattdessen wird die Frequenz angezeigt.', 'S-meter no legible por CAT en este equipo: se muestra la frecuencia en su lugar.', 'S-meter non leggibile via CAT su questa radio: viene mostrata la frequenza.'),
     ("* = en émission    HYB = mode hybride", "* = transmitting    HYB = hybrid mode", "* = sendet    HYB = Hybridmodus", "* = transmitiendo    HYB = modo híbrido", "* = in trasmissione    HYB = modo ibrido"),
 ]
 

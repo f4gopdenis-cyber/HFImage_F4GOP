@@ -1,6 +1,8 @@
 """Panneau d'état façon EasyPal : indicatif, barres RX / SNR, voyants, paramètres TX / RX."""
 import tkinter as tk
 
+from i18n import tr
+
 BG = "#9fe39a"
 FG = "#0d3b0d"
 LED_OFF, LED_GREEN, LED_AMBER, LED_RED = "#5f8f5c", "#18c718", "#f2b200", "#e53030"
@@ -16,6 +18,11 @@ class StatusPanel(tk.Frame):
         self.freq = tk.Label(self, text="", bg=BG, fg="#063806", font=("TkDefaultFont", 11, "bold"),
                              justify="right", anchor="e")
         self.freq.grid(row=0, column=2, columnspan=2, sticky="e", padx=6, pady=(4, 0))
+        # 1.78 : S-mètre du poste, à la place de la fréquence (déjà en haut de la fenêtre)
+        self.smeter = tk.Canvas(self, width=self.SM_W, height=30, bg=BG, highlightthickness=0)
+        self._sm_on, self._sm_key = False, None
+        for w in (self, self.smeter):
+            w.bind("<Configure>", lambda e: self._sm_redraw(self._sm_key) if self._sm_key else None, add="+")
         self.bars = {}
         for r, (name, unit) in enumerate((("RX", "dBFS"), ("SNR", "dB")), start=1):
             c = tk.Canvas(self, width=110, height=12, bg="#e8f7e6", highlightthickness=1,
@@ -82,6 +89,8 @@ class StatusPanel(tk.Frame):
         for name, (c, oval) in self.leds.items():
             fill = c.itemcget(oval, "fill")
             c.itemconfigure(oval, outline=fill if P else FG)
+        if self._sm_key is not None:                   # S-mètre redessiné aux nouvelles couleurs
+            self._sm_redraw(self._sm_key)
 
     def _track(self, c):
         c.delete("t")
@@ -128,6 +137,81 @@ class StatusPanel(tk.Frame):
         # ▾ : la fréquence se clique (menu des fréquences)
         self.freq.configure(text=f"{freq} ▾\n{sub}" if freq else "",
                             font=("TkDefaultFont", 11, "bold"))
+
+    SM_W = 108                  # largeur demandée : tient aussi dans un panneau étroit
+
+    def show_smeter(self, on):
+        """S-mètre (True) ou fréquence (False) à droite de l'indicatif."""
+        on = bool(on)
+        if on == self._sm_on:
+            return
+        self._sm_on = on
+        if on:
+            self.freq.grid_remove()
+            self.smeter.grid(row=0, column=2, columnspan=2, sticky="ew", padx=6, pady=(4, 0))
+            self._sm_key = None
+            self.set_smeter(None)
+        else:
+            self.smeter.grid_remove()
+            self.freq.grid()
+
+    def set_smeter(self, db, frozen=False):
+        """db : dB par rapport à S9 (None : pas encore lu) ; frozen : émission en cours (grisé).
+        Rien n'est redessiné si la valeur affichée ne change pas."""
+        from radio import s_text
+        self._sm_db = db
+        txt = s_text(db)
+        W = self._sm_width()
+        key = (txt, round(db) if db is not None else None, frozen, id(self.modern), W)
+        if key == self._sm_key:
+            return
+        self._sm_key = key
+        c, P = self.smeter, self.modern
+        bg = P["panel"] if P else BG
+        fg = P["fg"] if P else FG
+        muted = P["muted"] if P else "#3d6b3d"
+        track = P["field"] if P else "#e8f7e6"
+        green = (P["accent"] if P else "#2f9e2f") if not frozen else "#8a8f96"
+        red = (P["bad"] if P else LED_RED) if not frozen else "#a0a4aa"
+        c.configure(bg=bg)
+        c.delete("all")
+        x0, x1, y0, y1 = 1, W - 2, 15, 22
+
+        def pos(v):                        # v en dB / S9 : S0..S9 sur 60 %, S9..+60 sur 40 %
+            v = max(-54.0, min(60.0, float(v)))
+            return x0 + (x1 - x0) * (0.6 * (v + 54) / 54 if v <= 0 else 0.6 + 0.4 * v / 60)
+
+        c.create_text(x0, 0, text=tr("S-mètre"), anchor="nw", fill=muted, font=("TkDefaultFont", 7))
+        c.create_text(x1, -1, text=txt, anchor="ne", fill=muted if frozen or db is None else fg,
+                      font=("TkDefaultFont", 10, "bold"))
+        c.create_rectangle(x0, y0, x1, y1, fill=track, outline="" if P else FG)
+        if db is not None:
+            e = pos(db)
+            c.create_rectangle(x0 + 1, y0 + 1, min(e, pos(0)), y1 - (0 if P else 1), fill=green, outline="")
+            if db > 0:
+                c.create_rectangle(pos(0), y0 + 1, e, y1 - (0 if P else 1), fill=red, outline="")
+        for v, lab in ((-48, "1"), (-36, "3"), (-24, "5"), (-12, "7"), (0, "9"), (20, "+20"), (40, "+40"),
+                       (60, "+60")):
+            x = pos(v)
+            c.create_line(x, y1, x, y1 + 2, fill=muted)
+            if v == 40:
+                continue                   # pas assez de place pour toutes les étiquettes
+            c.create_text(min(x, x1 - 7) if v == 60 else x, y1 + 1, text=lab, anchor="n",
+                          fill=(red if v > 0 and not frozen else muted), font=("TkDefaultFont", 6))
+
+    def _sm_width(self):
+        """Largeur où dessiner : celle du canevas, mais sans dépasser le bord visible du panneau
+        (panneau étroit, style Moderne : sinon « S9+10 » et « +60 » seraient coupés)."""
+        c = self.smeter
+        w = c.winfo_width()
+        if w <= 1:
+            return self.SM_W
+        vis = self.winfo_width() - c.winfo_x() - 6
+        return max(60, min(w, vis)) if vis > 1 else w
+
+    def _sm_redraw(self, key):
+        self._sm_key = None
+        self.set_smeter(getattr(self, "_sm_db", None), key[2])
 
     def set_thumb(self, img, text=""):
         """Dernière image reçue (PIL) + petite ligne (indicatif, prénom, distance)."""

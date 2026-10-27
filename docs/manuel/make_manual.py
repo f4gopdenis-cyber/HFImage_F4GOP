@@ -289,6 +289,11 @@ s += B(["<b>Poste</b> : tapez une partie du nom dans « Rechercher » (ex. 7300,
         "Tous lisent et changent la fréquence et passent en émission en même temps. <b>Lancez HFImage en premier.</b> "
         "Pour les postes de la liste Hamlib et les Kenwood (choisir le modèle exact) ; pas pour les commandes CAT "
         "personnalisées ni le TCI (qui accepte déjà plusieurs logiciels).",
+        "<b>Afficher le S-mètre du poste</b> (coché par défaut) : à droite de l'indicatif, le S-mètre du poste "
+        "(S1 à S9+60), lu par CAT avec la fréquence, en réception seulement (figé et grisé pendant l'émission). "
+        "La fréquence, le mode et la bande restent en haut de la fenêtre. Si le poste ne donne pas son S-mètre "
+        "(OmniRig, FLRig, TCI, CAT personnalisé…), la fréquence reste affichée à sa place. Chaque marque a sa propre "
+        "échelle : la valeur est proche de celle du poste, pas toujours au point près.",
         "<b>Méthode PTT</b> : CAT (recommandé), DTR ou RTS (y compris sur le port d'une interface à côté du poste), "
         "ou VOX.",
         "<b>Source audio en émission</b> : « Arrière / Data » (audio USB, ACC) ou « Avant / Micro ». Choisissez "

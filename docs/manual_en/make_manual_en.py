@@ -281,6 +281,11 @@ s += B(["<b>Radio</b>: type part of the name in “Search” (e.g. 7300, FT-991,
         "and change the frequency and transmit at the same time. <b>Start HFImage first.</b> For the radios of the "
         "Hamlib list and Kenwood radios (choose the exact model); not for custom CAT commands or TCI (which already "
         "accepts several programs).",
+        "<b>Show the radio's S-meter</b> (ticked by default): to the right of the callsign, the radio's S-meter "
+        "(S1 to S9+60), read by CAT together with the frequency, on receive only (frozen and greyed while "
+        "transmitting). Frequency, mode and band stay at the top of the window. If the radio does not give its "
+        "S-meter (OmniRig, FLRig, TCI, custom CAT…), the frequency is shown in its place. Each brand has its own "
+        "scale: the value is close to the radio's, not always exact.",
         "<b>PTT method</b>: CAT (recommended), DTR or RTS (also on the port of an interface next to the radio), "
         "or VOX.",
         "<b>Transmit audio source</b>: “Rear / Data” (USB audio, ACC) or “Front / Mic”. Choose “Front / Mic” if your "

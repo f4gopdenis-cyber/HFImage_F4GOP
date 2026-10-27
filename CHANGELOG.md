@@ -1,5 +1,10 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 1.78 — S-mètre du poste ; russe : corrections de Yuri
+
+- **S-mètre du poste** dans le cadre de la station, à droite de l'indicatif, à la place de la fréquence qui apparaissait deux fois (elle reste en haut de la fenêtre, avec maintenant la bande : « 7.058 MHz · LSB-DATA1 · 40 m »). Lu par CAT avec la fréquence (une petite question de plus au poste), en réception seulement : figé et grisé pendant l'émission ; redessiné seulement quand il change. Kenwood en direct (SM0), postes Hamlib (Icom, Yaesu…) et Hamlib NET rigctl. Si le poste ne le donne pas, la fréquence reste affichée à sa place. Case **« Afficher le S-mètre du poste »** dans Poste radio (décochée : rien de plus n'est demandé au poste). Un clic sur le S-mètre ouvre le menu des fréquences, comme avant.
+- Traduction russe mise à jour par Yuri (bouton d'accord « TUNE ТХ », « Инфо моей станции », « Быстрый (9 с) », etc.).
+
 ## Version 1.77 — Hamlib NET rigctl : « RPRT -1 » au démarrage
 
 - « Hamlib NET rigctl » : certains rigctld répondent « RPRT -1 » à la lecture de fréquence tant qu'aucun logiciel ne leur a demandé le VFO (la fréquence se lisait dès qu'un autre logiciel s'était connecté — signalé par F4EEI). HFImage fait maintenant comme ces logiciels : il demande le VFO (puis l'état du poste) une fois, et relit la fréquence.
