@@ -38,7 +38,22 @@ class Pilotes(unittest.TestCase):
         r.query = lambda cmd, timeout=0.6: "SM00035;" if cmd == "SM0;" else ""
         self.assertEqual(r.smeter(), 0)
         r.query = lambda cmd, timeout=0.6: ""                   # pas de réponse
+        r._sm_cmd = None
         self.assertIsNone(r.smeter())
+
+    def test_ts890_commande_sans_zero(self):
+        """TS-890 : « SM; » (il répond « ?; » à « SM0; ») — signalé par F4GOP."""
+        r = radio.KenwoodRig.__new__(radio.KenwoodRig)
+        r.model = "TS-890S"
+        sent = []
+        r.query = lambda cmd, timeout=0.6: (sent.append(cmd), "SM0052;" if cmd == "SM;" else "?;")[1]
+        self.assertEqual(r.smeter(), radio.kenwood_db(52, "TS-890S"))
+        self.assertEqual(sent, ["SM;"])
+        r.model = "TS-480"                                       # autre modèle : SM0; refusé -> SM;
+        r._sm_cmd, sent[:] = None, []
+        self.assertEqual(r.smeter(), radio.kenwood_db(52, "TS-480"))
+        self.assertEqual(sent, ["SM0;", "SM;"])
+        self.assertEqual(r._sm_cmd, "SM;")
 
     def test_hamlib_strength(self):
         r = radio.RigctlRig.__new__(radio.RigctlRig)

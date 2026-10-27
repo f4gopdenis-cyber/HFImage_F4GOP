@@ -1069,4 +1069,5 @@ RU = {
     'Afficher le S-mètre du poste': 'Показывать S-метр трансивера',
     'S-mètre du poste (lu par CAT, en réception). Cliquez pour changer de fréquence.': 'S-метр трансивера (читается по CAT, на приёме). Щёлкните, чтобы сменить частоту.',
     'S-mètre non lu par CAT sur ce poste : fréquence affichée à la place.': 'S-метр этого трансивера не читается по CAT: вместо него показана частота.',
+    'réponse': 'ответ',
 }

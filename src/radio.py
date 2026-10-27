@@ -571,12 +571,21 @@ class KenwoodRig(RigBase):
 
     has_smeter = True
 
+    _sm_cmd = None
+
     def smeter(self):
-        """« SM0; » -> « SM0nnnn; » : 0-70 (S9 = 35) sur TS-890 / TS-990, 0-30 (S9 = 15) sur les autres."""
-        r = self.query("SM0;", 0.4)
-        if not (r.startswith("SM") and r.endswith(";") and r[-5:-1].isdigit()):
-            return None
-        return kenwood_db(int(r[-5:-1]), self.model)
+        """S-mètre : 0-70 (S9 = 35) sur TS-890 / TS-990, 0-30 (S9 = 15) sur les autres.
+        TS-890 : « SM; » -> « SMnnnn; » (il refuse « SM0; ») ; TS-990 et autres : « SM0; » -> « SM0nnnn; ».
+        On essaie les deux et on garde celle qui répond."""
+        cmds = [self._sm_cmd] if self._sm_cmd else (
+            ["SM;", "SM0;"] if self.model == "TS-890S" else ["SM0;", "SM;"])
+        for c in cmds:
+            r = self.query(c, 0.4)
+            if r.startswith("SM") and r.endswith(";") and r[-5:-1].isdigit():
+                self._sm_cmd = c
+                return kenwood_db(int(r[-5:-1]), self.model)
+            self.last_reply = (r or "(rien)")[:40]
+        return None
 
     def set_freq(self, hz):
         self.write(f"FA{int(hz):011d};")

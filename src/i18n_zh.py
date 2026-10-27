@@ -1068,4 +1068,5 @@ ZH = {
     'Afficher le S-mètre du poste': '显示电台的S表',
     'S-mètre du poste (lu par CAT, en réception). Cliquez pour changer de fréquence.': '电台S表(通过CAT读取,接收时)。点击更改频率。',
     'S-mètre non lu par CAT sur ce poste : fréquence affichée à la place.': '无法通过CAT读取此电台的S表:改为显示频率。',
+    'réponse': '回复',
 }

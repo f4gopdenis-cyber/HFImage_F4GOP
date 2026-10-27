@@ -63,7 +63,7 @@ import random
 import wave
 
 APP = "HFImage F4GOP"
-VERSION = "1.78"
+VERSION = "1.79"
 
 
 def _take_profile(argv):
@@ -3482,7 +3482,9 @@ class App(tk.Tk):
                 if self._sm_fail >= 3:
                     self._sm_off = True
                     self.ui(self._show_freq)
-                    self.ui(self.log, "S-mètre non lu par CAT sur ce poste : fréquence affichée à la place.")
+                    rep = getattr(r, "last_reply", "")
+                    self.ui(self.log, tr("S-mètre non lu par CAT sur ce poste : fréquence affichée à la place.") +
+                            (f" ({tr('réponse')} : {rep})" if rep else ""))
             return
         self._sm_ok = True
         if db != self._sm_val or self._sm_frozen:
