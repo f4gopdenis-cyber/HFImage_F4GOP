@@ -63,7 +63,7 @@ import random
 import wave
 
 APP = "HFImage F4GOP"
-VERSION = "1.75"
+VERSION = "1.76"
 
 
 def _take_profile(argv):
@@ -7723,7 +7723,16 @@ class App(tk.Tk):
 
     # ------------------------------------------------------------- site web / Digi-Sites
     def _web_cfg(self):
-        c = self._hyb_cfg()                        # même serveur FTP que le mode hybride
+        c = self._hyb_cfg()                        # même serveur FTP que le mode hybride…
+        if self.conf.get("web_own"):               # …ou un serveur à part (1.76, comme le « FTP Upload » d'EasyPal)
+            try:
+                port = int(self.conf.get("web_port") or 21)
+            except (TypeError, ValueError):
+                port = 21
+            c.update(host=str(self.conf.get("web_host") or "").strip(), port=port,
+                     user=str(self.conf.get("web_user") or "").strip(),
+                     password=hybrid.unprotect(self.conf.get("web_pass") or ""),
+                     tls=bool(self.conf.get("web_tls")))
         c.update(dir=self.conf.get("web_dir", "") or "", url=self.conf.get("web_url", ""),
                  count=int(self.conf.get("web_count", 20)),
                  call=self.mycall() or "NOCALL")
@@ -7770,8 +7779,8 @@ class App(tk.Tk):
         skip = {c.strip().upper() for c in str(self.conf.get("web_block", "")).replace(";", ",").split(",")}
         if kind == "rx" and (call or "").upper() in skip:
             return
-        if not self._hyb_cfg()["host"]:
-            self.log("Site web : serveur FTP non réglé (Réglages → Mode hybride).")
+        if not self._web_cfg()["host"]:
+            self.log("Site web : serveur FTP non réglé (Réglages → Mode hybride, ou Site web / Digi-Sites).")
             return
         self.web.add(self._web_cfg(), kind, path, self._web_caption(call if kind == "rx" else
                                                                      tr("émise par") + " " + call, mode))
@@ -7810,9 +7819,37 @@ class App(tk.Tk):
         for i, (lab, wd) in enumerate(rows):
             ttk.Label(f, text=lab).grid(row=3 + i, column=0, sticky="w", pady=2)
             wd.grid(row=3 + i, column=1, sticky="w", padx=6, pady=2)
+        # 1.76 : un serveur FTP à part pour le site (le mur d'un club…), l'hybride restant sur le sien
+        v_own = tk.BooleanVar(value=bool(self.conf.get("web_own")))
+        v_host = tk.StringVar(value=self.conf.get("web_host", ""))
+        v_port = tk.StringVar(value=str(self.conf.get("web_port", 21)))
+        v_user = tk.StringVar(value=self.conf.get("web_user", ""))
+        v_pass = tk.StringVar(value=hybrid.unprotect(self.conf.get("web_pass") or ""))
+        v_tls = tk.BooleanVar(value=bool(self.conf.get("web_tls")))
+        sf = ttk.LabelFrame(f, padding=6)
+        sf.configure(labelwidget=ttk.Checkbutton(sf, text="Autre serveur FTP pour le site (sinon : celui du mode "
+                                                            "hybride)", variable=v_own,
+                                                 command=lambda: own_ui()))
+        sf.grid(row=7, column=0, columnspan=2, sticky="we", pady=(8, 0))
+        own_w = []
+        for i, (lab, var, wd) in enumerate((("Serveur FTP", v_host, 30), ("Port", v_port, 6),
+                                            ("Identifiant", v_user, 30), ("Mot de passe", v_pass, 30))):
+            ttk.Label(sf, text=lab).grid(row=i, column=0, sticky="w", pady=1)
+            e = ttk.Entry(sf, textvariable=var, width=wd, show="•" if var is v_pass else "")
+            e.grid(row=i, column=1, sticky="w", padx=6, pady=1)
+            own_w.append(e)
+        ck_tls = ttk.Checkbutton(sf, text="FTPS (connexion chiffrée)", variable=v_tls)
+        ck_tls.grid(row=4, column=1, sticky="w", padx=6)
+        own_w.append(ck_tls)
+
+        def own_ui():
+            for e in own_w:
+                e.state(["!disabled"] if v_own.get() else ["disabled"])
+        own_ui()
         lb = ttk.Label(f, text="", foreground="#1c6f1c", wraplength=520, justify="left")
         lb.grid(row=8, column=0, columnspan=2, sticky="w", pady=(8, 0))
-        ttk.Label(f, text="Serveur FTP, identifiant et mot de passe : ceux du mode hybride (Réglages).\n"
+        ttk.Label(f, text="Serveur FTP, identifiant et mot de passe : ceux du mode hybride (Réglages),\n"
+                          "ou ceux de « Autre serveur FTP pour le site ».\n"
                           "Dossier vide = racine du site (comme EasyPal).\n"
                           "Ex. qsl.net : dossier vide, lien https://www.qsl.net/f4gop\n"
                           "Ex. : dossier « dsstv », lien http://monsite.free.fr/dsstv",
@@ -7832,9 +7869,21 @@ class App(tk.Tk):
                 messagebox.showinfo(APP, "« Dossier sur le serveur » est le dossier FTP (ex. dsstv), pas une adresse "
                                          "web. L'adresse a été placée dans « Lien public » et le dossier mis à la "
                                          "racine du site : vérifiez avant d'envoyer.", parent=w)
+            try:
+                port = int(v_port.get() or 21)
+            except ValueError:
+                port = 21
+            h = v_host.get().strip()
+            for pre in ("ftp://", "ftps://", "http://", "https://"):
+                if h.lower().startswith(pre):
+                    h = h[len(pre):]
+            h = h.strip("/")
             self.conf.update(web_on=bool(v_on.get()), web_tx=bool(v_tx.get()),
                              web_dir=d.strip("/"), web_url=v_url.get().strip(),
-                             web_count=int(v_n.get() or 20), web_block=v_block.get().strip())
+                             web_count=int(v_n.get() or 20), web_block=v_block.get().strip(),
+                             web_own=bool(v_own.get()), web_host=h, web_port=port,
+                             web_user=v_user.get().strip(), web_pass=hybrid.protect(v_pass.get()),
+                             web_tls=bool(v_tls.get()))
             self._save_conf_file()
             u = websync.page_url(self._web_cfg())
             d = websync.digisites_url(self._web_cfg())
@@ -7847,8 +7896,9 @@ class App(tk.Tk):
                 messagebox.showerror(APP, "Renseignez le lien public du dossier (adresse web où l'on voit les images).",
                                      parent=w)
                 return
-            if not self._hyb_cfg()["host"]:
-                messagebox.showerror(APP, "Réglez d'abord le serveur FTP (Réglages → Mode hybride).", parent=w)
+            if not self._web_cfg()["host"]:
+                messagebox.showerror(APP, "Réglez d'abord le serveur FTP (Réglages → Mode hybride, ou « Autre "
+                                          "serveur FTP pour le site » ci-dessus).", parent=w)
                 return
             # la page ET les dernières images (après un changement de dossier, Digi-Sites trouve
             # tout de suite image1, sans attendre la prochaine image reçue)
@@ -7856,8 +7906,31 @@ class App(tk.Tk):
             self.web.resync(self._web_cfg(), rx, tx)
             lb.configure(text=tr("Envoi de la page en cours… (résultat dans le journal)"))
 
+        def test_site():
+            """Dépose un petit fichier sur le serveur du site et le relit par le lien public."""
+            store()
+            cfg = self._web_cfg()
+            if not cfg["host"] or not cfg["url"]:
+                messagebox.showerror(APP, "Renseignez le serveur FTP et le lien public du dossier.", parent=w)
+                return
+            lb.configure(text=tr("Test du serveur du site en cours…"))
+
+            def run():
+                try:
+                    url, base = hybrid.test_server(cfg)
+                    msg = tr("Site web : serveur OK, dépôt FTP et lecture par le lien public réussis.")
+                    if base.rstrip("/") != cfg["url"].rstrip("/"):
+                        msg += "\n" + tr("Lien public à corriger :") + f" {base}"
+                    self.ui(self.log, msg)
+                    self.ui(messagebox.showinfo, APP, msg)
+                except Exception as e:
+                    self.ui(self.log_exc, "Test du serveur du site", e)
+                    self.ui(messagebox.showerror, APP, tr("Test du serveur du site échoué :") + f"\n{e}")
+            threading.Thread(target=run, daemon=True).start()
+
         b = ttk.Frame(f)
         b.grid(row=10, column=0, columnspan=2, sticky="e", pady=(10, 0))
+        ttk.Button(b, text="Tester le serveur", command=test_site).pack(side="left", padx=(0, 6))
         ttk.Button(b, text="Envoyer la page maintenant", command=send_page).pack(side="left")
         ttk.Button(b, text="Enregistrer", command=lambda: (store(), self.log("Site web : réglages enregistrés."))
                    ).pack(side="left", padx=6)

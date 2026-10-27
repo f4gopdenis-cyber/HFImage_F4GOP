@@ -40,3 +40,8 @@ class Russe(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class RetoursLigne(unittest.TestCase):
+    def test_pas_de_br(self):
+        self.assertFalse([k for k, v in RU.items() if "<br>" in v])

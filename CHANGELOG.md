@@ -1,5 +1,10 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 1.76 — site web sur un autre serveur FTP
+
+- **Site web / Digi-Sites** : nouvelle case **« Autre serveur FTP pour le site »** (serveur, port, identifiant, mot de passe, FTPS). Les images reçues partent alors sur ce serveur (le mur d'un club, par exemple), comme le « FTP Upload » d'EasyPal, pendant que le mode hybride reste sur son serveur (demande de VK6NJP). Case décochée : rien ne change. Nouveau bouton **« Tester le serveur »**.
+- Russe : les textes sur plusieurs lignes s'affichaient avec des « <br> » ; corrigé.
+
 ## Version 1.75 — Hamlib NET rigctl : mode VFO et diagnostic
 
 - « Hamlib NET rigctl » : un rigctld lancé avec l'option **--vfo** (-o) attend le VFO dans chaque commande (« f currVFO ») ; HFImage le demande à rigctld (« \chk_vfo ») et s'y adapte. Sans ça, la fréquence n'était pas lue.

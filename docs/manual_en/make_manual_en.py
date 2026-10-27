@@ -649,7 +649,10 @@ s.append(P("Menu <b>Images → Website / Digi-Sites…</b>: as in EasyPal, each 
            "transmitted pictures go to TX1.jpg … TX5.jpg, and a <b>hfimage.html</b> page shows them. Example with "
            "qsl.net: server <b>ftp.qsl.net</b>, empty folder, link <b>https://www.qsl.net/yourcall</b>, address for "
            "Digi-Sites (Setup → Edit site) <b>https://www.qsl.net/yourcall/image1</b>; page of your pictures: "
-           "https://www.qsl.net/yourcall/hfimage.html."))
+           "https://www.qsl.net/yourcall/hfimage.html. By default the pictures go to the FTP server of the hybrid mode; "
+           "with <b>“Other FTP server for the website”</b> they go to a separate server (a club wall, for example), like "
+           "EasyPal's “FTP Upload”, while hybrid stays on its own server. <b>“Test the server”</b> uploads a small file "
+           "and reads it back through the public link."))
 s.append(P("<b>Station sites</b>: menu <b>Images → Station sites…</b> (or Action, or right-click on the station list): "
            "like Digi-Sites, which is no longer maintained, one thumbnail per station with the <b>last picture it "
            "received</b> (its image1), the time of that picture and the distance. Online HFImage stations that upload "

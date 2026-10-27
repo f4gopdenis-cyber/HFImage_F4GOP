@@ -705,7 +705,10 @@ s.append(P("Menu <b>Images → Site web / Digi-Sites…</b> : comme EasyPal, cha
            "glissent : image2, image3…), avec indicatif, date, mode "
            "et bande. Vos images émises vont dans TX1.jpg … TX5.jpg. Une page <b>hfimage.html</b> les présente "
            "(rafraîchie toutes les 5 minutes). Dans Digi-Sites : Setup → Edit site, et donnez l'adresse du fichier "
-           "<b>image1</b> (affichée en vert dans la fenêtre)."))
+           "<b>image1</b> (affichée en vert dans la fenêtre). Par défaut, les images partent sur le serveur FTP du mode "
+           "hybride ; avec <b>« Autre serveur FTP pour le site »</b>, elles partent sur un serveur à part (le mur d'un "
+           "club, par exemple), comme le « FTP Upload » d'EasyPal, pendant que l'hybride reste sur le sien. Bouton "
+           "<b>« Tester le serveur »</b> : dépôt d'un petit fichier et relecture par le lien public."))
 s.append(P("Sites des stations", "h2"))
 s.append(P("Menu <b>Images → Sites des stations…</b> (ou Action, ou clic droit sur la liste des stations) : comme "
            "Digi-Sites, qui n'est plus entretenu, une vignette par station avec la <b>dernière image qu'elle a reçue</b> "
