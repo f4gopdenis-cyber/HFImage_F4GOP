@@ -1077,4 +1077,7 @@ RU = {
     'Lien public à corriger :': 'Публичная ссылка для исправления:',
     'Test du serveur du site échoué :': 'Тест серверной части веб-сайта не пройден:',
     'Renseignez le serveur FTP et le lien public du dossier.': 'Введите данные FTP-сервера и публичную ссылку на папку.',
+    'Indicatifs bloqués (images ignorées)': 'Заблокированные позывные (изображения игнорируются)',
+    'Séparés par des virgules. Les images de ces stations ne sont ni affichées, ni enregistrées, ni téléchargées en mode hybride.': 'Через запятую. Изображения этих станций не показываются, не сохраняются и не загружаются в гибридном режиме.',
+    'Indicatif bloqué, ignoré :': 'Заблокированный позывной, проигнорирован:',
 }

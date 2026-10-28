@@ -700,6 +700,11 @@ s.append(P("Chaque image envoyée en hybride est déposée sur votre serveur FTP
            "votre site ne sont jamais touchés. Avec « la dernière seulement », une station qui télécharge encore l'image "
            "précédente ne la trouvera plus."))
 s.append(P("Sécurité des téléchargements", "h2"))
+s.append(P("<b>Indicatifs bloqués</b> (Réglages → Mode hybride, depuis la 1.82) : les images des indicatifs de cette "
+           "liste (séparés par des virgules) ne sont ni affichées, ni enregistrées, ni téléchargées en hybride ; F4ABC "
+           "bloque aussi F4ABC/P. Pour ne recevoir que par radio, décochez « Télécharger automatiquement les images "
+           "hybrides reçues ». Rappel : sur l'air, n'importe qui peut émettre ; chaque opérateur est responsable de ce "
+           "qu'il émet."))
 s.append(P("Une annonce reçue par radio ne peut faire télécharger qu'un fichier de la <b>taille maximale choisie</b> (Réglages → Mode hybride → « Fichiers hybrides reçus : taille max », 200 Mo par défaut, ou sans limite), et seulement depuis "
            "une adresse Internet publique : l'ordinateur lui-même et les machines du réseau de la maison (box, NAS…) sont "
            "refusés, y compris après une redirection. Le test de votre propre serveur dans les Réglages n'est pas concerné. "

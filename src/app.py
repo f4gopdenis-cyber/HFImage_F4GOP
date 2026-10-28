@@ -63,7 +63,7 @@ import random
 import wave
 
 APP = "HFImage F4GOP"
-VERSION = "1.81"
+VERSION = "1.82"
 
 
 def _take_profile(argv):
@@ -182,6 +182,27 @@ class TrVar(tk.StringVar):
 
 
 
+def call_blocked(call, lst):
+    """L'indicatif est-il dans la liste (virgules, points-virgules ou espaces) ? F4ABC bloque aussi
+    F4ABC/P et EA/F4ABC."""
+    c = str(call or "").strip().upper()
+    if not c or c == "?":
+        return False
+    blocked = {x for x in re.split(r"[,;\s]+", str(lst or "").upper()) if x}
+    return c in blocked or any(p in blocked for p in c.split("/") if p)
+
+
+def tip_pos(px, py, w, h, sw, sh, ox=0, oy=0):
+    """Place d'une bulle d'aide : en bas à droite de la souris, sinon à gauche / au-dessus
+    quand elle sortirait de l'écran."""
+    x, y = px + 12, py + 16
+    if x + w > ox + sw - 2:
+        x = max(ox, px - 8 - w)
+    if y + h > oy + sh - 2:
+        y = max(oy, py - 8 - h)
+    return x, y
+
+
 def tip(widget, text):
     """Petite bulle d'aide quand la souris s'arrête sur `widget` (texte traduit)."""
     state = {"w": None, "job": None}
@@ -192,9 +213,16 @@ def tip(widget, text):
             return
         t = tk.Toplevel(widget)
         t.wm_overrideredirect(True)
-        t.wm_geometry(f"+{widget.winfo_pointerx() + 12}+{widget.winfo_pointery() + 16}")
+        px, py = widget.winfo_pointerx(), widget.winfo_pointery()
+        t.wm_geometry(f"+{px + 12}+{py + 16}")
         tk.Label(t, text=tr(text), bg="#ffffe0", fg="#000", relief="solid", borderwidth=1,
                  font=("TkDefaultFont", 8), padx=4, pady=1).pack()
+        # 1.82 : la bulle reste dans l'écran (plein écran, bouton au bord droit — BH2RMX)
+        t.update_idletasks()
+        x, y = tip_pos(px, py, t.winfo_reqwidth(), t.winfo_reqheight(),
+                       widget.winfo_screenwidth(), widget.winfo_screenheight(),
+                       widget.winfo_vrootx(), widget.winfo_vrooty())
+        t.wm_geometry(f"+{x}+{y}")
         state["w"] = t
 
     def enter(_e):
@@ -3047,6 +3075,17 @@ class App(tk.Tk):
                           state="readonly")
         cb.pack(side="left", padx=6)
         cb.bind("<<ComboboxSelected>>", lambda e: self._keep_changed())
+        # 1.82 : indicatifs bloqués en réception (demande de BH2RMX) : images ni affichées,
+        # ni enregistrées, ni téléchargées en hybride
+        bl = ttk.Frame(h)
+        bl.grid(row=15, column=0, columnspan=2, sticky="w", pady=(6, 0))
+        ttk.Label(bl, text="Indicatifs bloqués (images ignorées)").pack(side="left")
+        self.v_rxblock = tk.StringVar(value=self.conf.get("rx_block", ""))
+        e_bl = ttk.Entry(bl, textvariable=self.v_rxblock, width=24)
+        e_bl.pack(side="left", padx=6)
+        tip(e_bl, "Séparés par des virgules. Les images de ces stations ne sont ni affichées, ni enregistrées, "
+                  "ni téléchargées en mode hybride.")
+        self.v_rxblock.trace_add("write", lambda *a: self._rxblock_changed())
         hb = ttk.Frame(h)
         hb.grid(row=10, column=0, columnspan=2, sticky="w", pady=(6, 0))
         ttk.Button(hb, text="Tester le serveur", command=self.test_hybrid).pack(side="left")
@@ -5720,18 +5759,22 @@ class App(tk.Tk):
             messagebox.showinfo(APP, "En mode hybride, l'annonce dépend du dépôt sur le serveur : "
                                      "émettez directement.")
             return
+        drm = isinstance(self.tx, engine.DrmTransmission)
+        # 1.82 : mode EasyPal aussi (le bouton ne faisait rien — BH2RMX)
+        tag = "EasyPal_" + hamdrm.describe(self.tx.params).split(" /")[0] if drm else self.tx.mode
         p = filedialog.asksaveasfilename(defaultextension=".wav", filetypes=[("WAV", "*.wav")],
-                                         initialfile=f"hfimage_{self.tx.mode}.wav")
+                                         initialfile=f"hfimage_{tag}.wav")
         if not p:
             return
         import wave
         up = audio.Upsampler()
+        chunks = [self.tx.audio8k(None)] if drm else self.tx.audio_chunks()
         with wave.open(p, "wb") as w:
             w.setnchannels(1)
             w.setsampwidth(2)
             w.setframerate(audio.FS_CARD)
-            for c in self.tx.audio_chunks():
-                w.writeframes((up.process(c) * 0.7 * 32767).astype(np.int16).tobytes())
+            for c in chunks:
+                w.writeframes((np.clip(up.process(c) * 0.7, -1, 1) * 32767).astype(np.int16).tobytes())
         self.log(f"WAV enregistré (48 kHz) : {p}")
 
     def _ptt_settings(self):
@@ -6764,6 +6807,8 @@ class App(tk.Tk):
         if key in self._drm_hyb_seen:
             return
         self._drm_hyb_seen.add(key)
+        if self.is_blocked(h.get("call")):
+            return self._drop_blocked(h.get("call"), "hybride EasyPal")
         where = easypal_hybrid.public_label(h, h["name"])
         self._heard(h["call"], h.get("snr"), "Annonce hybride EasyPal", hyb=True)
         self.station_event(h["call"], "Annonce hybride EasyPal", engine.DRM_MODE, h.get("snr"), h["name"])
@@ -6808,6 +6853,9 @@ class App(tk.Tk):
                     raise RuntimeError("lien non reçu par Internet dans les 30 s")
                 if rec["size"] != fl["size"]:
                     raise RuntimeError("le lien reçu par Internet ne correspond pas à l'annonce radio")
+                if self.is_blocked(rec.get("call")):
+                    self.ui(self._drop_blocked, rec.get("call"), "hybride éclair")
+                    return
                 self.ui(self._heard, rec["call"], snr, "Annonce hybride éclair")
                 self.ui(self._rx_call, rec["call"])
                 self.ui(self.log, f"Hybride éclair de {rec['call']} : {rec['url']}")
@@ -6828,6 +6876,8 @@ class App(tk.Tk):
             hyb["call"] = self._full_call(hyb["call"])
         if hyb.get("flash"):
             return self._flash_announce(eng, hyb, mode)
+        if self.is_blocked(hyb.get("call")):
+            return self._drop_blocked(hyb.get("call"), "hybride")
         self._heard(hyb.get("call"), eng.last.get("snr"), "Annonce hybride")
         self.log(f"Annonce hybride de {hyb['call']} ({mode}) : {hyb['url']} "
                  f"({hyb['size']} octets)")
@@ -7063,9 +7113,31 @@ class App(tk.Tk):
         except tk.TclError:
             pass
 
+    # ---- 1.82 : indicatifs bloqués en réception
+    def _rxblock_changed(self):
+        self.conf["rx_block"] = self.v_rxblock.get().strip()
+        self._save_conf_file()
+
+    def is_blocked(self, call):
+        lst = self.conf.get("rx_block", "") if not hasattr(self, "v_rxblock") else self.v_rxblock.get()
+        return call_blocked(call, lst)
+
+    def _drop_blocked(self, call, what, paths=()):
+        """Image d'un indicatif bloqué : fichiers effacés, une ligne dans le journal."""
+        for p in paths:
+            try:
+                if p and os.path.exists(p) and os.sep + "relecture" + os.sep not in p:
+                    os.remove(p)
+            except OSError:
+                pass
+        self.log(tr("Indicatif bloqué, ignoré :") + f" {call} ({what})")
+
     def _got_image(self, hdr, path, png, mode, from_file=False):
         if hdr.get("call"):
             hdr["call"] = self._full_call(hdr["call"])
+        if self.is_blocked(hdr.get("call")):
+            self.pb_rx.configure(value=0)
+            return self._drop_blocked(hdr.get("call"), mode, (path, png))
         self.pb_rx.configure(value=100)
         who = hdr["call"] if hdr["call"] != "?" else "(indicatif à venir)"
         if hdr.get("text"):

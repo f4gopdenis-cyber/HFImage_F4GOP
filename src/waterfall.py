@@ -4,6 +4,7 @@ Les calculs FFT (rows_from) sont faits dans le thread audio ; l'affichage
 (add_rows / _render) dans le thread de l'interface.
 """
 import tkinter as tk
+import tkinter.font as tkfont
 
 import numpy as np
 from PIL import Image, ImageTk
@@ -195,8 +196,14 @@ class Waterfall(tk.Canvas):
             for f in (lo, hi):
                 self.create_line(self._x(f), self.top, self._x(f), self.top + self.h,
                                  fill=col, dash=(3, 4), tags="band")
-            self.create_text(self._x(hi) + 3, self.top + 4, text=self.mode_mark, fill=col,
-                             anchor="nw", font=("TkDefaultFont", 8, "bold"), tags="band")
+            # nom du mode à droite de la bande ; à gauche du trait s'il n'y a pas la place
+            # (bandes EasyPal jusqu'au bord : « EasyPal B 2,4 » était coupé — BH2RMX)
+            font = ("TkDefaultFont", 8, "bold")
+            tw = tkfont.Font(font=font).measure(self.mode_mark) + 6
+            x = self._x(hi)
+            right = x + 3 + tw <= max(10, self.winfo_width())
+            self.create_text(x + 3 if right else x - 3, self.top + 4, text=self.mode_mark, fill=col,
+                             anchor="nw" if right else "ne", font=font, tags="band")
         self.dirty = True
 
     def _hover(self, e):

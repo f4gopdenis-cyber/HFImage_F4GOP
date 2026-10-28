@@ -1069,4 +1069,7 @@ ZH = {
     'S-mètre du poste (lu par CAT, en réception). Cliquez pour changer de fréquence.': '电台S表(通过CAT读取,接收时)。点击更改频率。',
     'S-mètre non lu par CAT sur ce poste : fréquence affichée à la place.': '无法通过CAT读取此电台的S表:改为显示频率。',
     'réponse': '回复',
+    'Indicatifs bloqués (images ignorées)': '屏蔽的呼号(忽略其图片)',
+    'Séparés par des virgules. Les images de ces stations ne sont ni affichées, ni enregistrées, ni téléchargées en mode hybride.': '用逗号分隔。这些电台的图片不显示、不保存,混合模式下也不下载。',
+    'Indicatif bloqué, ignoré :': '已屏蔽的呼号,已忽略:',
 }

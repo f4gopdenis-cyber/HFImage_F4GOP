@@ -648,6 +648,10 @@ s.append(P("<b>My pictures on the server</b>: each picture sent in hybrid mode i
 s.append(P("<b>Download safety</b>: an announcement received over the air can only fetch a file up to the <b>maximum size you chose</b> (Settings → Hybrid mode → “Received hybrid files: max size”, 200 MB by default, or no limit), and "
            "only from a public Internet address (never the computer itself or a machine on your home network). Received "
            "pictures and files always stay in the reception folder, whatever the announced callsign."))
+s.append(P("<b>Blocked callsigns</b> (Settings → Hybrid mode, since 1.82): pictures from the callsigns listed there "
+           "(separated by commas) are not shown, not saved and not downloaded in hybrid mode; F4ABC also blocks F4ABC/P. "
+           "To receive by radio only, untick “Download received hybrid pictures automatically”. Note: on the air "
+           "anyone can transmit; each operator is responsible for what he transmits."))
 s.append(P("Menu <b>Images → Website / Digi-Sites…</b>: as in EasyPal, each received picture is uploaded as "
            "<b>image1</b>, with no extension as in EasyPal: this is the file Digi-Sites reads (the previous ones move to "
            "image2, image3…), with callsign, date, mode and band; your "

@@ -1,5 +1,12 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 1.82 — indicatifs bloqués ; corrections signalées par BH2RMX
+
+- **Indicatifs bloqués** (Réglages → Mode hybride) : les images des indicatifs de la liste ne sont ni affichées, ni enregistrées, ni téléchargées en hybride (HFImage, éclair, EasyPal) ; F4ABC bloque aussi F4ABC/P. Une ligne dans le journal signale l'image ignorée (demande de BH2RMX).
+- Bouton **WAV…** en mode EasyPal : il ne faisait rien ; il enregistre maintenant le vrai signal EasyPal (48 kHz).
+- Cascade : le nom du mode reçu (« EasyPal B 2,4 ») était coupé au bord droit ; il passe à gauche du trait quand la place manque.
+- Bulles d'aide : elles restent dans l'écran (plein écran, boutons près du bord droit ou du bas).
+
 ## Version 1.81 — mode EasyPal : fichier original trop long
 
 - Mode EasyPal avec le format « original » : la photo partait telle quelle, sans tenir compte de la durée choisie (48 min en mode E / QAM4 / RS4 ; on croyait que rien ne partait — essais de VK6ATI). Si le fichier original ne tient pas dans la durée, HFImage refuse maintenant comme dans les autres modes et indique la durée minimale, ou de choisir avif / jpeg pour réduire l'image.
