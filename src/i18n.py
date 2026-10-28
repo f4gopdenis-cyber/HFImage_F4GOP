@@ -1944,6 +1944,8 @@ def _one(s, depth=0):
     if depth < 3:
         for _, rx, row in _tmpl:
             mm = rx.match(core)
+            if mm and "\n" not in row[0] and any("\n" in v for v in mm.groupdict().values()):
+                continue        # texte sur plusieurs lignes : traduit ligne par ligne (tr)
             if mm:
                 vals = {k[1:]: _one(v, depth + 1) for k, v in mm.groupdict().items()}
                 out = row[ORDER.index(_lang)]

@@ -1,5 +1,10 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 1.81 — mode EasyPal : fichier original trop long
+
+- Mode EasyPal avec le format « original » : la photo partait telle quelle, sans tenir compte de la durée choisie (48 min en mode E / QAM4 / RS4 ; on croyait que rien ne partait — essais de VK6ATI). Si le fichier original ne tient pas dans la durée, HFImage refuse maintenant comme dans les autres modes et indique la durée minimale, ou de choisir avif / jpeg pour réduire l'image.
+- Traduction : un message sur deux lignes (durée trop courte) n'était traduit qu'à moitié ; corrigé.
+
 ## Version 1.80 — russe : nouveaux textes de Yuri
 
 - Traduction russe des 7 textes ajoutés depuis la dernière traduction (site web sur un autre serveur FTP, test du serveur, réponse du poste à la lecture de fréquence), par Yuri.

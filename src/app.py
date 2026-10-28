@@ -63,7 +63,7 @@ import random
 import wave
 
 APP = "HFImage F4GOP"
-VERSION = "1.80"
+VERSION = "1.81"
 
 
 def _take_profile(argv):
@@ -5557,6 +5557,17 @@ class App(tk.Tk):
                 and src is self.src_img:
             data, fmt, q = self.src_raw, self.src_kind, None
             size = (self.src_img.width, self.src_img.height)
+            need = hamdrm.estimate(len(data), params)
+            if need > seconds:
+                # 1.81 : fichier original trop long pour la durée choisie (VK6ATI : 48 min en E/QAM4/RS4,
+                # on croyait que rien ne partait) -> même refus que dans les autres modes
+                mini = int(-(-need // 15)) * 15
+                self.tx = None
+                self._set_text(self.lb_cmp_info, "")
+                # (même texte que les autres modes : déjà traduit)
+                self.v_txinfo.set(f"Fichier original ({len(data)} octets) : {seconds} s, c'est trop court en EasyPal.\n"
+                                  f"Minimum : environ {_fmt_s(mini)}, ou choisissez avif / jpeg pour le réduire.")
+                return
         else:
             fmt = DRM_FORMATS.get(fmt, "jp2")
             budget = engine.drm_budget(seconds, params)
