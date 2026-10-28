@@ -1,5 +1,9 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 1.83 — préréglages de poste
+
+- **Préréglages** dans la fenêtre Poste radio (comme EasyPal, demande de VK6NJP) : « Enregistrer sous… » garde tout le réglage du poste (modèle, port, vitesse, PTT, CI-V, mode DATA, partage…) avec les cartes son et le niveau d'émission ; choisir un préréglage dans la liste puis OK passe d'un poste à l'autre en une fois (FT-857D, IC-7300, IC-9700…). « Supprimer » l'efface.
+
 ## Version 1.82 — indicatifs bloqués ; corrections signalées par BH2RMX
 
 - **Indicatifs bloqués** (Réglages → Mode hybride) : les images des indicatifs de la liste ne sont ni affichées, ni enregistrées, ni téléchargées en hybride (HFImage, éclair, EasyPal) ; F4ABC bloque aussi F4ABC/P. Une ligne dans le journal signale l'image ignorée (demande de BH2RMX).

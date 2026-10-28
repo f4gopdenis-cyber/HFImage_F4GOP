@@ -1855,6 +1855,14 @@ T = [
     ('Indicatifs bloqués (images ignorées)', 'Blocked callsigns (pictures ignored)', 'Gesperrte Rufzeichen (Bilder ignoriert)', 'Indicativos bloqueados (imágenes ignoradas)', 'Nominativi bloccati (immagini ignorate)'),
     ('Séparés par des virgules. Les images de ces stations ne sont ni affichées, ni enregistrées, ni téléchargées en mode hybride.', 'Separated by commas. Pictures from these stations are not shown, not saved and not downloaded in hybrid mode.', 'Durch Kommas getrennt. Bilder dieser Stationen werden weder angezeigt noch gespeichert noch im Hybridmodus heruntergeladen.', 'Separados por comas. Las imágenes de estas estaciones no se muestran, no se guardan ni se descargan en modo híbrido.', 'Separati da virgole. Le immagini di queste stazioni non vengono mostrate, salvate né scaricate in modo ibrido.'),
     ('Indicatif bloqué, ignoré :', 'Blocked callsign, ignored:', 'Gesperrtes Rufzeichen, ignoriert:', 'Indicativo bloqueado, ignorado:', 'Nominativo bloccato, ignorato:'),
+    ('Préréglages', 'Presets', 'Voreinstellungen', 'Preajustes', 'Preimpostazioni'),
+    ('Enregistrer sous…', 'Save as…', 'Speichern unter…', 'Guardar como…', 'Salva come…'),
+    ("Poste, port, PTT, mode… et les cartes son et le niveau d'émission.", 'Radio, port, PTT, mode… plus the sound cards and the transmit level.', 'Gerät, Port, PTT, Modus… sowie die Soundkarten und der Sendepegel.', 'Equipo, puerto, PTT, modo… y las tarjetas de sonido y el nivel de transmisión.', 'Radio, porta, PTT, modo… e le schede audio e il livello di trasmissione.'),
+    ('Nom du préréglage (ex. FT-857D, IC-7300) :', 'Preset name (e.g. FT-857D, IC-7300):', 'Name der Voreinstellung (z. B. FT-857D, IC-7300):', 'Nombre del preajuste (p. ej. FT-857D, IC-7300):', 'Nome della preimpostazione (es. FT-857D, IC-7300):'),
+    ('Remplacer le préréglage « {0} » ?', 'Replace the preset “{0}”?', 'Voreinstellung „{0}“ ersetzen?', '¿Reemplazar el preajuste «{0}»?', 'Sostituire la preimpostazione «{0}»?'),
+    ('Supprimer le préréglage « {0} » ?', 'Delete the preset “{0}”?', 'Voreinstellung „{0}“ löschen?', '¿Eliminar el preajuste «{0}»?', 'Eliminare la preimpostazione «{0}»?'),
+    ('Préréglage enregistré :', 'Preset saved:', 'Voreinstellung gespeichert:', 'Preajuste guardado:', 'Preimpostazione salvata:'),
+    ('Préréglage :', 'Preset:', 'Voreinstellung:', 'Preajuste:', 'Preimpostazione:'),
     ("* = en émission    HYB = mode hybride", "* = transmitting    HYB = hybrid mode", "* = sendet    HYB = Hybridmodus", "* = transmitiendo    HYB = modo híbrido", "* = in trasmissione    HYB = modo ibrido"),
 ]
 

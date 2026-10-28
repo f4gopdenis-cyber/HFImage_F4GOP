@@ -1080,4 +1080,12 @@ RU = {
     'Indicatifs bloqués (images ignorées)': 'Заблокированные позывные (изображения игнорируются)',
     'Séparés par des virgules. Les images de ces stations ne sont ni affichées, ni enregistrées, ni téléchargées en mode hybride.': 'Через запятую. Изображения этих станций не показываются, не сохраняются и не загружаются в гибридном режиме.',
     'Indicatif bloqué, ignoré :': 'Заблокированный позывной, проигнорирован:',
+    'Préréglages': 'Пресеты',
+    'Enregistrer sous…': 'Сохранить как…',
+    "Poste, port, PTT, mode… et les cartes son et le niveau d'émission.": 'Трансивер, порт, PTT, режим… а также звуковые карты и уровень передачи.',
+    'Nom du préréglage (ex. FT-857D, IC-7300) :': 'Имя пресета (например, FT-857D, IC-7300):',
+    'Remplacer le préréglage « {0} » ?': 'Заменить пресет «{0}»?',
+    'Supprimer le préréglage « {0} » ?': 'Удалить пресет «{0}»?',
+    'Préréglage enregistré :': 'Пресет сохранён:',
+    'Préréglage :': 'Пресет:',
 }

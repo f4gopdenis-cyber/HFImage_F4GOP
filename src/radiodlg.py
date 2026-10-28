@@ -26,13 +26,15 @@ def port_name(text):
 
 
 class RadioDialog(tk.Toplevel):
-    def __init__(self, app):
+    def __init__(self, app, cfg=None, preset=None):
+        """cfg / preset : fenêtre rouverte sur un préréglage choisi dans la liste (1.83)."""
         super().__init__(app)
         self.app = app
         self.title("Poste radio")
         self.transient(app)
         self.resizable(False, False)
-        cfg = dict(app.radio_cfg)
+        cfg = dict(radio.DEFAULTS, **(cfg if cfg is not None else app.radio_cfg))
+        self.preset = preset                        # préréglage chargé (cartes son appliquées à OK)
         self.all_keys = radio.rig_keys()
         self.v = {k: tk.StringVar(value=str(cfg.get(k, radio.DEFAULTS[k]))) for k in radio.DEFAULTS}
         self.v_rig = tk.StringVar(value=tr(radio.rig_label(cfg["rig"])))
@@ -45,6 +47,24 @@ class RadioDialog(tk.Toplevel):
         L.grid(row=0, column=0, sticky="n")
         R = ttk.Frame(top)
         R.grid(row=0, column=1, sticky="n", padx=(12, 0))
+
+        # ---- 1.83 : préréglages de poste (comme EasyPal), demande de VK6NJP
+        # (colonne de droite, moins haute : la fenêtre ne grandit pas — écrans de portable)
+        pr = ttk.LabelFrame(R, text="Préréglages", padding=8)
+        pr.pack(fill="x", pady=(0, 8))
+        names = sorted(app.rig_presets(), key=str.lower)
+        cur = preset or app.conf.get("rig_preset", "")
+        self.v_preset = tk.StringVar(value=cur if cur in names else "")
+        self.cb_preset = ttk.Combobox(pr, textvariable=self.v_preset, values=names, width=20, state="readonly")
+        self.cb_preset.grid(row=0, column=0, columnspan=2, sticky="we")
+        self.cb_preset.bind("<<ComboboxSelected>>", lambda e: self._preset_load())
+        ttk.Button(pr, text="Enregistrer sous…", command=self._preset_save).grid(row=1, column=0, sticky="w",
+                                                                                 pady=(4, 0))
+        ttk.Button(pr, text="Supprimer", command=self._preset_delete).grid(row=1, column=1, sticky="w",
+                                                                           padx=(6, 0), pady=(4, 0))
+        ttk.Label(pr, text="Poste, port, PTT, mode… et les cartes son et le niveau d'émission.",
+                  foreground="#555", wraplength=290, justify="left").grid(row=2, column=0, columnspan=2,
+                                                                         sticky="w", pady=(4, 0))
 
         # ---- poste
         g = ttk.LabelFrame(L, text="Poste", padding=8)
@@ -213,6 +233,49 @@ class RadioDialog(tk.Toplevel):
         app._translate_ui(self)
         self.grab_set()
         self.protocol("WM_DELETE_WINDOW", self.destroy)
+
+    # ------------------------------------------------------------------ préréglages
+    def _preset_load(self):
+        name = self.v_preset.get()
+        p = self.app.rig_presets().get(name)
+        if not p:
+            return
+        # la fenêtre est refaite avec les réglages du préréglage (rien n'est appliqué avant OK)
+        app = self.app
+        geo = f"+{self.winfo_rootx()}+{self.winfo_rooty()}"
+        self.destroy()
+        w = RadioDialog(app, cfg=p.get("radio", {}), preset=name)
+        w.geometry(geo)
+        app._radio_win = w
+
+    def _preset_save(self):
+        from tkinter import simpledialog
+        name = simpledialog.askstring("HFImage", tr("Nom du préréglage (ex. FT-857D, IC-7300) :"),
+                                      initialvalue=self.v_preset.get() or radio.rig_label(self._rig_key()),
+                                      parent=self)
+        name = (name or "").strip()[:40]
+        if not name:
+            return
+        if name in self.app.rig_presets() and name != self.v_preset.get():
+            if not messagebox.askyesno("HFImage", tr("Remplacer le préréglage « {0} » ?").format(name),
+                                       parent=self):
+                return
+        self.app.save_rig_preset(name, self.cfg())
+        self.preset = name
+        self.v_preset.set(name)
+        self.cb_preset["values"] = sorted(self.app.rig_presets(), key=str.lower)
+        self.lb_test.configure(text=tr("Préréglage enregistré :") + f" {name}", foreground="#1c7f1c")
+
+    def _preset_delete(self):
+        name = self.v_preset.get()
+        if not name:
+            return
+        if not messagebox.askyesno("HFImage", tr("Supprimer le préréglage « {0} » ?").format(name), parent=self):
+            return
+        self.app.delete_rig_preset(name)
+        self.preset = None
+        self.v_preset.set("")
+        self.cb_preset["values"] = sorted(self.app.rig_presets(), key=str.lower)
 
     # ------------------------------------------------------------------ outils
     def _radios(self, parent, row, label, key, items):
@@ -502,4 +565,6 @@ class RadioDialog(tk.Toplevel):
                                  parent=self)
             return
         self.app.set_radio(c)
+        if self.preset and self.preset in self.app.rig_presets():
+            self.app.use_rig_preset(self.preset)       # cartes son et niveau du préréglage
         self.destroy()

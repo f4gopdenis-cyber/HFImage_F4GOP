@@ -294,6 +294,10 @@ s += B(["<b>Poste</b> : tapez une partie du nom dans « Rechercher » (ex. 7300,
         "La fréquence, le mode et la bande restent en haut de la fenêtre. Si le poste ne donne pas son S-mètre "
         "(OmniRig, FLRig, TCI, CAT personnalisé…), la fréquence reste affichée à sa place. Chaque marque a sa propre "
         "échelle : la valeur est proche de celle du poste, pas toujours au point près.",
+        "<b>Préréglages</b> (en haut à droite, depuis la 1.83) : pour passer d'un poste à l'autre (FT-857D, "
+        "IC-7300, IC-9700…). <b>Enregistrer sous…</b> garde tout le réglage du poste de la fenêtre, plus les cartes son "
+        "(Réglages → Audio) et le niveau d'émission actuels. Choisir un préréglage dans la liste remplit la fenêtre ; "
+        "<b>OK</b> l'applique, cartes son comprises (l'écoute repart sur la carte son de ce poste).",
         "<b>Méthode PTT</b> : CAT (recommandé), DTR ou RTS (y compris sur le port d'une interface à côté du poste), "
         "ou VOX.",
         "<b>Source audio en émission</b> : « Arrière / Data » (audio USB, ACC) ou « Avant / Micro ». Choisissez "

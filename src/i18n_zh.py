@@ -1072,4 +1072,12 @@ ZH = {
     'Indicatifs bloqués (images ignorées)': '屏蔽的呼号(忽略其图片)',
     'Séparés par des virgules. Les images de ces stations ne sont ni affichées, ni enregistrées, ni téléchargées en mode hybride.': '用逗号分隔。这些电台的图片不显示、不保存,混合模式下也不下载。',
     'Indicatif bloqué, ignoré :': '已屏蔽的呼号,已忽略:',
+    'Préréglages': '预设',
+    'Enregistrer sous…': '另存为…',
+    "Poste, port, PTT, mode… et les cartes son et le niveau d'émission.": '电台、端口、PTT、模式……以及声卡和发射电平。',
+    'Nom du préréglage (ex. FT-857D, IC-7300) :': '预设名称(例如 FT-857D、IC-7300):',
+    'Remplacer le préréglage « {0} » ?': '替换预设“{0}”?',
+    'Supprimer le préréglage « {0} » ?': '删除预设“{0}”?',
+    'Préréglage enregistré :': '预设已保存:',
+    'Préréglage :': '预设:',
 }

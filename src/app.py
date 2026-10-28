@@ -63,7 +63,7 @@ import random
 import wave
 
 APP = "HFImage F4GOP"
-VERSION = "1.82"
+VERSION = "1.83"
 
 
 def _take_profile(argv):
@@ -3316,6 +3316,46 @@ class App(tk.Tk):
             w.lift()
             return
         self._radio_win = radiodlg.RadioDialog(self)
+
+    # ---- 1.83 : préréglages de poste (comme EasyPal) — VK6NJP : FT-857D, IC-7300, IC-9700
+    def rig_presets(self):
+        p = self.conf.get("rig_presets")
+        return p if isinstance(p, dict) else {}
+
+    def save_rig_preset(self, name, cfg):
+        """Réglages du poste (fenêtre) + cartes son et niveau d'émission actuels."""
+        p = dict(self.rig_presets())
+        p[name] = {"radio": dict(cfg), "out_dev": self.v_out.get(), "in_dev": self.v_in.get(),
+                   "level": int(self.v_lvl.get())}
+        self.conf["rig_presets"] = p
+        self.conf["rig_preset"] = name
+        self._save_conf_file()
+        self.log(tr("Préréglage enregistré :") + f" {name}")
+
+    def delete_rig_preset(self, name):
+        p = dict(self.rig_presets())
+        p.pop(name, None)
+        self.conf["rig_presets"] = p
+        if self.conf.get("rig_preset") == name:
+            self.conf["rig_preset"] = ""
+        self._save_conf_file()
+
+    def use_rig_preset(self, name):
+        """Après OK dans la fenêtre Poste radio : cartes son et niveau du préréglage."""
+        p = self.rig_presets().get(name) or {}
+        self.conf["rig_preset"] = name
+        old_in = self.v_in.get()
+        if p.get("out_dev"):
+            self.v_out.set(p["out_dev"])
+        if p.get("in_dev"):
+            self.v_in.set(p["in_dev"])
+        if p.get("level"):
+            self.v_lvl.set(int(p["level"]))
+        self.log(tr("Préréglage :") + f" {name}")
+        if self.v_in.get() != old_in:
+            self._in_changed()                          # l'écoute repart sur la carte son de ce poste
+        else:
+            self.save_conf(quiet=True)
 
     def set_radio(self, cfg):
         """Nouveaux réglages du poste (fenêtre « Poste radio ») : enregistrés, liaison rouverte."""

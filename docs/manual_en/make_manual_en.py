@@ -286,6 +286,10 @@ s += B(["<b>Radio</b>: type part of the name in “Search” (e.g. 7300, FT-991,
         "transmitting). Frequency, mode and band stay at the top of the window. If the radio does not give its "
         "S-meter (OmniRig, FLRig, TCI, custom CAT…), the frequency is shown in its place. Each brand has its own "
         "scale: the value is close to the radio's, not always exact.",
+        "<b>Presets</b> (top right, since 1.83): to switch from one radio to another (FT-857D, IC-7300, IC-9700…). "
+        "<b>Save as…</b> keeps all the radio settings of the window, plus the current sound cards (Settings → Audio) "
+        "and transmit level. Picking a preset in the list fills the window; <b>OK</b> applies it, sound cards "
+        "included (listening restarts on that radio's sound card).",
         "<b>PTT method</b>: CAT (recommended), DTR or RTS (also on the port of an interface next to the radio), "
         "or VOX.",
         "<b>Transmit audio source</b>: “Rear / Data” (USB audio, ACC) or “Front / Mic”. Choose “Front / Mic” if your "
