@@ -25,6 +25,7 @@ from PIL import Image, ImageTk
 
 import audio
 import easypal_hybrid
+import ezpix
 import engine
 import hamdrm
 import hybrid
@@ -63,7 +64,7 @@ import random
 import wave
 
 APP = "HFImage F4GOP"
-VERSION = "1.83"
+VERSION = "1.84"
 
 
 def _take_profile(argv):
@@ -6652,6 +6653,7 @@ class App(tk.Tk):
         eng.on_control = lambda *a: self.ui(self._on_control, *a)
         eng.on_drm_bsr = lambda b, call, snr: self.ui(self._drm_bsr_heard, b, call, snr)
         eng.on_drm_hybrid = lambda h: self.ui(self._drm_hybrid_announce, eng, h)
+        eng.on_ezpix = lambda sc: self.ui(self._ezpix_heard, eng, sc)
         return eng
 
     def _full_call(self, call):
@@ -6865,6 +6867,55 @@ class App(tk.Tk):
                 eng.save_hybrid(hyb, data, engine.DRM_MODE)
             except Exception as e:
                 self.ui(self.log_exc, "Téléchargement hybride EasyPal", e)
+
+        threading.Thread(target=run, daemon=True).start()
+
+    # ---- 1.84 : EZ Pix (W3WVG) : signal GMSK fixe, image « EZPix/image1 » sur le site de l'expéditeur
+    def _ezpix_heard(self, eng, score):
+        self.wf.mark_mode("EZ Pix")
+        self.log(tr("Signal EZ Pix entendu") + f" ({score:.2f})")
+        if not self.v_hauto.get():
+            self.log("Téléchargement automatique désactivé (Réglages).")
+            return
+        if getattr(self, "_ez_busy", False):
+            return
+        self._ez_busy = True
+        log = lambda m: self.ui(self.log, m)
+
+        def run():
+            try:
+                cache = getattr(self, "_ez_onair", None)
+                if cache is None or time.time() - cache[0] > 120:
+                    cache = (time.time(), ezpix.fetch_onair())
+                    self._ez_onair = cache
+                stations = cache[1]
+                best = None
+                # l'expéditeur dépose son image avant ou pendant le signal : quelques essais
+                for k in range(7):
+                    best = ezpix.find_latest(stations)
+                    if best is not None:
+                        break
+                    time.sleep(10)
+                if best is None:
+                    log(tr("EZ Pix : aucune image récente trouvée chez les stations de la liste EZPixOnAir."))
+                    return
+                st, age, size = best
+                key = (st["call"], size, int(time.time() - age) // 30)
+                if key == getattr(self, "_ez_last", None):
+                    return                               # même image, déjà reçue
+                self._ez_last = key
+                if self.is_blocked(st["call"]):
+                    self.ui(self._drop_blocked, st["call"], "EZ Pix")
+                    return
+                log(f"EZ Pix : {st['call']} {st['name']} — {ezpix.image_url(st)} ({age:.0f} s)")
+                data = ezpix.download(st, hybrid.MAX_DOWNLOAD)
+                hyb = {"id": zlib.crc32(data + b"ezpix") & 0xFFFF, "call": st["call"], "crc": zlib.crc32(data),
+                       "fmt": protocol.detect_format(data), "url": ezpix.image_url(st), "snr": None}
+                eng.save_hybrid(hyb, data, ezpix.MODE)
+            except Exception as e:
+                self.ui(self.log_exc, "EZ Pix", e)
+            finally:
+                self._ez_busy = False
 
         threading.Thread(target=run, daemon=True).start()
 
@@ -7203,14 +7254,15 @@ class App(tk.Tk):
         if not hdr.get("preview"):
             # message texte seul : accusé de réception aussi (sans changer la liste Rx Ok de l'image)
             self._net_confirm(hdr["id"], hdr.get("call"), show=hdr.get("fmt") != "txt")
-        if not hdr.get("preview") and self.v_ack_auto.get() and self.rx_stream is not None and not drm:
+        ez = mode.startswith(ezpix.MODE)                 # EZ Pix ne connaît ni l'ACK ni les modes HFImage
+        if not hdr.get("preview") and self.v_ack_auto.get() and self.rx_stream is not None and not drm and not ez:
             # (EasyPal ne connaît pas l'ACK de HFImage : rien n'est émis en mode EasyPal)
             act = self.rx_engine.activity.get(hdr["id"], {}) if self.rx_engine else {}
             self.ack_pending[hdr["id"]] = {"call": hdr.get("call"), "end_at": act.get("end", 0)}
             if hdr.get("hybrid"):
                 # l'annonce hybride est répétée 3 fois (~11 s) : on attend qu'elle soit finie
                 self.ack_pending[hdr["id"]]["wait_until"] = time.time() + 12
-        if not hdr.get("preview") and not from_file:
+        if not hdr.get("preview") and not from_file and not ez:
             self._follow_mode(hdr, path, drm)
         if mode == engine.DRM_MODE:
             mode = f"EasyPal {hdr.get('drm', '')}".strip()

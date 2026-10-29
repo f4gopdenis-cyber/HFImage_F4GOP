@@ -1080,4 +1080,6 @@ ZH = {
     'Supprimer le préréglage « {0} » ?': '删除预设“{0}”?',
     'Préréglage enregistré :': '预设已保存:',
     'Préréglage :': '预设:',
+    'Signal EZ Pix entendu': '收到 EZ Pix 信号',
+    'EZ Pix : aucune image récente trouvée chez les stations de la liste EZPixOnAir.': 'EZ Pix:在 EZPixOnAir 列表的电台中未找到最近的图片。',
 }

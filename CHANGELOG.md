@@ -1,5 +1,9 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 1.84 — réception EZ Pix (essai)
+
+- **Réception des images EZ Pix** (programme de W3WVG, SK) : HFImage reconnaît le signal GMSK d'EZ Pix (250 bauds, 1 500 Hz, toujours identique, relevé sur des émissions réelles), lit la liste publique des stations EZ Pix (EZPixOnAir), télécharge l'image « EZPix/image1 » la plus récente et l'affiche avec l'indicatif. Détecteur très léger (moins de 0,2 % du processeur), aucune fausse alerte sur les modes HFImage. Rien n'est écrit sur le serveur de W3WVG. Demande de VK6NJP ; l'émission EZ Pix viendra après les essais de réception.
+
 ## Version 1.83 — préréglages de poste
 
 - **Préréglages** dans la fenêtre Poste radio (comme EasyPal, demande de VK6NJP) : « Enregistrer sous… » garde tout le réglage du poste (modèle, port, vitesse, PTT, CI-V, mode DATA, partage…) avec les cartes son et le niveau d'émission ; choisir un préréglage dans la liste puis OK passe d'un poste à l'autre en une fois (FT-857D, IC-7300, IC-9700…). « Supprimer » l'efface.

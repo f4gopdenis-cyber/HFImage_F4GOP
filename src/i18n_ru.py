@@ -1088,4 +1088,6 @@ RU = {
     'Supprimer le préréglage « {0} » ?': 'Удалить пресет «{0}»?',
     'Préréglage enregistré :': 'Пресет сохранён:',
     'Préréglage :': 'Пресет:',
+    'Signal EZ Pix entendu': 'Принят сигнал EZ Pix',
+    'EZ Pix : aucune image récente trouvée chez les stations de la liste EZPixOnAir.': 'EZ Pix: у станций из списка EZPixOnAir не найдено свежих изображений.',
 }

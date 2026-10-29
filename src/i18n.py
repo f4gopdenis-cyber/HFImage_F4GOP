@@ -1863,6 +1863,8 @@ T = [
     ('Supprimer le préréglage « {0} » ?', 'Delete the preset “{0}”?', 'Voreinstellung „{0}“ löschen?', '¿Eliminar el preajuste «{0}»?', 'Eliminare la preimpostazione «{0}»?'),
     ('Préréglage enregistré :', 'Preset saved:', 'Voreinstellung gespeichert:', 'Preajuste guardado:', 'Preimpostazione salvata:'),
     ('Préréglage :', 'Preset:', 'Voreinstellung:', 'Preajuste:', 'Preimpostazione:'),
+    ('Signal EZ Pix entendu', 'EZ Pix signal heard', 'EZ-Pix-Signal gehört', 'Señal EZ Pix recibida', 'Segnale EZ Pix ricevuto'),
+    ('EZ Pix : aucune image récente trouvée chez les stations de la liste EZPixOnAir.', 'EZ Pix: no recent picture found at the stations of the EZPixOnAir list.', 'EZ Pix: kein neues Bild bei den Stationen der EZPixOnAir-Liste gefunden.', 'EZ Pix: no se encontró ninguna imagen reciente en las estaciones de la lista EZPixOnAir.', 'EZ Pix: nessuna immagine recente trovata presso le stazioni della lista EZPixOnAir.'),
     ("* = en émission    HYB = mode hybride", "* = transmitting    HYB = hybrid mode", "* = sendet    HYB = Hybridmodus", "* = transmitiendo    HYB = modo híbrido", "* = in trasmissione    HYB = modo ibrido"),
 ]
 

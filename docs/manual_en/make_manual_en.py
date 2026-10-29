@@ -652,6 +652,11 @@ s.append(P("<b>My pictures on the server</b>: each picture sent in hybrid mode i
 s.append(P("<b>Download safety</b>: an announcement received over the air can only fetch a file up to the <b>maximum size you chose</b> (Settings → Hybrid mode → “Received hybrid files: max size”, 200 MB by default, or no limit), and "
            "only from a public Internet address (never the computer itself or a machine on your home network). Received "
            "pictures and files always stay in the reception folder, whatever the announced callsign."))
+s.append(P("<b>EZ Pix reception</b> (W3WVG, since 1.84): HFImage recognises the EZ Pix signal (GMSK 250 baud around "
+           "1,500 Hz, about 5 s, always the same). EZ Pix uploads the picture as <b>EZPix/image1</b> on the sender's site: "
+           "HFImage reads the public list of EZ Pix stations (EZPixOnAir), finds the most recent image1, downloads it and "
+           "shows it with the callsign (“EZPix-HYB”). “Download received hybrid pictures automatically” must be ticked; "
+           "blocked callsigns and the maximum size apply. No radio acknowledgement is sent to an EZ Pix station."))
 s.append(P("<b>Blocked callsigns</b> (Settings → Hybrid mode, since 1.82): pictures from the callsigns listed there "
            "(separated by commas) are not shown, not saved and not downloaded in hybrid mode; F4ABC also blocks F4ABC/P. "
            "To receive by radio only, untick “Download received hybrid pictures automatically”. Note: on the air "
