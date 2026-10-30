@@ -245,23 +245,33 @@ def _age(url, timeout=6):
         return None
 
 
-def find_latest(stations, t_heard=None, before=300, after=90, workers=16):
+LAST_SCAN = {}          # dernière recherche (pour le journal quand rien n'est trouvé)
+
+
+def find_latest(stations, t_heard=None, before=3600, after=90, workers=16):
     """Image EZ Pix de l'expéditeur : (station avec « image » = son adresse, écart, taille) ou None.
 
     On regarde « EZPix/image1 » sur le site de chaque station de la liste. EZ Pix dépose l'image
-    autour du moment de l'émission (avant, pendant ou juste après) : on garde l'image déposée le
-    plus près du moment où le signal a été entendu (t_heard), de `before` s avant à `after` s après."""
+    quand on la charge (parfois bien avant d'émettre), ou au moment d'émettre : on garde l'image
+    déposée le plus près du moment où le signal a été entendu (t_heard), de `before` s avant à
+    `after` s après. (1.87 : 1 h avant, au lieu de 5 min : F4GOP charge l'image puis émet plus tard.)"""
     cands = [(st, st["url"] + p) for st in stations for p in IMAGE_PATHS]
     late = (time.time() - t_heard) if t_heard else 0.0
-    best = None
+    best = newest = None
+    found = 0
     with concurrent.futures.ThreadPoolExecutor(max_workers=workers) as ex:
         for (st, url), res in zip(cands, ex.map(lambda c: _age(c[1]), cands)):
             if res is None:
                 continue
+            found += 1
             age, size = res
             a = age - late                       # > 0 : déposée avant le signal ; < 0 : après
+            if newest is None or a < newest[1]:
+                newest = (st["call"], a, url)
             if -after <= a <= before and (best is None or abs(a) < abs(best[1])):
                 best = (dict(st, image=url), a, size)
+    LAST_SCAN.clear()
+    LAST_SCAN.update(checked=len(cands), found=found, newest=newest)
     return best
 
 

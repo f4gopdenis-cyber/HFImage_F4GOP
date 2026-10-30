@@ -1,5 +1,10 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 1.87 — EZ Pix : image chargée bien avant l'émission
+
+- Réception EZ Pix : EZ Pix dépose l'image dès qu'on la charge, parfois bien avant d'émettre ; HFImage ne la cherchait que dans les 5 minutes avant le signal et ne trouvait rien (essai de F4GOP). L'image peut maintenant avoir été déposée jusqu'à 1 h avant le signal ; la plus proche du signal est retenue.
+- Si rien n'est trouvé, le journal indique combien de sites ont été regardés et l'image EZ Pix la plus récente vue, pour comprendre pourquoi.
+
 ## Version 1.86 — EZ Pix : l'image de l'expéditeur
 
 - Réception EZ Pix : l'image envoyée par F4GOP était remplacée par celle d'une autre station (JA6EID). L'« image1 » à la racine d'un site est souvent la dernière image REÇUE par cette station (Digi-Sites) : HFImage ne regarde plus que « EZPix/image1 », l'endroit où EZ Pix dépose l'image qu'il envoie.

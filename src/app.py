@@ -64,7 +64,7 @@ import random
 import wave
 
 APP = "HFImage F4GOP"
-VERSION = "1.86"
+VERSION = "1.87"
 
 
 def _take_profile(argv):
@@ -6894,13 +6894,17 @@ class App(tk.Tk):
                 # EZ Pix dépose l'image avant, pendant ou juste après le signal : on attend un peu
                 # (premier essai 15 s après le signal, puis toutes les 10 s, 1 min 30 au plus)
                 time.sleep(15)
-                for k in range(8):
+                for k in range(4):
                     best = ezpix.find_latest(stations, t_heard)
-                    if best is not None and best[1] <= 60:
+                    if best is not None:
                         break
                     time.sleep(10)
                 if best is None:
                     log(tr("EZ Pix : aucune image récente trouvée chez les stations de la liste EZPixOnAir."))
+                    sc = ezpix.LAST_SCAN
+                    nw = sc.get("newest")
+                    log(f"EZ Pix : {len(stations)} stations, {sc.get('found', 0)}/{sc.get('checked', 0)} images EZPix"
+                        + (f" ; la plus récente : {nw[0]} ({nw[1] / 60:+.0f} min) {nw[2]}" if nw else ""))
                     return
                 st, age, size = best
                 key = (ezpix.image_url(st), size, int(t_heard - age) // 60)

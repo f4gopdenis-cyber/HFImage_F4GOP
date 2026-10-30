@@ -92,15 +92,20 @@ class Liste(unittest.TestCase):
 
     def test_plus_proche_du_signal(self):
         """Signal entendu il y a 30 s : l'image déposée 2 s après le signal (expéditeur) est préférée
-        à une image déposée 4 min avant, et une image vieille de 10 min est ignorée."""
+        à une image déposée 4 min avant ; une image de plus d'une heure est ignorée."""
         import time
         st = [{"call": c, "url": f"http://x/{c}/"} for c in ("OLD", "SND", "MID")]
-        ages = {"http://x/OLD/EZPix/image1": (630, 1), "http://x/SND/EZPix/image1": (28, 1),
+        ages = {"http://x/OLD/EZPix/image1": (4000, 1), "http://x/SND/EZPix/image1": (28, 1),
                 "http://x/MID/EZPix/image1": (270, 1)}
         with mock.patch.object(ezpix, "_age", lambda url, timeout=6: ages.get(url)):
             best = ezpix.find_latest(st, t_heard=time.time() - 30)
         self.assertEqual(best[0]["call"], "SND")
         self.assertAlmostEqual(best[1], -2, delta=1)        # déposée ~2 s APRÈS le signal
+        # image chargée 10 min avant d'émettre (F4GOP) : trouvée
+        ages = {"http://x/SND/EZPix/image1": (630, 1)}
+        with mock.patch.object(ezpix, "_age", lambda url, timeout=6: ages.get(url)):
+            best = ezpix.find_latest(st, t_heard=time.time() - 30)
+        self.assertEqual(best[0]["call"], "SND")
 
 if __name__ == "__main__":
     unittest.main()
