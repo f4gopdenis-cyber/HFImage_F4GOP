@@ -24,6 +24,7 @@ import numpy as np
 from PIL import Image, ImageTk
 
 import audio
+import backup
 import easypal_hybrid
 import engine
 import hamdrm
@@ -63,7 +64,7 @@ import random
 import wave
 
 APP = "HFImage F4GOP"
-VERSION = "1.92"
+VERSION = "1.93"
 
 
 def _take_profile(argv):
@@ -1080,6 +1081,10 @@ class App(tk.Tk):
         f.add_separator()
         f.add_command(label="Journal des stations (CSV)",
                       command=lambda: self._open_path(os.path.join(DEFAULT_OUT, "stations.csv")))
+        f.add_separator()
+        # 1.93 : sauvegarde / restauration (nouveau PC, Windows réinstallé) — idée de BH2RMX
+        f.add_command(label="Sauvegarder (réglages, images)…", command=self.backup_dialog)
+        f.add_command(label="Restaurer une sauvegarde…", command=self.restore_dialog)
         f.add_separator()
         # 0.97 : l'onglet Simulation (outil d'essai) n'est plus affiché d'office
         self.v_simtab = tk.BooleanVar(value=bool(self.conf.get("show_sim", False)))
@@ -3332,8 +3337,9 @@ class App(tk.Tk):
         ttk.Checkbutton(cf, text="Effacer les images de plus de", variable=self.v_clean).pack(side="left")
         ttk.Spinbox(cf, from_=1, to=3650, width=5, textvariable=self.v_clean_days).pack(side="left", padx=4)
         ttk.Label(cf, text="jours").pack(side="left")
-        ttk.Label(d, text="Images rangées par jour (AAAA-MM-JJ). Seuls ces dossiers sont effacés ;\n"
-                          "les fichiers reçus et les anciennes images ne sont jamais touchés.",
+        ttk.Label(d, text="Les images reçues et envoyées sont rangées par jour (AAAA-MM-JJ) : les dossiers "
+                          "plus anciens\nque ce nombre de jours sont effacés. Jamais effacés : les fichiers reçus "
+                          "(dossier « fichiers »),\nles images des versions avant la 0.84 et vos propres dossiers.",
                   foreground="#555", justify="left").pack(anchor="w", pady=(4, 0))
         sk = ttk.Frame(d)
         sk.pack(fill="x", pady=(6, 0))
@@ -6417,6 +6423,8 @@ class App(tk.Tk):
         return res["act"], bool(remember.get())
 
     def _save_conf_file(self):
+        if getattr(self, "_restored", False):
+            return                    # sauvegarde restaurée : on ne réécrit pas ses réglages en partant
         try:
             self._pip_keep_save()
         except Exception:
@@ -8588,6 +8596,119 @@ class App(tk.Tk):
         except OSError:
             dst = src
         self._open_path(dst)
+
+    # ---- 1.93 : sauvegarde / restauration
+    def _backup_roots(self):
+        home = os.path.expanduser("~")
+        main_out = os.path.join(home, "Documents", "HFImage")
+        return home, main_out if not PROFILE else DEFAULT_OUT, self.v_folder.get() or DEFAULT_OUT
+
+    def backup_dialog(self):
+        try:
+            self.save_conf(quiet=True)            # réglages du moment, enregistrés avant la copie
+        except Exception:
+            pass
+        home, out, folder = self._backup_roots()
+        w = tk.Toplevel(self)
+        w.title(tr("Sauvegarder HFImage"))
+        w.transient(self)
+        w.resizable(False, False)
+        f = ttk.Frame(w, padding=12)
+        f.pack(fill="both", expand=True)
+        ttk.Label(f, text=tr("Choisissez ce qu'il faut garder. Tout part dans un seul fichier .zip (sur une clé "
+                             "USB, par exemple), à remettre en place sur l'autre PC par Fichiers → Restaurer."),
+                  wraplength=430, justify="left").pack(anchor="w")
+        labels = {"settings": tr("Réglages (profils, préréglages de poste, site web, sons begin/end)"),
+                  "rx": tr("Images et fichiers reçus"), "tx": tr("Images envoyées")}
+        vs = {}
+        for part in backup.PARTS:
+            items = backup.collect([part], home, out, folder)
+            vs[part] = tk.BooleanVar(value=True)
+            ttk.Checkbutton(f, text=f"{labels[part]} — {len(items)} " + tr("fichiers") + ", "
+                            + _fmt_size(backup.size_of(items)), variable=vs[part]).pack(anchor="w", pady=(6, 0))
+        ttk.Label(f, text=tr("Les mots de passe FTP sont chiffrés pour ce compte Windows : sur un autre PC, il "
+                             "faudra les retaper."), wraplength=430, justify="left",
+                  foreground="#555").pack(anchor="w", pady=(8, 0))
+        pb = ttk.Progressbar(f, length=430, maximum=100)
+        pb.pack(fill="x", pady=(8, 0))
+        b = ttk.Frame(f)
+        b.pack(fill="x", pady=(8, 0))
+
+        def go():
+            parts = [p for p in backup.PARTS if vs[p].get()]
+            if not parts:
+                return
+            from tkinter import filedialog
+            dst = filedialog.asksaveasfilename(parent=w, defaultextension=".zip", filetypes=[("ZIP", "*.zip")],
+                                               initialfile=f"HFImage_sauvegarde_{time.strftime('%Y-%m-%d')}.zip")
+            if not dst:
+                return
+            bt.configure(state="disabled")
+
+            def run():
+                try:
+                    n, size = backup.make(dst, parts, home, out, folder, VERSION,
+                                          progress=lambda x: self.ui(pb.configure, {"value": 100 * x}))
+                    self.ui(self.log, tr("Sauvegarde enregistrée :") + f" {dst} ({n} " + tr("fichiers") + ", "
+                            + _fmt_size(size) + ")")
+                    self.ui(messagebox.showinfo, APP, tr("Sauvegarde enregistrée :") + f"\n{dst}")
+                    self.ui(w.destroy)
+                except Exception as e:
+                    self.ui(self.log_exc, "Sauvegarde", e)
+                    self.ui(messagebox.showerror, APP, tr("Sauvegarde impossible :") + f"\n{e}")
+                    self.ui(bt.configure, {"state": "normal"})
+            threading.Thread(target=run, daemon=True).start()
+        bt = ttk.Button(b, text=tr("Enregistrer la sauvegarde…"), command=go)
+        bt.pack(side="right")
+        ttk.Button(b, text=tr("Fermer"), command=w.destroy).pack(side="right", padx=6)
+        self._translate_ui(w)
+
+    def restore_dialog(self):
+        from tkinter import filedialog
+        src = filedialog.askopenfilename(parent=self, title=tr("Restaurer une sauvegarde"),
+                                         filetypes=[("ZIP", "*.zip")])
+        if not src:
+            return
+        try:
+            man = backup.read_manifest(src)
+        except Exception as e:
+            messagebox.showerror(APP, f"{e}")
+            return
+        labels = {"settings": tr("Réglages"), "rx": tr("Images et fichiers reçus"), "tx": tr("Images envoyées")}
+        what = ", ".join(labels[p] for p in man.get("parts", []) if p in labels)
+        if not messagebox.askyesno(APP, tr("Sauvegarde du") + f" {man.get('date', '?').replace('T', ' ')} "
+                                   f"(HFImage {man.get('version', '?')}) : {what}.\n\n"
+                                   + tr("Remettre tout cela sur ce PC ? Les réglages actuels sont remplacés, "
+                                        "puis HFImage redémarre.")):
+            return
+        home, out, folder = self._backup_roots()
+
+        def run():
+            try:
+                info = backup.restore(src, home, out, folder)
+                self._restored = "settings" in info["parts"]
+                self.ui(self.log, tr("Sauvegarde restaurée :") + f" {info['files']} " + tr("fichiers"))
+                self.ui(self._restored_done, info)
+            except Exception as e:
+                self.ui(self.log_exc, "Restauration", e)
+                self.ui(messagebox.showerror, APP, tr("Restauration impossible :") + f"\n{e}")
+        threading.Thread(target=run, daemon=True).start()
+
+    def _restored_done(self, info):
+        msg = tr("Restauration terminée :") + f" {info['files']} " + tr("fichiers") + "."
+        if "settings" not in info["parts"]:
+            messagebox.showinfo(APP, msg)
+            return
+        messagebox.showinfo(APP, msg + "\n\n" + tr("Si la sauvegarde vient d'un autre PC, retapez les mots de "
+                                                     "passe FTP (Réglages → Mode hybride, site web). HFImage va "
+                                                     "redémarrer."))
+        try:
+            cmd = self._launch_cmd(PROFILE) if PROFILE else (
+                [sys.executable] if getattr(sys, "frozen", False) else [sys.executable, os.path.abspath(__file__)])
+            subprocess.Popen(cmd)
+        except Exception as e:
+            self.log_exc("Redémarrage", e)
+        self._quit()
 
     def _quit(self):
         self._closing = True

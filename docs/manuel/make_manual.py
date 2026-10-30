@@ -569,6 +569,10 @@ s += B(["<b>Texte inclus</b> : un message joint à l'image, affiché dans « Mes
         "<b>Menu CAT</b> (1.92, comme MMSSTV) : vos propres commandes, une par ligne « Nom = commande » (texte pour "
         "Kenwood / Yaesu / Elecraft, hexadécimal pour Icom CI-V), envoyées au poste en un clic par la liaison CAT "
         "d'HFImage. CAT → Modifier le menu… Attention : une commande fausse peut dérégler le poste.",
+        "<b>Sauvegarder / Restaurer</b> (1.93, menu Fichiers) : réglages (profils, préréglages de poste, site web, "
+        "sons), images reçues et images envoyées, au choix, dans un seul fichier .zip ; sur le nouveau PC, "
+        "Fichiers → Restaurer remet tout en place (chemins adaptés) et HFImage redémarre. Les mots de passe FTP "
+        "sont à retaper sur un autre PC (chiffrés pour le compte Windows d'origine).",
         "<b>IMG/QSL</b> : carte QSL avec photo de fond, indicatif, locator et report remplis automatiquement, "
         "police et couleurs au choix, <b>hauteur des bandeaux</b> du haut et du bas réglable (50 à 150 %, le texte "
         "suit). Les <b>textes se déplacent à la souris</b> dans l'aperçu (indicatif, locator, correspondant, "

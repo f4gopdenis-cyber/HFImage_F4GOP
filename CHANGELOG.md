@@ -1,5 +1,10 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 1.93 — sauvegarde / restauration ; texte du nettoyage plus clair
+
+- **Sauvegarder / Restaurer** (menu Fichiers, idée de BH2RMX) : réglages (programme, profils, préréglages de poste, site web, sons begin/end), images et fichiers reçus, images envoyées, au choix, dans un seul fichier .zip. Sur le nouveau PC ou après une réinstallation de Windows, « Restaurer une sauvegarde… » remet tout en place, adapte les chemins (autre nom d'utilisateur) et redémarre HFImage. Les mots de passe FTP, chiffrés pour le compte Windows d'origine, sont à retaper sur un autre PC.
+- Réglages → Dossier des images reçues : le texte sous « Effacer les images de plus de … jours » disait que les « fichiers reçus » n'étaient jamais touchés, ce qui laissait croire que les images reçues étaient gardées (BH2RMX). Il dit maintenant clairement que les dossiers par jour (images reçues et envoyées) plus anciens sont effacés, et ce qui ne l'est jamais.
+
 ## Version 1.92 — texte waterfall en LSB ; menu CAT
 
 - **Texte waterfall en LSB** : le texte se lisait en miroir sur les cascades RF (SDR Console…) quand le poste était en LSB, le poste inversant le spectre audio (signalé par BH2RMX). Il est maintenant retourné automatiquement en LSB (mode lu par le CAT, sinon fréquence sous 10 MHz). Réglage « Sens » dans la fenêtre Texte waterfall : Auto, Normal (USB) ou Inversé (LSB).
