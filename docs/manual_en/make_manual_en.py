@@ -574,7 +574,11 @@ s += B(["<b>Incl. text</b>: a message attached to the picture, shown in “Recei
         "<b>Tune</b> (10 s): carrier to adjust the amplifier / tuner. <b>ID</b>: callsign in Morse.",
         "<b>WAVE</b> / waterfall text: begin.wav / end.wav files, <b>text or picture</b> drawn in the correspondent's "
         "waterfall (Action → Waterfall text…); “Save” makes it a begin.wav played before each transmission, as in "
-        "EasyPal.",
+        "EasyPal. <b>Direction</b> (1.92): in LSB the text is mirrored so that it reads correctly on RF waterfalls "
+        "(SDR Console, radio screen); “Auto” follows the mode read by CAT (otherwise LSB below 10 MHz).",
+        "<b>CAT menu</b> (1.92, as in MMSSTV): your own commands, one per line “Name = command” (text for "
+        "Kenwood / Yaesu / Elecraft, hexadecimal for Icom CI-V), sent to the radio in one click through HFImage's CAT "
+        "link. CAT → Edit the menu… Caution: a wrong command can upset the radio settings.",
         "<b>IMG/QSL</b>: QSL card with background photo, callsign, locator and report filled in automatically, "
         "font and colours of your choice, adjustable <b>height of the top and bottom banners</b> (50 to 150 %, the "
         "text follows). The <b>texts can be moved with the mouse</b> in the preview (callsign, locator, "

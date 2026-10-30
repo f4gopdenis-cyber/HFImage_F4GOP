@@ -278,6 +278,10 @@ class RigBase:
         """which : « usb » ou « data ». -> (ok, texte)."""
         return False, "changement de mode non pris en charge"
 
+    def send_raw(self, cmds, delay=0.15):
+        """1.92 : commandes CAT du menu « CAT » (comme MMSSTV) : liste d'octets envoyée telle quelle."""
+        raise RuntimeError("cette liaison (TCI, FLRig, OmniRig, sans CAT) n'envoie pas de commande brute")
+
     @staticmethod
     def is_data(mode):
         m = (mode or "").upper()
@@ -444,6 +448,13 @@ class CustomRig(RigBase):
             self._in_tx = False
             self._send("cmd_exit1", "cmd_exit2")
 
+    def send_raw(self, cmds, delay=None):
+        for c in cmds:
+            with self.lock:
+                self.ser.write(c)
+                self.ser.flush()
+            time.sleep(self.delay if delay is None else delay)
+
     def _send(self, *keys):
         with self.lock:
             for k in keys:
@@ -559,6 +570,13 @@ class KenwoodRig(RigBase):
     def write(self, cmd):
         with self.lock:
             self.ser.write(cmd.encode())
+
+    def send_raw(self, cmds, delay=0.15):
+        for c in cmds:
+            with self.lock:
+                self.ser.write(c)
+                self.ser.flush()
+            time.sleep(delay)
 
     def freq(self):
         r = self.query("FA;")
@@ -761,6 +779,20 @@ class RigctlRig(RigBase):
     def _ok(self, c):
         r = self.cmd(c)
         return bool(r) and r[0] == "RPRT 0"
+
+    def send_raw(self, cmds, delay=0.15):
+        """Commande brute par rigctld (« W », octets écrits \\0xNN). Icom (FE FE … FD) : on attend
+        la réponse de 6 octets du poste (FB / FA) ; texte (Kenwood, Yaesu…) : pas de réponse, le
+        délai d'attente de rigctld est normal."""
+        for c in cmds:
+            esc = "".join(f"\\0x{b:02X}" for b in c)
+            icom = len(c) >= 6 and c[0] == 0xFE and c[1] == 0xFE and c[-1] == 0xFD
+            try:
+                self.cmd(f"+W {esc} {6 if icom else 1}", 4)
+            except RuntimeError as e:
+                if icom or "ne répond pas" not in str(e):
+                    raise
+            time.sleep(delay)
 
     def freq(self):
         r = self.cmd("f")

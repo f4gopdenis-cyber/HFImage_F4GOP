@@ -63,7 +63,7 @@ import random
 import wave
 
 APP = "HFImage F4GOP"
-VERSION = "1.91"
+VERSION = "1.92"
 
 
 def _take_profile(argv):
@@ -180,6 +180,21 @@ class TrVar(tk.StringVar):
     def retranslate(self):
         super().set(tr(getattr(self, "_fr", "")))
 
+
+
+def wft_mirror(sens, rig_mode, rig_freq):
+    """Texte waterfall : retourner de gauche à droite ? (« lsb » : oui ; « normal » : non ;
+    « auto » : poste en LSB d'après le CAT, sinon fréquence sous 10 MHz, sinon non)."""
+    if sens == "lsb":
+        return True
+    if sens == "normal":
+        return False
+    m = str(rig_mode or "").upper()
+    if "LSB" in m or m.startswith("PKTL"):
+        return True
+    if "USB" in m or m.startswith("PKTU"):
+        return False
+    return bool(rig_freq) and rig_freq < 10_000_000
 
 
 def call_blocked(call, lst):
@@ -1038,6 +1053,9 @@ class App(tk.Tk):
         self.qsy_menu = tk.Menu(a, tearoff=0, postcommand=lambda: self._fill_qsy_menu(self.qsy_menu))
         a.add_cascade(label="Aller sur une fréquence", menu=self.qsy_menu)
         m.add_cascade(label="Action", menu=a)
+        # 1.92 : commandes CAT personnalisées, en un clic (comme MMSSTV) — BH2RMX
+        self.cat_menu = tk.Menu(m, tearoff=0, postcommand=lambda: self._fill_cat_menu(self.cat_menu))
+        m.add_cascade(label="CAT", menu=self.cat_menu)
         i = tk.Menu(m, tearoff=0)
         i.add_command(label="Ouvrir une image…", command=self.open_image)
         i.add_command(label="Coller l'image (Ctrl+V)", command=self.paste_image)
@@ -1993,6 +2011,16 @@ class App(tk.Tk):
         self.v_wftneg = tk.BooleanVar(value=bool(self.conf.get("wft_neg")))
         ttk.Checkbutton(o2, text="Négatif", variable=self.v_wftneg,
                         command=self._wft_preview).pack(side="left", padx=6)
+        # 1.92 : en LSB, le texte est retourné pour se lire à l'endroit sur les cascades RF (BH2RMX)
+        ttk.Label(o2, text="Sens").pack(side="left", padx=(8, 0))
+        self._wft_sens_names = {"auto": tr("Auto (LSB / USB du poste)"), "normal": tr("Normal (USB)"),
+                                "lsb": tr("Inversé (LSB)")}
+        self.v_wftsens = tk.StringVar(value=self._wft_sens_names.get(self.conf.get("wft_sens", "auto"),
+                                                                    self._wft_sens_names["auto"]))
+        cbs = ttk.Combobox(o2, textvariable=self.v_wftsens, values=list(self._wft_sens_names.values()),
+                           width=22, state="readonly")
+        cbs.pack(side="left", padx=4)
+        cbs.bind("<<ComboboxSelected>>", lambda e: self._wft_sens_changed())
         oi = ttk.Frame(f)
         oi.pack(fill="x", pady=(4, 0))
         ttk.Button(oi, text="Image…", command=self.wft_image).pack(side="left")
@@ -2062,12 +2090,25 @@ class App(tk.Tk):
         self.win_wft.lift()
         self._wft_preview()
 
+    def _wft_sens_changed(self):
+        lab = self.v_wftsens.get()
+        self.conf["wft_sens"] = next((k for k, v in self._wft_sens_names.items() if v == lab), "auto")
+        self._save_conf_file()
+
+    def _wft_mirror(self):
+        """Texte waterfall retourné ? Oui si le poste est en LSB (mode lu par le CAT, sinon fréquence
+        sous 10 MHz), ou si « Inversé (LSB) » est choisi."""
+        return wft_mirror(self.conf.get("wft_sens", "auto"), self.rig_mode, self.rig_freq)
+
     def wft_send(self):
         bm = self._wft_bitmap()
         if bm is None:
             messagebox.showinfo(APP, "Écrivez d'abord le texte à envoyer.")
             return
-        self._start_job({"kind": "wftext", "bitmap": bm})
+        mirror = self._wft_mirror()
+        if mirror:
+            self.log(tr("Texte waterfall retourné pour la LSB (lisible à l'endroit sur les cascades RF)."))
+        self._start_job({"kind": "wftext", "bitmap": bm, "mirror": mirror})
 
     def wft_save(self):
         from tkinter import simpledialog
@@ -2084,7 +2125,7 @@ class App(tk.Tk):
         if not name.lower().endswith(".wav"):
             name += ".wav"
         p = os.path.join(wavtext.wav_dir(DEFAULT_OUT), os.path.basename(name))
-        engine.write_wav(p, wavtext.synth(bm, int(self.v_wavvol.get())), 8000)
+        engine.write_wav(p, wavtext.synth(bm, int(self.v_wavvol.get()), mirror=self._wft_mirror()), 8000)
         self.log(f"Texte waterfall enregistré : {p}")
         self._wav_refresh()
         if messagebox.askyesno(APP, "L'utiliser comme « begin.wav » (avant chaque émission) ?"):
@@ -2632,6 +2673,99 @@ class App(tk.Tk):
         ttk.Button(b, text=tr("Liste d'origine"), command=reset).pack(side="left")
         self._translate_ui(w)
         return w
+
+    # ---- 1.92 : menu « CAT » : commandes personnalisées (nom = commande), comme MMSSTV
+    def _cat_cmds(self):
+        out = []
+        for item in self.conf.get("cat_cmds") or []:
+            if not isinstance(item, (list, tuple)):
+                continue
+            try:
+                name, cmd = str(item[0]).strip(), str(item[1]).strip()
+            except (TypeError, IndexError):
+                continue
+            if name and cmd:
+                out.append((name, cmd))
+        return out
+
+    def _fill_cat_menu(self, m):
+        m.delete(0, "end")
+        cmds = self._cat_cmds()
+        for name, cmd in cmds:
+            m.add_command(label=name, command=lambda n=name, c=cmd: self.send_cat_cmd(n, c))
+        if not cmds:
+            m.add_command(label=tr("(aucune commande : Modifier le menu…)"), state="disabled")
+        m.add_separator()
+        m.add_command(label=tr("Modifier le menu…"), command=self._cat_edit)
+
+    def send_cat_cmd(self, name, text):
+        if self.tx_busy:
+            messagebox.showinfo(APP, tr("Attendez la fin de l'émission pour envoyer une commande CAT."))
+            return
+        try:
+            cmds = radio.parse_cmds(text)
+        except ValueError as e:
+            messagebox.showerror(APP, f"{name} : {e}")
+            return
+        if not cmds:
+            return
+
+        def run():
+            try:
+                r = self._rig_open_now()
+                if r is None:
+                    raise RuntimeError(tr("aucun poste relié par CAT (Réglages → Poste radio)"))
+                r.send_raw(cmds)
+                self.ui(self.log, tr("Commande CAT envoyée :") + f" {name}")
+                self._rig_kick.set()                    # fréquence / mode relus tout de suite
+            except Exception as e:
+                self.ui(self.log, tr("Commande CAT non envoyée :") + f" {name} — {e}")
+                self.ui(messagebox.showerror, APP, tr("Commande CAT non envoyée :") + f" {name}\n{e}")
+        threading.Thread(target=run, daemon=True).start()
+
+    def _cat_edit(self):
+        """Commandes du menu CAT, une par ligne : « Nom = commande »."""
+        w = tk.Toplevel(self)
+        w.title(tr("Menu CAT"))
+        w.transient(self)
+        f = ttk.Frame(w, padding=10)
+        f.pack(fill="both", expand=True)
+        ttk.Label(f, text=tr("Une commande par ligne : « Nom = commande ». Texte pour Kenwood, Yaesu, Elecraft "
+                             "(ex. « Antenne 2 = AN2; »), hexadécimal pour Icom CI-V (ex. « Préampli = "
+                             "FEFE94E0160201FD »). Plusieurs commandes à la suite : séparées par « | »."),
+                  wraplength=460, justify="left").pack(anchor="w")
+        t = tk.Text(f, width=56, height=12, font=("TkFixedFont", 10))
+        t.pack(fill="both", expand=True, pady=6)
+        t.insert("1.0", "\n".join(f"{n} = {c}" for n, c in self._cat_cmds()))
+        ttk.Label(f, text=tr("Attention : une commande fausse peut dérégler le poste. Les commandes partent "
+                             "par la liaison CAT d'HFImage (Kenwood en direct, Hamlib, CAT personnalisé)."),
+                  wraplength=460, justify="left", foreground="#a33").pack(anchor="w")
+        b = ttk.Frame(f)
+        b.pack(fill="x", pady=(6, 0))
+
+        def save():
+            out, bad = [], []
+            for line in t.get("1.0", "end").splitlines():
+                if not line.strip():
+                    continue
+                name, sep, cmd = line.partition("=")
+                name, cmd = name.strip(), cmd.strip()
+                try:
+                    ok = bool(sep and name and cmd and radio.parse_cmds(cmd))
+                except ValueError:
+                    ok = False
+                if not ok:
+                    bad.append(line.strip())
+                    continue
+                out.append([name[:40], cmd])
+            if bad:
+                messagebox.showerror(APP, tr("Lignes illisibles :") + "\n" + "\n".join(bad), parent=w)
+                return
+            self.conf["cat_cmds"] = out
+            self._save_conf_file()
+            w.destroy()
+        ttk.Button(b, text=tr("Enregistrer"), command=save).pack(side="right")
+        ttk.Button(b, text=tr("Annuler"), command=w.destroy).pack(side="right", padx=6)
 
     def _qsy_edit(self):
         """Liste des fréquences du menu, une par ligne : « 7.058 LSB »."""
@@ -6306,7 +6440,7 @@ class App(tk.Tk):
             a = wavtext.normalize(engine.read_wav_8k(job["path"]), job["volume"])
             return (lambda: iter([a])), len(a) / 8000, "", f"fichier {os.path.basename(job['path'])}"
         if kind == "wftext":
-            a = wavtext.synth(job["bitmap"], job["volume"])
+            a = wavtext.synth(job["bitmap"], job["volume"], mirror=bool(job.get("mirror")))
             return (lambda: iter([a])), len(a) / 8000, "", "texte waterfall"
         if kind == "control":
             ct = engine.ControlTransmission(job["payload"])

@@ -96,7 +96,7 @@ def _levels(bitmap):
     return a
 
 
-def synth(bitmap, volume=5, fs=FS):
+def synth(bitmap, volume=5, fs=FS, mirror=False):
     """Bitmap -> audio int16 8 kHz. La dernière ligne est émise en premier, pour que
     le texte se lise à l'endroit sur un waterfall qui défile vers le bas.
 
@@ -105,6 +105,10 @@ def synth(bitmap, volume=5, fs=FS):
     - phases de Newman (faible facteur de crête) puis écrêtage doux tanh, ce qui donne
       beaucoup plus de puissance moyenne pour la même crête que le modem."""
     amp = _levels(bitmap)
+    if mirror:
+        # 1.92 : poste en LSB : le spectre audio est inversé à l'émission ; sans ce retournement,
+        # le texte se lit en miroir sur une cascade RF (SDR Console…) — BH2RMX
+        amp = amp[:, ::-1]
     rows, cols = amp.shape
     freqs = np.linspace(F_LO, F_HI, cols)
     n = int(ROW_S * fs)

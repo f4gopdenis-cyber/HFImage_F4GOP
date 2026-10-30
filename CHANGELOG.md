@@ -1,5 +1,10 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 1.92 — texte waterfall en LSB ; menu CAT
+
+- **Texte waterfall en LSB** : le texte se lisait en miroir sur les cascades RF (SDR Console…) quand le poste était en LSB, le poste inversant le spectre audio (signalé par BH2RMX). Il est maintenant retourné automatiquement en LSB (mode lu par le CAT, sinon fréquence sous 10 MHz). Réglage « Sens » dans la fenêtre Texte waterfall : Auto, Normal (USB) ou Inversé (LSB).
+- **Menu « CAT »** (comme MMSSTV, demande de BH2RMX) : vos propres commandes « Nom = commande » (texte Kenwood / Yaesu / Elecraft, hexadécimal Icom CI-V, plusieurs à la suite avec « | »), envoyées au poste en un clic par la liaison CAT d'HFImage (Kenwood en direct, Hamlib, CAT personnalisé). CAT → Modifier le menu….
+
 ## Version 1.91 — EZ Pix retiré
 
 - Tout ce qui concernait EZ Pix (versions 1.84 à 1.90 : réception de la trame GMSK, liste EZPixOnAir, mode « EZ Pix » en émission) est retiré, à la demande de F4GOP : la recherche des images EZ Pix sur les sites des stations est trop lente et dépend de la liste de W3WVG, que seul EZ Pix peut tenir à jour. HFImage revient exactement à la version 1.83 (préréglages de poste, indicatifs bloqués, etc. restent en place) ; on continue avec les modes HFImage, EasyPal et l'hybride, qui fonctionnent bien.

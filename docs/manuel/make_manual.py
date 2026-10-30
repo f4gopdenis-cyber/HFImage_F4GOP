@@ -563,7 +563,12 @@ s += B(["<b>Texte inclus</b> : un message joint à l'image, affiché dans « Mes
         "<b>Accord</b> (10 s) : porteuse pour régler l'ampli / la boîte d'accord. <b>ID</b> : indicatif en morse.",
         "<b>WAVE</b> / texte waterfall : fichiers begin.wav / end.wav, <b>texte ou image</b> dessinés dans le "
         "waterfall du correspondant (Action → Texte waterfall… → « Image… » pour une photo, un logo, votre QSL) ; "
-        "« Sauve » en fait un begin.wav joué avant chaque émission, comme EasyPal.",
+        "« Sauve » en fait un begin.wav joué avant chaque émission, comme EasyPal. <b>Sens</b> (1.92) : en LSB, le "
+        "texte est retourné pour se lire à l'endroit sur les cascades RF (SDR Console, écran du poste) ; « Auto » "
+        "suit le mode lu par le CAT (sinon LSB sous 10 MHz).",
+        "<b>Menu CAT</b> (1.92, comme MMSSTV) : vos propres commandes, une par ligne « Nom = commande » (texte pour "
+        "Kenwood / Yaesu / Elecraft, hexadécimal pour Icom CI-V), envoyées au poste en un clic par la liaison CAT "
+        "d'HFImage. CAT → Modifier le menu… Attention : une commande fausse peut dérégler le poste.",
         "<b>IMG/QSL</b> : carte QSL avec photo de fond, indicatif, locator et report remplis automatiquement, "
         "police et couleurs au choix, <b>hauteur des bandeaux</b> du haut et du bas réglable (50 à 150 %, le texte "
         "suit). Les <b>textes se déplacent à la souris</b> dans l'aperçu (indicatif, locator, correspondant, "
