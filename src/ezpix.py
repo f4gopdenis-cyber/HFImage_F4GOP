@@ -193,12 +193,14 @@ def parse_onair_name(fname):
 
 
 def parse_onair_listing(page):
-    """Page « Index of /w/w3wvg/EZPixOnAir » -> liste de stations (une par indicatif)."""
+    """Page « Index of /w/w3wvg/EZPixOnAir » -> liste de stations. Une même station peut avoir
+    plusieurs sites (F4GOP : qsl.net/f0gop et qsl.net/f4gop) : chaque site est gardé (1.85)."""
     out = {}
     for href in re.findall(r'href="([^"?/][^"]*)"', page, re.I):
         st = parse_onair_name(html.unescape(href))
         if st:
-            out[st["call"]] = st
+            key = (st["call"], st["url"].lower().replace("https://", "http://"))
+            out[key] = st
     return list(out.values())
 
 
@@ -219,14 +221,17 @@ def fetch_onair(timeout=10):
     return parse_onair_listing(page)
 
 
+IMAGE_PATHS = ("EZPix/image1", "image1")    # selon le compte : dossier EZPix ou racine du site (F4GOP)
+
+
 def image_url(station):
-    return station["url"] + IMAGE_PATH
+    return station.get("image") or station["url"] + IMAGE_PATH
 
 
-def _age(station, timeout=6):
-    """(âge de l'image1 en s d'après l'horloge du serveur, taille) ou None."""
+def _age(url, timeout=6):
+    """(âge du fichier en s d'après l'horloge du serveur, taille) ou None."""
     try:
-        with _open(image_url(station), "HEAD", timeout) as r:
+        with _open(url, "HEAD", timeout) as r:
             lm = r.headers.get("Last-Modified")
             dt = r.headers.get("Date")
             size = int(r.headers.get("Content-Length") or 0)
@@ -239,17 +244,24 @@ def _age(station, timeout=6):
         return None
 
 
-def find_latest(stations, max_age=600, workers=12):
-    """Station dont l'image1 est la plus récente (moins de max_age s ; EZ Pix peut déposer l'image
-    un peu avant l'émission) : (station, âge, taille) ou None."""
+def find_latest(stations, t_heard=None, max_age=300, after=3, workers=16):
+    """Image EZ Pix la plus récente : (station avec « image » = son adresse, âge, taille) ou None.
+
+    On regarde « EZPix/image1 » et « image1 » sur le site de chaque station. L'expéditeur dépose
+    son image AVANT d'émettre ; les stations qui la reçoivent la redéposent ensuite (Digi-Sites)
+    sur leur propre site : seules les images déposées avant le signal (t_heard, + `after` s)
+    sont retenues, pour ne pas prendre un receveur pour l'expéditeur."""
+    cands = [(st, st["url"] + p) for st in stations for p in IMAGE_PATHS]
+    late = (time.time() - t_heard) if t_heard else 0.0
     best = None
     with concurrent.futures.ThreadPoolExecutor(max_workers=workers) as ex:
-        for st, res in zip(stations, ex.map(_age, stations)):
+        for (st, url), res in zip(cands, ex.map(lambda c: _age(c[1]), cands)):
             if res is None:
                 continue
             age, size = res
-            if -60 <= age <= max_age and (best is None or age < best[1]):
-                best = (st, age, size)
+            a = age - late                       # âge au moment où le signal a été entendu
+            if -after <= a <= max_age and (best is None or a < best[1]):
+                best = (dict(st, image=url), a, size)
     return best
 
 

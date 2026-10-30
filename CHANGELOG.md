@@ -1,5 +1,10 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 1.85 — EZ Pix : la bonne image
+
+- Réception EZ Pix : HFImage affichait toujours la même (ancienne) image (essai de F4GOP). Deux corrections : une station peut avoir plusieurs sites dans la liste EZPixOnAir (F4GOP : qsl.net/f0gop et qsl.net/f4gop) et tous sont maintenant regardés ; l'image est cherchée dans « EZPix/image1 » et aussi à la racine du site (« image1 »).
+- Seules les images déposées avant le signal sont retenues : une station qui a reçu l'image et la redépose ensuite sur son site (Digi-Sites) n'est pas prise pour l'expéditeur.
+
 ## Version 1.84 — réception EZ Pix (essai)
 
 - **Réception des images EZ Pix** (programme de W3WVG, SK) : HFImage reconnaît le signal GMSK d'EZ Pix (250 bauds, 1 500 Hz, toujours identique, relevé sur des émissions réelles), lit la liste publique des stations EZ Pix (EZPixOnAir), télécharge l'image « EZPix/image1 » la plus récente et l'affiche avec l'indicatif. Détecteur très léger (moins de 0,2 % du processeur), aucune fausse alerte sur les modes HFImage. Rien n'est écrit sur le serveur de W3WVG. Demande de VK6NJP ; l'émission EZ Pix viendra après les essais de réception.

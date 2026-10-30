@@ -64,7 +64,7 @@ import random
 import wave
 
 APP = "HFImage F4GOP"
-VERSION = "1.84"
+VERSION = "1.85"
 
 
 def _take_profile(argv):
@@ -6881,6 +6881,7 @@ class App(tk.Tk):
             return
         self._ez_busy = True
         log = lambda m: self.ui(self.log, m)
+        t_heard = time.time()
 
         def run():
             try:
@@ -6891,8 +6892,8 @@ class App(tk.Tk):
                 stations = cache[1]
                 best = None
                 # l'expéditeur dépose son image avant ou pendant le signal : quelques essais
-                for k in range(7):
-                    best = ezpix.find_latest(stations)
+                for k in range(3):
+                    best = ezpix.find_latest(stations, t_heard)
                     if best is not None:
                         break
                     time.sleep(10)
