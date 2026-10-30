@@ -1,13 +1,10 @@
 # Ménage des anciennes versions (demande de F4GOP, 30/10/2026) : on garde les 5 dernières releases,
 # les autres sont supprimées avec leur étiquette (tag). La mise à jour automatique d'HFImage ne lit
-# que « releases/latest » : elle n'en a pas besoin. Se lance quand ce fichier change, ou à la main
+# que « releases/latest » : elle n'en a pas besoin. Se lance seulement à la main
 # (Actions → Ménage des versions → Run workflow).
 name: Ménage des versions
 
 on:
-  push:
-    branches: [main]
-    paths: [".github/workflows/cleanup-releases.yml"]
   workflow_dispatch:
     inputs:
       keep:
@@ -33,7 +30,7 @@ jobs:
         run: |
           set -e
           gh release list -R "$REPO" --limit 1000 --json tagName --jq '.[].tagName' \
-            | grep -E '^v[0-9]+\.[0-9]+$' | sort -V > all.txt
+            | grep -E '^v[0-9]+\.[0-9]+$' | sort -V -u > all.txt
           total=$(wc -l < all.txt)
           echo "Versions publiées : $total — on garde les $KEEP dernières :"
           tail -n "$KEEP" all.txt
