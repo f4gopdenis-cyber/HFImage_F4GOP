@@ -90,6 +90,16 @@ class Liste(unittest.TestCase):
         self.assertEqual(best[0]["call"], "F4GOP")
         self.assertEqual(ezpix.image_url(best[0]), "http://x/f4gop/EZPix/image1")
 
+    def test_receveur_qui_redepose_ignore(self):
+        """Essai F4GOP (1.87) : image de F4GOP chargée 2 min avant le signal, puis SWL6NO dépose une
+        image 67 s APRÈS le signal : c'est l'image de F4GOP qui doit être prise."""
+        import time
+        st = [{"call": "F4GOP", "url": "http://x/f4gop/"}, {"call": "SWL6NO", "url": "http://x/swl/"}]
+        ages = {"http://x/f4gop/EZPix/image1": (150, 1), "http://x/swl/EZPix/image1": (-37, 1)}
+        with mock.patch.object(ezpix, "_age", lambda url, timeout=6: ages.get(url)):
+            best = ezpix.find_latest(st, t_heard=time.time() - 30)
+        self.assertEqual(best[0]["call"], "F4GOP")
+
     def test_plus_proche_du_signal(self):
         """Signal entendu il y a 30 s : l'image déposée 2 s après le signal (expéditeur) est préférée
         à une image déposée 4 min avant ; une image de plus d'une heure est ignorée."""

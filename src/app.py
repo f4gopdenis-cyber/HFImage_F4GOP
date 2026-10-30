@@ -64,7 +64,7 @@ import random
 import wave
 
 APP = "HFImage F4GOP"
-VERSION = "1.87"
+VERSION = "1.88"
 
 
 def _take_profile(argv):
@@ -6891,9 +6891,9 @@ class App(tk.Tk):
                     self._ez_onair = cache
                 stations = cache[1]
                 best = None
-                # EZ Pix dépose l'image avant, pendant ou juste après le signal : on attend un peu
-                # (premier essai 15 s après le signal, puis toutes les 10 s, 1 min 30 au plus)
-                time.sleep(15)
+                # EZ Pix dépose l'image avant le signal ou juste après (fin de l'envoi FTP, jusqu'à
+                # ~25 s) : première recherche 30 s après le signal, quand tout est en place
+                time.sleep(30)
                 for k in range(4):
                     best = ezpix.find_latest(stations, t_heard)
                     if best is not None:

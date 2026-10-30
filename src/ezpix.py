@@ -248,13 +248,13 @@ def _age(url, timeout=6):
 LAST_SCAN = {}          # dernière recherche (pour le journal quand rien n'est trouvé)
 
 
-def find_latest(stations, t_heard=None, before=3600, after=90, workers=16):
+def find_latest(stations, t_heard=None, before=3600, after=25, workers=16):
     """Image EZ Pix de l'expéditeur : (station avec « image » = son adresse, écart, taille) ou None.
 
     On regarde « EZPix/image1 » sur le site de chaque station de la liste. EZ Pix dépose l'image
-    quand on la charge (parfois bien avant d'émettre), ou au moment d'émettre : on garde l'image
-    déposée le plus près du moment où le signal a été entendu (t_heard), de `before` s avant à
-    `after` s après. (1.87 : 1 h avant, au lieu de 5 min : F4GOP charge l'image puis émet plus tard.)"""
+    quand on la charge (parfois bien avant d'émettre), ou au moment d'émettre : on garde la plus
+    récente déposée entre `before` s avant le signal (t_heard) et `after` s après.
+    (1.87 : 1 h avant, F4GOP charge l'image puis émet plus tard ; 1.88 : 25 s après au plus.)"""
     cands = [(st, st["url"] + p) for st in stations for p in IMAGE_PATHS]
     late = (time.time() - t_heard) if t_heard else 0.0
     best = newest = None
@@ -268,7 +268,10 @@ def find_latest(stations, t_heard=None, before=3600, after=90, workers=16):
             a = age - late                       # > 0 : déposée avant le signal ; < 0 : après
             if newest is None or a < newest[1]:
                 newest = (st["call"], a, url)
-            if -after <= a <= before and (best is None or abs(a) < abs(best[1])):
+            # la plus récente déposée avant le signal (ou dans les `after` s qui suivent : fin de
+            # l'envoi FTP de l'expéditeur, F4GOP -10 s) ; plus tard, ce sont des stations qui ont
+            # reçu une image et la redéposent (SWL6NO -67 s, 1.88)
+            if -after <= a <= before and (best is None or a < best[1]):
                 best = (dict(st, image=url), a, size)
     LAST_SCAN.clear()
     LAST_SCAN.update(checked=len(cands), found=found, newest=newest)

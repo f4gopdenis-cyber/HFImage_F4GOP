@@ -1,5 +1,9 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 1.88 — EZ Pix : pas l'image d'une autre station
+
+- Réception EZ Pix : au 2e essai de F4GOP, HFImage a pris l'image que SWL6NO avait déposée 67 s APRÈS le signal. HFImage garde maintenant l'image la plus récente déposée avant le signal ou dans les 25 s qui suivent (le temps que l'envoi FTP de l'expéditeur se termine) ; ce qui arrive plus tard vient d'autres stations. La recherche commence 30 s après le signal.
+
 ## Version 1.87 — EZ Pix : image chargée bien avant l'émission
 
 - Réception EZ Pix : EZ Pix dépose l'image dès qu'on la charge, parfois bien avant d'émettre ; HFImage ne la cherchait que dans les 5 minutes avant le signal et ne trouvait rien (essai de F4GOP). L'image peut maintenant avoir été déposée jusqu'à 1 h avant le signal ; la plus proche du signal est retenue.
