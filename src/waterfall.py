@@ -27,7 +27,6 @@ EASYPAL_BANDS = {}
 for _m, _bw, _lo, _hi in (("A", "2,2", 375, 2654), ("B", "2,2", 340, 2520), ("E", "2,2", 387, 2561),
                           ("A", "2,4", 381, 2824), ("B", "2,4", 340, 2801), ("E", "2,4", 387, 2713)):
     EASYPAL_BANDS[f"EasyPal {_m} {_bw}"] = (_lo, _hi, "#ce93d8")
-EASYPAL_BANDS["EZ Pix"] = (1350, 1650, "#ffb74d")       # 1.84 : signal EZ Pix (GMSK 250 bauds)
 
 
 def easypal_band_key(mode_idx, bw_idx):

@@ -588,19 +588,9 @@ class RxEngine:
         self._drm_poll = 0.0
         self.drm_files = 0           # fichiers reçus en HamDRM (bilan du décodage WAV)
         self.drm_good = {}           # dernier état HamDRM décodé avec des paramètres valides
-        # 1.84 : signal EZ Pix (W3WVG) : l'image est à chercher sur le site de l'expéditeur
-        import ezpix
-        self.ez = ezpix.Detector()
-        self.on_ezpix = lambda score: None
         os.makedirs(outdir, exist_ok=True)
 
     def process(self, samples8k: np.ndarray):
-        try:
-            sc = self.ez.feed(samples8k)
-            if sc is not None:
-                self.on_ezpix(sc)
-        except Exception:
-            pass
         for mode, modem in self.modems.items():
             x = self.filters[mode].process(samples8k) if self.qrm else samples8k
             for payload, snr in modem.demodulate(x):

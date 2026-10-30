@@ -1,5 +1,9 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 1.91 — EZ Pix retiré
+
+- Tout ce qui concernait EZ Pix (versions 1.84 à 1.90 : réception de la trame GMSK, liste EZPixOnAir, mode « EZ Pix » en émission) est retiré, à la demande de F4GOP : la recherche des images EZ Pix sur les sites des stations est trop lente et dépend de la liste de W3WVG, que seul EZ Pix peut tenir à jour. HFImage revient exactement à la version 1.83 (préréglages de poste, indicatifs bloqués, etc. restent en place) ; on continue avec les modes HFImage, EasyPal et l'hybride, qui fonctionnent bien.
+
 ## Version 1.90 — émission EZ Pix : indicatif bien lu
 
 - Émission EZ Pix : « votre indicatif n'est pas dans la liste EZ Pix » alors qu'il y était (F4GOP). L'indicatif était lu dans la fenêtre depuis le fil d'émission ; il est maintenant pris dans l'image préparée. Si l'indicatif manque vraiment, le message indique l'indicatif cherché et le nombre de stations de la liste.

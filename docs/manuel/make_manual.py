@@ -703,17 +703,6 @@ s.append(P("Chaque image envoyée en hybride est déposée sur votre serveur FTP
            "par HFImage avec votre indicatif sont concernés (hybride HFImage et hybride EasyPal) : les autres fichiers de "
            "votre site ne sont jamais touchés. Avec « la dernière seulement », une station qui télécharge encore l'image "
            "précédente ne la trouvera plus."))
-s.append(P("Réception EZ Pix (W3WVG)", "h2"))
-s.append(P("Depuis la 1.84, HFImage reconnaît le signal d'<b>EZ Pix</b> (GMSK 250 bauds autour de 1 500 Hz, ~5 s, "
-           "toujours le même). EZ Pix dépose l'image sous le nom <b>EZPix/image1</b> sur le site de l'expéditeur, au moment d'émettre : "
-           "HFImage lit la liste publique des stations EZ Pix (EZPixOnAir), cherche l'image déposée au moment du signal, la "
-           "télécharge et l'affiche avec l'indicatif (« EZPix-HYB »). Il faut « Télécharger automatiquement les images "
-           "hybrides reçues » coché ; les indicatifs bloqués et la taille maximale s'appliquent. Aucun accusé radio "
-           "n'est émis vers une station EZ Pix."))
-s.append(P("<b>Émission EZ Pix</b> (1.89) : choisissez le mode « <b>EZ Pix</b> » dans l'onglet TX (le mode hybride se coche "
-           "tout seul). À l'émission, l'image est déposée dans <b>EZPix/image1</b> sur votre site (serveur FTP du mode hybride, "
-           "à la racine du compte), vérifiée à l'adresse de votre fiche EZ Pix, puis le signal EZ Pix (5,4 s) part. Votre "
-           "indicatif doit figurer dans la liste EZPixOnAir (lancez une fois EZ Pix avec ce site pour vous y inscrire)."))
 s.append(P("Sécurité des téléchargements", "h2"))
 s.append(P("<b>Indicatifs bloqués</b> (Réglages → Mode hybride, depuis la 1.82) : les images des indicatifs de cette "
            "liste (séparés par des virgules) ne sont ni affichées, ni enregistrées, ni téléchargées en hybride ; F4ABC "
