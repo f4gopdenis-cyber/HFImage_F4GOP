@@ -302,19 +302,13 @@ s += B(["<b>Poste</b> : tapez une partie du nom dans « Rechercher » (ex. 7300,
         "ou VOX.",
         "<b>Source audio en émission</b> : « Arrière / Data » (audio USB, ACC) ou « Avant / Micro ». Choisissez "
         "« Avant / Micro » si votre poste émet l'audio USB sans le mode DATA : HFImage ne touche alors pas à son mode.",
-        "<b>Mode</b> : « Data / Pkt » met le poste en DATA avant chaque émission, en gardant sa bande latérale "
-        "(LSB → LSB-DATA, USB → USB-DATA).",
         "<b>Tester le CAT</b> lit la fréquence ; <b>Tester le PTT</b> émet 1,5 s. Vert = OK, rouge = erreur "
         "affichée en dessous."])
-s.append(P("Poste pas en DATA avant d'émettre", "h2"))
-s.append(P("Dès que le CAT est relié, HFImage lit le mode du poste avant chaque émission, <b>quelle que soit la méthode "
-           "PTT</b> (CAT, RTS, DTR ou VOX). S'il n'est pas en DATA, le réglage « <b>Poste pas en DATA avant d'émettre</b> » "
-           "(Réglages, sous les boutons du poste) décide :"))
-s += B(["<b>Passer en DATA automatiquement (USB-DATA / LSB-DATA)</b> : le réglage par défaut. Le poste passe en DATA "
-        "<b>en gardant sa bande latérale</b> : en LSB (40 et 80 m, comme EasyPal) il passe en <b>LSB-DATA</b>, en USB "
-        "en <b>USB-DATA</b>. Le journal l'indique (« TS-890S passé en LSB-DATA1 par CAT »).",
-        "<b>Demander</b> : une fenêtre propose de passer en DATA, d'émettre quand même ou d'annuler.",
-        "<b>Émettre sans rien dire</b> : le poste reste dans son mode ; le journal le rappelle à chaque émission."])
+s.append(P("Mode DATA du poste", "h2"))
+s.append(P("Depuis la 1.94, le mode DATA ne se règle plus qu'avec le <b>bouton « DATA auto »</b> (voir plus bas) : "
+           "<b>allumé</b>, le poste passe en LSB-DATA / USB-DATA pour émettre (en gardant sa bande latérale) puis revient "
+           "en LSB / USB ; <b>éteint</b>, HFImage ne touche pas au mode du poste. Les anciens réglages « Poste pas en "
+           "DATA avant d'émettre » et « Mode » (fenêtre Poste radio) sont repris automatiquement."))
 s.append(P("Kenwood TS-990 : une seule commande (LSB-D1 ou USB-D1). TS-890 : commande SF (fréquence et mode d'un coup, comme Hamlib). TS-590, TS-480 : LSB ou USB, puis DATA. "
            "Autres postes : PKTLSB / PKTUSB (Hamlib), DIG-L / DIG-U (OmniRig), mode DATA de FLRig. Avec un PTT par RTS, "
            "DTR ou VOX, un échec du passage en DATA est seulement signalé dans le journal, sans bloquer l'émission."))
@@ -774,7 +768,7 @@ s.append(table([["Symptôme", "Cause probable", "Que faire"],
                 ["Le poste ne passe pas en émission", "PTT mal réglé, port COM occupé",
                  "Poste radio… → Tester le PTT ; fermer les logiciels qui tiennent le port ou passer par OmniRig"],
                 ["Le poste émet mais sans puissance", "Poste pas en USB-DATA, mauvaise source audio, niveau trop faible",
-                 "Mode « Data / Pkt » ou réglage « Poste pas en DATA » ; source « Arrière / Data » ; monter le niveau"],
+                 "Bouton « DATA auto » allumé ; source « Arrière / Data » ; monter le niveau"],
                 ["Rien n'est reçu", "Mauvaise entrée audio, volume Windows coupé",
                  "Réglages → Audio ; vérifier que le waterfall bouge ; analyser un enregistrement WAVE"],
                 ["Trames détectées mais perdues", "Signal faible, QSB, QRM, écrêtage",
@@ -785,9 +779,8 @@ s.append(table([["Symptôme", "Cause probable", "Que faire"],
                  "Vérifier « envoyer un BSR » chez vous et « répondre aux BSR par un FIX » chez l'émetteur (onglet Stations)"],
                 ["Images peu nettes", "Mode lent ou robustesse forte, durée courte",
                  "Robustesse Auto ; durée 3 min ; DATAC1X si les reports le permettent"],
-                ["« Poste pas en mode DATA » et il ne bascule pas", "Réglage « Émettre sans rien dire » ou « Demander »",
-                 "Réglages → « Poste pas en DATA avant d'émettre » → « Passer en DATA automatiquement » ; "
-                 "le journal indique le réglage utilisé"],
+                ["Le poste ne passe pas en DATA", "Bouton « DATA auto » éteint",
+                 "Allumer « DATA auto » (onglet TX) ; le journal indique « DATA auto : … passé en LSB-DATA »"],
                 ["Le poste passe en USB-DATA au lieu de LSB-DATA", "Poste en USB avant l'émission",
                  "Mettre le poste en LSB : HFImage garde la bande latérale ; les deux stations doivent être sur la même"],
                 ["Port COM absent de la liste", "Pilote non vu par Windows ou appareil débranché",

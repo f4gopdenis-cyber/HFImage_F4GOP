@@ -236,7 +236,8 @@ class DataAuto(unittest.TestCase):
         logs = []
 
         class Stub:
-            conf = {"data_auto": on}
+            conf = {"data_policy": "auto" if on else "none"}   # bouton DATA auto allumé / éteint
+            data_policy = app.App.data_policy
             log = staticmethod(logs.append)
             log_exc = staticmethod(lambda *a: logs.append(a))
             ui = staticmethod(lambda fn, *a: fn(*a))

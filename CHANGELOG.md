@@ -1,5 +1,10 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 1.94 — mode DATA : le bouton « DATA auto » seulement
+
+- Le mode DATA du poste se réglait à trois endroits qui se recouvraient (bouton « DATA auto », liste « Poste pas en DATA avant d'émettre », cadre « Mode » de la fenêtre Poste radio). Il ne reste que le **bouton « DATA auto »** (demande de F4GOP) : allumé, le poste passe en LSB-DATA / USB-DATA pour émettre puis revient en LSB / USB ; éteint, HFImage ne touche pas au mode du poste.
+- Les anciens réglages sont repris : ceux à qui HFImage passait le poste en DATA (bouton, « Passer en DATA automatiquement », « Demander » ou « Mode : Data / Pkt ») ont le bouton allumé ; « Émettre sans rien dire » donne le bouton éteint. Chaque profil garde son propre bouton.
+
 ## Version 1.93 — sauvegarde / restauration ; texte du nettoyage plus clair
 
 - **Sauvegarder / Restaurer** (menu Fichiers, idée de BH2RMX) : réglages (programme, profils, préréglages de poste, site web, sons begin/end), images et fichiers reçus, images envoyées, au choix, dans un seul fichier .zip. Sur le nouveau PC ou après une réinstallation de Windows, « Restaurer une sauvegarde… » remet tout en place, adapte les chemins (autre nom d'utilisateur) et redémarre HFImage. Les mots de passe FTP, chiffrés pour le compte Windows d'origine, sont à retaper sur un autre PC.

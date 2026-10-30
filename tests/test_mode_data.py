@@ -107,7 +107,8 @@ class AvantEmission(unittest.TestCase):
         logs = []
 
         class Stub:
-            conf = {"data_action": action}
+            conf = {"data_action": action}                # ancien réglage : converti (1.94)
+            data_policy = app.App.data_policy
             _rig_open = staticmethod(lambda: rig)
             _rig_open_now = staticmethod(lambda: rig)
             log = staticmethod(logs.append)
@@ -120,18 +121,13 @@ class AvantEmission(unittest.TestCase):
             radio.time.sleep = old
         return ok, rig, logs
 
-    def test_ptt_rts_passe_en_lsb_data(self):
-        ok, rig, logs = self.run_check("RTS", "rear")
-        self.assertTrue(ok)
-        self.assertEqual(rig.mode(), "LSB-DATA1")
-        # 1.59 : le journal reçoit le texte (et non True / False, qui faisait échouer l'émission)
-        self.assertTrue(all(isinstance(m, str) for m in logs), logs)
-        self.assertTrue(any("passé en" in m for m in logs), logs)
-
-    def test_ptt_cat(self):
-        ok, rig, _ = self.run_check("CAT", "rear", start="2")
-        self.assertTrue(ok)
-        self.assertEqual(rig.mode(), "USB-DATA1")
+    def test_avant_emission_ne_touche_plus_au_mode(self):
+        """1.94 : le mode DATA ne se règle plus qu'avec le bouton « DATA auto » (au moment d'émettre) ;
+        le contrôle avant émission ouvre seulement la liaison CAT."""
+        for ptt, start in (("RTS", "1"), ("CAT", "2")):
+            ok, rig, logs = self.run_check(ptt, "rear", start=start)
+            self.assertTrue(ok)
+            self.assertEqual(rig.mode(), "LSB" if start == "1" else "USB")
 
     def test_avant_micro_inchange(self):
         ok, rig, _ = self.run_check("VOX", "front")
@@ -139,10 +135,10 @@ class AvantEmission(unittest.TestCase):
         self.assertEqual(rig.mode(), "LSB")
 
     def test_emettre_sans_rien_dire(self):
+        """Ancien « Émettre sans rien dire » = « Ne pas toucher au mode du poste » (1.94)."""
         ok, rig, logs = self.run_check("RTS", "rear", action="send")
         self.assertTrue(ok)
         self.assertEqual(rig.mode(), "LSB")
-        self.assertTrue(any("Émettre sans rien dire" in m for m in logs))
 
 
 if __name__ == "__main__":

@@ -294,19 +294,13 @@ s += B(["<b>Radio</b>: type part of the name in “Search” (e.g. 7300, FT-991,
         "or VOX.",
         "<b>Transmit audio source</b>: “Rear / Data” (USB audio, ACC) or “Front / Mic”. Choose “Front / Mic” if your "
         "radio transmits USB audio without DATA mode: HFImage then leaves its mode alone.",
-        "<b>Mode</b>: “Data / Pkt” puts the radio in DATA before each transmission, keeping its sideband "
-        "(LSB → LSB-DATA, USB → USB-DATA).",
         "<b>Test CAT</b> reads the frequency; <b>Test PTT</b> transmits for 1.5 s. Green = OK, red = error shown "
         "below."])
-s.append(P("Radio not in DATA before transmitting", "h2"))
-s.append(P("As soon as CAT is connected, HFImage reads the radio's mode before each transmission, <b>whatever the PTT "
-           "method</b> (CAT, RTS, DTR or VOX). If it is not in DATA, the setting “<b>Radio not in DATA before "
-           "transmitting</b>” (Settings, below the radio buttons) decides:"))
-s += B(["<b>Switch to DATA automatically (USB-DATA / LSB-DATA)</b>: the default. The radio goes to DATA <b>keeping "
-        "its sideband</b>: in LSB (40 and 80 m, as in EasyPal) it goes to <b>LSB-DATA</b>, in USB to <b>USB-DATA</b>. "
-        "The log shows it (“TS-890S switched to LSB-DATA1 by CAT”).",
-        "<b>Ask</b>: a window offers to switch to DATA, transmit anyway or cancel.",
-        "<b>Transmit without asking</b>: the radio stays in its mode; the log reminds you at each transmission."])
+s.append(P("Radio DATA mode", "h2"))
+s.append(P("Since 1.94, the DATA mode is set only with the <b>“DATA auto” button</b> (see below): <b>on</b>, the radio "
+           "goes to LSB-DATA / USB-DATA to transmit (keeping its sideband) and then back to LSB / USB; <b>off</b>, "
+           "HFImage leaves the radio mode alone. The former settings “Radio not in DATA before transmitting” and “Mode” "
+           "(Radio window) are converted automatically."))
 s.append(P("Kenwood TS-990: a single command (LSB-D1 or USB-D1). TS-890: SF command (frequency and mode at once, like Hamlib). TS-590, TS-480: LSB or USB, then DATA. Other "
            "radios: PKTLSB / PKTUSB (Hamlib), DIG-L / DIG-U (OmniRig), FLRig's DATA mode. With RTS, DTR or VOX PTT, a "
            "failed switch to DATA is only reported in the log and does not block the transmission."))
@@ -707,9 +701,9 @@ s.append(table([["Symptom", "Probable cause", "What to do"],
                 ["The radio does not transmit", "PTT badly set, COM port busy",
                  "Radio… → Test PTT; close the programs holding the port or use OmniRig"],
                 ["The radio transmits without power", "Radio not in DATA, wrong audio source, level too low",
-                 "“Switch to DATA automatically”; source “Rear / Data”; raise the level (ALC must not move)"],
-                ["“Radio not in DATA” and it does not switch", "Setting “Transmit without asking” or “Ask”",
-                 "Settings → “Radio not in DATA before transmitting” → “Switch to DATA automatically”"],
+                 "“DATA auto” button on; source “Rear / Data”; raise the level (ALC must not move)"],
+                ["The radio does not go to DATA", "“DATA auto” button off",
+                 "Turn “DATA auto” on (TX tab); the log shows “DATA auto: … switched to LSB-DATA”"],
                 ["COM port missing from the list", "Driver not seen, or device unplugged",
                  "Version 0.76 or later; type the port name (COM9); check Windows Device Manager"],
                 ["Nothing is received", "Wrong audio input, Windows volume muted",

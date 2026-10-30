@@ -1114,4 +1114,13 @@ ZH = {
     'Restauration impossible :': '无法恢复:',
     'Restauration terminée :': '恢复完成:',
     "Si la sauvegarde vient d'un autre PC, retapez les mots de passe FTP (Réglages → Mode hybride, site web). HFImage va redémarrer.": '如果备份来自另一台电脑,请重新输入 FTP 密码(设置 → 混合模式、网站)。HFImage 将重新启动。',
+    'DATA pour émettre, puis retour en LSB / USB (DATA auto)': '发射时 DATA,结束后回到 LSB / USB(DATA auto)',
+    'Ne pas toucher au mode du poste': '不改变电台模式',
+    'Passer en DATA et y rester': '切换到 DATA 并保持',
+    'Demander à chaque fois': '每次询问',
+    'Mode DATA du poste :': '电台 DATA 模式:',
+    'Mode DATA du poste': '电台 DATA 模式',
+    'Même réglage que le bouton « DATA auto » et Réglages → Mode DATA du poste.': '与“DATA auto”按钮及 设置 → 电台 DATA 模式 为同一设置。',
+    'DATA pour émettre, puis retour': '发射用 DATA,然后恢复',
+    "Mode DATA : bouton « DATA auto » (allumé : DATA pour émettre, puis retour en LSB / USB ;\néteint : HFImage ne touche pas au mode du poste).": "DATA 模式:“DATA auto”按钮(开:发射时 DATA,结束后回到 LSB / USB;\n关:HFImage 不改变电台模式)。",
 }

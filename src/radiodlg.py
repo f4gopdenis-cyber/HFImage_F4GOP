@@ -204,15 +204,8 @@ class RadioDialog(tk.Toplevel):
                         variable=self.v["tx_audio"]).pack(anchor="w")
         ttk.Radiobutton(a, text="Avant / Micro", value="front", variable=self.v["tx_audio"]).pack(anchor="w")
 
-        m = ttk.LabelFrame(R, text="Mode", padding=8)
-        m.pack(fill="x", pady=(8, 0))
-        self.mode_frame = m
-        mf = ttk.Frame(m)
-        mf.pack(anchor="w")
-        for t, val in [("Aucun", "none"), ("USB", "usb"), ("Data / Pkt", "data")]:
-            ttk.Radiobutton(mf, text=t, value=val, variable=self.v["set_mode"]).pack(side="left", padx=(0, 10))
-        ttk.Label(m, text="Mis par CAT avant chaque émission (« Aucun » : on ne touche pas au poste).",
-                  foreground="#555", wraplength=280, justify="left").pack(anchor="w", pady=(4, 0))
+        # 1.94 : plus de cadre « Mode » : le mode DATA se règle avec le bouton « DATA auto » de la fenêtre
+        self.mode_frame = None
 
         t = ttk.Frame(R)
         t.pack(fill="x", pady=(10, 0))
@@ -377,7 +370,6 @@ class RadioDialog(tk.Toplevel):
             self.v["host"].set(net[kind])
         if kind not in net and self.v["host"].get() in net.values():
             self.v["host"].set("")
-        self._state(self.mode_frame, kind != "none")
         # source audio : sert au PTT CAT (TX1; / TX0;) et au contrôle du mode DATA (dès que le CAT est relié)
         self._state(self.audio_frame, c["ptt"] == "CAT" or kind != "none")
         self.cb_pttport.configure(state="normal" if c["ptt"] in ("DTR", "RTS") else "disabled")

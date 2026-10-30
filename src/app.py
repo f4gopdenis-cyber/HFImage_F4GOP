@@ -64,7 +64,7 @@ import random
 import wave
 
 APP = "HFImage F4GOP"
-VERSION = "1.93"
+VERSION = "1.94"
 
 
 def _take_profile(argv):
@@ -132,8 +132,19 @@ MODE_THR = {"DATAC1X": 9, "DATAC1": 5, "DATAC3": 0, "DATAC4": -4}
 AUTO_MAX_AGE = 45 * 60           # reports pris en compte (s)
 # robustesse = redondance du code fontaine (trames en plus, pour les trames perdues dans le QSB)
 ROBUST = [("Auto (selon les reports)", None), ("Faible (15 %)", 15), ("Normale (40 %)", 40), ("Forte (70 %)", 70), ("Très forte (100 %)", 100)]
-DATA_ACTIONS = {"ask": "Demander", "switch": "Passer en DATA automatiquement (USB-DATA / LSB-DATA)",
-                "send": "Émettre sans rien dire"}
+# 1.94 : le mode DATA ne se règle plus qu'avec le bouton « DATA auto » (demande de F4GOP) : allumé, le poste
+# passe en LSB-DATA / USB-DATA pour émettre puis revient en LSB / USB ; éteint, HFImage ne touche pas au
+# mode du poste. (Avant : bouton + « Poste pas en DATA avant d'émettre » + « Mode » de Poste radio.)
+DATA_POLICIES = {"auto": "DATA auto allumé", "none": "DATA auto éteint"}
+
+
+def data_policy_from_old(conf, radio_cfg):
+    """Ancien réglage (avant 1.94) -> bouton DATA auto allumé (« auto ») ou éteint (« none »).
+    Ceux à qui HFImage passait le poste en DATA (bouton, « Passer en DATA automatiquement », « Demander »,
+    ou « Mode : Data / Pkt ») gardent le passage en DATA ; « Émettre sans rien dire » -> éteint."""
+    if conf.get("data_auto") or (radio_cfg or {}).get("set_mode") == "data":
+        return "auto"
+    return "none" if conf.get("data_action", "switch") == "send" else "auto"
 HEARD_KEEP_S = 2 * 3600     # stations entendues gardées 2 h dans la liste
 RING_S = 15 * 60          # Relire RX : 15 dernières minutes gardées en mémoire
 PTT_METHODS = ["VOX", "CAT", "RTS", "DTR"]
@@ -3143,16 +3154,9 @@ class App(tk.Tk):
         ttk.Button(pb, text="Tester le PTT (1 s)", command=self.test_ptt).pack(side="left")
         da = ttk.Frame(c)
         da.grid(row=2, column=0, columnspan=2, sticky="w", pady=(6, 0))
-        ttk.Label(da, text="Poste pas en DATA avant d'émettre :").pack(side="left")
-        self._data_act_names = {tr(v): k for k, v in DATA_ACTIONS.items()}
-        self.v_dataact = tk.StringVar(value=tr(DATA_ACTIONS.get(self.conf.get("data_action", "switch"), DATA_ACTIONS["ask"])))
-        cbd = ttk.Combobox(da, textvariable=self.v_dataact, values=list(self._data_act_names), state="readonly", width=46)
-        cbd.pack(side="left", padx=4)
-
-        def _act_changed(_e=None):
-            self.conf["data_action"] = self._data_act_names.get(self.v_dataact.get(), "ask")
-            self._save_conf_file()
-        cbd.bind("<<ComboboxSelected>>", _act_changed)
+        ttk.Label(da, text="Mode DATA : bouton « DATA auto » (allumé : DATA pour émettre, puis retour en LSB / USB ;\n"
+                           "éteint : HFImage ne touche pas au mode du poste).", foreground="#555",
+                  justify="left").pack(side="left")
         ttk.Label(c, text="Plus de 300 postes (Hamlib), Kenwood en direct, OmniRig, FLRig.\n"
                           "Le port doit être libre : fermez les autres logiciels qui l'utilisent,\n"
                           "ou passez par OmniRig / FLRig pour partager le poste.",
@@ -6317,31 +6321,14 @@ class App(tk.Tk):
                                          "exceptions."))
 
     def _check_rig_before_tx(self, cfg):
-        """Avant d'émettre : liaison CAT, mode du poste (réglage « Mode », ou contrôle du mode DATA)."""
+        """Avant d'émettre : la liaison CAT s'ouvre (le PTT par CAT en a besoin). Le mode DATA n'est
+        plus réglé ici (1.94) : c'est le bouton « DATA auto », au moment d'émettre."""
         kind = radio.rig_entry(cfg["rig"])["kind"]
         if kind == "none":
             return True
         try:
-            r = self._rig_open_now()
-            if r is None or not getattr(r, "reads_freq", True):
-                return True                          # CAT personnalisé : ni mode ni fréquence à contrôler
-            if self.conf.get("data_auto"):
-                return True                          # « DATA auto » : passage en DATA au moment d'émettre
-            if cfg.get("set_mode") in ("usb", "data"):
-                m = r.mode() or ""
-                want_data = cfg["set_mode"] == "data"
-                if (r.is_data(m) if want_data else m.upper() == "USB"):
-                    return True
-                ok, msg = r.set_mode(cfg["set_mode"])
-                self.log(msg)
-                if not ok:
-                    return messagebox.askyesno(APP, msg + "\n\nÉmettre quand même ?")
-                return True
-            # contrôle du mode DATA dès que le CAT est relié, quel que soit le PTT (CAT, RTS,
-            # DTR ou VOX) ; sauf « Avant / Micro » : le poste émet alors l'audio sans DATA
-            if cfg.get("tx_audio") == "front":
-                return True
-            txt, ok = self._rig_status(r)
+            self._rig_open_now()
+            return True
         except radio.HamlibMissing as e:
             self.log(str(e))
             if cfg["ptt"] != "CAT":
@@ -6354,73 +6341,6 @@ class App(tk.Tk):
                 return True                          # PTT sans CAT : on émet quand même
             messagebox.showerror(APP, f"PTT par CAT impossible :\n{e}")
             return False
-        self.log(txt)
-        if ok is False:
-            act = self.conf.get("data_action", "switch")
-            if act not in ("switch", "send"):
-                act, remember = self._ask_data_mode(txt)
-                if remember and act in ("switch", "send"):
-                    self.conf["data_action"] = act
-                    if hasattr(self, "v_dataact"):
-                        self.v_dataact.set(tr(DATA_ACTIONS[act]))
-                    self._save_conf_file()
-            if act == "cancel":
-                return False
-            if act == "send":
-                self.log("Réglage « Émettre sans rien dire » : le poste reste dans son mode. Pour le passage "
-                         "automatique en DATA : Réglages → « Poste pas en DATA avant d'émettre ».")
-            if act == "switch":
-                try:
-                    ok2, msg = r.set_mode("data")
-                except Exception as e:
-                    msg, ok2 = f"Passage en DATA impossible : {e}", False
-                self.log(msg)
-                if not ok2:
-                    if cfg["ptt"] != "CAT":
-                        # PTT par RTS / DTR / VOX : on n'empêche pas l'émission, on prévient
-                        self.log("Poste pas passé en DATA : vérifiez son mode si l'audio ne part pas.")
-                        return True
-                    return messagebox.askyesno(APP, msg + "\n\nÉmettre quand même ?")
-        return True
-
-    def _ask_data_mode(self, txt):
-        """Poste pas en DATA : passer en DATA (USB-DATA ou LSB-DATA), émettre quand même ou annuler,
-        avec « Ne plus me demander ». -> (choix, mémoriser)."""
-        win = tk.Toplevel(self)
-        win.title(APP)
-        win.transient(self)
-        win.resizable(False, False)
-        res = {"act": "cancel"}
-        f = ttk.Frame(win, padding=14)
-        f.pack(fill="both", expand=True)
-        ttk.Label(f, text=txt, wraplength=460, justify="left").pack(anchor="w")
-        ttk.Label(f, text="Si votre poste est réglé pour émettre l'audio USB sans le mode DATA, choisissez "
-                          "« Avant / Micro » comme source audio dans Réglages → Poste radio : ce message ne s'affichera plus.",
-                  wraplength=460, justify="left", foreground="#555").pack(anchor="w", pady=(8, 0))
-        remember = tk.BooleanVar(value=False)
-        ttk.Checkbutton(f, text="Ne plus me demander (faire pareil les prochaines fois)",
-                        variable=remember).pack(anchor="w", pady=(10, 0))
-        b = ttk.Frame(f)
-        b.pack(fill="x", pady=(12, 0))
-
-        def done(act):
-            res["act"] = act
-            win.destroy()
-
-        first = ttk.Button(b, text="Passer en DATA et émettre", command=lambda: done("switch"))
-        first.pack(side="left")
-        ttk.Button(b, text="Émettre quand même", command=lambda: done("send")).pack(side="left", padx=6)
-        ttk.Button(b, text="Annuler", command=lambda: done("cancel")).pack(side="right")
-        win.protocol("WM_DELETE_WINDOW", lambda: done("cancel"))
-        self._translate_ui(win)
-        win.update_idletasks()
-        x = self.winfo_rootx() + (self.winfo_width() - win.winfo_width()) // 2
-        y = self.winfo_rooty() + (self.winfo_height() - win.winfo_height()) // 3
-        win.geometry(f"+{max(0, x)}+{max(0, y)}")
-        first.focus_set()
-        win.grab_set()
-        self.wait_window(win)
-        return res["act"], bool(remember.get())
 
     def _save_conf_file(self):
         if getattr(self, "_restored", False):
@@ -6631,7 +6551,7 @@ class App(tk.Tk):
     def _data_auto_on(self, rig, job):
         """Bouton « DATA auto » : LSB / USB -> LSB-DATA / USB-DATA juste avant d'émettre.
         -> bande latérale à remettre après l'émission (« LSB » / « USB »), ou None."""
-        if not self.conf.get("data_auto") or rig is None or not getattr(rig, "reads_freq", True):
+        if self.data_policy() != "auto" or rig is None or not getattr(rig, "reads_freq", True):
             return None
         try:
             m = (rig.mode() or "").upper().replace(" ", "")
@@ -6669,20 +6589,32 @@ class App(tk.Tk):
                     f" ({tr('mode lu')} : {m or '?'})")
         self._rig_kick.set()
 
-    def _data_auto_toggle(self):
-        self.conf["data_auto"] = not self.conf.get("data_auto")
+    # ---- 1.94 : un seul réglage pour le mode DATA (bouton DATA auto = raccourci vers « auto »)
+    def data_policy(self):
+        p = self.conf.get("data_policy")
+        if p not in DATA_POLICIES:
+            p = data_policy_from_old(self.conf, getattr(self, "radio_cfg", {}))
+            self.conf["data_policy"] = p
+        return p
+
+    def set_data_policy(self, p):
+        if p not in DATA_POLICIES:
+            return
+        old = self.data_policy()
+        self.conf["data_policy"] = p
         self._save_conf_file()
         self._data_auto_paint()
-        if self.conf["data_auto"]:
+        if p != old:
             self.log(tr("DATA auto : le poste passe en LSB-DATA / USB-DATA pour émettre, puis revient en "
-                        "LSB / USB à la fin."))
-        else:
-            self.log(tr("DATA auto : arrêté."))
+                        "LSB / USB à la fin.") if p == "auto" else tr("DATA auto : arrêté."))
+
+    def _data_auto_toggle(self):
+        self.set_data_policy("none" if self.data_policy() == "auto" else "auto")
 
     def _data_auto_paint(self):
         b = getattr(self, "bt_dauto", None)
         if b is not None:
-            self._btn_color(b, "on" if self.conf.get("data_auto") else "off")
+            self._btn_color(b, "on" if self.data_policy() == "auto" else "off")
 
     def _play_fallback(self, player, dev_label):
         """Joue sur la sortie choisie ; si elle échoue ou reste muette, essaie le

@@ -1122,4 +1122,13 @@ RU = {
     'Restauration impossible :': 'Не удалось восстановить:',
     'Restauration terminée :': 'Восстановление завершено:',
     "Si la sauvegarde vient d'un autre PC, retapez les mots de passe FTP (Réglages → Mode hybride, site web). HFImage va redémarrer.": 'Если копия сделана на другом ПК, введите пароли FTP заново (Настройки → Гибридный режим, сайт). HFImage перезапустится.',
+    'DATA pour émettre, puis retour en LSB / USB (DATA auto)': 'DATA для передачи, затем обратно в LSB / USB (DATA auto)',
+    'Ne pas toucher au mode du poste': 'Не трогать режим трансивера',
+    'Passer en DATA et y rester': 'Включить DATA и оставить',
+    'Demander à chaque fois': 'Спрашивать каждый раз',
+    'Mode DATA du poste :': 'Режим DATA трансивера:',
+    'Mode DATA du poste': 'Режим DATA трансивера',
+    'Même réglage que le bouton « DATA auto » et Réglages → Mode DATA du poste.': 'Та же настройка, что кнопка «DATA auto» и Настройки → Режим DATA трансивера.',
+    'DATA pour émettre, puis retour': 'DATA для передачи, затем обратно',
+    "Mode DATA : bouton « DATA auto » (allumé : DATA pour émettre, puis retour en LSB / USB ;\néteint : HFImage ne touche pas au mode du poste).": "Режим DATA: кнопка «DATA auto» (вкл.: DATA для передачи, затем обратно в LSB / USB;\nвыкл.: HFImage не трогает режим трансивера).",
 }
