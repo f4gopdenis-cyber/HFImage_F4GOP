@@ -64,7 +64,7 @@ import random
 import wave
 
 APP = "HFImage F4GOP"
-VERSION = "1.85"
+VERSION = "1.86"
 
 
 def _take_profile(argv):
@@ -6891,24 +6891,26 @@ class App(tk.Tk):
                     self._ez_onair = cache
                 stations = cache[1]
                 best = None
-                # l'expéditeur dépose son image avant ou pendant le signal : quelques essais
-                for k in range(3):
+                # EZ Pix dépose l'image avant, pendant ou juste après le signal : on attend un peu
+                # (premier essai 15 s après le signal, puis toutes les 10 s, 1 min 30 au plus)
+                time.sleep(15)
+                for k in range(8):
                     best = ezpix.find_latest(stations, t_heard)
-                    if best is not None:
+                    if best is not None and best[1] <= 60:
                         break
                     time.sleep(10)
                 if best is None:
                     log(tr("EZ Pix : aucune image récente trouvée chez les stations de la liste EZPixOnAir."))
                     return
                 st, age, size = best
-                key = (st["call"], size, int(time.time() - age) // 30)
+                key = (ezpix.image_url(st), size, int(t_heard - age) // 60)
                 if key == getattr(self, "_ez_last", None):
                     return                               # même image, déjà reçue
                 self._ez_last = key
                 if self.is_blocked(st["call"]):
                     self.ui(self._drop_blocked, st["call"], "EZ Pix")
                     return
-                log(f"EZ Pix : {st['call']} {st['name']} — {ezpix.image_url(st)} ({age:.0f} s)")
+                log(f"EZ Pix : {st['call']} {st['name']} — {ezpix.image_url(st)} ({-age:+.0f} s)")
                 data = ezpix.download(st, hybrid.MAX_DOWNLOAD)
                 hyb = {"id": zlib.crc32(data + b"ezpix") & 0xFFFF, "call": st["call"], "crc": zlib.crc32(data),
                        "fmt": protocol.detect_format(data), "url": ezpix.image_url(st), "snr": None}

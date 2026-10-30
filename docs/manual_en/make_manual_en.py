@@ -653,8 +653,8 @@ s.append(P("<b>Download safety</b>: an announcement received over the air can on
            "only from a public Internet address (never the computer itself or a machine on your home network). Received "
            "pictures and files always stay in the reception folder, whatever the announced callsign."))
 s.append(P("<b>EZ Pix reception</b> (W3WVG, since 1.84): HFImage recognises the EZ Pix signal (GMSK 250 baud around "
-           "1,500 Hz, about 5 s, always the same). EZ Pix uploads the picture as <b>image1</b> (site root or EZPix folder) on the sender's site before transmitting: "
-           "HFImage reads the public list of EZ Pix stations (EZPixOnAir), finds the most recent image1, downloads it and "
+           "1,500 Hz, about 5 s, always the same). EZ Pix uploads the picture as <b>EZPix/image1</b> on the sender's site when transmitting: "
+           "HFImage reads the public list of EZ Pix stations (EZPixOnAir), finds the picture uploaded at the time of the signal, downloads it and "
            "shows it with the callsign (“EZPix-HYB”). “Download received hybrid pictures automatically” must be ticked; "
            "blocked callsigns and the maximum size apply. No radio acknowledgement is sent to an EZ Pix station."))
 s.append(P("<b>Blocked callsigns</b> (Settings → Hybrid mode, since 1.82): pictures from the callsigns listed there "

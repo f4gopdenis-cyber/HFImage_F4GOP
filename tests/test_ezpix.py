@@ -81,27 +81,26 @@ class Liste(unittest.TestCase):
         urls = sorted(s["url"] for s in ezpix.parse_onair_listing(page))
         self.assertEqual(urls, ["https://www.qsl.net/f0gop/", "https://www.qsl.net/f4gop/"])
 
-    def test_la_plus_recente(self):
-        st = [{"call": c, "url": f"http://x/{c}/"} for c in ("A1A", "B2B", "C3C")]
-        ages = {"http://x/A1A/EZPix/image1": (900, 10), "http://x/B2B/image1": (25, 2000),
-                "http://x/C3C/EZPix/image1": (40, 30)}
+    def test_dossier_ezpix_seulement(self):
+        """« image1 » à la racine (Digi-Sites : dernière image REÇUE par JA6EID) n'est plus regardée."""
+        st = [{"call": "JA6EID", "url": "http://x/ja/"}, {"call": "F4GOP", "url": "http://x/f4gop/"}]
+        ages = {"http://x/ja/image1": (5, 700000), "http://x/f4gop/EZPix/image1": (40, 600000)}
         with mock.patch.object(ezpix, "_age", lambda url, timeout=6: ages.get(url)):
             best = ezpix.find_latest(st)
-        self.assertEqual(best[0]["call"], "B2B")
-        self.assertEqual(ezpix.image_url(best[0]), "http://x/B2B/image1")      # image à la racine (F4GOP)
-        ages["http://x/B2B/image1"] = (700, 5)
-        with mock.patch.object(ezpix, "_age", lambda url, timeout=6: ages.get(url)):
-            self.assertEqual(ezpix.find_latest(st)[0]["call"], "C3C")
+        self.assertEqual(best[0]["call"], "F4GOP")
+        self.assertEqual(ezpix.image_url(best[0]), "http://x/f4gop/EZPix/image1")
 
-    def test_receveur_pas_pris_pour_expediteur(self):
-        """Signal entendu il y a 20 s : l'image déposée 5 s APRÈS (une station qui l'a reçue et la
-        redépose sur son site, Digi-Sites) n'est pas retenue ; celle d'avant le signal l'est."""
+    def test_plus_proche_du_signal(self):
+        """Signal entendu il y a 30 s : l'image déposée 2 s après le signal (expéditeur) est préférée
+        à une image déposée 4 min avant, et une image vieille de 10 min est ignorée."""
         import time
-        st = [{"call": "SND", "url": "http://x/snd/"}, {"call": "RCV", "url": "http://x/rcv/"}]
-        ages = {"http://x/snd/image1": (35, 100), "http://x/rcv/image1": (15, 100)}
+        st = [{"call": c, "url": f"http://x/{c}/"} for c in ("OLD", "SND", "MID")]
+        ages = {"http://x/OLD/EZPix/image1": (630, 1), "http://x/SND/EZPix/image1": (28, 1),
+                "http://x/MID/EZPix/image1": (270, 1)}
         with mock.patch.object(ezpix, "_age", lambda url, timeout=6: ages.get(url)):
-            best = ezpix.find_latest(st, t_heard=time.time() - 20)
+            best = ezpix.find_latest(st, t_heard=time.time() - 30)
         self.assertEqual(best[0]["call"], "SND")
+        self.assertAlmostEqual(best[1], -2, delta=1)        # déposée ~2 s APRÈS le signal
 
 if __name__ == "__main__":
     unittest.main()

@@ -221,7 +221,8 @@ def fetch_onair(timeout=10):
     return parse_onair_listing(page)
 
 
-IMAGE_PATHS = ("EZPix/image1", "image1")    # selon le compte : dossier EZPix ou racine du site (F4GOP)
+IMAGE_PATHS = ("EZPix/image1",)    # 1.86 : seulement le dossier EZPix (« image1 » à la racine d'un site,
+                                    # c'est souvent la dernière image REÇUE, Digi-Sites : JA6EID pris pour F4GOP)
 
 
 def image_url(station):
@@ -244,13 +245,12 @@ def _age(url, timeout=6):
         return None
 
 
-def find_latest(stations, t_heard=None, max_age=300, after=3, workers=16):
-    """Image EZ Pix la plus récente : (station avec « image » = son adresse, âge, taille) ou None.
+def find_latest(stations, t_heard=None, before=300, after=90, workers=16):
+    """Image EZ Pix de l'expéditeur : (station avec « image » = son adresse, écart, taille) ou None.
 
-    On regarde « EZPix/image1 » et « image1 » sur le site de chaque station. L'expéditeur dépose
-    son image AVANT d'émettre ; les stations qui la reçoivent la redéposent ensuite (Digi-Sites)
-    sur leur propre site : seules les images déposées avant le signal (t_heard, + `after` s)
-    sont retenues, pour ne pas prendre un receveur pour l'expéditeur."""
+    On regarde « EZPix/image1 » sur le site de chaque station de la liste. EZ Pix dépose l'image
+    autour du moment de l'émission (avant, pendant ou juste après) : on garde l'image déposée le
+    plus près du moment où le signal a été entendu (t_heard), de `before` s avant à `after` s après."""
     cands = [(st, st["url"] + p) for st in stations for p in IMAGE_PATHS]
     late = (time.time() - t_heard) if t_heard else 0.0
     best = None
@@ -259,8 +259,8 @@ def find_latest(stations, t_heard=None, max_age=300, after=3, workers=16):
             if res is None:
                 continue
             age, size = res
-            a = age - late                       # âge au moment où le signal a été entendu
-            if -after <= a <= max_age and (best is None or a < best[1]):
+            a = age - late                       # > 0 : déposée avant le signal ; < 0 : après
+            if -after <= a <= before and (best is None or abs(a) < abs(best[1])):
                 best = (dict(st, image=url), a, size)
     return best
 

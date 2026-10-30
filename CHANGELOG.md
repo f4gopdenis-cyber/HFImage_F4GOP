@@ -1,5 +1,10 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 1.86 — EZ Pix : l'image de l'expéditeur
+
+- Réception EZ Pix : l'image envoyée par F4GOP était remplacée par celle d'une autre station (JA6EID). L'« image1 » à la racine d'un site est souvent la dernière image REÇUE par cette station (Digi-Sites) : HFImage ne regarde plus que « EZPix/image1 », l'endroit où EZ Pix dépose l'image qu'il envoie.
+- EZ Pix dépose son image avant, pendant ou juste après le signal : HFImage attend jusqu'à 1 min 30 et garde l'image déposée le plus près du moment du signal. Le journal indique l'écart (ex. « +3 s » : déposée 3 s après le signal).
+
 ## Version 1.85 — EZ Pix : la bonne image
 
 - Réception EZ Pix : HFImage affichait toujours la même (ancienne) image (essai de F4GOP). Deux corrections : une station peut avoir plusieurs sites dans la liste EZPixOnAir (F4GOP : qsl.net/f0gop et qsl.net/f4gop) et tous sont maintenant regardés ; l'image est cherchée dans « EZPix/image1 » et aussi à la racine du site (« image1 »).

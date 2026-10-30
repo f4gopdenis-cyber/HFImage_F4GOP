@@ -705,8 +705,8 @@ s.append(P("Chaque image envoyée en hybride est déposée sur votre serveur FTP
            "précédente ne la trouvera plus."))
 s.append(P("Réception EZ Pix (W3WVG)", "h2"))
 s.append(P("Depuis la 1.84, HFImage reconnaît le signal d'<b>EZ Pix</b> (GMSK 250 bauds autour de 1 500 Hz, ~5 s, "
-           "toujours le même). EZ Pix dépose l'image sous le nom <b>image1</b> (à la racine du site ou dans le dossier EZPix) sur le site de l'expéditeur, avant d'émettre : "
-           "HFImage lit la liste publique des stations EZ Pix (EZPixOnAir), cherche l'image1 la plus récente, la "
+           "toujours le même). EZ Pix dépose l'image sous le nom <b>EZPix/image1</b> sur le site de l'expéditeur, au moment d'émettre : "
+           "HFImage lit la liste publique des stations EZ Pix (EZPixOnAir), cherche l'image déposée au moment du signal, la "
            "télécharge et l'affiche avec l'indicatif (« EZPix-HYB »). Il faut « Télécharger automatiquement les images "
            "hybrides reçues » coché ; les indicatifs bloqués et la taille maximale s'appliquent. Aucun accusé radio "
            "n'est émis vers une station EZ Pix."))
