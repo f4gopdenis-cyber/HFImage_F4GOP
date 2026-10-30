@@ -1082,4 +1082,8 @@ ZH = {
     'Préréglage :': '预设:',
     'Signal EZ Pix entendu': '收到 EZ Pix 信号',
     'EZ Pix : aucune image récente trouvée chez les stations de la liste EZPixOnAir.': 'EZ Pix:在 EZPixOnAir 列表的电台中未找到最近的图片。',
+    'En mode EZ Pix, seules les images partent : choisissez un autre mode pour envoyer un texte.': 'EZ Pix 模式只发送图片:发送文字请选择其他模式。',
+    "votre indicatif n'est pas dans la liste EZ Pix (EZPixOnAir) : les stations EZ Pix ne sauraient pas où chercher votre image. Lancez une fois EZ Pix avec ce site pour vous y inscrire.": '您的呼号不在 EZ Pix 列表(EZPixOnAir)中:EZ Pix 电台不知道去哪里找您的图片。请用此网站运行一次 EZ Pix 进行登记。',
+    "image déposée, mais introuvable à l'adresse de votre fiche EZ Pix :": '图片已上传,但在您的 EZ Pix 登记地址找不到:',
+    'le serveur FTP du mode hybride doit être celui de ce site.': '混合模式的 FTP 服务器必须是该网站的服务器。',
 }

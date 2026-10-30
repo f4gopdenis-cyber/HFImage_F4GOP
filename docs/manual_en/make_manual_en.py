@@ -657,6 +657,10 @@ s.append(P("<b>EZ Pix reception</b> (W3WVG, since 1.84): HFImage recognises the 
            "HFImage reads the public list of EZ Pix stations (EZPixOnAir), finds the picture uploaded at the time of the signal, downloads it and "
            "shows it with the callsign (“EZPix-HYB”). “Download received hybrid pictures automatically” must be ticked; "
            "blocked callsigns and the maximum size apply. No radio acknowledgement is sent to an EZ Pix station."))
+s.append(P("<b>EZ Pix transmission</b> (1.89): choose mode “<b>EZ Pix</b>” in the TX tab (hybrid mode is ticked automatically). "
+           "When transmitting, the picture is uploaded as <b>EZPix/image1</b> on your site (hybrid mode FTP server, account root), "
+           "checked at the address of your EZ Pix entry, then the EZ Pix signal (5.4 s) is sent. Your callsign must be in the "
+           "EZPixOnAir list (run EZ Pix once with this site to register)."))
 s.append(P("<b>Blocked callsigns</b> (Settings → Hybrid mode, since 1.82): pictures from the callsigns listed there "
            "(separated by commas) are not shown, not saved and not downloaded in hybrid mode; F4ABC also blocks F4ABC/P. "
            "To receive by radio only, untick “Download received hybrid pictures automatically”. Note: on the air "

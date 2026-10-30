@@ -1090,4 +1090,8 @@ RU = {
     'Préréglage :': 'Пресет:',
     'Signal EZ Pix entendu': 'Принят сигнал EZ Pix',
     'EZ Pix : aucune image récente trouvée chez les stations de la liste EZPixOnAir.': 'EZ Pix: у станций из списка EZPixOnAir не найдено свежих изображений.',
+    'En mode EZ Pix, seules les images partent : choisissez un autre mode pour envoyer un texte.': 'В режиме EZ Pix передаются только изображения: для текста выберите другой режим.',
+    "votre indicatif n'est pas dans la liste EZ Pix (EZPixOnAir) : les stations EZ Pix ne sauraient pas où chercher votre image. Lancez une fois EZ Pix avec ce site pour vous y inscrire.": 'вашего позывного нет в списке EZ Pix (EZPixOnAir): станции EZ Pix не будут знать, где искать ваше изображение. Запустите один раз EZ Pix с этим сайтом, чтобы зарегистрироваться.',
+    "image déposée, mais introuvable à l'adresse de votre fiche EZ Pix :": 'изображение загружено, но не найдено по адресу вашей записи EZ Pix:',
+    'le serveur FTP du mode hybride doit être celui de ce site.': 'FTP-сервер гибридного режима должен быть сервером этого сайта.',
 }

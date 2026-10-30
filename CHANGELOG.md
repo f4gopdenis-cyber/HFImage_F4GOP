@@ -1,5 +1,10 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 1.89 — émission EZ Pix
+
+- **Mode « EZ Pix »** dans la liste des modes (onglet TX), à côté d'Auto, DATAC et EasyPal (demande de F4GOP et VK6NJP) : l'image est déposée dans « EZPix/image1 » sur votre site (serveur FTP du mode hybride, à la racine du compte), vérifiée à l'adresse de votre fiche EZ Pix (liste EZPixOnAir), puis le signal EZ Pix (5,4 s, GMSK 250 bauds) part avec le poste, le CAT, le PTT et le DATA auto d'HFImage. Les stations EZ Pix et HFImage la reçoivent. « Mode hybride » se coche tout seul (EZ Pix passe toujours par le site) ; « Répéter l'annonce » renvoie le signal.
+- Votre indicatif doit être dans la liste EZPixOnAir (une fois EZ Pix lancé avec ce site) : sinon HFImage le dit et n'émet pas.
+
 ## Version 1.88 — EZ Pix : pas l'image d'une autre station
 
 - Réception EZ Pix : au 2e essai de F4GOP, HFImage a pris l'image que SWL6NO avait déposée 67 s APRÈS le signal. HFImage garde maintenant l'image la plus récente déposée avant le signal ou dans les 25 s qui suivent (le temps que l'envoi FTP de l'expéditeur se termine) ; ce qui arrive plus tard vient d'autres stations. La recherche commence 30 s après le signal.

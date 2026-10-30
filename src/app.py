@@ -64,7 +64,7 @@ import random
 import wave
 
 APP = "HFImage F4GOP"
-VERSION = "1.88"
+VERSION = "1.89"
 
 
 def _take_profile(argv):
@@ -109,7 +109,8 @@ DEFAULTS = {
     "drm_mode": "B", "drm_qam": "QAM16", "drm_bw": "2,4 kHz", "drm_prot": "Haute (HI)", "drm_rs": "RS2",
     "wav_volume": 5, "wft_font": "Arial", "wft_neg": False, "wft_text": "",
 }
-TX_MODES = ["Auto", "DATAC1X", "DATAC1", "DATAC3", "DATAC4"] + (["EasyPal"] if hamdrm.AVAILABLE else [])
+EZ_MODE = "EZ Pix"            # 1.89 : émission façon EZ Pix (image sur le site, signal GMSK de W3WVG)
+TX_MODES = ["Auto", "DATAC1X", "DATAC1", "DATAC3", "DATAC4"] + (["EasyPal"] if hamdrm.AVAILABLE else []) + [EZ_MODE]
 # mode EasyPal (HamDRM) : réglages proposés, comme dans EasyPal
 DRM_MODES = ["A", "B", "E"]
 DRM_QAMS = ["QAM4", "QAM16", "QAM64"]
@@ -1556,7 +1557,14 @@ class App(tk.Tk):
         else:
             b.pack_forget()
 
+    def _hyb_on(self):
+        """Émission par Internet : « Mode hybride » coché, ou mode EZ Pix (toujours hybride)."""
+        return bool(self.v_hyb.get()) or self.v_mode.get() == EZ_MODE
+
     def _toggle_hyb_ui(self):
+        if not self.v_hyb.get() and self.v_mode.get() == EZ_MODE:
+            self.v_mode.set("Auto")              # EZ Pix est toujours hybride : décoché -> mode Auto
+            self.log("EZ Pix : « Mode hybride » décoché, retour au mode Auto.")
         self._show_pre_btn()
         self._drm_hyb_mode()
         self._btn_on("hyb", self.v_hyb.get())
@@ -4260,6 +4268,9 @@ class App(tk.Tk):
         self._mode_changed()
 
     def _mode_changed(self, _e=None):
+        if self.v_mode.get() == EZ_MODE and not self.v_hyb.get():
+            self.v_hyb.set(True)                  # EZ Pix : l'image passe par le site, comme en hybride
+            self._toggle_hyb_ui()
         self._drm_hyb_mode()
         self.v_sec.set(MODE_SEC.get(self.v_mode.get(), 120))
         self._drm_ui_update()
@@ -5535,7 +5546,7 @@ class App(tk.Tk):
     def _prepare_sync(self):
         """Fait tenir l'image dans la durée demandée : calcule le budget en octets
         pour le mode et la redondance, puis la taille/qualité qui y entrent."""
-        hyb = bool(self.v_hyb.get())
+        hyb = self._hyb_on()
         for w in getattr(self, "_radio_widgets", []):     # sans objet en hybride
             w.configure(state="disabled" if hyb else
                         ("readonly" if getattr(w, "_ro", False) else "normal"))
@@ -5700,7 +5711,8 @@ class App(tk.Tk):
                                   or src is not self.src_img):
             fmt = "jpeg"
         drm_hyb = self.v_mode.get() == engine.DRM_MODE
-        if drm_hyb and (fmt in ("avif", "webp") or (fmt == "original" and self.src_kind in ("avif", "webp", "svg"))):
+        ez = self.v_mode.get() == EZ_MODE
+        if (drm_hyb or ez) and (fmt in ("avif", "webp") or (fmt == "original" and self.src_kind in ("avif", "webp", "svg"))):
             fmt = "jpeg"                      # EasyPal n'affiche ni AVIF, ni WebP, ni SVG
         how = ""
         if anim:
@@ -5754,6 +5766,15 @@ class App(tk.Tk):
             self._show(self.lb_cmp, "cmp", self.src_img if q is None else Image.open(io.BytesIO(data)))
             desc = f"{imgfmt.describe(fmt)} original" if q is None else engine.quality_label(fmt, q)
         self._set_text(self.lb_cmp_info, f"{size[0]}×{size[1]} — {len(data)} octets ({desc})")
+        if ez:
+            self.tx.ezpix = True
+            cfg = self._hyb_cfg()
+            srv = cfg["host"] or "(serveur FTP non réglé)"
+            self.v_txinfo.set(f"Mode EZ Pix (lisible par EZ Pix et HFImage)\n"
+                              f"Image déposée par FTP sur {srv}, dossier EZPix (fichier image1)\n"
+                              f"Signal radio : ~{len(ezpix.modulate()) / 8000:.0f} s (GMSK 250 bauds, 1500 Hz)")
+            self._update_comp()
+            return
         if drm_hyb:
             self.tx.drm = True
             cfg = self._hyb_cfg()
@@ -5874,7 +5895,7 @@ class App(tk.Tk):
         if tx is None and getattr(self, "_prep_waiting", False) and not self.tx_busy:
             self.prepare(sync=True)       # calcul de l'image encore en cours : on le termine maintenant
             self._prep_show_busy(False)
-        if tx is None and self.tx is not None and isinstance(self.tx, HybridJob) != bool(self.v_hyb.get()):
+        if tx is None and self.tx is not None and isinstance(self.tx, HybridJob) != self._hyb_on():
             self.tx = None
             self.prepare(sync=True)       # l'image prête était pour l'autre mode
         tx = tx or self.tx
@@ -5902,17 +5923,28 @@ class App(tk.Tk):
         if isinstance(tx, HybridJob):
             job["kind"] = "hybrid"
             job["flash"] = bool(self.v_flash.get())
-            if complement and tx.announce is None and not getattr(tx, "drm", False):
+            if complement and tx.announce is None and not getattr(tx, "drm", False) \
+                    and not getattr(tx, "ezpix", False):
                 messagebox.showinfo(APP, "Rien à répéter : émettez d'abord l'image.")
                 return False
             job["drm_hybrid"] = bool(getattr(tx, "drm", False))
-            if complement and job["drm_hybrid"]:
+            job["ezpix"] = bool(getattr(tx, "ezpix", False))
+            if complement and job["ezpix"]:
+                if getattr(tx, "ez_url", None) is None:
+                    messagebox.showinfo(APP, "Rien à répéter : émettez d'abord l'image.")
+                    return False
+            elif complement and job["drm_hybrid"]:
                 if getattr(tx, "drm_announce", None) is None:
                     messagebox.showinfo(APP, "Rien à répéter : émettez d'abord l'image.")
                     return False
             elif not complement:
                 cfg = self._hyb_cfg()
-                if job["drm_hybrid"]:
+                if job["ezpix"]:
+                    if not cfg["host"]:
+                        messagebox.showinfo(APP, "Mode EZ Pix : renseignez le serveur FTP de votre site "
+                                                 "(Réglages → Mode hybride), celui de votre fiche EZ Pix.")
+                        return False
+                elif job["drm_hybrid"]:
                     if not cfg["host"]:
                         messagebox.showinfo(APP, "Mode hybride EasyPal : renseignez le serveur FTP "
                                                  "dans l'onglet Réglages.")
@@ -6037,6 +6069,10 @@ class App(tk.Tk):
             return
         call = self.mycall() or "NOCALL"
         mode = self._tx_mode()
+        if mode == EZ_MODE:
+            messagebox.showinfo(APP, tr("En mode EZ Pix, seules les images partent : choisissez un autre mode "
+                                        "pour envoyer un texte."))
+            return
         if mode == engine.DRM_MODE:
             # comme EasyPal / QSSTV : un petit fichier .txt (Windows : CRLF, accents en cp1252)
             data = text.replace("\r\n", "\n").replace("\n", "\r\n").encode("cp1252", "replace")
@@ -6329,6 +6365,17 @@ class App(tk.Tk):
             what = (f"FIX EasyPal, {job.get('drm_need', '?')} segments" if bsr else
                     f"{'texte ' if tx.fmt == 'txt' else ''}EasyPal {hamdrm.describe(tx.params)}, "
                     f"{len(tx.data)} octets")
+            modem = frames = None
+        elif kind == "hybrid" and job.get("ezpix"):
+            # EZ Pix : image « EZPix/image1 » sur notre site, puis le signal GMSK (toujours le même)
+            if not job["complement"] or getattr(tx, "ez_url", None) is None:
+                tx.ez_url = self._ezpix_upload(tx, job["cfg"])
+                iid = zlib.crc32(tx.data + b"ezpix") & 0xFFFF
+                self.my_ids.add(iid)
+                self.ui(setattr, self, "last_tx_id", iid)
+            drm_audio = ezpix.modulate_int16()
+            dur, mode = len(drm_audio) / 8000, EZ_MODE
+            what = f"signal EZ Pix ({tx.ez_url})"
             modem = frames = None
         elif kind == "hybrid" and job.get("drm_hybrid"):
             # hybride façon EasyPal : image dans HybridFiles1, annonce « de_… » en HamDRM
@@ -6869,6 +6916,31 @@ class App(tk.Tk):
                 self.ui(self.log_exc, "Téléchargement hybride EasyPal", e)
 
         threading.Thread(target=run, daemon=True).start()
+
+    def _ezpix_upload(self, tx, cfg):
+        """Émission EZ Pix (fil d'émission) : notre fiche EZPixOnAir (adresse du site), dépôt de l'image
+        dans « EZPix/image1 » à la racine du compte FTP, vérification par le lien public. -> lien."""
+        me = (self.mycall() or "").upper()
+        mine = [s for s in ezpix.fetch_onair() if s["call"] == me or s["call"] == me.split("/")[0]]
+        if not mine:
+            raise RuntimeError(tr("votre indicatif n'est pas dans la liste EZ Pix (EZPixOnAir) : les stations "
+                                  "EZ Pix ne sauraient pas où chercher votre image. Lancez une fois EZ Pix "
+                                  "avec ce site pour vous y inscrire."))
+        user = (cfg.get("user") or "").lower()
+        mine.sort(key=lambda s: user and user in s["url"].lower(), reverse=True)   # le site de ce compte FTP
+        self.ui(self.log, f"EZ Pix : dépôt de {len(tx.data)} octets sur {cfg['host']} (EZPix/image1)…")
+        ez_cfg = dict(cfg, dir="EZPix", url=mine[0]["url"])      # (dossier EZPix à la racine du compte)
+        hybrid.upload(ez_cfg, "image1", tx.data,
+                      progress=lambda f: self.ui(self.pb_tx.configure, {"value": 100 * f}))
+        for st in mine:
+            url = ezpix.image_url(st)
+            res = ezpix._age(url)
+            if res is not None and res[1] == len(tx.data) and res[0] < 120:
+                self.ui(self.log, f"EZ Pix : image en ligne : {url}")
+                return url
+        raise RuntimeError(tr("image déposée, mais introuvable à l'adresse de votre fiche EZ Pix :") + " "
+                           + ", ".join(ezpix.image_url(s) for s in mine)
+                           + " — " + tr("le serveur FTP du mode hybride doit être celui de ce site."))
 
     # ---- 1.84 : EZ Pix (W3WVG) : signal GMSK fixe, image « EZPix/image1 » sur le site de l'expéditeur
     def _ezpix_heard(self, eng, score):
