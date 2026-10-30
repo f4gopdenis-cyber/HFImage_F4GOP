@@ -1,5 +1,9 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 1.90 — émission EZ Pix : indicatif bien lu
+
+- Émission EZ Pix : « votre indicatif n'est pas dans la liste EZ Pix » alors qu'il y était (F4GOP). L'indicatif était lu dans la fenêtre depuis le fil d'émission ; il est maintenant pris dans l'image préparée. Si l'indicatif manque vraiment, le message indique l'indicatif cherché et le nombre de stations de la liste.
+
 ## Version 1.89 — émission EZ Pix
 
 - **Mode « EZ Pix »** dans la liste des modes (onglet TX), à côté d'Auto, DATAC et EasyPal (demande de F4GOP et VK6NJP) : l'image est déposée dans « EZPix/image1 » sur votre site (serveur FTP du mode hybride, à la racine du compte), vérifiée à l'adresse de votre fiche EZ Pix (liste EZPixOnAir), puis le signal EZ Pix (5,4 s, GMSK 250 bauds) part avec le poste, le CAT, le PTT et le DATA auto d'HFImage. Les stations EZ Pix et HFImage la reçoivent. « Mode hybride » se coche tout seul (EZ Pix passe toujours par le site) ; « Répéter l'annonce » renvoie le signal.

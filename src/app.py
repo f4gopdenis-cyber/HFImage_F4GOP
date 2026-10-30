@@ -64,7 +64,7 @@ import random
 import wave
 
 APP = "HFImage F4GOP"
-VERSION = "1.89"
+VERSION = "1.90"
 
 
 def _take_profile(argv):
@@ -6920,12 +6920,17 @@ class App(tk.Tk):
     def _ezpix_upload(self, tx, cfg):
         """Émission EZ Pix (fil d'émission) : notre fiche EZPixOnAir (adresse du site), dépôt de l'image
         dans « EZPix/image1 » à la racine du compte FTP, vérification par le lien public. -> lien."""
-        me = (self.mycall() or "").upper()
-        mine = [s for s in ezpix.fetch_onair() if s["call"] == me or s["call"] == me.split("/")[0]]
+        # (indicatif pris dans l'image préparée : on est ici dans le fil d'émission, pas dans celui
+        # de la fenêtre)
+        me = str(getattr(tx, "call", "") or "").strip().upper()
+        base = max(me.split("/"), key=len) if me else ""
+        onair = ezpix.fetch_onair()
+        mine = [s for s in onair if s["call"] in (me, base)]
         if not mine:
+            self.ui(self.log, f"EZ Pix : {len(onair)} stations dans la liste EZPixOnAir, « {me} » absent.")
             raise RuntimeError(tr("votre indicatif n'est pas dans la liste EZ Pix (EZPixOnAir) : les stations "
                                   "EZ Pix ne sauraient pas où chercher votre image. Lancez une fois EZ Pix "
-                                  "avec ce site pour vous y inscrire."))
+                                  "avec ce site pour vous y inscrire.") + f" ({me or '?'}, {len(onair)})")
         user = (cfg.get("user") or "").lower()
         mine.sort(key=lambda s: user and user in s["url"].lower(), reverse=True)   # le site de ce compte FTP
         self.ui(self.log, f"EZ Pix : dépôt de {len(tx.data)} octets sur {cfg['host']} (EZPix/image1)…")
