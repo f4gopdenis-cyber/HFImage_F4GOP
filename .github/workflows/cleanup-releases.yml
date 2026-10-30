@@ -1,0 +1,55 @@
+# Ménage des anciennes versions (demande de F4GOP, 30/10/2026) : on garde les 5 dernières releases,
+# les autres sont supprimées avec leur étiquette (tag). La mise à jour automatique d'HFImage ne lit
+# que « releases/latest » : elle n'en a pas besoin. Se lance quand ce fichier change, ou à la main
+# (Actions → Ménage des versions → Run workflow).
+name: Ménage des versions
+
+on:
+  push:
+    branches: [main]
+    paths: [".github/workflows/cleanup-releases.yml"]
+  workflow_dispatch:
+    inputs:
+      keep:
+        description: "Nombre de versions à garder"
+        default: "5"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Supprimer les anciennes releases
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          KEEP: ${{ github.event.inputs.keep || '5' }}
+        run: |
+          set -e
+          gh release list -R "$REPO" --limit 1000 --json tagName --jq '.[].tagName' \
+            | grep -E '^v[0-9]+\.[0-9]+$' | sort -V > all.txt
+          total=$(wc -l < all.txt)
+          echo "Versions publiées : $total — on garde les $KEEP dernières :"
+          tail -n "$KEEP" all.txt
+          head -n -"$KEEP" all.txt > old.txt || true
+          n=0
+          while read -r t; do
+            [ -z "$t" ] && continue
+            gh release delete "$t" -R "$REPO" --yes --cleanup-tag && n=$((n+1))
+          done < old.txt
+          echo "Supprimées : $n"
+
+      - name: Supprimer les anciennes branches de travail
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        run: |
+          for b in ezpix-plusieurs-sites correction-ts890 easypal-hamdrm; do
+            gh api -X DELETE "repos/$REPO/git/refs/heads/$b" && echo "branche $b supprimée" || echo "branche $b : déjà absente"
+          done
