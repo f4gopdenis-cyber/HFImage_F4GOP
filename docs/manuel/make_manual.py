@@ -532,11 +532,14 @@ s.append(P("Réglages → Apparence → <b>Style</b> : <b>Classique (EasyPal)</b
            "valeur, boutons de gauche plats et compacts (ÉMISSION dans la couleur d'accent), colonne de gauche en "
            "<b>cartes</b> (jauges RX / SNR arrondies, voyants sans contour), stations marquées ● (en ligne) ou ○ (entendues "
            "par radio), Rx Ok coloré selon le report (mêmes couleurs que la carte), et une <b>barre du haut</b> avec l'indicatif, la fréquence en grand (clic : menu des fréquences), "
-           "l'état (réception, émission), les stations en ligne (clic : carte) et l'heure UTC. Cinq <b>ambiances</b> : "
-           "Vert EasyPal (par défaut), Sombre, Clair, Vert radio, et <b>Personnalisée</b> : bouton « Couleur… » à côté de "
+           "l'état (réception, émission), les stations en ligne (clic : carte) et l'heure UTC. Dix <b>ambiances</b> : "
+           "Vert EasyPal (par défaut), Sombre, Clair, Vert radio, Halloween, Noël, Hiver, Printemps, Été, et <b>Personnalisée</b> : bouton « Couleur… » à côté de "
            "l'ambiance, on choisit une seule couleur et HFImage en tire tout le reste (barres dans cette couleur, fonds très "
            "clairs de la même teinte, accent plus foncé, texte noir ou blanc selon ce qui se lit le mieux). On passe de l'un "
            "à l'autre à tout moment, sans redémarrer."))
+s.append(P("Case <b>« Thème selon la saison (Halloween, Noël) »</b> (décochée par défaut) : cochée, HFImage prend tout "
+           "seul l'ambiance <b>Halloween</b> du 20 au 31 octobre et <b>Noël</b> du 1er décembre au 6 janvier, même en style "
+           "Classique ; le reste de l'année, il revient à votre choix habituel, sans rien changer à vos réglages."))
 s.append(P("Horloge", "h2"))
 s.append(P("L'horloge en bas à droite affiche l'heure de Windows (heure d'été comprise). Un clic dessus passe à "
            "« heure de Windows + UTC », puis « UTC seule », puis revient. Ce choix vaut pour tout le programme : "

@@ -25,7 +25,8 @@ class Palette(unittest.TestCase):
         self.assertNotEqual(red, P["fg"])                                    # couleur d'alerte gardée
 
     def test_ambiances(self):
-        self.assertEqual(set(theme.MODERN), {"Vert EasyPal", "Sombre", "Clair", "Vert radio"})
+        self.assertEqual(set(theme.MODERN), {"Vert EasyPal", "Sombre", "Clair", "Vert radio",
+                                             "Halloween", "Noël", "Hiver", "Printemps", "Été"})
         self.assertEqual(list(theme.MODERN)[0], "Vert EasyPal")              # en tête de liste
         P = theme.MODERN["Vert EasyPal"]
         self.assertEqual(P["bar"], "#33d633")                               # le vert EasyPal d'origine

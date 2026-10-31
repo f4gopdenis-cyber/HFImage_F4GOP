@@ -1,5 +1,10 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 1.95 — thèmes de fêtes et de saisons
+
+- **Cinq nouvelles ambiances** du style Moderne (Réglages → Apparence → Style Moderne → Ambiance, idée de F4GOP) : **Halloween** (noir violacé et orange citrouille), **Noël** (vert sapin, rouge et doré), **Hiver** (bleu glacier), **Printemps** (vert tendre et rose), **Été** (sable et bleu mer). Seules les couleurs changent : rien de plus à charger, le waterfall et les couleurs d'état (émission, alertes) restent lisibles.
+- Case **« Thème selon la saison (Halloween, Noël) »**, décochée par défaut : cochée, HFImage prend tout seul l'ambiance Halloween du 20 au 31 octobre et Noël du 1er décembre au 6 janvier ; le reste de l'année, il revient à votre choix habituel, sans toucher à vos réglages.
+
 ## Version 1.94 — mode DATA : le bouton « DATA auto » seulement
 
 - Le mode DATA du poste se réglait à trois endroits qui se recouvraient (bouton « DATA auto », liste « Poste pas en DATA avant d'émettre », cadre « Mode » de la fenêtre Poste radio). Il ne reste que le **bouton « DATA auto »** (demande de F4GOP) : allumé, le poste passe en LSB-DATA / USB-DATA pour émettre puis revient en LSB / USB ; éteint, HFImage ne touche pas au mode du poste.

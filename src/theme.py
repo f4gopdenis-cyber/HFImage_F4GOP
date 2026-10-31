@@ -40,7 +40,41 @@ MODERN = {
     "Vert radio": dict(bg="#10231b", panel="#143024", field="#0e1f17", bar="#18382a", bar_fg="#e6f4ec",
                        fg="#e6f4ec", muted="#8fb3a0", border="#1f4434", button="#1b3d2e", button_fg="#e6f4ec",
                        accent="#2fd17a", accent_fg="#06110a", bad="#ff6b6b", dark=True, top="#0a1611"),
+    # 1.95 : ambiances de fêtes et de saisons (idée de F4GOP)
+    "Halloween": dict(bg="#1a1320", panel="#241a2e", field="#140f19", bar="#2e2138", bar_fg="#ffe9cc",
+                      fg="#f3e6d8", muted="#b49ab8", border="#3d2c4a", button="#2e2138", button_fg="#f3e6d8",
+                      accent="#ff7a1a", accent_fg="#1a0d00", bad="#ff4d5e", dark=True, top="#120c17",
+                      top_fg="#ff9a3d", top_muted="#b49ab8"),
+    "Noël": dict(bg="#0f2a1c", panel="#143524", field="#0c2216", bar="#1b4330", bar_fg="#f7f1e1",
+                 fg="#f4efe2", muted="#a9c7b2", border="#245a3f", button="#1b4330", button_fg="#f4efe2",
+                 accent="#d62d3a", accent_fg="#ffffff", bad="#ff6b6b", dark=True, top="#0a1f14",
+                 top_fg="#f2c14e", top_muted="#a9c7b2"),
+    "Hiver": dict(bg="#eaf2f9", panel="#f7fbff", field="#ffffff", bar="#cfe2f3", bar_fg="#12324f",
+                  fg="#14304a", muted="#5f7a92", border="#c4d7e8", button="#e1edf7", button_fg="#14304a",
+                  accent="#2b78c2", accent_fg="#ffffff", bad="#d93b4a", dark=False, top="#2b5f8f",
+                  top_fg="#ffffff", top_muted="#cfe2f3"),
+    "Printemps": dict(bg="#f3f8ee", panel="#fbfdf8", field="#ffffff", bar="#dcedcc", bar_fg="#24401c",
+                      fg="#22351c", muted="#6b7f60", border="#d3e3c4", button="#eaf3e1", button_fg="#22351c",
+                      accent="#c2457a", accent_fg="#ffffff", bad="#d93b3b", dark=False, top="#7fb069",
+                      top_fg="#16300f", top_muted="#3c5a30"),
+    "Été": dict(bg="#fbf5e8", panel="#fffdf7", field="#ffffff", bar="#f3e2bb", bar_fg="#3d2f12",
+                fg="#2f2a1f", muted="#7d6f55", border="#ead9b2", button="#f6ecd5", button_fg="#2f2a1f",
+                accent="#0b7fa8", accent_fg="#ffffff", bad="#d9433b", dark=False, top="#0b7fa8",
+                top_fg="#ffffff", top_muted="#cdeaf4"),
 }
+# « Thème selon la saison » (case, décochée par défaut) : ambiance prise d'office à ces dates
+# (mois, jour) de début et de fin, bornes comprises ; Noël passe d'une année à l'autre.
+SEASONS = (("Halloween", (10, 20), (10, 31)),
+           ("Noël", (12, 1), (1, 6)))
+
+
+def season_theme(day):
+    """Date (datetime.date) -> ambiance de fête à prendre ce jour-là, ou None."""
+    md = (day.month, day.day)
+    for name, start, end in SEASONS:
+        if (start <= md <= end) if start <= end else (md >= start or md <= end):
+            return name
+    return None
 # 1.63 : ambiance « Personnalisée » : toute la palette tirée d'une seule couleur choisie
 MODERN_CUSTOM = "Personnalisée"
 MODERN_CUSTOM_DEFAULT = "#3a8ee6"

@@ -42,6 +42,7 @@ import clocktz
 import radio
 import radiodlg
 import contextlib
+import datetime
 import stationmap
 import theme
 import updater
@@ -64,7 +65,7 @@ import random
 import wave
 
 APP = "HFImage F4GOP"
-VERSION = "1.94"
+VERSION = "1.95"
 
 
 def _take_profile(argv):
@@ -104,7 +105,7 @@ DEFAULTS = {
     "look_style": "classique", "modern_theme": "Vert EasyPal",
     "theme": "Vert EasyPal", "theme_color": "#3a8ee6", "font_family": "(par défaut)", "font_size": "9",
     "locator": "", "bsr_auto": True, "fix_auto": True, "ack_auto": True, "listen_after": True, "follow_mode": True,
-    "cwid": False, "cat_freq": True, "lang": "", "msg_translate": True, "wait_free": True, "hyb_flash": True,
+    "cwid": False, "cat_freq": True, "season_theme": False, "lang": "", "msg_translate": True, "wait_free": True, "hyb_flash": True,
     "freq_presets": [[3733000, "LSB"], [7058000, "LSB"], [14233000, "USB"], [21340000, "USB"], [28680000, "USB"]],
     "drm_mode": "B", "drm_qam": "QAM16", "drm_bw": "2,4 kHz", "drm_prot": "Haute (HI)", "drm_rs": "RS2",
     "wav_volume": 5, "wft_font": "Arial", "wft_neg": False, "wft_text": "",
@@ -736,6 +737,13 @@ class App(tk.Tk):
             modern = self.conf.get("modern_theme")
             if modern not in theme.MODERN and modern != theme.MODERN_CUSTOM:
                 modern = "Vert EasyPal"
+        # 1.95 : « Thème selon la saison » : Halloween, Noël… aux dates prévues (sans toucher au choix
+        # enregistré, qui revient tout seul après la fête)
+        if hasattr(self, "v_season"):
+            self.conf["season_theme"] = bool(self.v_season.get())
+        season = theme.season_theme(datetime.date.today()) if self.conf.get("season_theme") else None
+        if season:
+            modern = season
         self.look.set(theme=th if th in theme.THEMES or th == "Personnalisée" else "Vert EasyPal",
                       custom=self.conf.get("theme_color"), family=fam,
                       scale=theme.FONT_SIZES.get(size, 1.0), text=self.conf.get("text_color") or "",
@@ -3300,6 +3308,10 @@ class App(tk.Tk):
         style_ui()
         for cb in (cb_st, cb_am):
             cb.bind("<<ComboboxSelected>>", lambda e: (style_ui(), self._apply_look()))
+        self.v_season = tk.BooleanVar(value=bool(self.conf.get("season_theme", False)))
+        ttk.Checkbutton(af, text="Thème selon la saison (Halloween, Noël)", variable=self.v_season,
+                        command=self._apply_look).grid(row=4, column=1, columnspan=4, sticky="w", padx=4,
+                                                       pady=(4, 0))
 
         nf = ttk.LabelFrame(colR, text="Internet : stations en ligne (comme EasyPal)", padding=8)
         nf.pack(fill="x", pady=(10, 0))

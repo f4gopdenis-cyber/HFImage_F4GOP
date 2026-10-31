@@ -333,10 +333,13 @@ s.append(P("Settings → Appearance → <b>Style</b>: <b>Classic (EasyPal)</b>, 
            "flat, compact left buttons (TRANSMIT in the accent colour), left column as <b>cards</b> "
            "(rounded RX / SNR gauges, borderless LEDs), stations marked ● (online) or ○ (heard over the air), Rx Ok "
            "coloured by report (same colours as the map), and a <b>top bar</b> with your callsign, the frequency in large type (click: frequency menu), the state "
-           "(receiving, transmitting), the stations online (click: map) and the UTC time. Five <b>ambiences</b>: "
-           "EasyPal green (default), Dark, Light, Radio green, and <b>Custom</b>: “Colour…” button next to the theme, pick a "
+           "(receiving, transmitting), the stations online (click: map) and the UTC time. Ten <b>ambiences</b>: "
+           "EasyPal green (default), Dark, Light, Radio green, Halloween, Christmas, Winter, Spring, Summer, and <b>Custom</b>: “Colour…” button next to the theme, pick a "
            "single colour and HFImage derives everything else (bars in that colour, very light backgrounds of the same "
            "hue, darker accent, black or white text, whichever reads best). Switch at any time, without restarting."))
+s.append(P("<b>“Seasonal theme (Halloween, Christmas)”</b> box (unticked by default): ticked, HFImage switches by itself to "
+           "the <b>Halloween</b> ambience from 20 to 31 October and to <b>Christmas</b> from 1 December to 6 January, even in "
+           "Classic style; the rest of the year it goes back to your usual choice, without changing your settings."))
 s.append(P("Changing frequency", "h2"))
 s.append(P("With a CAT link, the <b>“Frequency ▾”</b> button (right of “Wait for clear frequency”), or a <b>click on the "
            "frequency</b> shown (panel at the top left, marked ▾, or the status bar) opens the "
