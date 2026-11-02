@@ -322,7 +322,9 @@ s.append(P("Menu <b>Windows</b>: tick an area to turn it into a <b>separate wind
 s += B(["Separate windows always stay <b>in front of</b> the main window and are minimised with it.",
         "Untick the area, or close its window, to put it back. “Put everything back in the main window” gathers "
         "everything; “Settings → Original window layout” too.",
-        "The layout is kept from one session to the next.",
+        "The layout is kept from one session to the next: it is saved as soon as you release a divider, even if the "
+        "PC is then switched off with HFImage open. For a <b>bigger waterfall</b>, drag down the divider between the "
+        "waterfall and the “Stations / Rx Ok” list.",
         "<b>Show the history</b> and <b>Show received messages</b> (RX tab) hide these lists: without both, the received "
         "picture uses the whole width."])
 

@@ -65,7 +65,7 @@ import random
 import wave
 
 APP = "HFImage F4GOP"
-VERSION = "1.96"
+VERSION = "1.97"
 
 
 def _take_profile(argv):
@@ -548,9 +548,12 @@ class App(tk.Tk):
         self.after(300, self._startup_dialogs)     # licence, puis assistant au premier démarrage
         self.after(400, self._restore_layout)
         self.after(1500, self._restore_layout)     # une 2e fois, une fois tout affiché
+        self.after(1600, self._layout_autosave)    # 1.97 : disposition gardée sans attendre la fermeture
         self.after(1700, lambda: self.dock.restore(self.conf.get("detached")))   # fenêtres séparées
         self.after(20000, self._auto_clean)        # anciennes images (puis toutes les 6 h)
         self.protocol("WM_DELETE_WINDOW", self._quit)
+        # 1.97 : Windows qui s'éteint (ou redémarre) avec HFImage ouvert : disposition enregistrée
+        self.protocol("WM_SAVE_YOURSELF", self._save_layout)
         self.bind_all("<Control-v>", self._ctrl_v, add="+")         # 1.67 : coller une image (onglet TX)
         self.bind_all("<Control-V>", self._ctrl_v, add="+")
         self.journal_devices()
@@ -4073,6 +4076,7 @@ class App(tk.Tk):
                 self.conf.pop(k, None)              # anciens réglages : repris dans « radio »
             with open(CONF_PATH, "w", encoding="utf-8") as f:
                 json.dump(self.conf, f, indent=1)
+            self._save_layout()                     # 1.97 : la disposition des fenêtres aussi
             private_file(CONF_PATH)
             if not quiet:
                 self.log("Réglages enregistrés.")
@@ -8445,10 +8449,35 @@ class App(tk.Tk):
     def _pane_len(self, p):
         return p.winfo_width() if str(p.cget("orient")) == "horizontal" else p.winfo_height()
 
+    def _layout_autosave(self):
+        """1.97 (signalé par F1ABL) : la disposition n'était enregistrée qu'à la fermeture par la croix ;
+        un PC éteint avec HFImage ouvert la perdait. On l'enregistre dès qu'un séparateur est lâché."""
+        self._layout_ready = True                     # tailles enregistrées remises en place : on peut écrire
+        for p in self.panes.values():
+            p.bind("<ButtonRelease-1>", lambda e: self._layout_save_soon(), add="+")
+
+    def _layout_save_soon(self):
+        job = getattr(self, "_layout_job", None)
+        if job:
+            self.after_cancel(job)
+        self._layout_job = self.after(300, self._layout_save_now)
+
+    def _layout_save_now(self):
+        self._layout_job = None
+        if not getattr(self, "_closing", False):
+            self._save_layout()
+
     def _save_layout(self):
         """Taille de la fenêtre et des zones, pour la prochaine ouverture."""
+        if getattr(self, "_restored", False):
+            return                    # sauvegarde restaurée : on ne réécrit pas ses réglages en partant
         try:
             self._pip_keep_save()                     # logos incrustés gardés pour le prochain lancement
+            if not getattr(self, "_layout_ready", False):
+                # pas encore remise en place (démarrage) : on garderait les tailles par défaut
+                with open(CONF_PATH, "w", encoding="utf-8") as f:
+                    json.dump(self.conf, f, indent=1)
+                return
             zoomed = self.state() == "zoomed"
             if not zoomed:
                 self.conf["win_geom"] = self.geometry()

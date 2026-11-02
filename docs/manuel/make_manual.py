@@ -330,7 +330,9 @@ s.append(P("Menu <b>Fenêtres</b> : cochez une zone pour en faire une <b>fenêtr
 s += B(["Les fenêtres séparées restent <b>toujours devant</b> la fenêtre principale et se réduisent avec elle.",
         "Décochez la zone, ou fermez sa fenêtre, pour la remettre à sa place. « Tout remettre dans la fenêtre "
         "principale » rassemble tout ; « Réglages → Disposition d'origine des fenêtres » aussi.",
-        "La disposition est gardée d'une session à l'autre.",
+        "La disposition est gardée d'une session à l'autre : elle est enregistrée dès qu'on lâche un séparateur, même "
+        "si le PC est ensuite éteint avec HFImage ouvert. Pour un <b>waterfall plus grand</b>, tirez vers le bas le "
+        "séparateur entre le waterfall et la liste « Stations / Rx Ok ».",
         "Les cases <b>Afficher l'historique</b> et <b>Afficher les messages reçus</b> (onglet RX) masquent ces listes : "
         "sans les deux, l'image reçue prend toute la largeur."])
 

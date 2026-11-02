@@ -1,5 +1,10 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 1.97 — disposition des fenêtres toujours gardée
+
+- Correction (signalée par F1ABL) : la taille des zones (waterfall, liste des stations, historique, journal…) n'était enregistrée qu'en fermant HFImage par la croix. Un PC éteint ou redémarré avec HFImage ouvert la perdait. Elle est maintenant enregistrée dès qu'on lâche un séparateur, avec « Enregistrer les réglages », et quand Windows s'éteint.
+- Rappel : pour agrandir le waterfall, tirez vers le bas le séparateur entre le waterfall et la liste « Stations / Rx Ok » ; la taille est gardée au prochain démarrage.
+
 ## Version 1.96 — hybride : retour d'EasyPal vers un mode DATAC
 
 - Correction (signalée par VK6NJP) : en mode hybride, après avoir utilisé le mode EasyPal avec une image, repasser à un mode DATAC (DATAC1X…) avec la même image envoyait encore l'annonce EasyPal (HamDRM « EP E/16 ») au lieu de l'annonce HFImage. L'image est maintenant préparée à nouveau quand on change de mode, et l'annonce part dans le bon format. Rappel : en hybride, l'image passe par Internet ; la radio n'envoie qu'une courte annonce en DATAC3 (ou DATAC13 + DATAC0 en mode éclair), quel que soit le mode DATAC choisi.
