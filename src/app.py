@@ -65,7 +65,7 @@ import random
 import wave
 
 APP = "HFImage F4GOP"
-VERSION = "1.95"
+VERSION = "1.96"
 
 
 def _take_profile(argv):
@@ -5897,10 +5897,13 @@ class App(tk.Tk):
         else:
             data, q, size = self._cz(engine.compress, src, width, int(kb * 1000), fmt)
         call = self.mycall() or "NOCALL"
-        key = ("hyb", data, fmt, call)
+        # 1.96 : hybride EasyPal ou HFImage dans la clé : repasser d'EasyPal à un mode DATAC avec la même
+        # image préparait l'annonce EasyPal quand même (signalé par VK6NJP)
+        key = ("hyb", data, fmt, call, bool(drm_hyb))
         if self.tx is None or getattr(self.tx, "key", None) != key:
             self.tx = HybridJob(data, fmt, call)
             self.tx.key = key
+        self.tx.drm = bool(drm_hyb)
         if anim:
             self.lb_cmp.set_animation(*imgfmt.gif_frames(data))
             n, secs = imgfmt.gif_info(data)
@@ -5910,7 +5913,6 @@ class App(tk.Tk):
             desc = f"{imgfmt.describe(fmt)} original" if q is None else engine.quality_label(fmt, q)
         self._set_text(self.lb_cmp_info, f"{size[0]}×{size[1]} — {len(data)} octets ({desc})")
         if drm_hyb:
-            self.tx.drm = True
             cfg = self._hyb_cfg()
             srv = cfg["host"] or "(serveur FTP non réglé)"
             ann = hamdrm.estimate(120, easypal_hybrid_params(cfg_call=call)) if hamdrm.AVAILABLE else 0

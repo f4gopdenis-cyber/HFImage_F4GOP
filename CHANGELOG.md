@@ -1,5 +1,9 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 1.96 — hybride : retour d'EasyPal vers un mode DATAC
+
+- Correction (signalée par VK6NJP) : en mode hybride, après avoir utilisé le mode EasyPal avec une image, repasser à un mode DATAC (DATAC1X…) avec la même image envoyait encore l'annonce EasyPal (HamDRM « EP E/16 ») au lieu de l'annonce HFImage. L'image est maintenant préparée à nouveau quand on change de mode, et l'annonce part dans le bon format. Rappel : en hybride, l'image passe par Internet ; la radio n'envoie qu'une courte annonce en DATAC3 (ou DATAC13 + DATAC0 en mode éclair), quel que soit le mode DATAC choisi.
+
 ## Version 1.95 — thèmes de fêtes et de saisons
 
 - **Cinq nouvelles ambiances** du style Moderne (Réglages → Apparence → Style Moderne → Ambiance, idée de F4GOP) : **Halloween** (noir violacé et orange citrouille), **Noël** (vert sapin, rouge et doré), **Hiver** (bleu glacier), **Printemps** (vert tendre et rose), **Été** (sable et bleu mer). Seules les couleurs changent : rien de plus à charger, le waterfall et les couleurs d'état (émission, alertes) restent lisibles.
