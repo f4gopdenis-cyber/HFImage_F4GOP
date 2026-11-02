@@ -481,7 +481,8 @@ s.append(table([["Setting", "Values", "Meaning"],
                                               "signal). Use 2.2 kHz with a narrow filter."],
                 ["Protection", "High (HI), Normal (LO)", "Code rate of the error correction. HI is more robust."],
                 ["Reed-Solomon", "None, RS1 … RS4", "Extra redundancy: the picture is rebuilt even when segments are "
-                                                    "lost. <b>RS2 by default</b>. Read by EasyPal and QSSTV."]],
+                                                    "lost, as soon as enough of them arrive (about 88 % with RS1, 75 % RS2, 63 % RS3, 50 % RS4), "
+                                                    "without waiting for the end of the transmission. <b>RS2 by default</b>. Read by EasyPal and QSSTV."]],
                [32, 42, 96]))
 s.append(Spacer(1, 6))
 s.append(P("Pictures are sent in <b>JPEG 2000</b> (the usual EasyPal format) or JPEG, sized to fit the chosen "

@@ -595,7 +595,8 @@ s.append(table([["Réglage", "Valeurs", "Rôle"],
                                                 "signal). 2,2 kHz avec un filtre étroit."],
                 ["Erreur (protection)", "Haute (HI), Normale (LO)", "Rendement de la correction d'erreurs. HI est plus robuste."],
                 ["Reed-Solomon", "Aucun, RS1 … RS4", "Redondance en plus : l'image est reconstruite même avec des segments "
-                                                    "perdus. <b>RS2 par défaut</b>. Lu par EasyPal et QSSTV."]],
+                                                    "perdus, dès qu'il en arrive assez (environ 88 % en RS1, 75 % en RS2, 63 % en RS3, 50 % en RS4), "
+                                                    "sans attendre la fin de l'émission. <b>RS2 par défaut</b>. Lu par EasyPal et QSSTV."]],
                [32, 42, 96]))
 s.append(Spacer(1, 6))
 s.append(P("Les images partent en <b>JPEG 2000</b> (format habituel d'EasyPal) ou en JPEG, à la taille qui tient dans "

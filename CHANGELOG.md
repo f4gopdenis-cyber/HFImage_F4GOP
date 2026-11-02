@@ -1,5 +1,10 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 1.98 — mode EasyPal : image Reed-Solomon reçue sans attendre
+
+- Correction (signalée par F4GOP, image de F5TGB en RS4) : en mode EasyPal, une image protégée par Reed-Solomon (RS1 à RS4) n'était reconstruite qu'après réception du tout dernier segment, et seulement à partir de 63 % des segments. Si ce dernier segment était perdu, il fallait attendre l'émission suivante : EasyPal affichait l'image une minute plus tôt. Le nombre total de segments est maintenant lu dans l'en-tête, comme EasyPal, et l'image est reconstruite dès qu'il y a assez de segments (environ la moitié en RS4).
+- Le panneau affiche le vrai nombre total de segments dès le début de la réception (avant : seulement ceux déjà vus), et un BSR demande aussi les segments de la fin qui manquent.
+
 ## Version 1.97 — disposition des fenêtres toujours gardée
 
 - Correction (signalée par F1ABL) : la taille des zones (waterfall, liste des stations, historique, journal…) n'était enregistrée qu'en fermant HFImage par la croix. Un PC éteint ou redémarré avec HFImage ouvert la perdait. Elle est maintenant enregistrée dès qu'on lâche un séparateur, avec « Enregistrer les réglages », et quand Windows s'éteint.

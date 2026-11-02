@@ -25,6 +25,7 @@
 #include "drmproto.h"
 #include "configparams.h"
 #include "reedsolomoncoder.h"
+#include "rs.h"
 #include "demodulator.h"
 #include "hamdrm_rxhooks.h"
 
@@ -460,6 +461,23 @@ void sourceDecoder::writeData(transportBlock *tbPtr)
 
   QByteArray ba;
 
+  // HFImage 1.98 (signalé par F4GOP) : nombre total de segments connu dès l'en-tête
+  // (taille du fichier / taille d'un segment), comme EasyPal. Sans cela, un fichier RS1..RS4
+  // n'était reconstruit qu'après réception du tout dernier segment (fin d'émission, ou
+  // l'émission suivante s'il était perdu), alors que la moitié des segments peut suffire.
+  bool sizeKnown=tbPtr->headerReceived && tbPtr->bodySize>0 && tbPtr->defaultSegmentSize>0;
+  if(sizeKnown)
+    {
+      int expected=(int)((tbPtr->bodySize+tbPtr->defaultSegmentSize-1)/tbPtr->defaultSegmentSize);
+      if(expected<tbPtr->totalSegments) expected=tbPtr->totalSegments;
+      tbPtr->totalSegments=expected;
+      while(tbPtr->dataSegmentPtrList.count()<expected)
+        {
+          tbPtr->dataSegmentPtrList.append(new dataSegment(tbPtr->defaultSegmentSize));
+        }
+      bodyTotalSegments=tbPtr->totalSegments;
+    }
+
   erasureList.clear();
   erasureList.append(tbPtr->totalSegments);
   erasureList.append(tbPtr->defaultSegmentSize);
@@ -486,18 +504,30 @@ void sourceDecoder::writeData(transportBlock *tbPtr)
           tbPtr->segmentsReceived++;
         }
     }
-  if(tbPtr->isAlmostComplete()<63)
+  // HFImage 1.98 : premier essai de reconstruction dès que le code Reed-Solomon peut y suffire
+  // (RS4 : 128 octets de données sur 255, soit ~50 % des segments), au lieu de 63 % pour tous
+  int minPct=63;
+  {
+    QString ext=QFileInfo(tbPtr->fileName).suffix().toLower();
+    if(ext=="rs1") minPct=(100*RSDSIZERS1)/255;
+    else if(ext=="rs2") minPct=(100*RSDSIZERS2)/255;
+    else if(ext=="rs3") minPct=(100*RSDSIZERS3)/255;
+    else if(ext=="rs4") minPct=(100*RSDSIZERS4)/255;
+  }
+  if(tbPtr->isAlmostComplete()<minPct)
     {
       return ;
     }
   addToLog("Image already received",LOGDRMSRC);
 
-  if(!tbPtr->lastSegmentReceived)
+  if(!tbPtr->lastSegmentReceived && !sizeKnown)
     {
       addToLog("Not lastSegmentReceived",LOGDRMSRC);
 
       return;
     }
+  // dernier segment absent (compté à la taille normale) : le fichier fait bodySize octets
+  if(sizeKnown && (unsigned int)ba.size()>tbPtr->bodySize) ba.truncate(tbPtr->bodySize);
   checkSaveImage(ba,tbPtr);
 }
 
