@@ -69,7 +69,7 @@ class Formes(unittest.TestCase):
             import app
         except (ImportError, OSError) as e:
             raise unittest.SkipTest(str(e))
-        s = types.SimpleNamespace(conf={}, PIP_MAX_N=4, PIP_CORNERS=app.App.PIP_CORNERS)
+        s = types.SimpleNamespace(conf={}, PIP_MAX_N=app.App.PIP_MAX_N, PIP_CORNERS=app.App.PIP_CORNERS, PIP_EDGES=app.App.PIP_EDGES)
         s.pips = [{"path": "a", "corner": "haut-droite", "size": "moyenne", "pos": None, "scale": None,
                    "shape": "rond"}, {"path": "b", "shape": "ovale"}]
         app.App._pip_save_layouts(s)

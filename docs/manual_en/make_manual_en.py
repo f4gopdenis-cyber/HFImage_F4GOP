@@ -180,7 +180,7 @@ s += B(["Sharp 800×600 photo in about 2 minutes (fast DATAC1X mode, 2.2 kHz wid
         "<b>Stations online</b> list, <b>Rx Ok</b> with reports in dB, <b>map</b> of stations.",
         "<b>Hybrid</b> mode (picture via the Internet, link over the air), including <b>flash hybrid</b>: a robust 9 s "
         "announcement over the air.",
-        "Up to <b>4 correspondents' pictures</b> inserted into yours, animated GIFs, <b>QSL</b> card, text in the waterfall.",
+        "Up to <b>8 correspondents' pictures</b> inserted into yours, animated GIFs, <b>QSL</b> card, text in the waterfall.",
         "<b>Separate windows</b>: waterfall, gallery, station list… placed where you want, even on another screen.",
         "More than 300 radios controlled (Hamlib), Kenwood direct, OmniRig, FLRig.",
         "<b>Gallery</b>, upload to your website (<b>Digi-Sites</b>), reception <b>analyser</b>.",
@@ -545,9 +545,9 @@ s.append(P("7. Adding to your picture", "h1"))
 s.append(P("Correspondent's picture", "h2"))
 s.append(P("To answer as in EasyPal: right-click a picture in the <b>Gallery</b> → “Reply with this image (inserted into my TX image)”, or tick "
            "<b>Correspondent's image</b> in the TX tab and click <b>…</b>. Received pictures are inserted into yours with "
-           "the caption “from F4EMK — +12 dB”: the <b>report</b> is the SNR you measured when receiving them. <b>Up to 4 "
+           "the caption “from F4EMK — +12 dB”: the <b>report</b> is the SNR you measured when receiving them. <b>Up to 8 "
            "pictures</b> at once, for example to answer several stations together."))
-s += B(["<b>Inserted images</b> list: <b>Add an image</b> (it goes to a free corner) and <b>Remove</b>. The “Image "
+s += B(["<b>Inserted images</b> list: <b>Add an image</b> (it goes to a free corner, then to the middle of an edge) and <b>Remove</b>. The “Image "
         "received” list changes the picture of the selected line.",
         "Each picture has its own <b>position</b> and <b>size</b>: a corner and a size in the lists, or with the mouse "
         "in the preview. <b>Click</b> a picture to select it (yellow frame), <b>drag</b> it to place it, the <b>mouse "

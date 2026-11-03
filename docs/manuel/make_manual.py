@@ -178,7 +178,7 @@ s += B(["Photo 800×600 nette en environ 2 minutes (mode rapide DATAC1X, 2,2 kHz
         "<b>Coupe-QRM</b> à la réception : porteuses, CW, RTTY et BLU voisines effacées.",
         "Liste des <b>stations en ligne</b>, <b>Rx Ok</b> avec reports en dB, <b>carte</b> des stations.",
         "Mode <b>hybride</b> (image par Internet, lien par radio), dont l'<b>hybride éclair</b> : annonce radio robuste de 9 s (DATAC13, passe jusqu'à −7 dB).",
-        "Jusqu'à <b>4 images de correspondants</b> incrustées dans la vôtre, GIF animés, carte <b>QSL</b>, texte dans le waterfall.",
+        "Jusqu'à <b>8 images de correspondants</b> incrustées dans la vôtre, GIF animés, carte <b>QSL</b>, texte dans le waterfall.",
         "<b>Fenêtres séparées</b> : waterfall, galerie, liste des stations… placés où vous voulez, même sur un autre écran.",
         "Plus de 300 postes pilotés (Hamlib), Kenwood en direct, OmniRig, FLRig.",
         "<b>Galerie</b>, mise en ligne sur votre site (<b>Digi-Sites</b>), <b>analyseur</b> de réception.",
@@ -489,9 +489,9 @@ s.append(P("Image du correspondant", "h2"))
 s.append(P("Pour répondre comme dans EasyPal : clic droit sur une image de la <b>Galerie</b> → « Répondre avec cette image », "
            "ou case <b>Image du correspondant</b> (onglet TX) et bouton <b>…</b>. Les images reçues sont incrustées dans la "
            "vôtre avec la légende « de F4EMK — +12 dB » : le <b>report</b> est le SNR que vous avez mesuré en les recevant. "
-           "<b>Jusqu'à 4 images</b> à la fois, par exemple pour répondre à plusieurs stations d'un coup. Se combine avec "
+           "<b>Jusqu'à 8 images</b> à la fois, par exemple pour répondre à plusieurs stations d'un coup. Se combine avec "
            "« Mes conditions de trafic »."))
-s += B(["Liste <b>Images incrustées</b> : <b>Ajouter une image</b> (elle se place dans un coin libre) et <b>Retirer</b>. "
+s += B(["Liste <b>Images incrustées</b> : <b>Ajouter une image</b> (elle se place dans un coin libre, puis au milieu d'un bord) et <b>Retirer</b>. "
         "La liste « Image reçue » change l'image de la ligne choisie.",
         "Chaque image a sa <b>position</b> et sa <b>taille</b> : un coin et une taille dans les listes, ou à la souris "
         "dans l'aperçu. <b>Cliquez</b> sur une image pour la choisir (cadre jaune), <b>faites-la glisser</b> pour la "

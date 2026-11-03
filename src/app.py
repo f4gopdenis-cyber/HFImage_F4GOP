@@ -66,7 +66,7 @@ import random
 import wave
 
 APP = "HFImage F4GOP"
-VERSION = "2.00"
+VERSION = "2.01"
 
 
 def _take_profile(argv):
@@ -4560,8 +4560,10 @@ class App(tk.Tk):
     # La disposition de chaque emplacement est gardée dans les réglages : l'emplacement 1
     # garde les anciennes clés (pip_corner, pip_size, pip_pos, pip_scale), les suivants
     # sont dans « pip_more ».
-    PIP_MAX_N = 4
+    PIP_MAX_N = 8               # 2.01 (demande de F1ABL) : 8 au lieu de 4
     PIP_CORNERS = ("haut-droite", "haut-gauche", "bas-droite", "bas-gauche")
+    # 5e à 8e image : au milieu des bords (en haut, en bas, à gauche, à droite), une fois les coins pris
+    PIP_EDGES = ((0.5, 0.03), (0.5, 0.97), (0.03, 0.5), (0.97, 0.5))   # même marge que les coins
 
     def _pip_caption(self, p):
         """Légende sous l'incrustation : celle écrite par l'utilisateur, sinon « de F4EMK — +12 dB »
@@ -4589,8 +4591,15 @@ class App(tk.Tk):
             return {"corner": d.get("corner", "haut-gauche"), "size": d.get("size", "petite"),
                     "pos": d.get("pos"), "scale": d.get("scale"), "rot": d.get("rot", 0), "tilt": d.get("tilt", 0),
                     "shape": d.get("shape", "rect")}
-        used = {p.get("corner") for p in getattr(self, "pips", [])[:i] if not p.get("pos")}
-        corner = next((c for c in self.PIP_CORNERS if c not in used), self.PIP_CORNERS[i % 4])
+        others = getattr(self, "pips", [])[:i]
+        used = {p.get("corner") for p in others if not p.get("pos")}
+        corner = next((c for c in self.PIP_CORNERS if c not in used), None)
+        if corner is None:                   # coins pris : milieu d'un bord libre
+            taken = {tuple(round(float(v), 2) for v in p["pos"]) for p in others
+                     if isinstance(p.get("pos"), (list, tuple)) and len(p["pos"]) == 2}
+            pos = next((e for e in self.PIP_EDGES if e not in taken), self.PIP_EDGES[i % len(self.PIP_EDGES)])
+            return {"corner": self.PIP_CORNERS[i % 4], "size": "petite", "pos": list(pos), "scale": None, "rot": 0,
+                    "tilt": 0, "shape": "rect"}
         return {"corner": corner, "size": "petite", "pos": None, "scale": None, "rot": 0, "tilt": 0, "shape": "rect"}
 
     PIP_KEEP_KEYS = ("path", "call", "snr", "local", "logo", "opa", "cap", "corner", "size", "pos", "scale",
@@ -4628,7 +4637,17 @@ class App(tk.Tk):
     def _pip_new(self, cand, i=None):
         """Nouvelle incrustation à partir d'une image reçue {path, call, snr}."""
         i = len(self.pips) if i is None else i
+        if i >= len(self.PIP_CORNERS):
+            self._pip_make_room()
         return dict(cand, **self._pip_slot_layout(i))
+
+    def _pip_make_room(self):
+        """2.01 : à partir de la 5e image (milieu des bords), les images des coins en taille moyenne ou
+        grande, jamais réglées à la main (position ou taille libre), passent en petite pour ne pas se
+        chevaucher ; on peut toujours les agrandir ensuite."""
+        for p in getattr(self, "pips", []):
+            if not p.get("pos") and not p.get("scale") and p.get("size") in ("moyenne", "grande"):
+                p["size"] = "petite"
 
     def _pip_thumb(self, path):
         cache = self.__dict__.setdefault("_pip_thumbs", {})
@@ -4712,7 +4731,7 @@ class App(tk.Tk):
 
     def set_pip(self, entry, add=False):
         """Galerie → « Répondre avec cette image » (elle remplace les incrustations) ou
-        « Ajouter cette image à mon image TX » (elle s'ajoute, 4 au maximum)."""
+        « Ajouter cette image à mon image TX » (elle s'ajoute, 8 au maximum)."""
         src = entry.get("png") or entry.get("file")
         call = entry.get("call") or "?"
         snr = entry.get("snr")
@@ -4722,7 +4741,7 @@ class App(tk.Tk):
         if add and any(p["path"] == src for p in self.pips):
             pass                                            # déjà incrustée
         elif add and len(self.pips) >= self.PIP_MAX_N:
-            messagebox.showinfo(APP, tr("4 images au maximum dans l'image TX. Retirez-en une dans "
+            messagebox.showinfo(APP, tr("8 images au maximum dans l'image TX. Retirez-en une dans "
                                         "« Image du correspondant… »."))
             return
         elif add:
@@ -5290,7 +5309,7 @@ class App(tk.Tk):
         def add_pc():
             """Bouton « Image du PC… » : une image de l'ordinateur, incrustée comme celles reçues."""
             if len(self.pips) >= self.PIP_MAX_N:
-                messagebox.showinfo(APP, tr("4 images au maximum dans l'image TX. Retirez-en une dans "
+                messagebox.showinfo(APP, tr("8 images au maximum dans l'image TX. Retirez-en une dans "
                                             "« Image du correspondant… »."), parent=w)
                 return
             types = " ".join("*" + e for e in self.PIP_LOCAL_TYPES)

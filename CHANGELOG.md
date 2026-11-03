@@ -1,5 +1,9 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 2.01 — jusqu'à 8 images incrustées
+
+- **8 images reçues** peuvent maintenant être incrustées dans l'image TX, au lieu de 4 (demande de F1ABL). Les 4 premières se placent dans les coins, comme avant ; les suivantes au milieu des bords (en haut, en bas, à gauche, à droite). À l'arrivée de la 5e, les images des coins en taille moyenne ou grande (jamais réglées à la main) passent en petite pour que rien ne se chevauche ; chacune peut toujours être déplacée et agrandie à la souris.
+
 ## Version 2.00 — copie JPG des images reçues
 
 - **Copie JPG** (demande de VK3DNH) : Réglages → Dossier des images reçues → case « Copie JPG de chaque image reçue dans un seul dossier ». Chaque image reçue (radio, hybride, EasyPal) est copiée en plus en .jpg, avec le même nom que l'original, directement dans le dossier choisi, sans sous-dossier par jour : pratique pour un « mur des dernières images reçues » sur un site web (QSL.net demande des fichiers .jpg). Une image déjà en JPEG est copiée sans perte ; les autres formats sont convertis (GIF animé : première image). Quand l'indicatif arrive en fin d'image, la copie est renommée avec lui. Décochée par défaut ; l'enregistrement habituel ne change pas, et ce dossier n'est jamais effacé par le nettoyage automatique.

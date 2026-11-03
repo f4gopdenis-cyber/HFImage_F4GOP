@@ -759,7 +759,7 @@ ZH = {
     'Rotation': '旋转',
     'Perspective': '透视',
     'Remettre droit': '校正',
-    "4 images au maximum dans l'image TX. Retirez-en une dans « Image du correspondant… ».": '发射图像中最多 4 张图片。请在“对方图像…”中移除一张。',
+    "8 images au maximum dans l'image TX. Retirez-en une dans « Image du correspondant… ».": '发射图像中最多 8 张图片。请在“对方图像…”中移除一张。',
     'Ajouter cette image à mon image TX (plusieurs incrustations)': '把此图像加入我的发射图像(多个内嵌图)',
     'Éclair (9 s)': 'Flash(9 秒)',
     'Annonce radio : ~9 s (DATAC13 robuste + DATAC0, éclair : lien par Internet)': '空中播报: 约 9 秒(稳健 DATAC13 + DATAC0,Flash: 链接走互联网)',

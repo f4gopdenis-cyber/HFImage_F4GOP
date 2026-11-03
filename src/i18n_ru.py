@@ -760,7 +760,7 @@ RU = {
     'Rotation': 'Поворот',
     'Perspective': 'Перспектива',
     'Remettre droit': 'Выровнять',
-    "4 images au maximum dans l'image TX. Retirez-en une dans « Image du correspondant… ».": 'Максимум 4 изображения в изображении TX. Удалите одно в «Изображение корреспондента…».',
+    "8 images au maximum dans l'image TX. Retirez-en une dans « Image du correspondant… ».": 'Максимум 8 изображений в изображении TX. Удалите одно в «Изображение корреспондента…».',
     'Ajouter cette image à mon image TX (plusieurs incrustations)': 'Добавить это изображение в моё изображение TX (несколько вставок)',
     'Éclair (9 s)': 'Быстрый (9 с)',
     'Annonce radio : ~9 s (DATAC13 robuste + DATAC0, éclair : lien par Internet)': 'Радио объявление: ~9 с (устойчивый DATAC13 + DATAC0, быстрая: ссылка через Интернет)',

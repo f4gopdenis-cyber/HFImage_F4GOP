@@ -59,7 +59,7 @@ class Reglages(unittest.TestCase):
             import app
         except (ImportError, OSError) as e:
             raise unittest.SkipTest(str(e))
-        s = types.SimpleNamespace(conf={}, PIP_MAX_N=4, PIP_CORNERS=app.App.PIP_CORNERS)
+        s = types.SimpleNamespace(conf={}, PIP_MAX_N=app.App.PIP_MAX_N, PIP_CORNERS=app.App.PIP_CORNERS, PIP_EDGES=app.App.PIP_EDGES)
         s.pips = [{"path": "a", "corner": "haut-droite", "size": "moyenne", "pos": None, "scale": None,
                    "rot": -12, "tilt": 0.4},
                   {"path": "b", "corner": "bas-gauche", "size": "petite", "pos": [0.2, 0.3], "scale": 0.3,
