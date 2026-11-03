@@ -66,7 +66,7 @@ import random
 import wave
 
 APP = "HFImage F4GOP"
-VERSION = "2.02"
+VERSION = "2.03"
 
 
 def _take_profile(argv):
@@ -3899,7 +3899,7 @@ class App(tk.Tk):
             self._rx_call(st.get("callsign") or good.get("callsign"), eng.drm_t)
         got, K = st.get("seg_received", 0), st.get("seg_total", 0)
         if K > 0:
-            self._rx_tab_auto(("easypal", K, st.get("callsign") or good.get("callsign")))
+            self._rx_tab_auto(("easypal", self._drm_episode(eng.drm_t)))
             # dès le début : mode EasyPal (A/B/E et QAM repris quand l'image sera complète).
             # Une seule fois par émission reçue : l'état EasyPal reste affiché après la fin du signal,
             # et le mode choisi ensuite à la main (Auto…) ne doit pas être remis sur EasyPal (1.10).
@@ -7349,6 +7349,18 @@ class App(tk.Tk):
             self.pb_rx.configure(value=100 * min(got, K) / K)
             self.v_rxstat.set(txt + f"\nImage en cours : {min(got, K)} / {K} symboles "
                                     f"({100 * min(got, K) // K} %)")
+
+    DRM_EPISODE_GAP_S = 15
+
+    def _drm_episode(self, t):
+        """2.03 : numéro de la réception EasyPal en cours. Le total de segments et l'indicatif changent
+        pendant la réception : s'en servir pour reconnaître l'image faisait revenir sur l'onglet RX sans
+        cesse (signalé par F4GOP). Même réception tant que le signal ne s'interrompt pas plus de 15 s."""
+        ep = self.__dict__.setdefault("_drm_ep", [0, 0.0])
+        if t - ep[1] > self.DRM_EPISODE_GAP_S:
+            ep[0] += 1
+        ep[1] = max(ep[1], t)
+        return ep[0]
 
     def _rx_tab_auto(self, key):
         """Une image commence à arriver alors que l'onglet Émission est affiché : on passe

@@ -1,5 +1,9 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 2.03 — mode EasyPal : on peut rester sur l'onglet TX
+
+- Correction (signalée par F4GOP) : pendant la réception d'une image EasyPal, HFImage revenait sans cesse sur l'onglet RX, ce qui empêchait de préparer son image dans l'onglet TX. Il reconnaissait l'image par son nombre total de segments et l'indicatif, qui changent pendant la réception. Il passe maintenant sur RX une seule fois par réception (même réception tant que le signal ne s'interrompt pas plus de 15 s) ; si vous revenez sur TX, il vous y laisse.
+
 ## Version 2.02 — logo indépendant
 
 - **Logo indépendant** (demande de Gérard) : votre logo et vos images du PC ne sont plus mélangés aux images des correspondants. Nouvelle case **« Logo »** dans l'onglet TX pour l'afficher ou le masquer d'un clic, sans le perdre (place, taille, opacité, rotation gardées, même après redémarrage), comme dans le « GMSK controller ». « Répondre avec cette image » (Galerie) ne remplace plus que les images reçues : le logo reste en place. Au premier lancement, la case « Logo » reprend l'état de la case « Image du correspondant ».
