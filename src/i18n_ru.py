@@ -3,6 +3,10 @@
 Traduction de Yuri (2026). Les textes absents restent en anglais."""
 
 RU = {
+    'Copie JPG de chaque image reçue dans un seul dossier': 'JPG-копия каждого принятого изображения в одной папке',
+    "Même nom que l'image reçue, en .jpg, sans sous-dossier par jour (pour un site web,\nQSL.net…). Vide : sous-dossier « jpg » du dossier des images reçues. Jamais effacé.": 'То же имя, что у принятого изображения, в формате .jpg, без подпапок по дням (для сайта,\nQSL.net…). Пусто: подпапка «jpg» папки принятых изображений. Никогда не удаляется.',
+    'Dossier des copies JPG': 'Папка для JPG-копий',
+    'Choisissez un autre dossier que celui des images reçues (par exemple son sous-dossier « jpg »).': 'Выберите папку, отличную от папки принятых изображений (например, её подпапку «jpg»).',
     'Clic : afficher — Ctrl+clic : choisir — double-clic : plein format — clic droit : options': 'Клик: показать — Ctrl+клик: выбрать — двойной клик: полный размер — правый клик: параметры',
     '{0} images choisies : clic droit pour les envoyer': 'Выбрано изображений: {0} — правый клик для отправки',
     '1 image choisie (Ctrl+clic pour en ajouter)': 'Выбрано 1 изображение (Ctrl+клик, чтобы добавить)',

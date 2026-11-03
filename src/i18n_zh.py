@@ -3,6 +3,10 @@
 Traduction de Yang BH2RMX, avec BD4QXR (2026). Les textes absents restent en anglais."""
 
 ZH = {
+    'Copie JPG de chaque image reçue dans un seul dossier': '每张接收图像的 JPG 副本保存在同一文件夹',
+    "Même nom que l'image reçue, en .jpg, sans sous-dossier par jour (pour un site web,\nQSL.net…). Vide : sous-dossier « jpg » du dossier des images reçues. Jamais effacé.": '与接收图像同名，保存为 .jpg，不按日期分子文件夹（用于网站、\nQSL.net…）。留空：接收图像文件夹中的“jpg”子文件夹。从不删除。',
+    'Dossier des copies JPG': 'JPG 副本文件夹',
+    'Choisissez un autre dossier que celui des images reçues (par exemple son sous-dossier « jpg »).': '请选择与接收图像文件夹不同的文件夹（例如其“jpg”子文件夹）。',
     'Clic : afficher — Ctrl+clic : choisir — double-clic : plein format — clic droit : options': '单击: 显示 — Ctrl+单击: 选择 — 双击: 原始尺寸 — 右键: 选项',
     '{0} images choisies : clic droit pour les envoyer': '已选择 {0} 张图像: 右键发送',
     '1 image choisie (Ctrl+clic pour en ajouter)': '已选择 1 张图像 (Ctrl+单击添加更多)',

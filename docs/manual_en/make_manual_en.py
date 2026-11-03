@@ -382,6 +382,10 @@ s += B(["<b>Status panel</b> (top left): callsign of the station received, radio
         "<b>Automatic cleaning</b> (Settings, below the folder): day folders older than <b>30 days</b> (adjustable) are "
         "deleted, sent pictures included. Nothing else is ever deleted: received files, recordings and pictures from "
         "older versions are kept. Untick the box to keep everything.",
+        "<b>JPG copy</b> (Settings, below the folder; requested by VK3DNH): every received picture is also copied as "
+        "<b>.jpg</b>, with the same name, into <b>a single folder</b> without day sub-folders (by default the “jpg” "
+        "sub-folder). Handy for a “last pictures received” wall on a website (QSL.net requires .jpg files). This folder "
+        "is never deleted.",
         "<b>Replay RX</b>: decodes the last 15 minutes again (if a picture was missed)."])
 s.append(P("Gallery", "h2"))
 s.append(P("<b>Gallery</b> tab: the last 30, 60 or 100 pictures received (“from F4EMK”) or sent. Click: show; "

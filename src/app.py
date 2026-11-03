@@ -31,6 +31,7 @@ import hamdrm
 import hybrid
 import i18n
 import imgfmt
+import jpgcopy
 import presence
 import docking
 import gallery
@@ -65,7 +66,7 @@ import random
 import wave
 
 APP = "HFImage F4GOP"
-VERSION = "1.99"
+VERSION = "2.00"
 
 
 def _take_profile(argv):
@@ -105,7 +106,7 @@ DEFAULTS = {
     "look_style": "classique", "modern_theme": "Vert EasyPal",
     "theme": "Vert EasyPal", "theme_color": "#3a8ee6", "font_family": "(par défaut)", "font_size": "9",
     "locator": "", "bsr_auto": True, "fix_auto": True, "ack_auto": True, "listen_after": True, "follow_mode": True,
-    "cwid": False, "cat_freq": True, "season_theme": False, "lang": "", "msg_translate": True, "wait_free": True, "hyb_flash": True,
+    "cwid": False, "cat_freq": True, "season_theme": False, "jpg_copy": False, "jpg_dir": "", "lang": "", "msg_translate": True, "wait_free": True, "hyb_flash": True,
     "freq_presets": [[3733000, "LSB"], [7058000, "LSB"], [14233000, "USB"], [21340000, "USB"], [28680000, "USB"]],
     "drm_mode": "B", "drm_qam": "QAM16", "drm_bw": "2,4 kHz", "drm_prot": "Haute (HI)", "drm_rs": "RS2",
     "wav_volume": 5, "wft_font": "Arial", "wft_neg": False, "wft_text": "",
@@ -3362,6 +3363,22 @@ class App(tk.Tk):
                           "plus anciens\nque ce nombre de jours sont effacés. Jamais effacés : les fichiers reçus "
                           "(dossier « fichiers »),\nles images des versions avant la 0.84 et vos propres dossiers.",
                   foreground="#555", justify="left").pack(anchor="w", pady=(4, 0))
+        # 2.00 (demande de VK3DNH) : copie JPG de chaque image reçue, dans un seul dossier (sites web, QSL.net)
+        jf = ttk.Frame(d)
+        jf.pack(fill="x", pady=(6, 0))
+        self.v_jpg = tk.BooleanVar(value=bool(self.conf.get("jpg_copy")))
+        self.v_jpgdir = tk.StringVar(value=self.conf.get("jpg_dir", ""))
+        ttk.Checkbutton(jf, text="Copie JPG de chaque image reçue dans un seul dossier", variable=self.v_jpg,
+                        command=self._jpg_changed).pack(side="left")
+        jf2 = ttk.Frame(d)
+        jf2.pack(fill="x", pady=(2, 0))
+        e = ttk.Entry(jf2, textvariable=self.v_jpgdir, width=40)
+        e.pack(side="left")
+        e.bind("<FocusOut>", lambda ev: self._jpg_changed())
+        ttk.Button(jf2, text="…", width=3, command=self._jpg_pick).pack(side="left", padx=4)
+        ttk.Label(d, text="Même nom que l'image reçue, en .jpg, sans sous-dossier par jour (pour un site web,\n"
+                          "QSL.net…). Vide : sous-dossier « jpg » du dossier des images reçues. Jamais effacé.",
+                  foreground="#555", justify="left").pack(anchor="w", pady=(2, 0))
         sk = ttk.Frame(d)
         sk.pack(fill="x", pady=(6, 0))
         ttk.Label(sk, text="Images envoyées gardées (dossier « envoyees »)").pack(side="left")
@@ -4012,6 +4029,50 @@ class App(tk.Tk):
             pass
         return int(idx)
 
+    # ---------------------------------------------------------------- copie JPG (2.00, demande de VK3DNH)
+    JPG_SRC_EXT = (".jpg", ".jpeg", ".png", ".gif", ".webp", ".avif", ".svg", ".jp2", ".bmp")
+
+    def _jpg_dir(self):
+        return (self.conf.get("jpg_dir") or "").strip() or os.path.join(self.conf.get("folder") or DEFAULT_OUT, "jpg")
+
+    def _jpg_copy(self, iid, path, png=None):
+        """Image reçue -> copie JPG dans un seul dossier (en tâche de fond ; une erreur va au journal)."""
+        if not self.conf.get("jpg_copy") or not path or not path.lower().endswith(self.JPG_SRC_EXT):
+            return
+        folder = self._jpg_dir()
+        if jpgcopy.same_folder(folder, self.conf.get("folder") or DEFAULT_OUT):
+            return                        # même dossier que les images reçues : la galerie les verrait en double
+        copies = self.__dict__.setdefault("_jpg_copies", {})
+        old = copies.get(iid)
+
+        def run():
+            try:
+                dst = jpgcopy.make(folder, path, png, old)
+                copies[iid] = dst
+                while len(copies) > 300:
+                    copies.pop(next(iter(copies)))
+            except Exception as e:
+                self.ui(self.log_exc, "Copie JPG", e)
+        threading.Thread(target=run, daemon=True).start()
+
+    def _jpg_pick(self):
+        p = filedialog.askdirectory(initialdir=self.v_jpgdir.get() or self._jpg_dir(), parent=self.win_conf,
+                                    title=tr("Dossier des copies JPG"))
+        if p:
+            self.v_jpgdir.set(p)
+            self._jpg_changed()
+
+    def _jpg_changed(self):
+        d = self.v_jpgdir.get().strip()
+        if self.v_jpg.get() and jpgcopy.same_folder(d or self._jpg_dir(), self.v_folder.get()):
+            messagebox.showinfo(APP, tr("Choisissez un autre dossier que celui des images reçues "
+                                        "(par exemple son sous-dossier « jpg »)."), parent=self.win_conf)
+            self.v_jpgdir.set("")
+            d = ""
+        self.conf["jpg_copy"] = bool(self.v_jpg.get())
+        self.conf["jpg_dir"] = d
+        self._save_conf_file()
+
     def _clean_days(self):
         try:
             return max(1, min(3650, int(self.v_clean_days.get())))
@@ -4060,6 +4121,7 @@ class App(tk.Tk):
                 folder=self.v_folder.get(),
                 hyb_on=bool(self.v_hyb.get()), hyb_flash=bool(self.v_flash.get()),
                 rx_clean=bool(self.v_clean.get()), rx_clean_days=self._clean_days(),
+                jpg_copy=bool(self.v_jpg.get()), jpg_dir=self.v_jpgdir.get().strip(),
                 hyb_host=self.v_hhost.get().strip(),
                 hyb_port=int(self.v_hport.get() or 21), hyb_user=self.v_huser.get().strip(),
                 hyb_pass=hybrid.protect(self.v_hpass.get()), hyb_dir=self.v_hdir.get().strip(),
@@ -7307,6 +7369,7 @@ class App(tk.Tk):
                 self.ack_pending[hdr["id"]]["wait_until"] = time.time() + 12
         if not hdr.get("preview") and not from_file:
             self._follow_mode(hdr, path, drm)
+            self._jpg_copy(hdr["id"], path, png)          # 2.00 : copie JPG (site web, demande de VK3DNH)
         if mode == engine.DRM_MODE:
             mode = f"EasyPal {hdr.get('drm', '')}".strip()
         self.log(f"{kind} {who} ({mode}, {hdr['size']} octets) : {os.path.basename(path)}")
@@ -7536,6 +7599,8 @@ class App(tk.Tk):
         if info.get("call"):
             info["call"] = self._full_call(info["call"])
         """L'indicatif est arrivé (trame d'identification de fin) : mise à jour."""
+        if info["id"] in getattr(self, "_jpg_copies", {}):
+            self._jpg_copy(info["id"], path, png)          # copie JPG renommée avec l'indicatif
         if info["id"] in self.ack_pending:
             self.ack_pending[info["id"]]["call"] = info["call"]
         self._heard(info.get("call"), self.snr_by_id.get(info["id"]), "Image reçue", info.get("loc"))

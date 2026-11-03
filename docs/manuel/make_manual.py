@@ -378,6 +378,10 @@ s += B(["<b>Panneau d'état</b> (en haut à gauche) : indicatif de la station re
         "<b>Nettoyage automatique</b> (Réglages, sous le dossier) : les sous-dossiers par jour de plus de <b>30 jours</b> "
         "(réglable) sont effacés, images envoyées comprises. Rien d'autre n'est jamais effacé : ni les fichiers reçus, "
         "ni les enregistrements, ni les images des versions précédentes. Décochez la case pour tout garder.",
+        "<b>Copie JPG</b> (Réglages, sous le dossier ; demande de VK3DNH) : chaque image reçue est copiée en plus en "
+        "<b>.jpg</b>, avec le même nom, dans <b>un seul dossier</b> sans sous-dossier par jour (par défaut le sous-dossier "
+        "« jpg »). Pratique pour un « mur des dernières images reçues » sur un site web (QSL.net demande des .jpg). "
+        "Ce dossier n'est jamais effacé.",
         "<b>Relire RX</b> : redécode les 15 dernières minutes (si une image a été manquée)."])
 s.append(P("Galerie", "h2"))
 s.append(P("Onglet <b>Galerie</b> : les 30, 60 ou 100 dernières images reçues (« de F4EMK ») ou envoyées. Clic : "
