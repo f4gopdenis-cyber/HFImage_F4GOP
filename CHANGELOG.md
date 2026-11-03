@@ -1,5 +1,11 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 2.02 — logo indépendant
+
+- **Logo indépendant** (demande de Gérard) : votre logo et vos images du PC ne sont plus mélangés aux images des correspondants. Nouvelle case **« Logo »** dans l'onglet TX pour l'afficher ou le masquer d'un clic, sans le perdre (place, taille, opacité, rotation gardées, même après redémarrage), comme dans le « GMSK controller ». « Répondre avec cette image » (Galerie) ne remplace plus que les images reçues : le logo reste en place. Au premier lancement, la case « Logo » reprend l'état de la case « Image du correspondant ».
+- Onglet TX : « Image du correspondant », « Logo » et « Bulles… » sur une 3e ligne (la 2e était coupée à droite à la largeur normale de la fenêtre).
+- Édition directe : le message « 8 images au maximum » disait encore 4.
+
 ## Version 2.01 — jusqu'à 8 images incrustées
 
 - **8 images reçues** peuvent maintenant être incrustées dans l'image TX, au lieu de 4 (demande de F1ABL). Les 4 premières se placent dans les coins, comme avant ; les suivantes au milieu des bords (en haut, en bas, à gauche, à droite). À l'arrivée de la 5e, les images des coins en taille moyenne ou grande (jamais réglées à la main) passent en petite pour que rien ne se chevauche ; chacune peut toujours être déplacée et agrandie à la souris.

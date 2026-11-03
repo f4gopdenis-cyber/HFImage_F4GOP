@@ -3,6 +3,8 @@
 Traduction de Yuri (2026). Les textes absents restent en anglais."""
 
 RU = {
+    'Logo': 'Логотип',
+    "Pas encore de logo : clic droit sur l'image de l'onglet TX → « Ajouter un logo / une image du PC… ».": 'Логотипа пока нет: правый клик по изображению на вкладке TX → «Добавить логотип / изображение с ПК…».',
     'Copie JPG de chaque image reçue dans un seul dossier': 'JPG-копия каждого принятого изображения в одной папке',
     "Même nom que l'image reçue, en .jpg, sans sous-dossier par jour (pour un site web,\nQSL.net…). Vide : sous-dossier « jpg » du dossier des images reçues. Jamais effacé.": 'То же имя, что у принятого изображения, в формате .jpg, без подпапок по дням (для сайта,\nQSL.net…). Пусто: подпапка «jpg» папки принятых изображений. Никогда не удаляется.',
     'Dossier des copies JPG': 'Папка для JPG-копий',

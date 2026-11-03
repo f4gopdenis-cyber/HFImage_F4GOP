@@ -89,7 +89,7 @@ class EditionDirecte(unittest.TestCase):
         ed.add_pc_image(self.logo)
         p = a.pips[-1]
         self.assertTrue(p["logo"])                                   # PNG transparent : logo
-        self.assertTrue(a.conf["pip_on"])
+        self.assertTrue(a.conf["logo_on"])                           # 2.02 : case « Logo » (indépendante)
         ox, oy, dw, dh = self.box()
         cx, cy = ox + dw // 2, oy + dh // 2
         self.assertEqual(ed.hit(E(cx, cy))[:2], ("p", 0))

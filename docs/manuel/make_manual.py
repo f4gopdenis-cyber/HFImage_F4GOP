@@ -429,6 +429,10 @@ s.append(P("Une fois l'image ouverte dans l'onglet TX, tout se fait <b>sur l'ima
            "aussi son style, ses couleurs, sa forme, sa légende. Les fenêtres « Bulles… » et « Image du "
            "correspondant… » restent là pour les réglages fins. Un <b>clic à côté</b> des textes et logos ouvre une "
            "autre image, comme avant (s'il y a une sélection, le premier clic l'enlève)."))
+s.append(P("<b>Case « Logo »</b> (onglet TX, à côté de « Image du correspondant » ; demande de Gérard) : votre logo et vos "
+           "images du PC sont <b>indépendants</b> des images des correspondants. La case les affiche ou les masque d'un clic, "
+           "sans les perdre (place, taille, opacité, rotation gardées, même après redémarrage). « Répondre avec cette "
+           "image » (Galerie) ne remplace que les images reçues : votre logo reste en place."))
 s.append(P("Bulles de texte (BD)", "h2"))
 s.append(P("Bouton <b>Bulles…</b> (onglet TX) ou menu <b>Images → Bulles de texte…</b> : on écrit un texte, il "
            "apparaît dans une bulle de bande dessinée sur l'image émise. Cinq styles : <b>parole</b> (bulle ronde "

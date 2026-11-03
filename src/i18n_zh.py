@@ -3,6 +3,8 @@
 Traduction de Yang BH2RMX, avec BD4QXR (2026). Les textes absents restent en anglais."""
 
 ZH = {
+    'Logo': '标志',
+    "Pas encore de logo : clic droit sur l'image de l'onglet TX → « Ajouter un logo / une image du PC… ».": '尚无标志：在 TX 选项卡的图像上右键 → “添加标志 / 电脑中的图像…”。',
     'Copie JPG de chaque image reçue dans un seul dossier': '每张接收图像的 JPG 副本保存在同一文件夹',
     "Même nom que l'image reçue, en .jpg, sans sous-dossier par jour (pour un site web,\nQSL.net…). Vide : sous-dossier « jpg » du dossier des images reçues. Jamais effacé.": '与接收图像同名，保存为 .jpg，不按日期分子文件夹（用于网站、\nQSL.net…）。留空：接收图像文件夹中的“jpg”子文件夹。从不删除。',
     'Dossier des copies JPG': 'JPG 副本文件夹',

@@ -77,8 +77,8 @@ class TxEditor:
         h = bubbles.hit(dw, dh, [b for b in a.bubbles], x, y, grab=10)
         if h is not None and (a.bubbles[h[0]].get("text") or "").strip():
             return "b", h[0], h[1]
-        if a.conf.get("pip_on"):
-            for i in range(len(a.pips) - 1, -1, -1):
+        for i in range(len(a.pips) - 1, -1, -1):
+            if a._pip_visible(a.pips[i]):
                 r = self._pip_rect(i, dw, dh)
                 if r and r[0] <= x <= r[0] + r[2] and r[1] <= y <= r[1] + r[3]:
                     return "p", i, "pip"
@@ -334,7 +334,7 @@ class TxEditor:
     def add_pip(self, cand, logo=None):
         a = self.app
         if len(a.pips) >= a.PIP_MAX_N:
-            a._edit_info(a._tr("4 images au maximum dans l'image TX. Retirez-en une dans "
+            a._edit_info(a._tr("8 images au maximum dans l'image TX. Retirez-en une dans "
                                "« Image du correspondant… »."))
             return
         p = a._pip_new(cand)
@@ -346,9 +346,14 @@ class TxEditor:
                 logo = False
         p.update(cap=None, logo=bool(logo), opa=1.0)
         a.pips.append(p)
-        a.conf["pip_on"] = True
-        if hasattr(a, "v_pipon"):
-            a.v_pipon.set(True)
+        if a._pip_mine(p):                         # logo / image du PC : case « Logo » (2.02)
+            a.conf["logo_on"] = True
+            if hasattr(a, "v_logoon"):
+                a.v_logoon.set(True)
+        else:
+            a.conf["pip_on"] = True
+            if hasattr(a, "v_pipon"):
+                a.v_pipon.set(True)
         self.sel = ("p", len(a.pips) - 1)
         self.changed()
 

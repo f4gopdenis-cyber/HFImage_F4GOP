@@ -431,6 +431,10 @@ s.append(P("Once the picture is open in the TX tab, everything is done <b>on the
            "Right-clicking the selected item also gives its style, colours, shape and caption. The “Bubbles…” and "
            "“Correspondent's image…” windows remain for fine settings. A <b>click beside</b> the texts and logos opens "
            "another picture, as before (if something is selected, the first click just deselects it)."))
+s.append(P("<b>“Logo” box</b> (TX tab, next to “Correspondent's image”): your logo and your PC pictures are "
+           "<b>independent</b> of the correspondents' pictures. The box shows or hides them with one click, without losing "
+           "them (position, size, opacity, rotation kept, even after a restart). “Reply with this image” (Gallery) only "
+           "replaces the received pictures: your logo stays in place."))
 s.append(P("Speech bubbles", "h2"))
 s.append(P("<b>Bubbles…</b> button (TX tab) or <b>Images → Speech bubbles…</b>: type a text and it appears in a "
            "comic-strip bubble on the transmitted picture. Four styles: <b>speech</b> (round bubble with a tail), "

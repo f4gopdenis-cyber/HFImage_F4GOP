@@ -66,7 +66,7 @@ import random
 import wave
 
 APP = "HFImage F4GOP"
-VERSION = "2.01"
+VERSION = "2.02"
 
 
 def _take_profile(argv):
@@ -1785,19 +1785,36 @@ class App(tk.Tk):
         ttk.Checkbutton(r2, text="Mes conditions de trafic", variable=self.v_tcon,
                         command=_tc_toggle).pack(side="left")
         ttk.Button(r2, text="…", width=3, command=self.trafic_dialog).pack(side="left", padx=(2, 0))
+        # 2.02 : 3e ligne (incrustations, logo, bulles) : la 2e débordait à la largeur normale de la fenêtre
+        r3 = ttk.Frame(tb)
+        r3.pack(fill="x", pady=(4, 0))
         self.v_pipon = tk.BooleanVar(value=bool(self.conf.get("pip_on")))
 
         def _pip_toggle():
             self.conf["pip_on"] = bool(self.v_pipon.get())
             self._save_conf_file()
-            if self.conf["pip_on"] and not self.pips:
+            if self.conf["pip_on"] and not any(not self._pip_mine(p) for p in self.pips):
                 self.pip_dialog()
             else:
                 self.prepare()
-        ttk.Checkbutton(r2, text="Image du correspondant", variable=self.v_pipon,
-                        command=_pip_toggle).pack(side="left", padx=(12, 0))
-        ttk.Button(r2, text="…", width=3, command=self.pip_dialog).pack(side="left", padx=(2, 0))
-        ttk.Button(r2, text="💬 Bulles…", command=self.bubble_dialog).pack(side="left", padx=(12, 0))
+        ttk.Checkbutton(r3, text="Image du correspondant", variable=self.v_pipon,
+                        command=_pip_toggle).pack(side="left")
+        ttk.Button(r3, text="…", width=3, command=self.pip_dialog).pack(side="left", padx=(2, 0))
+        if self.conf.get("logo_on") is None:
+            # avant la 2.02, le logo suivait la case « Image du correspondant » : même état au départ
+            self.conf["logo_on"] = bool(self.conf.get("pip_on"))
+        self.v_logoon = tk.BooleanVar(value=bool(self.conf.get("logo_on")))
+
+        def _logo_toggle():
+            self.conf["logo_on"] = bool(self.v_logoon.get())
+            self._save_conf_file()
+            if self.conf["logo_on"] and not any(self._pip_mine(p) for p in self.pips):
+                messagebox.showinfo(APP, tr("Pas encore de logo : clic droit sur l'image de l'onglet TX → "
+                                            "« Ajouter un logo / une image du PC… »."))
+            self.prepare()
+        ttk.Checkbutton(r3, text="Logo", variable=self.v_logoon, command=_logo_toggle).pack(side="left",
+                                                                                             padx=(12, 0))
+        ttk.Button(r3, text="💬 Bulles…", command=self.bubble_dialog).pack(side="left", padx=(12, 0))
 
         # réglages du mode EasyPal (HamDRM) : visibles seulement dans ce mode
         self.drm_row = ttk.Frame(tb)
@@ -4263,7 +4280,7 @@ class App(tk.Tk):
         if not c or c[0] is not self.src_img or c[1] != size:
             self._edit_base = c = (self.src_img, size, self.src_img.convert("RGB").resize(size, Image.BILINEAR))
         im = c[2]
-        if self.conf.get("pip_on") and self.pips:
+        if self._pips_shown():
             im = self._pip_compose(im)[0]
         im = self._tc_apply(im, cache=False)
         return bubbles.draw(im, self.bubbles)
@@ -4664,10 +4681,29 @@ class App(tk.Tk):
                 del cache[k]
         return cache[path]
 
-    def _pip_compose(self, base):
-        """base + les images incrustées -> (image, [rectangle (x, y, W, H) ou None par incrustation])."""
+    # 2.02 (demande de Gérard) : le logo et les images du PC sont indépendants des images des
+    # correspondants : case « Logo » à part, et « Répondre avec cette image » ne les retire plus
+    @staticmethod
+    def _pip_mine(p):
+        """Logo ou image prise sur le PC (pas une image reçue d'un correspondant)."""
+        return bool(p.get("logo") or p.get("local"))
+
+    def _pip_visible(self, p):
+        if self._pip_mine(p):
+            return bool(self.conf.get("logo_on", True))
+        return bool(self.conf.get("pip_on"))
+
+    def _pips_shown(self):
+        return [p for p in getattr(self, "pips", []) if self._pip_visible(p)]
+
+    def _pip_compose(self, base, all_=False):
+        """base + les images incrustées -> (image, [rectangle (x, y, W, H) ou None par incrustation]).
+        all_ : toutes (aperçu de la fenêtre « Image du correspondant »), sinon celles des cases cochées."""
         im, rects = base, []
         for p in self.pips:
+            if not all_ and not self._pip_visible(p):
+                rects.append(None)
+                continue
             try:
                 th = self._pip_thumb(p["path"])
                 cap = self._pip_caption(p)
@@ -4686,9 +4722,10 @@ class App(tk.Tk):
 
     def _pip_source(self):
         """Image ouverte, avec les images des correspondants incrustées si la case est cochée."""
-        if self.src_img is None or not self.conf.get("pip_on") or not self.pips:
+        if self.src_img is None or not self._pips_shown():
             return self.src_img
-        key = (id(self.src_img), self.conf.get("pip_report", True),
+        key = (id(self.src_img), self.conf.get("pip_report", True), bool(self.conf.get("pip_on")),
+               bool(self.conf.get("logo_on", True)),
                tuple((p["path"], self._pip_caption(p), p.get("corner"), p.get("size"), tuple(p.get("pos") or ()),
                       p.get("scale"), p.get("rot") or 0, p.get("tilt") or 0, bool(p.get("logo")),
                       p.get("opa", 1.0), p.get("shape") or "rect") for p in self.pips))
@@ -4747,7 +4784,8 @@ class App(tk.Tk):
         elif add:
             self.pips.append(self._pip_new(cand))
         else:
-            self.pips = [self._pip_new(cand, 0)]
+            mine = [p for p in self.pips if self._pip_mine(p)]            # logo gardé (2.02)
+            self.pips = [self._pip_new(cand, 0)] + mine[:self.PIP_MAX_N - 1]
         self.conf["pip_on"] = True
         if hasattr(self, "v_pipon"):
             self.v_pipon.set(True)
@@ -5273,7 +5311,7 @@ class App(tk.Tk):
                 small = real.copy()
                 small.thumbnail((960, 720))
                 geo["src_id"], geo["small"] = id(real), small
-            im, geo["rects"] = self._pip_compose(geo["small"])
+            im, geo["rects"] = self._pip_compose(geo["small"], all_=True)
             geo["size"] = im.size
             im = im.copy()
             im.thumbnail((480, 360))
