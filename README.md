@@ -3,6 +3,9 @@
 **Transmission d'images numériques en HF, façon EasyPal — sans SSTV.**
 Programme Windows de F4GOP (Denis, IN98QR) pour envoyer et recevoir des photos par radio, avec un modem numérique moderne (codec2 OFDM), une correction d'erreurs par code fontaine et un mode hybride par Internet.
 
+[![Affiche HFImage par F5PTY](docs/images/affiche_hfimage_f5pty.jpg)](docs/images/affiche_hfimage_f5pty.jpg)
+<sub>*Affiche : F5PTY (Ivan) — merci !*</sub>
+
 ![Fenêtre principale](docs/images/fenetre_principale.png)
 
 ## Téléchargement
