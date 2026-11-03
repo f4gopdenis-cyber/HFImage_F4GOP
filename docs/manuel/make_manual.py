@@ -384,6 +384,10 @@ s.append(P("Onglet <b>Galerie</b> : les 30, 60 ou 100 dernières images reçues 
            "afficher ; double-clic : plein format ; clic droit : <b>copier l'image</b> (à coller avec Ctrl+V dans Teams, "
            "un e-mail… ; un GIF animé est copié comme image fixe), renvoyer l'image, voir la station sur la carte, "
            "ouvrir le dossier, retirer de la galerie. Sous Linux, la copie demande xclip (sudo apt install xclip)."))
+s.append(P("<b>Envoi groupé</b> (idée de VK6ATI) : <b>Ctrl + clic</b> sur plusieurs images pour les choisir (cadre orange, ✔), "
+           "ou clic droit → « Choisir toutes les images affichées ». Puis clic droit → « Envoyer les N images choisies, l'une "
+           "après l'autre » : elles partent à la suite, dans le mode réglé (en hybride, ~11 s d'annonce par image), avec une "
+           "pause de 3 s entre deux images et en respectant « Attendre fréquence libre ». Le bouton <b>STOP</b> arrête la série."))
 s.append(img("galerie.png", 160, "La galerie des dernières images reçues."))
 
 # ------------------------------------------------------------------ 5

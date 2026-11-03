@@ -388,6 +388,10 @@ s.append(P("<b>Gallery</b> tab: the last 30, 60 or 100 pictures received (“fro
            "double-click: full size; right-click: <b>copy image</b> (paste it with Ctrl+V into Teams, an e-mail…; an animated "
            "GIF is copied as a still image; on Linux this needs xclip: sudo apt install xclip), send the picture again, reply with this picture, show the station "
            "on the map, open the folder, remove from the gallery."))
+s.append(P("<b>Batch send</b> (idea from VK6ATI): <b>Ctrl + click</b> several pictures to choose them (orange frame, ✔), "
+           "or right-click → “Choose all pictures shown”. Then right-click → “Send the N chosen pictures, one after the "
+           "other”: they go out in a row, in the selected mode (in hybrid, about 11 s of announcement per picture), with a "
+           "3 s pause between pictures and respecting “Wait for clear frequency”. The <b>STOP</b> button stops the series."))
 s.append(img("en_gallery.png", 150, "The gallery of the last pictures received."))
 
 # ------------------------------------------------------------------ 5

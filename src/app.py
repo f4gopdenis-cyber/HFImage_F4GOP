@@ -65,7 +65,7 @@ import random
 import wave
 
 APP = "HFImage F4GOP"
-VERSION = "1.98"
+VERSION = "1.99"
 
 
 def _take_profile(argv):
@@ -1533,6 +1533,7 @@ class App(tk.Tk):
                 j["fn"]()
             else:
                 self.log(tr("Émission en attente annulée."))
+                self._batch_cancel()
             return
         self.after(500, self._wait_tick)
 
@@ -1553,6 +1554,7 @@ class App(tk.Tk):
     def _wait_cancel(self):
         self._wait_clear()
         self.log(tr("Émission en attente annulée."))
+        self._batch_cancel()
 
     def _btn_emission_force(self, event=None):
         """Clic droit sur ÉMISSION : émettre tout de suite, sans attendre."""
@@ -6675,6 +6677,7 @@ class App(tk.Tk):
         self._update_comp()
         if relisten and self.rx_stream is None and self.v_in.get():
             self.toggle_listen(quiet=True)
+        self._batch_after_tx()
 
     def test_audio(self):
         """Tonalité 1 kHz de 2 s sur la sortie choisie (sans PTT)."""
@@ -8225,6 +8228,72 @@ class App(tk.Tk):
             p = self._gallery_src(e)
         if p and os.path.exists(p):
             self._open_path(imgfmt.viewable(p))
+
+    # ---------------------------------------------------------------- envoi groupé (1.99, idée de VK6ATI)
+    BATCH_PAUSE_MS = 3000          # entre deux images : le temps aux stations de répondre (ACK, BSR)
+
+    def _gallery_path(self, e):
+        p = e.get("file")
+        if p and p.lower().endswith((".avif", ".webp")) and e.get("png") and os.path.exists(e["png"]):
+            p = e["png"]
+        return p if p and os.path.exists(p) else None
+
+    def gallery_send_batch(self, entries):
+        """Galerie : images choisies envoyées l'une après l'autre, dans le mode réglé (hybride compris),
+        en respectant « Attendre fréquence libre ». STOP arrête la série."""
+        paths = [p for p in (self._gallery_path(e) for e in entries) if p]
+        if not paths:
+            return False
+        if self.tx_busy or getattr(self, "_batch", None) or getattr(self, "_wait_job", None):
+            messagebox.showinfo(APP, tr("Une émission est déjà en cours."))
+            return False
+        how = tr("mode hybride (par Internet)") if self.v_hyb.get() else self._tx_mode()
+        if len(paths) > 1 and not messagebox.askyesno(
+                APP, tr(f"Envoyer {len(paths)} images l'une après l'autre ({how}) ?") + "\n\n"
+                + tr("Le bouton STOP arrête la série.")):
+            return False
+        self._batch = {"paths": paths, "n": len(paths), "k": 0}
+        self.log(tr(f"Envoi groupé : {len(paths)} images ({how})."))
+        self._batch_next()
+        return True
+
+    def _batch_next(self):
+        b = getattr(self, "_batch", None)
+        if not b:
+            return
+        if not b["paths"]:
+            self._batch = None
+            self.log(tr(f"Envoi groupé terminé : {b['n']} images envoyées."))
+            return
+        p = b["paths"].pop(0)
+        b["k"] += 1
+        what = tr(f"image {b['k']}/{b['n']}")
+        try:
+            self.load_image(p)
+            self.show_tab("tx", focus=False)
+            self.prepare(sync=True)
+        except Exception as e:
+            self.log_exc("Envoi groupé", e)
+        self.log(tr("Envoi groupé :") + f" {what} — {os.path.basename(p)}")
+
+        def go():
+            if not self.transmit():
+                self._batch_cancel(tr("Envoi groupé arrêté : image non prête."))
+        self._tx_when_free(go, what)
+
+    def _batch_cancel(self, msg=None):
+        if getattr(self, "_batch", None):
+            self._batch = None
+            self.log(msg or tr("Envoi groupé arrêté."))
+
+    def _batch_after_tx(self):
+        """Fin d'une émission : image suivante de la série, sauf si STOP a été appuyé."""
+        if not getattr(self, "_batch", None):
+            return
+        if self.stop_tx.is_set():
+            self._batch_cancel()
+            return
+        self.after(self.BATCH_PAUSE_MS, self._batch_next)
 
     def gallery_to_tx(self, e):
         p = e.get("file")

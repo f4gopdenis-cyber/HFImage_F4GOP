@@ -136,6 +136,7 @@ class GalleryView(tk.Frame):
         self.shown = []
         self._job = None
         self._gen = 0
+        self.sel = []               # 1.99 : images choisies (Ctrl+clic) pour l'envoi groupé (idée de VK6ATI)
 
         bar = tk.Frame(self, bg="black")
         bar.pack(fill="x", pady=(4, 2))
@@ -149,7 +150,8 @@ class GalleryView(tk.Frame):
                      state="readonly").pack(side="left", padx=8)
         self.v_n.trace_add("write", lambda *a: self.refresh())
         tk.Button(bar, text="Dossier", relief="raised", bd=1, command=self._open_dir).pack(side="right", padx=6)
-        self.lb_help = tk.Label(bar, text="Clic : afficher — double-clic : plein format — clic droit : options",
+        self.lb_help = tk.Label(bar, text="Clic : afficher — Ctrl+clic : choisir — double-clic : plein format — "
+                                          "clic droit : options",
                                 bg="black", fg="white", font=("TkDefaultFont", 9, "bold"))
         self.lb_help.pack(side="left", padx=10)
 
@@ -194,6 +196,8 @@ class GalleryView(tk.Frame):
         except ValueError:
             n = 30
         self.shown = self.store.latest(self.v_dir.get(), n)
+        keys = {self._key(e) for e in self.shown}
+        self.sel = [k for k in self.sel if k in keys]
         self._cols = 0
         self._layout()
 
@@ -231,14 +235,17 @@ class GalleryView(tk.Frame):
                                 outline="#7a7a7a", tags=(tag,))
             cv.create_text(x + self.TW // 2, y + self.TH + self.CAP // 2 + 1, text=cap, fill="white",
                            font=("TkDefaultFont", 9), tags=(tag,))
+            if self._key(e) in self.sel:
+                self._mark(i, x, y)
             cv.tag_bind(tag, "<Button-1>", lambda ev, e=e: self._click(e))
+            cv.tag_bind(tag, "<Control-Button-1>", lambda ev, e=e: self._toggle(e))
             cv.tag_bind(tag, "<Double-Button-1>", lambda ev, e=e: self._full(e))
             cv.tag_bind(tag, "<Button-3>", lambda ev, e=e: self._popup(ev, e))
             cv.tag_bind(tag, "<Enter>", lambda ev, e=e: self._hover(e))
         rows = (len(self.shown) + cols - 1) // cols
         cv.configure(scrollregion=(0, 0, W, self.GAP + rows * (self.TH + self.CAP + self.GAP)))
-        self.lb_status.configure(text=self.tr(f"{len(self.shown)} images") if len(self.shown) != 1
-                                 else self.tr("1 image"))
+        self._x0 = x0
+        self._status()
         self._load_thumbs(gen, x0, cols)
 
     def _caption(self, e):
@@ -270,9 +277,57 @@ class GalleryView(tk.Frame):
             x = x0 + c * (self.TW + self.GAP)
             y = self.GAP + r * (self.TH + self.CAP + self.GAP)
             self.cv.create_image(x + self.TW // 2, y + self.TH // 2, image=ph, tags=(f"t{i}",))
+            self.cv.tag_raise(f"s{i}")              # cadre de sélection au-dessus de la vignette
         except Exception:
             pass
         self.after(1, lambda: self._load_thumbs(gen, x0, cols, i + 1))
+
+    # ------------------------------------------------------------------ sélection (envoi groupé)
+    @staticmethod
+    def _key(e):
+        return (e.get("file") or "", e.get("t", 0))
+
+    def _mark(self, i, x, y):
+        self.cv.create_rectangle(x - 3, y - 3, x + self.TW + 3, y + self.TH + self.CAP + 3, outline="#ffb000",
+                                 width=4, tags=(f"s{i}", "sel", f"t{i}"))
+        self.cv.create_text(x + self.TW - 12, y + 12, text="✔", fill="#ffb000", font=("TkDefaultFont", 14, "bold"),
+                            tags=(f"s{i}", "sel", f"t{i}"))
+
+    def _status(self):
+        n = len(self.shown)
+        txt = self.tr(f"{n} images") if n != 1 else self.tr("1 image")
+        if self.sel:
+            k = len(self.sel)
+            txt += "   —   " + (self.tr(f"{k} images choisies : clic droit pour les envoyer") if k > 1
+                                else self.tr("1 image choisie (Ctrl+clic pour en ajouter)"))
+        self.lb_status.configure(text=txt)
+
+    def _toggle(self, e):
+        k = self._key(e)
+        if k in self.sel:
+            self.sel.remove(k)
+        else:
+            self.sel.append(k)
+        self._layout()
+        return "break"
+
+    def selected(self):
+        """Images choisies, de la plus ancienne à la plus récente (ordre d'envoi)."""
+        by = {self._key(e): e for e in self.shown}
+        return sorted((by[k] for k in self.sel if k in by), key=lambda e: e.get("t", 0))
+
+    def select_all(self):
+        self.sel = [self._key(e) for e in self.shown]
+        self._layout()
+
+    def clear_selection(self):
+        self.sel = []
+        self._layout()
+
+    def _send_selection(self):
+        items = self.selected()
+        if items and self.app.gallery_send_batch(items):
+            self.clear_selection()
 
     # ------------------------------------------------------------------ actions
     def _hover(self, e):
@@ -290,6 +345,13 @@ class GalleryView(tk.Frame):
     def _popup(self, ev, e):
         m = self.menu
         m.delete(0, "end")
+        if self.sel:
+            k = len(self.selected())
+            m.add_command(label=self.tr(f"Envoyer les {k} images choisies, l'une après l'autre") if k > 1
+                          else self.tr("Envoyer l'image choisie"), command=self._send_selection)
+            m.add_command(label=self.tr("Annuler le choix des images"), command=self.clear_selection)
+        m.add_command(label=self.tr("Choisir toutes les images affichées (envoi groupé)"), command=self.select_all)
+        m.add_separator()
         m.add_command(label=self.tr("Afficher dans l'onglet RX"), command=lambda: self._click(e))
         m.add_command(label=self.tr("Ouvrir en plein format"), command=lambda: self._full(e))
         m.add_command(label=self.tr("Copier l'image"), command=lambda: self.app.gallery_copy(e))

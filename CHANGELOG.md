@@ -1,5 +1,9 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 1.99 — Galerie : envoi groupé
+
+- **Envoi groupé** (idée de VK6ATI) : dans la Galerie, **Ctrl + clic** choisit plusieurs images (cadre orange, ✔), ou clic droit → « Choisir toutes les images affichées ». Clic droit → « Envoyer les N images choisies, l'une après l'autre » : elles partent à la suite, de la plus ancienne à la plus récente, dans le mode réglé (hybride compris), avec 3 s de pause entre deux images pour laisser répondre les stations, et en respectant « Attendre fréquence libre ». Le bouton STOP (ou l'annulation d'une attente) arrête la série.
+
 ## Version 1.98 — mode EasyPal : image Reed-Solomon reçue sans attendre
 
 - Correction (signalée par F4GOP, image de F5TGB en RS4) : en mode EasyPal, une image protégée par Reed-Solomon (RS1 à RS4) n'était reconstruite qu'après réception du tout dernier segment, et seulement à partir de 63 % des segments. Si ce dernier segment était perdu, il fallait attendre l'émission suivante : EasyPal affichait l'image une minute plus tôt. Le nombre total de segments est maintenant lu dans l'en-tête, comme EasyPal, et l'image est reconstruite dès qu'il y a assez de segments (environ la moitié en RS4).
