@@ -61,6 +61,11 @@ MODERN = {
                 fg="#2f2a1f", muted="#7d6f55", border="#ead9b2", button="#f6ecd5", button_fg="#2f2a1f",
                 accent="#0b7fa8", accent_fg="#ffffff", bad="#d9433b", dark=False, top="#0b7fa8",
                 top_fg="#ffffff", top_muted="#cdeaf4"),
+    # 2.05 : « Néon bleu », d'après l'image de la station de M7WUV (boutons clairs, vert pour émettre)
+    "Néon bleu": dict(bg="#0a1633", panel="#0e1f47", field="#07102a", bar="#13306e", bar_fg="#eaf4ff",
+                      fg="#e3eeff", muted="#8fb0dc", border="#2a64c8", button="#2559b8", button_fg="#eaf4ff",
+                      accent="#22c55e", accent_fg="#04220f", bad="#ff4d5e", dark=True, top="#06102a",
+                      top_fg="#ffd84a", top_muted="#8fb0dc"),
 }
 # « Thème selon la saison » (case, décochée par défaut) : ambiance prise d'office à ces dates
 # (mois, jour) de début et de fin, bornes comprises ; Noël passe d'une année à l'autre.

@@ -335,8 +335,8 @@ s.append(P("Settings → Appearance → <b>Style</b>: <b>Classic (EasyPal)</b>, 
            "flat, compact left buttons (TRANSMIT in the accent colour), left column as <b>cards</b> "
            "(rounded RX / SNR gauges, borderless LEDs), stations marked ● (online) or ○ (heard over the air), Rx Ok "
            "coloured by report (same colours as the map), and a <b>top bar</b> with your callsign, the frequency in large type (click: frequency menu), the state "
-           "(receiving, transmitting), the stations online (click: map) and the UTC time. Ten <b>ambiences</b>: "
-           "EasyPal green (default), Dark, Light, Radio green, Halloween, Christmas, Winter, Spring, Summer, and <b>Custom</b>: “Colour…” button next to the theme, pick a "
+           "(receiving, transmitting), the stations online (click: map) and the UTC time. Eleven <b>ambiences</b>: "
+           "EasyPal green (default), Dark, Light, Radio green, Halloween, Christmas, Winter, Spring, Summer, Neon blue, and <b>Custom</b>: “Colour…” button next to the theme, pick a "
            "single colour and HFImage derives everything else (bars in that colour, very light backgrounds of the same "
            "hue, darker accent, black or white text, whichever reads best). Switch at any time, without restarting."))
 s.append(P("<b>“Seasonal theme (Halloween, Christmas)”</b> box (unticked by default): ticked, HFImage switches by itself to "

@@ -547,8 +547,8 @@ s.append(P("Réglages → Apparence → <b>Style</b> : <b>Classique (EasyPal)</b
            "valeur, boutons de gauche plats et compacts (ÉMISSION dans la couleur d'accent), colonne de gauche en "
            "<b>cartes</b> (jauges RX / SNR arrondies, voyants sans contour), stations marquées ● (en ligne) ou ○ (entendues "
            "par radio), Rx Ok coloré selon le report (mêmes couleurs que la carte), et une <b>barre du haut</b> avec l'indicatif, la fréquence en grand (clic : menu des fréquences), "
-           "l'état (réception, émission), les stations en ligne (clic : carte) et l'heure UTC. Dix <b>ambiances</b> : "
-           "Vert EasyPal (par défaut), Sombre, Clair, Vert radio, Halloween, Noël, Hiver, Printemps, Été, et <b>Personnalisée</b> : bouton « Couleur… » à côté de "
+           "l'état (réception, émission), les stations en ligne (clic : carte) et l'heure UTC. Onze <b>ambiances</b> : "
+           "Vert EasyPal (par défaut), Sombre, Clair, Vert radio, Halloween, Noël, Hiver, Printemps, Été, Néon bleu, et <b>Personnalisée</b> : bouton « Couleur… » à côté de "
            "l'ambiance, on choisit une seule couleur et HFImage en tire tout le reste (barres dans cette couleur, fonds très "
            "clairs de la même teinte, accent plus foncé, texte noir ou blanc selon ce qui se lit le mieux). On passe de l'un "
            "à l'autre à tout moment, sans redémarrer."))

@@ -1,5 +1,9 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 2.05 — ambiance « Néon bleu »
+
+- Nouvelle ambiance **« Néon bleu »** du style Moderne (Réglages → Apparence → Style Moderne → Ambiance), d'après l'image de la station de M7WUV : fond bleu nuit, bordures bleu vif, boutons bleus clairs, émission en vert, indicatif en jaune doré. Seules les couleurs changent : rien de plus à charger ni à l'écran.
+
 ## Version 2.04 — format de la date du bandeau
 
 - « Mes conditions de trafic » : nouvelle liste **Date** pour choisir le format de la date du bandeau (demande de VK6NJP) : international 2026-11-04 (par défaut, comme avant), jour/mois/année 04/11/2026 (France, Australie, Royaume-Uni…) ou mois/jour/année 11/04/2026 (États-Unis).

@@ -1815,6 +1815,7 @@ T = [
     ("Pas encore de logo : clic droit sur l'image de l'onglet TX → « Ajouter un logo / une image du PC… ».", "No logo yet: right-click the picture in the TX tab → “Add a logo / a picture from PC…”.", "Noch kein Logo: Rechtsklick auf das Bild im Reiter TX → „Logo / Bild vom PC hinzufügen…“.", "Aún no hay logotipo: clic derecho en la imagen de la pestaña TX → «Añadir un logotipo / una imagen del PC…».", "Nessun logo per ora: clic destro sull'immagine della scheda TX → «Aggiungi un logo / un'immagine dal PC…»."),
     ("04/11/2026 (jour/mois)", "04/11/2026 (day/month)", "04/11/2026 (Tag/Monat)", "04/11/2026 (día/mes)", "04/11/2026 (giorno/mese)"),
     ("11/04/2026 (mois/jour)", "11/04/2026 (month/day)", "11/04/2026 (Monat/Tag)", "11/04/2026 (mes/día)", "11/04/2026 (mese/giorno)"),
+    ("Néon bleu", "Neon blue", "Neonblau", "Azul neón", "Blu neon"),
     ("Halloween", "Halloween", "Halloween", "Halloween", "Halloween"),
     ("Noël", "Christmas", "Weihnachten", "Navidad", "Natale"),
     ("Hiver", "Winter", "Winter", "Invierno", "Inverno"),

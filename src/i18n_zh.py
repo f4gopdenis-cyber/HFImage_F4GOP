@@ -3,6 +3,7 @@
 Traduction de Yang BH2RMX, avec BD4QXR (2026). Les textes absents restent en anglais."""
 
 ZH = {
+    'Néon bleu': '霓虹蓝',
     '04/11/2026 (jour/mois)': '04/11/2026（日/月）',
     '11/04/2026 (mois/jour)': '11/04/2026（月/日）',
     'Logo': '标志',
