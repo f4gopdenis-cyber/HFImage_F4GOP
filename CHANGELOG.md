@@ -1,5 +1,9 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 2.08
+
+- Correction : après avoir coché « Boutons arrondis » en style Moderne, le passage en style Classique (Nuit ou autre) donnait des boutons géants qui cachaient la cascade et les messages, jusqu'au redémarrage. Les boutons reprennent maintenant tout de suite leur taille normale.
+
 ## Version 2.07
 
 - Thème **Nuit** (style Classique) : les boutons activés (Écoute ON, Hybride…), en attente ou en émission ont maintenant le texte en noir sur leur fond jaune, orange ou rouge — avant, le texte clair était illisible (signalé par Gérard). Un bouton qu'on désactive reprend bien le fond sombre du thème.
