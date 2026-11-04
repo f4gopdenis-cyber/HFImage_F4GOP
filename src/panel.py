@@ -86,11 +86,10 @@ class StatusPanel(tk.Frame):
                 m = cmap or (lambda col, opt: col)
                 c.configure(highlightthickness=1, bg=m("#e8f7e6", "background"), height=12,
                             highlightbackground=m(FG, "foreground"))
+            self._track(c)                             # 2.10 : efface le fond arrondi du style Moderne
             last = getattr(self, "_bar_last", {}).get(name)
             if last:
                 self.set_bar(name, *last)
-            else:
-                self._track(c)
         for name, (c, oval) in self.leds.items():
             fill = c.itemcget(oval, "fill")
             c.itemconfigure(oval, outline=fill if P else FG)
