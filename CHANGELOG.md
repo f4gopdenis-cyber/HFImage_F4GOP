@@ -1,5 +1,9 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 2.10
+
+- Correction : après un passage par le style Moderne, les jauges RX / SNR gardaient en style Classique le fond arrondi sombre du Moderne (pilule noire sur Sable, Vert EasyPal, Gris, Bordeaux, Violet), jusqu'au redémarrage. Il est maintenant effacé tout de suite.
+
 ## Version 2.09
 
 - Style Classique : le S-mètre et les jauges RX / SNR prennent maintenant les couleurs du thème choisi (Bleu, Gris, Sable, Bordeaux, Violet, Nuit) — avant, le S-mètre restait vert EasyPal, très voyant en Nuit.
