@@ -1816,6 +1816,7 @@ T = [
     ("04/11/2026 (jour/mois)", "04/11/2026 (day/month)", "04/11/2026 (Tag/Monat)", "04/11/2026 (día/mes)", "04/11/2026 (giorno/mese)"),
     ("11/04/2026 (mois/jour)", "11/04/2026 (month/day)", "11/04/2026 (Monat/Tag)", "11/04/2026 (mes/día)", "11/04/2026 (mese/giorno)"),
     ("Néon bleu", "Neon blue", "Neonblau", "Azul neón", "Blu neon"),
+    ("Boutons arrondis (style Moderne)", "Rounded buttons (Modern style)", "Abgerundete Schaltflächen (Stil Modern)", "Botones redondeados (estilo Moderno)", "Pulsanti arrotondati (stile Moderno)"),
     ("Halloween", "Halloween", "Halloween", "Halloween", "Halloween"),
     ("Noël", "Christmas", "Weihnachten", "Navidad", "Natale"),
     ("Hiver", "Winter", "Winter", "Invierno", "Inverno"),

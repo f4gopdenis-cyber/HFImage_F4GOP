@@ -3,6 +3,7 @@
 Traduction de Yuri (2026). Les textes absents restent en anglais."""
 
 RU = {
+    'Boutons arrondis (style Moderne)': 'Скруглённые кнопки (стиль «Современный»)',
     'Néon bleu': 'Неоновый синий',
     '04/11/2026 (jour/mois)': '04/11/2026 (день/месяц)',
     '11/04/2026 (mois/jour)': '11/04/2026 (месяц/день)',

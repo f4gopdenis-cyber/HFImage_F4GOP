@@ -1,5 +1,9 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 2.06 — boutons arrondis (option)
+
+- Réglages → Apparence : case **« Boutons arrondis (style Moderne) »**, décochée par défaut. Les boutons de la grille de gauche et ceux des onglets prennent des coins arrondis, à la même place qu'avant et avec les mêmes couleurs d'état (émission en rouge, écoute en vert, attente en orange) ; le survol à la souris les éclaire. Rien de plus à charger : quelques petites images de fond, faites une seule fois. Décochée, tout redevient exactement comme avant.
+
 ## Version 2.05 — ambiance « Néon bleu »
 
 - Nouvelle ambiance **« Néon bleu »** du style Moderne (Réglages → Apparence → Style Moderne → Ambiance), d'après l'image de la station de M7WUV : fond bleu nuit, bordures bleu vif, boutons bleus clairs, émission en vert, indicatif en jaune doré. Seules les couleurs changent : rien de plus à charger ni à l'écran.

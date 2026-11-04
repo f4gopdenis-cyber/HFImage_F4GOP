@@ -552,6 +552,9 @@ s.append(P("Réglages → Apparence → <b>Style</b> : <b>Classique (EasyPal)</b
            "l'ambiance, on choisit une seule couleur et HFImage en tire tout le reste (barres dans cette couleur, fonds très "
            "clairs de la même teinte, accent plus foncé, texte noir ou blanc selon ce qui se lit le mieux). On passe de l'un "
            "à l'autre à tout moment, sans redémarrer."))
+s.append(P("Case <b>« Boutons arrondis (style Moderne) »</b> (décochée par défaut) : les boutons de la grille de gauche "
+           "et ceux des onglets prennent des coins arrondis, à la même place et avec les mêmes couleurs d'état "
+           "(émission en rouge, écoute en vert, attente en orange). Décochez-la pour revenir aux boutons carrés."))
 s.append(P("Case <b>« Thème selon la saison (Halloween, Noël) »</b> (décochée par défaut) : cochée, HFImage prend tout "
            "seul l'ambiance <b>Halloween</b> du 20 au 31 octobre et <b>Noël</b> du 1er décembre au 6 janvier, même en style "
            "Classique ; le reste de l'année, il revient à votre choix habituel, sans rien changer à vos réglages."))

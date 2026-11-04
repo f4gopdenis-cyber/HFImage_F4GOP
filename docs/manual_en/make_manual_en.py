@@ -339,6 +339,9 @@ s.append(P("Settings → Appearance → <b>Style</b>: <b>Classic (EasyPal)</b>, 
            "EasyPal green (default), Dark, Light, Radio green, Halloween, Christmas, Winter, Spring, Summer, Neon blue, and <b>Custom</b>: “Colour…” button next to the theme, pick a "
            "single colour and HFImage derives everything else (bars in that colour, very light backgrounds of the same "
            "hue, darker accent, black or white text, whichever reads best). Switch at any time, without restarting."))
+s.append(P("<b>“Rounded buttons (Modern style)”</b> box (unticked by default): the left button grid and the tab buttons "
+           "get rounded corners, in the same place and with the same state colours (transmit in red, receive in "
+           "green, waiting in orange). Untick it to go back to square buttons."))
 s.append(P("<b>“Seasonal theme (Halloween, Christmas)”</b> box (unticked by default): ticked, HFImage switches by itself to "
            "the <b>Halloween</b> ambience from 20 to 31 October and to <b>Christmas</b> from 1 December to 6 January, even in "
            "Classic style; the rest of the year it goes back to your usual choice, without changing your settings."))

@@ -104,6 +104,15 @@ def _readable_on(bg, dark="#111111", light="#ffffff"):
     return dark if _contrast(bg, dark) >= _contrast(bg, light) else light
 
 
+def round_rect(w, h, fill, outer, r=7, scale=4):
+    """Rectangle à coins arrondis (PIL), lissé : fond d'un bouton arrondi (2.06)."""
+    from PIL import Image, ImageDraw
+    w, h = max(2, int(w)), max(2, int(h))
+    im = Image.new("RGB", (w * scale, h * scale), outer)
+    ImageDraw.Draw(im).rounded_rectangle((0, 0, w * scale - 1, h * scale - 1), min(r, h // 2) * scale, fill=fill)
+    return im.resize((w, h), Image.LANCZOS)
+
+
 def modern_custom(color):
     """Palette du style Moderne tirée d'une seule couleur : barres dans cette couleur, fonds
     très clairs de la même teinte, accent plus foncé, texte noir ou blanc selon le contraste."""
@@ -281,6 +290,10 @@ class Appearance:
         self.bold = False               # tout le texte en gras
         self.modern = None              # style Moderne : nom de l'ambiance (None : Classique)
         self.modern_custom = MODERN_CUSTOM_DEFAULT      # couleur de l'ambiance « Personnalisée »
+        self.round = False              # 2.06 : boutons à coins arrondis (style Moderne, option)
+        self._round_n = 0
+        self._round_imgs = []
+        self._layout0 = {}
         self.map = make_mapper(self.theme)
         self.named = {}
         for n in ("TkDefaultFont", "TkTextFont", "TkFixedFont", "TkMenuFont", "TkHeadingFont",
@@ -311,7 +324,9 @@ class Appearance:
         return next((f for f in MODERN_FONTS if f.lower() in have), None)
 
     def set(self, theme=None, custom=None, family=None, scale=None, text=None, bold=None, modern=False,
-            modern_rgb=None):
+            modern_rgb=None, round_=None):
+        if round_ is not None:
+            self.round = bool(round_)
         if theme is not None:
             self.theme = theme
         if custom is not None:
@@ -560,6 +575,41 @@ class Appearance:
             s.configure(f"{o}.TScrollbar", background=P["button"], troughcolor=P["bg"], arrowcolor=P["muted"],
                         bordercolor=P["bg"], lightcolor=P["button"], darkcolor=P["button"])
         s.configure("TMenubutton", background=P["button"], foreground=P["button_fg"], bordercolor=P["border"])
+        if self.round:
+            self._ttk_round(P)
+        else:
+            self._ttk_square()
+
+    # ---------------------------------------------------------------- 2.06 : boutons arrondis
+    ROUND_R = 7
+
+    def _ttk_round(self, P):
+        """Boutons ttk à coins arrondis : bordure dessinée en image, étirée (« 9 cases »)."""
+        from PIL import ImageTk
+        s = self.style
+        for st in ("TButton", "Accent.TButton"):
+            self._layout0.setdefault(st, s.layout(st))
+        self._round_n += 1
+        n, r = self._round_n, self.ROUND_R
+        mk = lambda fill: ImageTk.PhotoImage(round_rect(24, 24, fill, P["bg"], r), master=self.root)
+        imgs = {k: mk(P[c]) for k, c in (("btn", "button"), ("acc", "accent"), ("bg", "bg"))}
+        self._round_imgs = list(imgs.values())               # gardées en vie tant qu'elles servent
+        for st, el, normal, active, disabled in (("TButton", f"HFR{n}b.border", "btn", "acc", "bg"),
+                                                 ("Accent.TButton", f"HFR{n}a.border", "acc", "acc", "btn")):
+            s.element_create(el, "image", imgs[normal], ("disabled", imgs[disabled]),
+                             ("pressed", imgs[active]), ("active", imgs[active]), border=(r, 3), sticky="nsew")
+            s.layout(st, [(el, {"sticky": "nsew", "children": [
+                ("Button.padding", {"sticky": "nsew", "children": [("Button.label", {"sticky": "nsew"})]})]})])
+        s.configure("TButton", padding=(8, 1))
+        s.configure("Accent.TButton", padding=(12, 2))
+
+    def _ttk_square(self):
+        s = self.style
+        for st, lay in self._layout0.items():
+            try:
+                s.layout(st, lay)
+            except tk.TclError:
+                pass
 
     def _ttk(self):
         s = self.style

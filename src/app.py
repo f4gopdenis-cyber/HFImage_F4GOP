@@ -66,7 +66,7 @@ import random
 import wave
 
 APP = "HFImage F4GOP"
-VERSION = "2.05"
+VERSION = "2.06"
 
 
 def _take_profile(argv):
@@ -106,7 +106,7 @@ DEFAULTS = {
     "look_style": "classique", "modern_theme": "Vert EasyPal",
     "theme": "Vert EasyPal", "theme_color": "#3a8ee6", "font_family": "(par défaut)", "font_size": "9",
     "locator": "", "bsr_auto": True, "fix_auto": True, "ack_auto": True, "listen_after": True, "follow_mode": True,
-    "cwid": False, "cat_freq": True, "season_theme": False, "jpg_copy": False, "jpg_dir": "", "lang": "", "msg_translate": True, "wait_free": True, "hyb_flash": True,
+    "cwid": False, "cat_freq": True, "season_theme": False, "jpg_copy": False, "jpg_dir": "", "round_btn": False, "lang": "", "msg_translate": True, "wait_free": True, "hyb_flash": True,
     "freq_presets": [[3733000, "LSB"], [7058000, "LSB"], [14233000, "USB"], [21340000, "USB"], [28680000, "USB"]],
     "drm_mode": "B", "drm_qam": "QAM16", "drm_bw": "2,4 kHz", "drm_prot": "Haute (HI)", "drm_rs": "RS2",
     "wav_volume": 5, "wft_font": "Arial", "wft_neg": False, "wft_text": "",
@@ -752,7 +752,14 @@ class App(tk.Tk):
                       custom=self.conf.get("theme_color"), family=fam,
                       scale=theme.FONT_SIZES.get(size, 1.0), text=self.conf.get("text_color") or "",
                       bold=bool(self.conf.get("font_bold")), modern=modern,
-                      modern_rgb=self.conf.get("modern_color") or theme.MODERN_CUSTOM_DEFAULT)
+                      modern_rgb=self.conf.get("modern_color") or theme.MODERN_CUSTOM_DEFAULT,
+                      round_=bool(self.conf.get("round_btn")))
+        # 2.06 : boutons arrondis : tailles remesurées sans image (police, ambiance changées)
+        if self._round_on():
+            for b in getattr(self, "gbtn", {}).values():
+                b.configure(image="", compound="none", padx=1, pady=3, width=0, height=0)
+                b._hf_round = b._hf_nat = None
+            self.update_idletasks()
         # boutons de la grille : couleur selon leur état, dans le style choisi
         for b in getattr(self, "gbtn", {}).values():
             st = getattr(b, "_hf_state", "off")
@@ -1439,8 +1446,13 @@ class App(tk.Tk):
                 bg, fg = P["accent"], P["accent_fg"]          # l'émission : la tuile principale
             b.configure(bg=bg, fg=fg, activebackground=P["accent"] if state == "off" else bg,
                         activeforeground=P["accent_fg"] if state == "off" else fg, relief="flat")
-            if key:                                           # 1.58 : boutons plats compacts, sans icône
+            if key and self._round_on():                      # 2.06 : coins arrondis (option)
+                self._round_grid(b, bg)
+            elif key:                                         # 1.58 : boutons plats compacts, sans icône
                 b.configure(image="", compound="none", padx=1, pady=3)
+                if getattr(b, "_hf_nat", None):
+                    b.configure(width=0, height=0)
+                b._hf_round = b._hf_nat = None
             return
         b._hf_state = state
         bg, abg, _, relief = self.BTN_CLASSIC[state]
@@ -1450,6 +1462,75 @@ class App(tk.Tk):
         if relief:
             kw["relief"] = relief
         b.configure(**kw)
+
+    # ---------------------------------------------------------------- 2.06 : boutons arrondis
+    def _round_on(self):
+        return bool(self.conf.get("round_btn")) and bool(self.look.palette() if hasattr(self, "look") else None)
+
+    def _round_img(self, w, h, fill, outer):
+        cache = self.__dict__.setdefault("_round_cache", {})
+        key = (w, h, fill, outer)
+        im = cache.get(key)
+        if im is None:
+            if len(cache) > 300:
+                cache.clear()
+            im = cache[key] = ImageTk.PhotoImage(theme.round_rect(w, h, fill, outer, theme.Appearance.ROUND_R))
+        return im
+
+    def _round_grid(self, b, fill, size=None):
+        """Tuile de la grille à coins arrondis : son fond est une image de la taille du bouton, à la couleur
+        de son état (repos, actif, attente, émission) ; le survol l'éclaire avec la couleur d'accent."""
+        b._hf_fill = fill
+        try:
+            outer = b.master.cget("bg")
+            if not getattr(b, "_hf_nat", None):
+                # taille naturelle du bouton (sans image) : le fond ne la dépasse jamais, sinon le bouton
+                # demanderait plus de place, serait agrandi, et le fond redessiné plus grand… sans fin
+                b.configure(image="", compound="none", padx=1, pady=3, width=0, height=0, bd=0,
+                            highlightthickness=0)
+                b.update_idletasks()                       # taille demandée recalculée maintenant
+                b._hf_nat = (b.winfo_reqwidth(), b.winfo_reqheight())
+                b._hf_corr = None
+            aw, ah = size or (b.winfo_width(), b.winfo_height())
+        except tk.TclError:
+            return
+        nw, nh = b._hf_nat
+        # le fond remplit la case donnée par la grille ; la place DEMANDÉE reste la taille naturelle
+        # (width / height en pixels) : le dessin ne change jamais la mise en page, donc pas de boucle
+        w, h = (aw, ah) if aw > 1 and ah > 1 else (nw, nh)
+        if w < 8 or h < 8:
+            return
+        b._hf_round = (w, h)
+        b._hf_img = self._round_img(w, h, fill, outer)
+        cw, ch = getattr(b, "_hf_corr", None) or (0, 0)
+        b.configure(image=b._hf_img, compound="center", bg=outer, activebackground=outer, bd=0,
+                    highlightthickness=0, padx=0, pady=0, width=nw - cw, height=nh - ch)
+        if getattr(b, "_hf_corr", None) is None:
+            # Tk ajoute quelques pixels autour d'un bouton à image (selon le système) : on les retire une fois
+            b.update_idletasks()
+            b._hf_corr = (b.winfo_reqwidth() - nw, b.winfo_reqheight() - nh)
+            if b._hf_corr != (0, 0):
+                b.configure(width=nw - b._hf_corr[0], height=nh - b._hf_corr[1])
+        if not getattr(b, "_hf_round_bound", False):
+            b._hf_round_bound = True
+            b.bind("<Configure>", lambda e, b=b: self._round_resize(b, e), add="+")
+            b.bind("<Enter>", lambda e, b=b: self._round_hover(b, True), add="+")
+            b.bind("<Leave>", lambda e, b=b: self._round_hover(b, False), add="+")
+
+    def _round_resize(self, b, e):
+        r = getattr(b, "_hf_round", None)
+        if self._round_on() and r and getattr(b, "_hf_nat", None) and e.width > 1 and (e.width, e.height) != r:
+            self._round_grid(b, b._hf_fill, (e.width, e.height))   # colonne élargie ou rétrécie
+
+    def _round_hover(self, b, inside):
+        if not self._round_on() or not getattr(b, "_hf_round", None):
+            return
+        P = self.look.palette()
+        fill = P["accent"] if inside and getattr(b, "_hf_state", "off") == "off" else b._hf_fill
+        try:
+            b.configure(image=self._round_img(*b._hf_round, fill, b.master.cget("bg")))
+        except tk.TclError:
+            pass
 
     def _btn_emission(self):
         if getattr(self, "_wait_job", None):
@@ -3335,6 +3416,15 @@ class App(tk.Tk):
         ttk.Checkbutton(af, text="Thème selon la saison (Halloween, Noël)", variable=self.v_season,
                         command=self._apply_look).grid(row=4, column=1, columnspan=4, sticky="w", padx=4,
                                                        pady=(4, 0))
+        # 2.06 : boutons à coins arrondis (style Moderne), décochée au départ
+        self.v_round = tk.BooleanVar(value=bool(self.conf.get("round_btn")))
+
+        def _round_toggle():
+            self.conf["round_btn"] = bool(self.v_round.get())
+            self._apply_look()
+        ttk.Checkbutton(af, text="Boutons arrondis (style Moderne)", variable=self.v_round,
+                        command=_round_toggle).grid(row=5, column=1, columnspan=4, sticky="w", padx=4,
+                                                    pady=(2, 0))
 
         nf = ttk.LabelFrame(colR, text="Internet : stations en ligne (comme EasyPal)", padding=8)
         nf.pack(fill="x", pady=(10, 0))
