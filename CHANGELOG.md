@@ -1,5 +1,9 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 2.09
+
+- Style Classique : le S-mètre et les jauges RX / SNR prennent maintenant les couleurs du thème choisi (Bleu, Gris, Sable, Bordeaux, Violet, Nuit) — avant, le S-mètre restait vert EasyPal, très voyant en Nuit.
+
 ## Version 2.08
 
 - Correction : après avoir coché « Boutons arrondis » en style Moderne, le passage en style Classique (Nuit ou autre) donnait des boutons géants qui cachaient la cascade et les messages, jusqu'au redémarrage. Les boutons reprennent maintenant tout de suite leur taille normale.
