@@ -1,5 +1,9 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 2.07
+
+- Thème **Nuit** (style Classique) : les boutons activés (Écoute ON, Hybride…), en attente ou en émission ont maintenant le texte en noir sur leur fond jaune, orange ou rouge — avant, le texte clair était illisible (signalé par Gérard). Un bouton qu'on désactive reprend bien le fond sombre du thème.
+
 ## Version 2.06 — boutons arrondis (option)
 
 - Réglages → Apparence : case **« Boutons arrondis (style Moderne) »**, décochée par défaut. Les boutons de la grille de gauche et ceux des onglets prennent des coins arrondis, à la même place qu'avant et avec les mêmes couleurs d'état (émission en rouge, écoute en vert, attente en orange) ; le survol à la souris les éclaire. Rien de plus à charger : quelques petites images de fond, faites une seule fois. Décochée, tout redevient exactement comme avant.

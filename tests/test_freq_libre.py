@@ -28,7 +28,7 @@ class Btn(dict):
 def make(app, online=None, modems=None, waitfree=True):
     s = types.SimpleNamespace()
     for n in ("_freq_busy", "_tx_when_free", "_wait_tick", "_wait_clear", "_wait_go", "_wait_cancel", "_batch_cancel",
-              "_btn_emission", "_btn_emission_force", "_btn_color"):
+              "_btn_emission", "_btn_emission_force", "_btn_color", "_classic_fg", "_is_light"):
         setattr(s, n, getattr(app.App, n).__get__(s))
     s.WAIT_MAX_S, s.WAIT_HOLD_S, s.WAIT_SYNC_S = app.App.WAIT_MAX_S, app.App.WAIT_HOLD_S, app.App.WAIT_SYNC_S
     s.BTN_CLASSIC = app.App.BTN_CLASSIC

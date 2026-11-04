@@ -66,7 +66,7 @@ import random
 import wave
 
 APP = "HFImage F4GOP"
-VERSION = "2.06"
+VERSION = "2.07"
 
 
 def _take_profile(argv):
@@ -1456,12 +1456,39 @@ class App(tk.Tk):
             return
         b._hf_state = state
         bg, abg, _, relief = self.BTN_CLASSIC[state]
+        look = getattr(self, "look", None)
+        if state == "off" and look is not None:          # 2.07 : au repos, fond du thème (Nuit : sombre)
+            hx = lambda c: "#%02x%02x%02x" % tuple(v // 257 for v in self.winfo_rgb(c))
+            bg, abg = look.map(hx(bg), "background"), look.map(hx(abg), "activebackground")
         kw = {"bg": bg}
         if abg:
             kw["activebackground"] = abg
         if relief:
             kw["relief"] = relief
+        # 2.07 : thème Nuit (ou texte clair choisi) -> texte noir sur les fonds jaune/orange/rouge
+        fg = self._classic_fg(b)
+        if fg:
+            dark = "#000000" if state != "off" and self._is_light(fg) else fg
+            kw["fg"] = kw["activeforeground"] = dark
         b.configure(**kw)
+
+    def _classic_fg(self, b):
+        """Couleur de texte « normale » d'un bouton de la grille dans le thème en cours (style Classique)."""
+        look = getattr(self, "look", None)
+        if look is None:
+            return None
+        orig = getattr(look, "orig", {}).get(b, {}).get("foreground") or "#000000"
+        try:
+            return look.map(orig, "foreground")
+        except Exception:
+            return None
+
+    def _is_light(self, color):
+        try:
+            r, g, bl = (v / 65535 for v in self.winfo_rgb(color))
+        except (tk.TclError, AttributeError):
+            return False
+        return 0.299 * r + 0.587 * g + 0.114 * bl > 0.55
 
     # ---------------------------------------------------------------- 2.06 : boutons arrondis
     def _round_on(self):
