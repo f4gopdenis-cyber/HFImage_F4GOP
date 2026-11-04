@@ -72,15 +72,20 @@ class StatusPanel(tk.Frame):
             self.leds[name] = (c, oval)
 
     modern = None                # palette du style Moderne (None : Classique)
+    cmap = None                  # 2.09 : couleurs du thème Classique (Nuit…) : fonction (couleur, option)
 
-    def set_modern(self, P):
-        """Style Moderne : jauges arrondies, voyants sans contour ; None : comme EasyPal."""
+    def set_modern(self, P, cmap=None):
+        """Style Moderne : jauges arrondies, voyants sans contour ; None : comme EasyPal.
+        cmap : adaptation des couleurs au thème Classique choisi (Nuit…), pour le S-mètre."""
         self.modern = P
+        self.cmap = cmap
         for name, (c, val, unit) in self.bars.items():
             if P:
                 c.configure(highlightthickness=0, bg=P["panel"], height=10)
             else:
-                c.configure(highlightthickness=1, bg="#e8f7e6", height=12)
+                m = cmap or (lambda col, opt: col)
+                c.configure(highlightthickness=1, bg=m("#e8f7e6", "background"), height=12,
+                            highlightbackground=m(FG, "foreground"))
             last = getattr(self, "_bar_last", {}).get(name)
             if last:
                 self.set_bar(name, *last)
@@ -162,15 +167,16 @@ class StatusPanel(tk.Frame):
         self._sm_db = db
         txt = s_text(db)
         W = self._sm_width()
-        key = (txt, round(db) if db is not None else None, frozen, id(self.modern), W)
+        key = (txt, round(db) if db is not None else None, frozen, id(self.modern), id(self.cmap), W)
         if key == self._sm_key:
             return
         self._sm_key = key
         c, P = self.smeter, self.modern
-        bg = P["panel"] if P else BG
-        fg = P["fg"] if P else FG
-        muted = P["muted"] if P else "#3d6b3d"
-        track = P["field"] if P else "#e8f7e6"
+        m = (lambda col, opt: col) if P or not self.cmap else self.cmap
+        bg = P["panel"] if P else m(BG, "background")
+        fg = P["fg"] if P else m(FG, "foreground")
+        muted = P["muted"] if P else m("#3d6b3d", "foreground")
+        track = P["field"] if P else m("#e8f7e6", "background")
         green = (P["accent"] if P else "#2f9e2f") if not frozen else "#8a8f96"
         red = (P["bad"] if P else LED_RED) if not frozen else "#a0a4aa"
         c.configure(bg=bg)
@@ -184,7 +190,7 @@ class StatusPanel(tk.Frame):
         c.create_text(x0, 0, text=tr("S-mètre"), anchor="nw", fill=muted, font=("TkDefaultFont", 7))
         c.create_text(x1, -1, text=txt, anchor="ne", fill=muted if frozen or db is None else fg,
                       font=("TkDefaultFont", 10, "bold"))
-        c.create_rectangle(x0, y0, x1, y1, fill=track, outline="" if P else FG)
+        c.create_rectangle(x0, y0, x1, y1, fill=track, outline="" if P else fg)
         if db is not None:
             e = pos(db)
             c.create_rectangle(x0 + 1, y0 + 1, min(e, pos(0)), y1 - (0 if P else 1), fill=green, outline="")

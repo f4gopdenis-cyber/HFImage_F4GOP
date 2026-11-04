@@ -870,7 +870,7 @@ class App(tk.Tk):
         if not hasattr(self, "_st_box"):
             return
         try:
-            self.panel.set_modern(P)
+            self.panel.set_modern(P, None if P else self.look.map)
             m = 4 if P else 0
             self.panel.pack_configure(padx=m, pady=(m, 0))
             self._grid_frame.pack_configure(padx=m, pady=(6, 0))
