@@ -103,6 +103,23 @@ class Arrondis(unittest.TestCase):
         self.assertFalse(a._round_on())
         self.assertEqual(str(a.gbtn["fix"].cget("image")), "")
 
+    def test_passage_en_classique_nuit_taille_normale(self):
+        """2.08 : arrondis en Moderne puis passage en Classique Nuit -> boutons géants (signalé par F4GOP)."""
+        a = self.a
+        self.set_round(True)
+        a.conf.update(look_style="classique", theme="Nuit")
+        import i18n
+        if hasattr(a, "v_lookstyle"):
+            a.v_lookstyle.set(i18n.tr("Classique (EasyPal)"))
+        if hasattr(a, "v_theme"):
+            a.v_theme.set(i18n.tr("Nuit"))
+        a._apply_look(save=False)
+        self.pump()
+        for k, b in a.gbtn.items():
+            self.assertEqual(str(b.cget("width")), "0", k)
+            self.assertEqual(str(b.cget("height")), "0", k)
+            self.assertLess(b.winfo_reqheight(), 40, k)
+
 
 if __name__ == "__main__":
     unittest.main()

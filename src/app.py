@@ -765,6 +765,9 @@ class App(tk.Tk):
             st = getattr(b, "_hf_state", "off")
             if not modern:                             # Classique : boutons texte, comme avant
                 b.configure(image="", compound="none", padx=1, pady=1)
+                if getattr(b, "_hf_nat", None) or getattr(b, "_hf_round", None):
+                    b.configure(width=0, height=0)     # 2.08 : tailles en pixels des boutons arrondis
+                b._hf_round = b._hf_nat = None         # (sans image, Tk les lirait en caractères)
             if modern or st != "off":                  # Classique : boutons au repos laissés au thème
                 self._btn_color(b, st)
         self._data_auto_paint()
