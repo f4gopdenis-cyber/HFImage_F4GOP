@@ -1,5 +1,9 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 2.04 — format de la date du bandeau
+
+- « Mes conditions de trafic » : nouvelle liste **Date** pour choisir le format de la date du bandeau (demande de VK6NJP) : international 2026-11-04 (par défaut, comme avant), jour/mois/année 04/11/2026 (France, Australie, Royaume-Uni…) ou mois/jour/année 11/04/2026 (États-Unis).
+
 ## Version 2.03 — mode EasyPal : on peut rester sur l'onglet TX
 
 - Correction (signalée par F4GOP) : pendant la réception d'une image EasyPal, HFImage revenait sans cesse sur l'onglet RX, ce qui empêchait de préparer son image dans l'onglet TX. Il reconnaissait l'image par son nombre total de segments et l'indicatif, qui changent pendant la réception. Il passe maintenant sur RX une seule fois par réception (même réception tant que le signal ne s'interrompt pas plus de 15 s) ; si vous revenez sur TX, il vous y laisse.

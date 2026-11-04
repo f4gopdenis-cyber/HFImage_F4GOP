@@ -484,7 +484,8 @@ s.append(P("Case <b>Mes conditions de trafic</b> (onglet TX) et bouton <b>…</b
            "incrusté en bas ou en haut de l'image émise, avec votre indicatif, locator, QTH, poste (lu par CAT si le "
            "champ est vide), puissance, antenne, fréquence, date et heure UTC, et un texte libre. Chaque élément "
            "peut être coché ou non ; l'aperçu se met à jour en direct. Le bandeau passe avec l'image, il est donc "
-           "visible chez tous les correspondants, quelle que soit leur version."))
+           "visible chez tous les correspondants, quelle que soit leur version. Liste <b>Date</b> : format "
+           "international (2026-11-04, par défaut), jour/mois/année (04/11/2026) ou mois/jour/année (11/04/2026)."))
 s.append(P("Le cadre <b>Police et couleurs</b> permet de choisir la police (toutes celles installées sur Windows), "
            "le gras et l'italique, la couleur du texte, une couleur à part pour l'<b>indicatif</b>, la couleur du "
            "contour des lettres (✕ = sans contour), la couleur du fond et son opacité (0 % = pas de fond), et un filet "

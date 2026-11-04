@@ -6,7 +6,9 @@ from PIL import Image, ImageDraw, ImageFont
 DEFAULT = {"tc_on": False, "tc_rig": "", "tc_power": "", "tc_ant": "", "tc_qth": "", "tc_extra": "",
            "tc_call": True, "tc_loc": True, "tc_freq": True, "tc_date": True, "tc_pos": "bas", "tc_size": "normale",
            "tc_font": "Arial", "tc_bold": True, "tc_italic": False, "tc_color": "#ffffff", "tc_stroke": "#000000",
-           "tc_bg": "#000000", "tc_alpha": 60, "tc_callcolor": "", "tc_frame": False}
+           "tc_bg": "#000000", "tc_alpha": 60, "tc_callcolor": "", "tc_frame": False, "tc_datefmt": "iso"}
+# 2.04 (demande de VK6NJP) : format de la date du bandeau (international, jour/mois/année, mois/jour/année)
+DATE_FORMATS = {"iso": "%Y-%m-%d", "jma": "%d/%m/%Y", "mja": "%m/%d/%Y"}
 STYLE_WORDS = ("Bold", "Italic", "Oblique", "Light", "Semibold", "SemiBold", "Black", "Medium", "Thin",
                "Condensed", "Demibold", "Heavy", "Semilight", "ExtraLight", "Regular", "Gras", "Italique")
 # Polices livrées avec Windows (secours si le registre n'est pas lisible) : (normal, gras, italique, gras italique)
@@ -193,7 +195,7 @@ def parts(conf, call="", loc="", rig_model="", freq_text=""):
         out.append(freq_text)
     if c["tc_date"]:
         import clocktz
-        out.append(clocktz.fmt("%Y-%m-%d %H:%M"))
+        out.append(clocktz.fmt(DATE_FORMATS.get(c.get("tc_datefmt"), DATE_FORMATS["iso"]) + " %H:%M"))
     if c["tc_extra"]:
         out.append(c["tc_extra"])
     return out

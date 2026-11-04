@@ -3,6 +3,8 @@
 Traduction de Yuri (2026). Les textes absents restent en anglais."""
 
 RU = {
+    '04/11/2026 (jour/mois)': '04/11/2026 (день/месяц)',
+    '11/04/2026 (mois/jour)': '11/04/2026 (месяц/день)',
     'Logo': 'Логотип',
     "Pas encore de logo : clic droit sur l'image de l'onglet TX → « Ajouter un logo / une image du PC… ».": 'Логотипа пока нет: правый клик по изображению на вкладке TX → «Добавить логотип / изображение с ПК…».',
     'Copie JPG de chaque image reçue dans un seul dossier': 'JPG-копия каждого принятого изображения в одной папке',

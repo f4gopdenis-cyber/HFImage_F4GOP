@@ -66,7 +66,7 @@ import random
 import wave
 
 APP = "HFImage F4GOP"
-VERSION = "2.03"
+VERSION = "2.04"
 
 
 def _take_profile(argv):
@@ -4560,8 +4560,9 @@ class App(tk.Tk):
         style = {k: self.conf[k] for k in ("tc_font", "tc_bold", "tc_italic", "tc_color", "tc_stroke", "tc_bg",
                                            "tc_alpha", "tc_callcolor", "tc_frame") if k in self.conf}
         call = self.mycall()
-        key = (id(base), tuple(i for i in items if not re.match(r"\d{4}-\d\d-\d\d \d\d:\d\d", i)),
-               self.conf.get("tc_pos"), self.conf.get("tc_size"), tuple(sorted(style.items())))
+        key = (id(base), tuple(i for i in items if not re.match(r"(\d{4}-\d\d-\d\d|\d\d/\d\d/\d{4}) \d\d:\d\d", i)),
+               self.conf.get("tc_pos"), self.conf.get("tc_size"), tuple(sorted(style.items())),
+               self.conf.get("tc_datefmt"))
         c = getattr(self, "_tc_cache", None)
         if cache and c and c[0] == key and c[2] is base:
             return c[1]
@@ -5545,6 +5546,12 @@ class App(tk.Tk):
         ttk.Label(pf, text="Taille du texte").pack(side="left", padx=(10, 0))
         ttk.Combobox(pf, textvariable=v_size, values=list(size_names.values()), width=9, state="readonly").pack(
             side="left", padx=6)
+        # 2.04 (demande de VK6NJP) : format de la date
+        date_names = {"iso": "2026-11-04", "jma": tr("04/11/2026 (jour/mois)"), "mja": tr("11/04/2026 (mois/jour)")}
+        v_datefmt = tk.StringVar(value=date_names.get(c.get("tc_datefmt"), date_names["iso"]))
+        ttk.Label(pf, text="Date").pack(side="left", padx=(10, 0))
+        ttk.Combobox(pf, textvariable=v_datefmt, values=list(date_names.values()), width=22,
+                     state="readonly").pack(side="left", padx=6)
         # --- police et couleurs
         fams = list(trafic.fonts()) or ["Arial"]
         v_font = tk.StringVar(value=c["tc_font"] if c["tc_font"] in fams else
@@ -5632,6 +5639,7 @@ class App(tk.Tk):
                 self.conf[k] = bool(var.get())
             self.conf["tc_pos"] = next(k for k, n in pos_names.items() if n == v_pos.get())
             self.conf["tc_size"] = next(k for k, n in size_names.items() if n == v_size.get())
+            self.conf["tc_datefmt"] = next((k for k, n in date_names.items() if n == v_datefmt.get()), "iso")
             self.conf["tc_font"] = v_font.get()
             for k, var in sb.items():
                 self.conf[k] = bool(var.get())
@@ -5661,7 +5669,7 @@ class App(tk.Tk):
             cv.configure(image=self._photos["tc"])
 
         for var in list(v.values()) + list(b.values()) + list(sb.values()) + list(col.values()) + [
-                v_pos, v_size, v_font, v_alpha]:
+                v_pos, v_size, v_datefmt, v_font, v_alpha]:
             var.trace_add("write", lambda *a: self._tc_preview_later(preview))
         bt = ttk.Frame(f)
         bt.grid(row=11, column=0, columnspan=3, sticky="e", pady=(10, 0))

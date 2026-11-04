@@ -3,6 +3,8 @@
 Traduction de Yang BH2RMX, avec BD4QXR (2026). Les textes absents restent en anglais."""
 
 ZH = {
+    '04/11/2026 (jour/mois)': '04/11/2026（日/月）',
+    '11/04/2026 (mois/jour)': '11/04/2026（月/日）',
     'Logo': '标志',
     "Pas encore de logo : clic droit sur l'image de l'onglet TX → « Ajouter un logo / une image du PC… ».": '尚无标志：在 TX 选项卡的图像上右键 → “添加标志 / 电脑中的图像…”。',
     'Copie JPG de chaque image reçue dans un seul dossier': '每张接收图像的 JPG 副本保存在同一文件夹',

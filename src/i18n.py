@@ -1813,6 +1813,8 @@ T = [
     ("Choisissez un autre dossier que celui des images reçues (par exemple son sous-dossier « jpg »).", "Choose a different folder from the received pictures folder (for example its “jpg” sub-folder).", "Wählen Sie einen anderen Ordner als den der empfangenen Bilder (z. B. seinen Unterordner „jpg“).", "Elija otra carpeta distinta de la de imágenes recibidas (por ejemplo su subcarpeta «jpg»).", "Scegliete una cartella diversa da quella delle immagini ricevute (ad esempio la sua sottocartella «jpg»)."),
     ("Logo", "Logo", "Logo", "Logotipo", "Logo"),
     ("Pas encore de logo : clic droit sur l'image de l'onglet TX → « Ajouter un logo / une image du PC… ».", "No logo yet: right-click the picture in the TX tab → “Add a logo / a picture from PC…”.", "Noch kein Logo: Rechtsklick auf das Bild im Reiter TX → „Logo / Bild vom PC hinzufügen…“.", "Aún no hay logotipo: clic derecho en la imagen de la pestaña TX → «Añadir un logotipo / una imagen del PC…».", "Nessun logo per ora: clic destro sull'immagine della scheda TX → «Aggiungi un logo / un'immagine dal PC…»."),
+    ("04/11/2026 (jour/mois)", "04/11/2026 (day/month)", "04/11/2026 (Tag/Monat)", "04/11/2026 (día/mes)", "04/11/2026 (giorno/mese)"),
+    ("11/04/2026 (mois/jour)", "11/04/2026 (month/day)", "11/04/2026 (Monat/Tag)", "11/04/2026 (mes/día)", "11/04/2026 (mese/giorno)"),
     ("Halloween", "Halloween", "Halloween", "Halloween", "Halloween"),
     ("Noël", "Christmas", "Weihnachten", "Navidad", "Natale"),
     ("Hiver", "Winter", "Winter", "Invierno", "Inverno"),
