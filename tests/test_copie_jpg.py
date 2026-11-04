@@ -80,13 +80,14 @@ class Appli(unittest.TestCase):
         self.p.stop()
 
     def wait_files(self, folder, n=1):
+        ls = lambda: sorted(f for f in os.listdir(folder) if not f.endswith(".part")) if os.path.isdir(folder) else []
         t = time.time()
         while time.time() - t < 5:
             self.a.update()
-            if os.path.isdir(folder) and len(os.listdir(folder)) >= n:
-                return sorted(os.listdir(folder))
+            if len(ls()) >= n:
+                return ls()
             time.sleep(0.05)
-        return sorted(os.listdir(folder)) if os.path.isdir(folder) else []
+        return ls()
 
     def test_decochee_par_defaut(self):
         self.assertFalse(self.app.DEFAULTS["jpg_copy"])
