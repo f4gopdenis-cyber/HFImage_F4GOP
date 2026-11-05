@@ -831,16 +831,31 @@ class RxEngine:
         return self.rcv.nack(iid)
 
 
-def read_wav_8k(path) -> np.ndarray:
-    """WAV mono/stéréo 16 bits, 8 ou 48 kHz -> int16 8 kHz."""
+def read_wav_int16(path):
+    """2.11 : WAV PCM 8, 16, 24 ou 32 bits, mono ou stéréo (1re voie) -> (int16 mono, fréquence).
+    EasyPal accepte les WAV 8 bits : HFImage aussi (signalé par un OM anglais)."""
     with wave.open(path, "rb") as w:
         fs, ch, sw = w.getframerate(), w.getnchannels(), w.getsampwidth()
         raw = w.readframes(w.getnframes())
-    if sw != 2:
-        raise ValueError("seuls les WAV 16 bits sont pris en charge")
-    x = np.frombuffer(raw, dtype=np.int16)
+    if sw == 1:                                   # 8 bits : non signé, centré sur 128
+        x = ((np.frombuffer(raw, dtype=np.uint8).astype(np.int16) - 128) << 8).astype(np.int16)
+    elif sw == 2:
+        x = np.frombuffer(raw, dtype="<i2")
+    elif sw == 3:                                 # 24 bits : on garde les 2 octets de poids fort
+        b = np.frombuffer(raw[:len(raw) // 3 * 3], dtype=np.uint8).reshape(-1, 3)
+        x = (b[:, 1].astype(np.uint16) | (b[:, 2].astype(np.uint16) << 8)).view(np.int16)
+    elif sw == 4:
+        x = (np.frombuffer(raw, dtype="<i4") >> 16).astype(np.int16)
+    else:
+        raise ValueError("format WAV non pris en charge")
     if ch > 1:
-        x = x.reshape(-1, ch)[:, 0]
+        x = x[:len(x) // ch * ch].reshape(-1, ch)[:, 0]
+    return x, fs
+
+
+def read_wav_8k(path) -> np.ndarray:
+    """WAV mono/stéréo 8 à 32 bits, toute fréquence -> int16 8 kHz."""
+    x, fs = read_wav_int16(path)
     if fs == 8000:
         return x.copy()
     if fs == 48000:
@@ -852,15 +867,8 @@ def read_wav_8k(path) -> np.ndarray:
 
 
 def read_wav_48k(path) -> np.ndarray:
-    """WAV mono/stéréo 16 bits, toute fréquence -> float32 48 kHz (-1..1)."""
-    with wave.open(path, "rb") as w:
-        fs, ch, sw = w.getframerate(), w.getnchannels(), w.getsampwidth()
-        raw = w.readframes(w.getnframes())
-    if sw != 2:
-        raise ValueError("seuls les WAV 16 bits sont pris en charge")
-    x = np.frombuffer(raw, dtype=np.int16)
-    if ch > 1:
-        x = x.reshape(-1, ch)[:, 0]
+    """WAV mono/stéréo 8 à 32 bits, toute fréquence -> float32 48 kHz (-1..1)."""
+    x, fs = read_wav_int16(path)
     x = x.astype(np.float32) / 32768.0
     if fs == 48000:
         return x

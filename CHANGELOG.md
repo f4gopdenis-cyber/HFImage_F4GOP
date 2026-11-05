@@ -1,5 +1,10 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 2.11
+
+- Fichiers WAV : HFImage lit maintenant aussi les WAV en 8 bits (comme EasyPal), ainsi qu'en 24 et 32 bits, mono ou stéréo — avant, seuls les WAV 16 bits étaient acceptés.
+- Deux écrans : une fenêtre agrandie se rouvre maintenant sur l'écran où elle était, et non plus sur l'autre écran (signalé par F4GOP).
+
 ## Version 2.10
 
 - Correction : après un passage par le style Moderne, les jauges RX / SNR gardaient en style Classique le fond arrondi sombre du Moderne (pilule noire sur Sable, Vert EasyPal, Gris, Bordeaux, Violet), jusqu'au redémarrage. Il est maintenant effacé tout de suite.

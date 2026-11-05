@@ -11,7 +11,6 @@ puis on en tire un diagnostic en clair et le mode conseillé.
 """
 import ctypes
 import time
-import wave
 
 import numpy as np
 
@@ -75,14 +74,7 @@ def _frames(x, mode, use_filter, progress=None):
 
 
 def _level(path):
-    with wave.open(path, "rb") as w:
-        fs, ch, sw = w.getframerate(), w.getnchannels(), w.getsampwidth()
-        raw = w.readframes(w.getnframes())
-    if sw != 2:
-        raise ValueError("seuls les WAV 16 bits sont pris en charge")
-    a = np.frombuffer(raw, dtype=np.int16)
-    if ch > 1:
-        a = a.reshape(-1, ch)[:, 0]
+    a, fs = engine.read_wav_int16(path)           # 2.11 : WAV 8 à 32 bits
     a = a.astype(np.float64)
     peak = float(np.max(np.abs(a))) if len(a) else 0.0
     clip = float(np.mean(np.abs(a) >= 32700)) if len(a) else 0.0
