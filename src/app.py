@@ -8763,6 +8763,19 @@ class App(tk.Tk):
         else:
             self.upd_busy = False
 
+    @staticmethod
+    def _zoomed_geom(old, cur):
+        """2.11 (deux écrans, signalé par F4GOP) : fenêtre agrandie -> on garde sa taille normale d'avant,
+        mais à la place de l'écran où elle est agrandie ; sinon elle se rouvrait sur l'autre écran.
+        (+40 : un peu à l'intérieur, Windows place une fenêtre agrandie quelques pixels avant le bord.)"""
+        m = re.match(r"(\d+)x(\d+)\+(-?\d+)\+(-?\d+)$", cur or "")     # Tk : « +-1928 » = x négatif
+        if not m:
+            return old
+        o = re.match(r"(\d+)x(\d+)", old or "")
+        w, h = (o.group(1), o.group(2)) if o else ("1320", "880")
+        x, y = int(m.group(3)) + 40, int(m.group(4)) + 40
+        return f"{w}x{h}+{x}+{y}"
+
     def _zoom_main(self):
         try:
             self.state("zoomed")                  # Windows : plein écran (fenêtre agrandie)
@@ -8812,6 +8825,8 @@ class App(tk.Tk):
             zoomed = self.state() == "zoomed"
             if not zoomed:
                 self.conf["win_geom"] = self.geometry()
+            else:
+                self.conf["win_geom"] = self._zoomed_geom(self.conf.get("win_geom"), self.geometry())
             self.conf["win_zoomed"] = zoomed
             lay = {}
             for k, side in self._LAYOUT.items():
