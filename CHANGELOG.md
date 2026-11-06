@@ -1,5 +1,10 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 2.14 (demandes de BH2RMX)
+
+- Dossier Documents déplacé (sur D:, OneDrive…) : HFImage utilise maintenant le vrai dossier Documents de Windows au lieu de recréer « Documents\HFImage » sur C:. Le journal des stations, les locators, le journal et les WAV d'avant y sont recopiés automatiquement. Les images reçues restent dans le dossier choisi dans Réglages → Dossier.
+- Format de la date : un seul réglage, dans Réglages → Station, pour le bandeau « Mes conditions de trafic » et la carte QSL (qui restait toujours en AAAA-MM-JJ). La liste montre la date du jour dans chaque format (avant : un exemple figé au 4 novembre).
+
 ## Version 2.13 (demandes de BH2RMX)
 
 - Carte QSL : refaire une carte pour un autre correspondant repart maintenant de l'image de fond d'origine — avant, le nouvel indicatif s'écrivait par-dessus l'ancienne carte.

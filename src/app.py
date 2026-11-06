@@ -66,7 +66,7 @@ import random
 import wave
 
 APP = "HFImage F4GOP"
-VERSION = "2.13"
+VERSION = "2.14"
 
 
 def _take_profile(argv):
@@ -90,9 +90,59 @@ PROFILE = _take_profile(sys.argv)
 CONF_MAIN = os.path.join(os.path.expanduser("~"), ".hfimage.json")
 CONF_PATH = os.path.join(os.path.expanduser("~"), f".hfimage_{PROFILE}.json") if PROFILE else CONF_MAIN
 DONATE_URL = "https://www.paypal.com/paypalme/F4GOP"     # 1.70 : menu Infos → Soutenir HFImage (don)
-DEFAULT_OUT = os.path.join(os.path.expanduser("~"), "Documents", "HFImage")
+def _documents_dir():
+    """2.14 (BH2RMX) : le vrai dossier Documents de Windows, même déplacé (sur D:, OneDrive…) ;
+    avant, HFImage prenait toujours C:\\Users\\…\\Documents et y recréait son dossier."""
+    if sys.platform.startswith("win"):
+        try:
+            import ctypes
+            from ctypes import wintypes
+
+            class GUID(ctypes.Structure):
+                _fields_ = [("a", wintypes.DWORD), ("b", wintypes.WORD), ("c", wintypes.WORD),
+                            ("d", ctypes.c_ubyte * 8)]
+            fid = GUID(0xFDD39AD0, 0x238F, 0x46AF, (ctypes.c_ubyte * 8)(0xAD, 0xB4, 0x6C, 0x85, 0x48, 0x03, 0x69, 0xC7))
+            ptr = ctypes.c_wchar_p()
+            if ctypes.windll.shell32.SHGetKnownFolderPath(ctypes.byref(fid), 0, None, ctypes.byref(ptr)) == 0:
+                path = ptr.value
+                ctypes.windll.ole32.CoTaskMemFree(ptr)
+                if path and os.path.isdir(path):
+                    return path
+        except Exception:
+            pass
+    return os.path.join(os.path.expanduser("~"), "Documents")
+
+
+OLD_OUT = os.path.join(os.path.expanduser("~"), "Documents", "HFImage")     # emplacement d'avant 2.14
+DEFAULT_OUT = os.path.join(_documents_dir(), "HFImage")
 if PROFILE:
     DEFAULT_OUT = os.path.join(DEFAULT_OUT, PROFILE)
+    OLD_OUT = os.path.join(OLD_OUT, PROFILE)
+
+
+def _migrate_old_out(old=None, new=None):
+    """2.14 : Documents déplacé -> le journal des stations, les locators, le journal et les WAV
+    d'avant sont recopiés dans le nouveau dossier HFImage (s'ils n'y sont pas déjà). Les images
+    reçues restent où le réglage « Dossier » les met."""
+    old, new = old or OLD_OUT, new or DEFAULT_OUT
+    try:
+        if os.path.normcase(os.path.abspath(old)) == os.path.normcase(os.path.abspath(new)) \
+                or not os.path.isdir(old):
+            return []
+        done = []
+        for name in ("stations.csv", "locators.json", "journal.txt", "wav"):
+            a, b = os.path.join(old, name), os.path.join(new, name)
+            if not os.path.exists(a) or os.path.exists(b):
+                continue
+            os.makedirs(new, exist_ok=True)
+            if os.path.isdir(a):
+                shutil.copytree(a, b)
+            else:
+                shutil.copy2(a, b)
+            done.append(name)
+        return done
+    except Exception:
+        return []
 DEFAULTS = {
     "callsign": "", "opname": "", "mode": "Auto", "width": "auto", "seconds": 120, "fmt": "avif",
     "overhead": "auto", "out_dev": "", "in_dev": "", "level": 50,
@@ -459,6 +509,10 @@ class App(tk.Tk):
         self.first_run = not os.path.exists(CONF_PATH)    # aucun réglage enregistré : premier démarrage
         private_file(CONF_PATH)
         self.conf = load_conf()
+        moved = _migrate_old_out()                 # 2.14 : Documents déplacé (D:, OneDrive…)
+        if moved:
+            self.after(2000, lambda: self.log(tr("Dossier Documents déplacé : fichiers HFImage recopiés dans")
+                                              + f" {DEFAULT_OUT} ({', '.join(moved)})"))
         clocktz.MODE = self.conf.get("clock", "local")
         self.v_fbold = tk.BooleanVar(value=bool(self.conf.get("font_bold")))       # menu Police / Réglages
         self.conf["font_size"] = theme.size_name(self.conf.get("font_size", "9"))   # 8 … 14 points
@@ -3259,6 +3313,13 @@ class App(tk.Tk):
         ttk.Entry(st, textvariable=self.v_loc, width=8).grid(row=0, column=3, sticky="w", padx=6)
         ttk.Label(st, text="Prénom").grid(row=2, column=0, sticky="w", pady=(6, 0))
         ttk.Entry(st, textvariable=self.v_opname, width=12).grid(row=2, column=1, sticky="w", padx=6, pady=(6, 0))
+        # 2.14 (BH2RMX) : format de la date, un seul réglage pour le bandeau et la carte QSL
+        dn = self._date_names()
+        self.v_datefmt = tk.StringVar(value=dn.get(self.conf.get("tc_datefmt"), dn["iso"]))
+        ttk.Label(st, text="Date").grid(row=2, column=2, sticky="w", padx=(12, 0), pady=(6, 0))
+        cbd = ttk.Combobox(st, textvariable=self.v_datefmt, values=list(dn.values()), width=20, state="readonly")
+        cbd.grid(row=2, column=3, sticky="w", padx=6, pady=(6, 0))
+        cbd.bind("<<ComboboxSelected>>", lambda e: self._datefmt_chosen())
         ttk.Label(st, text="Langue / Language").grid(row=1, column=0, sticky="w", pady=(6, 0))
         names = list(i18n.LANGS.values())
         self.v_lang = tk.StringVar(value=i18n.LANGS.get(i18n.get_lang(), "Français"))
@@ -5726,12 +5787,7 @@ class App(tk.Tk):
         ttk.Label(pf, text="Taille du texte").pack(side="left", padx=(10, 0))
         ttk.Combobox(pf, textvariable=v_size, values=list(size_names.values()), width=9, state="readonly").pack(
             side="left", padx=6)
-        # 2.04 (demande de VK6NJP) : format de la date
-        date_names = {"iso": "2026-11-04", "jma": tr("04/11/2026 (jour/mois)"), "mja": tr("11/04/2026 (mois/jour)")}
-        v_datefmt = tk.StringVar(value=date_names.get(c.get("tc_datefmt"), date_names["iso"]))
-        ttk.Label(pf, text="Date").pack(side="left", padx=(10, 0))
-        ttk.Combobox(pf, textvariable=v_datefmt, values=list(date_names.values()), width=22,
-                     state="readonly").pack(side="left", padx=6)
+        # format de la date : 2.14, un seul réglage dans Réglages → Station (bandeau et carte QSL)
         # --- police et couleurs
         fams = list(trafic.fonts()) or ["Arial"]
         v_font = tk.StringVar(value=c["tc_font"] if c["tc_font"] in fams else
@@ -5819,7 +5875,6 @@ class App(tk.Tk):
                 self.conf[k] = bool(var.get())
             self.conf["tc_pos"] = next(k for k, n in pos_names.items() if n == v_pos.get())
             self.conf["tc_size"] = next(k for k, n in size_names.items() if n == v_size.get())
-            self.conf["tc_datefmt"] = next((k for k, n in date_names.items() if n == v_datefmt.get()), "iso")
             self.conf["tc_font"] = v_font.get()
             for k, var in sb.items():
                 self.conf[k] = bool(var.get())
@@ -5849,7 +5904,7 @@ class App(tk.Tk):
             cv.configure(image=self._photos["tc"])
 
         for var in list(v.values()) + list(b.values()) + list(sb.values()) + list(col.values()) + [
-                v_pos, v_size, v_datefmt, v_font, v_alpha]:
+                v_pos, v_size, v_font, v_alpha]:
             var.trace_add("write", lambda *a: self._tc_preview_later(preview))
         bt = ttk.Frame(f)
         bt.grid(row=11, column=0, columnspan=3, sticky="e", pady=(10, 0))
@@ -7951,12 +8006,28 @@ class App(tk.Tk):
 
         threading.Thread(target=run, daemon=True).start()
 
+    def _date_names(self):
+        """Formats de date, montrés avec la date du jour (avant : un exemple figé au 4 novembre)."""
+        t = time.localtime()
+        return {"iso": time.strftime("%Y-%m-%d", t),
+                "jma": time.strftime("%d/%m/%Y", t) + " (" + tr("jour/mois") + ")",
+                "mja": time.strftime("%m/%d/%Y", t) + " (" + tr("mois/jour") + ")"}
+
+    def _datefmt_chosen(self):
+        dn = self._date_names()
+        self.conf["tc_datefmt"] = next((k for k, n in dn.items() if n == self.v_datefmt.get()), "iso")
+        self.save_conf(quiet=True)
+        self.prepare()                                # bandeau « Mes conditions de trafic » refait
+
+    def _date_fmt(self):
+        return trafic.DATE_FORMATS.get(self.conf.get("tc_datefmt"), trafic.DATE_FORMATS["iso"])
+
     def qsl_dialog(self):
         win = tk.Toplevel(self)
         win.title("Carte QSL")
         win.transient(self)
         fields = {}
-        now = clocktz.fmt("%Y-%m-%d %H:%M", suffix=False)
+        now = clocktz.fmt(self._date_fmt() + " %H:%M", suffix=False)      # 2.14 : format choisi
         last = ""
         for iid in self.tree.get_children():          # dernière station identifiée
             c = self.tree.item(iid, "values")[1]
@@ -8987,7 +9058,7 @@ class App(tk.Tk):
     # ---- 1.93 : sauvegarde / restauration
     def _backup_roots(self):
         home = os.path.expanduser("~")
-        main_out = os.path.join(home, "Documents", "HFImage")
+        main_out = os.path.join(_documents_dir(), "HFImage")
         return home, main_out if not PROFILE else DEFAULT_OUT, self.v_folder.get() or DEFAULT_OUT
 
     def backup_dialog(self):

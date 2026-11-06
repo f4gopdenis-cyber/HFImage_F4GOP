@@ -1172,4 +1172,7 @@ RU = {
     "Mettre derrière": "На задний план",
     "Enregistrement impossible :": "Не удалось сохранить:",
     "Image enregistrée :": "Изображение сохранено:",
+    "jour/mois": "день/месяц",
+    "mois/jour": "месяц/день",
+    "Dossier Documents déplacé : fichiers HFImage recopiés dans": "Папка «Документы» перемещена: файлы HFImage скопированы в",
 }
