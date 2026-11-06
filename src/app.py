@@ -66,7 +66,7 @@ import random
 import wave
 
 APP = "HFImage F4GOP"
-VERSION = "2.14"
+VERSION = "2.15"
 
 
 def _take_profile(argv):
@@ -908,7 +908,14 @@ class App(tk.Tk):
             w.pack(side=side, padx=padx, pady=8)
             self.tb[key] = w
             return w
-        lab("logo", padx=(14, 6), font=("TkDefaultFont", 10, "bold")).configure(text=" HF ")
+        lg = lab("logo", padx=(14, 6), font=("TkDefaultFont", 10, "bold"))
+        try:                                            # 2.15 : nouvelle icône (globe + HF) à la place de « HF »
+            here = getattr(sys, "_MEIPASS", os.path.dirname(os.path.abspath(__file__)))
+            ic = Image.open(os.path.join(here, "icon64.png")).convert("RGBA").resize((34, 34), Image.LANCZOS)
+            self._tb_logo = ImageTk.PhotoImage(ic)
+            lg.configure(image=self._tb_logo, bd=0)
+        except Exception:
+            lg.configure(text=" HF ")
         lab("app", padx=(0, 18), font=("TkDefaultFont", 13, "bold")).configure(text="HFImage")
         lab("call", padx=(0, 6), font=("TkDefaultFont", 13, "bold"))
         lab("who", padx=(0, 22))
@@ -959,7 +966,8 @@ class App(tk.Tk):
                  "clock": (fam, int(11 * k), "bold")}
         for key, w in self.tb.items():
             w.configure(bg=top, fg=P.get("top_fg", P["fg"]), font=fonts[key])
-        self.tb["logo"].configure(bg=P["accent"], fg=P["accent_fg"])
+        if not getattr(self, "_tb_logo", None):
+            self.tb["logo"].configure(bg=P["accent"], fg=P["accent_fg"])
         for key in ("who", "mode", "online"):
             self.tb[key].configure(fg=P.get("top_muted", P["muted"]))
         if not self.topbar.winfo_manager():

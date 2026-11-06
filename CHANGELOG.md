@@ -1,5 +1,9 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 2.15
+
+- Nouvelle icône du programme : le globe (avec la vraie carte de l'Europe), l'anneau doré, les ondes et le « HF » vert, dans l'esprit du logo de F4GOP. Bureau, barre des tâches, fenêtre, et à gauche de la barre du haut (style Moderne) à la place de « HF ».
+
 ## Version 2.14 (demandes de BH2RMX)
 
 - Dossier Documents déplacé (sur D:, OneDrive…) : HFImage utilise maintenant le vrai dossier Documents de Windows au lieu de recréer « Documents\HFImage » sur C:. Le journal des stations, les locators, le journal et les WAV d'avant y sont recopiés automatiquement. Les images reçues restent dans le dossier choisi dans Réglages → Dossier.
