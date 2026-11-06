@@ -1163,4 +1163,5 @@ RU = {
     'Même réglage que le bouton « DATA auto » et Réglages → Mode DATA du poste.': 'Та же настройка, что кнопка «DATA auto» и Настройки → Режим DATA трансивера.',
     'DATA pour émettre, puis retour': 'DATA для передачи, затем обратно',
     "Mode DATA : bouton « DATA auto » (allumé : DATA pour émettre, puis retour en LSB / USB ;\néteint : HFImage ne touche pas au mode du poste).": "Режим DATA: кнопка «DATA auto» (вкл.: DATA для передачи, затем обратно в LSB / USB;\nвыкл.: HFImage не трогает режим трансивера).",
+    "Pas de CAT : fréquence d'écoute indiquée aux autres stations :": "Нет CAT: частота прослушивания показана другим станциям:",
 }

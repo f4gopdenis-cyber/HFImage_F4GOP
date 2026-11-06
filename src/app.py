@@ -66,7 +66,7 @@ import random
 import wave
 
 APP = "HFImage F4GOP"
-VERSION = "2.11"
+VERSION = "2.12"
 
 
 def _take_profile(argv):
@@ -2733,11 +2733,16 @@ class App(tk.Tk):
         if self.tx_busy:
             messagebox.showinfo(APP, tr("Émission en cours : changez de fréquence après."))
             return
-        if radio.rig_entry(self.radio_cfg["rig"])["kind"] == "none":
-            messagebox.showinfo(APP, tr("Pas de liaison CAT : choisissez d'abord le poste (Réglages → Poste "
-                                        "radio…) pour que HFImage puisse changer la fréquence."))
-            return
         side = side or ("LSB" if hz < 10_000_000 else "USB")
+        if radio.rig_entry(self.radio_cfg["rig"])["kind"] == "none":
+            # 2.12 (demande de VK3DNH) : sans CAT, la fréquence choisie est celle où l'on écoute ;
+            # elle est publiée dans la liste des stations pour cette séance (pas enregistrée)
+            self.rig_freq = int(hz)
+            self._show_freq()
+            self._heard_refresh()
+            self.log(tr("Pas de CAT : fréquence d'écoute indiquée aux autres stations :")
+                     + f" {hz / 1e6:.3f} MHz {side}")
+            return
         self.log(tr("Changement de fréquence :") + f" {hz / 1e6:.3f} MHz {side}…")
 
         def run():
@@ -2997,12 +3002,23 @@ class App(tk.Tk):
             del self.online[k]
         # stations en ligne (Internet, avec LEUR fréquence) + stations entendues par radio
         on = {str(d["call"]).upper(): d for d in self.online.values()}
-        self._heard_names = sorted(set(on) | set(self.heard))
+        # 2.12 (demande de VK3DNH) : notre indicatif en tête dès qu'on est connecté au serveur
+        try:
+            me = (self.mycall() or "").upper() if self.net is not None and self.net_ok else ""
+        except AttributeError:
+            me = ""
+        self._heard_names = ([me] if me else []) + sorted((set(on) | set(self.heard)) - {me})
         # colonne de l'indicatif à la largeur du plus long (PA0041SWL, F4FRC/P…) : colonnes alignées
         cw = max([7] + [len(c) for c in self._heard_names])
         P = self.look.palette() if hasattr(self, "look") else None
         rows = []
         for c in self._heard_names:
+            if c == me:                                               # notre ligne : nos propres réglages
+                tag = " HYB" if self.v_hyb.get() else ""
+                mark = "*" if self.tx_busy else " "
+                rows.append((f"{'● ' if P else ''}{c:<{cw}}{mark}{self._mhz(self.rig_freq):>6}{tag}",
+                             self._c("#c01818" if self.tx_busy else "#000000")))
+                continue
             hyb = self._is_hyb(c, on)
             tag = " HYB" if hyb else ""                                # HYB = mode hybride, après la fréquence
             h = self.heard.get(c, {})
@@ -3037,7 +3053,7 @@ class App(tk.Tk):
                 rows.append((f"{c:<{rw}}{'' if rep is None else f'{rep:+d} dB':>7}{self._name_tail(c)}", None))
         App._sync_list(self.lst_rxok, self._rxok_names, rows)
         fr = f" - {self._mhz(self.rig_freq)}" if self.rig_freq else ""
-        self._set_text(self.lb_heard, tr(f"Stations ({len(self._heard_names)})") + fr)
+        self._set_text(self.lb_heard, tr(f"Stations ({len(self._heard_names) - (1 if me else 0)})") + fr)
         self._net_status()
         self._set_text(self.lb_rxok, tr(f"Rx Ok ({len(self.rxok)})"))
         if self.map_win is not None and self.map_win.alive() and self.map_win._drag is None:

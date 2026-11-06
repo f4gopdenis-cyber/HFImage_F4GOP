@@ -1945,6 +1945,7 @@ T = [
      "Modo DATA: botón «DATA auto» (encendido: DATA para transmitir y vuelta a LSB / USB;\napagado: HFImage no toca el modo del equipo).",
      "Modo DATA: pulsante «DATA auto» (acceso: DATA per trasmettere, poi ritorno in LSB / USB;\nspento: HFImage non tocca il modo della radio)."),
     ("* = en émission    HYB = mode hybride", "* = transmitting    HYB = hybrid mode", "* = sendet    HYB = Hybridmodus", "* = transmitiendo    HYB = modo híbrido", "* = in trasmissione    HYB = modo ibrido"),
+    ("Pas de CAT : fréquence d'écoute indiquée aux autres stations :", "No CAT: listening frequency shown to the other stations:", "Kein CAT: Hörfrequenz wird den anderen Stationen angezeigt:", "Sin CAT: frecuencia de escucha indicada a las demás estaciones:", "Nessun CAT: frequenza di ascolto indicata alle altre stazioni:"),
 ]
 
 _lang = "fr"

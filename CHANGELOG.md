@@ -1,5 +1,10 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 2.12
+
+- Sans CAT : la fréquence choisie dans le menu « Fréquence ▾ » (ou « Autre fréquence… ») est maintenant indiquée aux autres stations dans la liste « Stations », pour la séance en cours (elle n'est pas enregistrée) — avant, le menu répondait seulement « Pas de liaison CAT » (demande de VK3DNH).
+- Liste « Stations » : votre indicatif apparaît en tête dès que HFImage est connecté au serveur, avec votre fréquence — s'il n'y est pas, vous n'êtes pas connecté (demande de VK3DNH).
+
 ## Version 2.11
 
 - Fichiers WAV : HFImage lit maintenant aussi les WAV en 8 bits (comme EasyPal), ainsi qu'en 24 et 32 bits, mono ou stéréo — avant, seuls les WAV 16 bits étaient acceptés.

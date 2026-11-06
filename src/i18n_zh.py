@@ -1155,4 +1155,5 @@ ZH = {
     'Même réglage que le bouton « DATA auto » et Réglages → Mode DATA du poste.': '与“DATA auto”按钮及 设置 → 电台 DATA 模式 为同一设置。',
     'DATA pour émettre, puis retour': '发射用 DATA,然后恢复',
     "Mode DATA : bouton « DATA auto » (allumé : DATA pour émettre, puis retour en LSB / USB ;\néteint : HFImage ne touche pas au mode du poste).": "DATA 模式:“DATA auto”按钮(开:发射时 DATA,结束后回到 LSB / USB;\n关:HFImage 不改变电台模式)。",
+    "Pas de CAT : fréquence d'écoute indiquée aux autres stations :": "无 CAT:监听频率已告知其他电台:",
 }
