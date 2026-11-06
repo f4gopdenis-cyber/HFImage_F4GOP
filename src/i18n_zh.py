@@ -1156,4 +1156,12 @@ ZH = {
     'DATA pour émettre, puis retour': '发射用 DATA,然后恢复',
     "Mode DATA : bouton « DATA auto » (allumé : DATA pour émettre, puis retour en LSB / USB ;\néteint : HFImage ne touche pas au mode du poste).": "DATA 模式:“DATA auto”按钮(开:发射时 DATA,结束后回到 LSB / USB;\n关:HFImage 不改变电台模式)。",
     "Pas de CAT : fréquence d'écoute indiquée aux autres stations :": "无 CAT:监听频率已告知其他电台:",
+    "Émission en cours : attendez la fin.": "正在发射:请等待结束。",
+    "Image à émettre": "待发射图像",
+    "Image à émettre retirée.": "已移除待发射图像。",
+    "Enregistrer l'image…": "保存图像…",
+    "Mettre devant": "置于顶层",
+    "Mettre derrière": "置于底层",
+    "Enregistrement impossible :": "无法保存:",
+    "Image enregistrée :": "图像已保存:",
 }

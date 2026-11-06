@@ -202,7 +202,8 @@ def size_name(v):
     v = OLD_SIZES.get(str(v), str(v))
     return v if v in FONT_SIZES else "9"
 FONTS = ["(par défaut)", "Segoe UI", "Arial", "Tahoma", "Verdana", "Calibri", "Trebuchet MS",
-         "Times New Roman", "Georgia", "Consolas", "Courier New"]
+         "Times New Roman", "Georgia", "Consolas", "Courier New",
+         "Microsoft YaHei UI"]       # 2.13 (BH2RMX) : police chinoise de Windows (montrée si elle est installée)
 MONO = {"consolas", "courier new", "courier", "tkfixedfont", "lucida console", "dejavu sans mono"}
 
 COLOR_OPTS = ("background", "foreground", "activebackground", "activeforeground", "selectbackground",

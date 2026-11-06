@@ -1164,4 +1164,12 @@ RU = {
     'DATA pour émettre, puis retour': 'DATA для передачи, затем обратно',
     "Mode DATA : bouton « DATA auto » (allumé : DATA pour émettre, puis retour en LSB / USB ;\néteint : HFImage ne touche pas au mode du poste).": "Режим DATA: кнопка «DATA auto» (вкл.: DATA для передачи, затем обратно в LSB / USB;\nвыкл.: HFImage не трогает режим трансивера).",
     "Pas de CAT : fréquence d'écoute indiquée aux autres stations :": "Нет CAT: частота прослушивания показана другим станциям:",
+    "Émission en cours : attendez la fin.": "Идёт передача: дождитесь окончания.",
+    "Image à émettre": "Изображение для передачи",
+    "Image à émettre retirée.": "Изображение для передачи удалено.",
+    "Enregistrer l'image…": "Сохранить изображение…",
+    "Mettre devant": "На передний план",
+    "Mettre derrière": "На задний план",
+    "Enregistrement impossible :": "Не удалось сохранить:",
+    "Image enregistrée :": "Изображение сохранено:",
 }

@@ -325,6 +325,20 @@ class TxEditor:
             self.app.conf["bub_last"] = {k: b[k] for k in ("style", "size", "bg", "fg", "anim") if k in b}
             self.changed()
 
+    def restack(self, front):
+        """Image insérée choisie : tout devant (dessinée en dernier) ou tout derrière."""
+        kind, p = self.selected()
+        if kind != "p":
+            return
+        lst = self.app.pips
+        lst.remove(p)
+        if front:
+            lst.append(p)
+        else:
+            lst.insert(0, p)
+        self.sel = ("p", lst.index(p))
+        self.changed()
+
     def set_pip(self, **kw):
         kind, p = self.selected()
         if kind == "p":
@@ -429,11 +443,15 @@ class TxEditor:
                 m.add_cascade(label=tr("Forme"), menu=sh)
                 m.add_command(label=tr("Légende…"), command=self._caption)
                 m.add_command(label=tr("Remettre droit"), command=lambda: self.set_pip(rot=0, tilt=0))
+                # 2.13 (BH2RMX) : ordre des images insérées (laquelle passe devant l'autre)
+                m.add_command(label=tr("Mettre devant"), command=lambda: self.restack(True))
+                m.add_command(label=tr("Mettre derrière"), command=lambda: self.restack(False))
                 m.add_command(label=tr("Supprimer"), command=self.delete)
             m.add_separator()
             m.add_command(label=tr("Bulles de texte…"), command=a.bubble_dialog)
             m.add_command(label=tr("Image du correspondant…"), command=a.pip_dialog)
             m.add_command(label=tr("Ouvrir une autre image…"), command=a.open_image, state=busy)
+            m.add_command(label=tr("Enregistrer l'image…"), command=a.save_tx_image)     # 2.13 (BH2RMX)
         if self.view.zoom > 1.0:
             m.add_separator()
             m.add_command(label=tr("Revenir à l'image entière"), command=self.view.reset_zoom)

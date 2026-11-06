@@ -66,7 +66,7 @@ import random
 import wave
 
 APP = "HFImage F4GOP"
-VERSION = "2.12"
+VERSION = "2.13"
 
 
 def _take_profile(argv):
@@ -729,6 +729,8 @@ class App(tk.Tk):
         th = self._theme_names.get(self.v_theme.get(), self.v_theme.get()) if hasattr(self, "v_theme") \
             else self.conf.get("theme", "Vert EasyPal")
         fam = self.v_font.get() if hasattr(self, "v_font") else self.conf.get("font_family")
+        if fam == tr("(par défaut)"):
+            fam = "(par défaut)"                        # 2.13 : affiché traduit, enregistré en français
         size = self._size_names.get(self.v_fsize.get(), "9") if hasattr(self, "v_fsize") \
             else theme.size_name(self.conf.get("font_size", "9"))
         modern = None
@@ -1129,6 +1131,7 @@ class App(tk.Tk):
         e.add_command(label="Journal des stations", command=lambda: self.tree.delete(*self.tree.get_children()))
         e.add_command(label="Waterfall", command=lambda: self.wf.clear())
         e.add_command(label="Journal à l'écran", command=lambda: self._clear_text(self.logbox))
+        e.add_command(label="Image à émettre", command=self.clear_tx_image)     # 2.13 (BH2RMX)
         f.add_cascade(label="Effacer", menu=e)          # 0.97 : sous-menu de Fichiers
         m.add_cascade(label="Fichiers", menu=f)
         self._sim_tab_toggle(save=False)
@@ -3401,13 +3404,15 @@ class App(tk.Tk):
         self._theme_names = {tr(n): n for n in list(theme.THEMES) + ["Personnalisée"]}
         self._size_names = {tr(n): n for n in theme.FONT_SIZES}
         self.v_theme = tk.StringVar(value=tr(self.conf.get("theme", "Vert EasyPal")))
-        self.v_font = tk.StringVar(value=self.conf.get("font_family", "(par défaut)"))
+        f0 = self.conf.get("font_family", "(par défaut)")
+        self.v_font = tk.StringVar(value=tr(f0) if f0 == "(par défaut)" else f0)
         self.v_fsize = tk.StringVar(value=theme.size_name(self.conf.get("font_size", "9")))
         try:
             have = {f.lower() for f in tkfont.families(self)}
         except tk.TclError:
             have = set()
-        fonts = [f for f in theme.FONTS if f.startswith("(") or not have or f.lower() in have]
+        fonts = [tr(f) if f.startswith("(") else f for f in theme.FONTS
+                 if f.startswith("(") or (not have and f != "Microsoft YaHei UI") or f.lower() in have]
         ttk.Label(af, text="Couleurs").grid(row=0, column=0, sticky="w")
         cb_t = ttk.Combobox(af, textvariable=self.v_theme, values=list(self._theme_names), state="readonly", width=16)
         cb_t.grid(row=0, column=1, sticky="w", padx=4)
@@ -4599,6 +4604,45 @@ class App(tk.Tk):
             self.log(f"Photo de {len(self.src_raw) / 1000:.0f} K : format avif pour la radio "
                      "(« original » reste possible en mode hybride).")
         self.prepare()
+
+    def clear_tx_image(self):
+        """2.13 (BH2RMX) : retire l'image de l'onglet TX (Fichiers → Effacer → Image à émettre)."""
+        if self.tx_busy:
+            messagebox.showinfo(APP, tr("Émission en cours : attendez la fin."))
+            return
+        self.src_img = self.src_raw = self.src_kind = self.src_anim = None
+        self.src_path = ""
+        self.bubbles = []                     # placées sur l'image retirée
+        self._qsl_card = self._qsl_bg = None
+        self.tx = None
+        if getattr(self, "tx_editor", None) is not None:
+            self.tx_editor.sel = None
+        for v in (self.lb_src, self.lb_cmp):
+            v.set_image(None)
+        self._set_text(self.lb_src_info, "")
+        self.log(tr("Image à émettre retirée."))
+
+    def save_tx_image(self):
+        """2.13 (BH2RMX) : enregistre l'image TX telle qu'elle partira (carte QSL, bulles, logos…)."""
+        im = self._tx_source() if self.src_img is not None else None
+        if im is None:
+            messagebox.showinfo(APP, tr("Ouvrez d'abord une image."))
+            return
+        call = (self.mycall() or "HFImage").replace("/", "-")
+        p = filedialog.asksaveasfilename(parent=self, defaultextension=".png",
+                                         initialfile=f"{call}_{time.strftime('%Y%m%d_%H%M')}.png",
+                                         filetypes=[("PNG", "*.png"), ("JPEG", "*.jpg *.jpeg")])
+        if not p:
+            return
+        try:
+            if p.lower().endswith((".jpg", ".jpeg")):
+                im.convert("RGB").save(p, "JPEG", quality=92)
+            else:
+                im.save(p, "PNG")
+        except Exception as e:
+            messagebox.showerror(APP, tr("Enregistrement impossible :") + f"\n{e}")
+            return
+        self.log(tr("Image enregistrée :") + f" {p}")
 
     def _rotate_tx(self, deg):
         """Tourne l'image à émettre d'un quart de tour (deg = 90 : à gauche, -90 : à droite)."""
@@ -7943,8 +7987,13 @@ class App(tk.Tk):
                 fields["report"].set(auto["report"])
 
         fields["to"].trace_add("write", to_changed)
-        bg = {"img": self.src_img}
-        lab_bg = ttk.Label(win, text="Fond : image ouverte" if self.src_img is not None else "Fond : dégradé")
+        base = self.src_img
+        if base is not None and base is getattr(self, "_qsl_card", None):
+            # 2.13 (BH2RMX) : l'image à émettre est notre carte QSL : on repart de son fond d'origine,
+            # sinon le nouvel indicatif s'écrivait par-dessus l'ancien
+            base = self._qsl_bg
+        bg = {"img": base}
+        lab_bg = ttk.Label(win, text="Fond : image ouverte" if base is not None else "Fond : dégradé")
         lab_bg.grid(row=5, column=0, columnspan=2, sticky="w", padx=8)
 
         # ---- style : police, couleurs, taille de l'indicatif, bandeaux (gardé pour la prochaine fois)
@@ -8123,6 +8172,7 @@ class App(tk.Tk):
             except Exception:
                 pass
             self.src_img = card
+            self._qsl_card, self._qsl_bg = card, bg["img"]      # 2.13 : fond gardé pour la carte suivante
             self.src_raw = self.src_kind = self.src_anim = None
             self._show(self.lb_src, "src", card)
             self._set_text(self.lb_src_info, f"Carte QSL pour {fields['to'].get() or '—'}")

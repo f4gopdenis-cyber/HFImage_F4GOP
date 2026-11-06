@@ -1,5 +1,12 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 2.13 (demandes de BH2RMX)
+
+- Carte QSL : refaire une carte pour un autre correspondant repart maintenant de l'image de fond d'origine — avant, le nouvel indicatif s'écrivait par-dessus l'ancienne carte.
+- Image TX : « Enregistrer l'image… » au clic droit (la carte QSL, les bulles et les logos tels qu'ils partiront) ; Fichiers → Effacer → « Image à émettre » retire l'image de l'onglet TX.
+- Images insérées : « Mettre devant » / « Mettre derrière » au clic droit, pour choisir laquelle passe devant l'autre.
+- Police : « (par défaut) » est traduit dans la liste des polices, et « Microsoft YaHei UI » (police chinoise de Windows) y est proposée quand elle est installée.
+
 ## Version 2.12
 
 - Sans CAT : la fréquence choisie dans le menu « Fréquence ▾ » (ou « Autre fréquence… ») est maintenant indiquée aux autres stations dans la liste « Stations », pour la séance en cours (elle n'est pas enregistrée) — avant, le menu répondait seulement « Pas de liaison CAT » (demande de VK3DNH).

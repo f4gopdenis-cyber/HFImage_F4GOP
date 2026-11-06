@@ -1946,6 +1946,14 @@ T = [
      "Modo DATA: pulsante «DATA auto» (acceso: DATA per trasmettere, poi ritorno in LSB / USB;\nspento: HFImage non tocca il modo della radio)."),
     ("* = en émission    HYB = mode hybride", "* = transmitting    HYB = hybrid mode", "* = sendet    HYB = Hybridmodus", "* = transmitiendo    HYB = modo híbrido", "* = in trasmissione    HYB = modo ibrido"),
     ("Pas de CAT : fréquence d'écoute indiquée aux autres stations :", "No CAT: listening frequency shown to the other stations:", "Kein CAT: Hörfrequenz wird den anderen Stationen angezeigt:", "Sin CAT: frecuencia de escucha indicada a las demás estaciones:", "Nessun CAT: frequenza di ascolto indicata alle altre stazioni:"),
+    ("Émission en cours : attendez la fin.", "Transmitting: wait until it ends.", "Sendung läuft: warten Sie das Ende ab.", "Transmisión en curso: espere a que termine.", "Trasmissione in corso: attendete la fine."),
+    ("Image à émettre", "Picture to send", "Zu sendendes Bild", "Imagen a enviar", "Immagine da inviare"),
+    ("Image à émettre retirée.", "Picture to send removed.", "Zu sendendes Bild entfernt.", "Imagen a enviar retirada.", "Immagine da inviare rimossa."),
+    ("Enregistrer l'image…", "Save picture…", "Bild speichern…", "Guardar imagen…", "Salva immagine…"),
+    ("Mettre devant", "Bring to front", "Nach vorne", "Traer al frente", "Porta in primo piano"),
+    ("Mettre derrière", "Send to back", "Nach hinten", "Enviar al fondo", "Porta in fondo"),
+    ("Enregistrement impossible :", "Cannot save:", "Speichern nicht möglich:", "No se puede guardar:", "Impossibile salvare:"),
+    ("Image enregistrée :", "Picture saved:", "Bild gespeichert:", "Imagen guardada:", "Immagine salvata:"),
 ]
 
 _lang = "fr"
