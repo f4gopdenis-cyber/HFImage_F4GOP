@@ -66,6 +66,11 @@ MODERN = {
                       fg="#e3eeff", muted="#8fb0dc", border="#2a64c8", button="#2559b8", button_fg="#eaf4ff",
                       accent="#22c55e", accent_fg="#04220f", bad="#ff4d5e", dark=True, top="#06102a",
                       top_fg="#ffd84a", top_muted="#8fb0dc"),
+    # 2.20 (d'après l'image de M7WUV) : violet nuit, liserés magenta, boutons actifs cyan
+    "Néon violet": dict(bg="#140a24", panel="#1c0f33", field="#0e0719", bar="#3a1666", bar_fg="#f6ecff",
+                        fg="#f2e8ff", muted="#b9a3d6", border="#c026d3", button="#2d1a4d", button_fg="#f2e8ff",
+                        accent="#22d3ee", accent_fg="#032a33", bad="#ff4d6d", dark=True, top="#0f0720",
+                        top_fg="#ff5fd8", top_muted="#b9a3d6"),
 }
 # « Thème selon la saison » (case, décochée par défaut) : ambiance prise d'office à ces dates
 # (mois, jour) de début et de fin, bornes comprises ; Noël passe d'une année à l'autre.
