@@ -1,5 +1,9 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 2.21
+
+- Quatre nouvelles ambiances néon (style Moderne) : « Néon vert » (façon écran de terminal), « Néon rouge » (enseigne de nuit), « Néon ambre » (cadrans des postes à lampes) et « Néon cyan » (cyberpunk). Superbes avec les boutons arrondis en relief.
+
 ## Version 2.20
 
 - Nouvelle ambiance « Néon violet » (style Moderne, d'après l'image de M7WUV) : fond violet nuit, liserés magenta, boutons actifs cyan, indicatif en pastille rose. Superbe avec les boutons arrondis en relief.

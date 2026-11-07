@@ -1177,4 +1177,8 @@ RU = {
     "Dossier Documents déplacé : fichiers HFImage recopiés dans": "Папка «Документы» перемещена: файлы HFImage скопированы в",
     "Boutons en relief (3D)": "Объёмные кнопки (3D)",
     "Néon violet": "Неоновый фиолетовый",
+    "Néon vert": "Неоновый зелёный",
+    "Néon rouge": "Неоновый красный",
+    "Néon ambre": "Неоновый янтарный",
+    "Néon cyan": "Неоновый голубой",
 }
