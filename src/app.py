@@ -66,7 +66,7 @@ import random
 import wave
 
 APP = "HFImage F4GOP"
-VERSION = "2.17"
+VERSION = "2.18"
 
 
 def _take_profile(argv):
@@ -997,6 +997,7 @@ class App(tk.Tk):
             self.tb[key].configure(fg=P.get("top_muted", P["muted"]))
         if not self.topbar.winfo_manager():
             self.topbar.pack(fill="x", before=self._main_pane)
+        self._tb_call_key = self._tb_lcd_key = None
         self._topbar_update()
 
     def _topbar_update(self):
@@ -1005,14 +1006,15 @@ class App(tk.Tk):
             return
         P = self.look.palette() or theme.MODERN["Vert EasyPal"]
         tb = self.tb
-        tb["call"].configure(text=self.mycall() or "—")
         who = " · ".join(x for x in (self.myname(), self.v_loc.get().strip().upper()) if x)
         tb["who"].configure(text=who)
         fr = self.rig_freq
-        tb["freq"].configure(text=f"{fr / 1e6:.3f}" if fr else "—.———")
         band = audio.band_of(fr) if fr else ""
-        sub = " · ".join(x for x in ("MHz", str(self.rig_mode or ""), band or "") if x)
-        tb["mode"].configure(text=sub if fr else tr("Fréquence ▾"))
+        if not self._topbar_lcd(P, fr, band):                 # 2.18 : écran de poste (sinon texte)
+            tb["call"].configure(text=self.mycall() or "—", image="")
+            tb["freq"].configure(text=f"{fr / 1e6:.3f}" if fr else "—.———", image="")
+            sub = " · ".join(x for x in ("MHz", str(self.rig_mode or ""), band or "") if x)
+            tb["mode"].configure(text=sub if fr else tr("Fréquence ▾"))
         if self.tx_busy:
             st, bg, fg = "●  " + tr("ÉMISSION"), P["bad"], "#ffffff"
         elif getattr(self, "_wait_job", None):
@@ -1025,6 +1027,39 @@ class App(tk.Tk):
         n = len({str(d.get("call")).upper() for d in self.online.values()}) if getattr(self, "online", None) else 0
         tb["online"].configure(text=f"🌐 {n} " + tr("en ligne") if self.net is not None else "")
         tb["clock"].configure(text=time.strftime("%H:%M", time.gmtime()) + " UTC")
+
+    def _topbar_lcd(self, P, fr, band):
+        """2.18 (choix de F4GOP) : fréquence dans un afficheur « écran de poste », indicatif dans une
+        pastille. Images refaites seulement quand ce qu'elles montrent change. -> False si impossible."""
+        try:
+            import topdisplay
+            k = self.look.scale if hasattr(self, "look") else 1.0
+            pt = max(10, int(round(self.winfo_fpixels("1p") * 12 * k)))
+            tb = self.tb
+            call = self.mycall() or "—"
+            key = (call, P.get("top_fg"), P.get("top"), pt)
+            if getattr(self, "_tb_call_key", None) != key:
+                im = topdisplay.pill(call, topdisplay.hex_rgb(P.get("top_fg", P["fg"])),
+                                     topdisplay.hex_rgb(P.get("top", P["bg"])), pt)
+                if im is None:
+                    return False
+                self._tb_call_img = ImageTk.PhotoImage(im)
+                self._tb_call_key = key
+                tb["call"].configure(image=self._tb_call_img, text="")
+            mode = str(self.rig_mode or "")
+            key = (int(fr) if fr else 0, mode, band, P.get("border"), pt, tr("Fréquence ▾"))
+            if getattr(self, "_tb_lcd_key", None) != key:
+                im = topdisplay.lcd(fr, mode, band, topdisplay.hex_rgb(P.get("border", "#2a64c8")), pt,
+                                    tr("Fréquence ▾"))
+                if im is None:
+                    return False
+                self._tb_lcd_img = ImageTk.PhotoImage(im)
+                self._tb_lcd_key = key
+                tb["freq"].configure(image=self._tb_lcd_img, text="")
+                tb["mode"].configure(text="")
+            return True
+        except Exception:
+            return False
 
     def _c(self, color):
         """Couleur de texte d'origine adaptée au thème (éléments de listes)."""

@@ -1,5 +1,9 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 2.18
+
+- Style Moderne : barre du haut façon « écran de poste ». La fréquence s'affiche dans un petit afficheur sombre aux chiffres orange lumineux (7.058.000), avec le mode et la bande dans le coin ; l'indicatif est dans une pastille. Même hauteur qu'avant ; un clic sur l'afficheur ouvre toujours le menu des fréquences. Rien ne change en style Classique.
+
 ## Version 2.17 (correction urgente, signalé par VK6NJP)
 
 - Documents dans OneDrive : depuis la 2.14, HFImage voulait créer son dossier dans le dossier Documents de OneDrive ; quand Windows le refusait, l'émission échouait (« The system cannot find the file specified »). HFImage vérifie maintenant au démarrage qu'il peut écrire dans le vrai dossier Documents ; sinon il reprend l'emplacement d'avant (Documents\HFImage dans le dossier de l'utilisateur), comme en 2.13.

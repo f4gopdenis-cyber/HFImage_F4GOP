@@ -89,7 +89,9 @@ class Appli(unittest.TestCase):
         self.assertEqual(str(b.cget("bg")), P["button"])
         self.assertTrue(a.topbar.winfo_manager())
         a._topbar_update()
-        self.assertEqual(a.tb["call"].cget("text"), "F4GOP")
+        # 2.18 : indicatif dans une pastille (image), ou en texte si aucune police n'est trouvée
+        self.assertTrue(a.tb["call"].cget("text") == "F4GOP" or str(a.tb["call"].cget("image")))
+        self.assertEqual(a._tb_call_key[0] if a.tb["call"].cget("image") else "F4GOP", "F4GOP")
         self.style(True, "Sombre")
         self.assertEqual(str(b.cget("bg")), theme.MODERN["Sombre"]["button"])
         self.style(False)
