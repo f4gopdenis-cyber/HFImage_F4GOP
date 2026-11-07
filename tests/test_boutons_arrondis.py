@@ -10,6 +10,7 @@ import unittest
 from unittest import mock
 
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "src"))
+import theme  # noqa: E402
 
 
 class Arrondis(unittest.TestCase):
@@ -119,6 +120,42 @@ class Arrondis(unittest.TestCase):
             self.assertEqual(str(b.cget("width")), "0", k)
             self.assertEqual(str(b.cget("height")), "0", k)
             self.assertLess(b.winfo_reqheight(), 40, k)
+
+    def test_frequence_alignee_sur_dossier(self):
+        """2.19 (M7WUV) : « Fréquence ▾ » dans la 4e colonne de la grille, arrondi comme les tuiles."""
+        a = self.a
+        bq, bd = a.gbtn["freqmenu"], a.gbtn["dossier"]
+        self.assertEqual(int(bq.grid_info()["column"]), 3)
+        self.set_round(True)
+        self.assertEqual(bq.winfo_width(), bd.winfo_width())
+        self.assertNotEqual(str(bq.cget("image")), "")
+
+    def test_relief_3d(self):
+        a = self.a
+        a.conf["btn_3d"] = True
+        self.set_round(True)
+        b = a.gbtn["fix"]
+        self.assertTrue(any(k[4] for k in a._round_cache))          # images en relief
+        before = self.sizes()
+        a.conf["btn_3d"] = False
+        self.set_round(True)
+        self.assertEqual(self.sizes(), before)                      # même place, plat ou relief
+        self.assertNotEqual(str(b.cget("image")), "")
+
+    def test_deux_fois_meme_place(self):
+        a = self.a
+        avant = self.sizes()
+        self.set_round(True)
+        un = self.sizes()
+        self.set_round(True)
+        self.assertEqual(self.sizes(), un)
+        self.assertEqual(un, avant)
+
+    def test_image_3d(self):
+        im = theme.round_rect(80, 24, "#2559b8", "#0a1633", 7, relief=True)
+        self.assertEqual(im.size, (80, 24))
+        top, bas = im.getpixel((40, 4)), im.getpixel((40, 19))
+        self.assertGreater(sum(top), sum(bas))                      # plus clair en haut
 
 
 if __name__ == "__main__":

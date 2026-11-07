@@ -1,5 +1,11 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 2.19 (demandes de M7WUV)
+
+- Nouvelle option « Boutons en relief (3D) » (Réglages → Apparence, décochée au départ) : les boutons arrondis prennent un léger relief (dégradé, reflet, liseré, petite ombre). Même place que les boutons plats.
+- Le bouton « Fréquence ▾ » est maintenant aligné sous « Dossier », de la même largeur, et arrondi (ou en relief) comme les autres boutons.
+- Correction : avec les boutons arrondis, changer d'ambiance pouvait agrandir les boutons de 2 pixels.
+
 ## Version 2.18
 
 - Style Moderne : barre du haut façon « écran de poste ». La fréquence s'affiche dans un petit afficheur sombre aux chiffres orange lumineux (7.058.000), avec le mode et la bande dans le coin ; l'indicatif est dans une pastille. Même hauteur qu'avant ; un clic sur l'afficheur ouvre toujours le menu des fréquences. Rien ne change en style Classique.

@@ -66,7 +66,7 @@ import random
 import wave
 
 APP = "HFImage F4GOP"
-VERSION = "2.18"
+VERSION = "2.19"
 
 
 def _take_profile(argv):
@@ -181,7 +181,7 @@ DEFAULTS = {
     "look_style": "classique", "modern_theme": "Vert EasyPal",
     "theme": "Vert EasyPal", "theme_color": "#3a8ee6", "font_family": "(par défaut)", "font_size": "9",
     "locator": "", "bsr_auto": True, "fix_auto": True, "ack_auto": True, "listen_after": True, "follow_mode": True,
-    "cwid": False, "cat_freq": True, "season_theme": False, "jpg_copy": False, "jpg_dir": "", "round_btn": False, "lang": "", "msg_translate": True, "wait_free": True, "hyb_flash": True,
+    "cwid": False, "cat_freq": True, "season_theme": False, "jpg_copy": False, "jpg_dir": "", "round_btn": False, "btn_3d": False, "lang": "", "msg_translate": True, "wait_free": True, "hyb_flash": True,
     "freq_presets": [[3733000, "LSB"], [7058000, "LSB"], [14233000, "USB"], [21340000, "USB"], [28680000, "USB"]],
     "drm_mode": "B", "drm_qam": "QAM16", "drm_bw": "2,4 kHz", "drm_prot": "Haute (HI)", "drm_rs": "RS2",
     "wav_volume": 5, "wft_font": "Arial", "wft_neg": False, "wft_text": "",
@@ -1528,19 +1528,22 @@ class App(tk.Tk):
             g.columnconfigure(c, weight=1, uniform="b")
         self.gbtn["tx"].bind("<Button-3>", self._btn_emission_force)
         self.v_waitfree = tk.BooleanVar(value=self.conf.get("wait_free", True))
-        row = tk.Frame(parent, bg=GREEN)
-        row.pack(fill="x")
+        # 2.19 (M7WUV) : dernière ligne de la grille elle-même (mêmes colonnes : « Fréquence » sous « Dossier »)
+        row = self._freq_row = self._grid_frame
         # bouton bien visible pour changer de fréquence (le clic sur la fréquence affichée
         # n'était pas trouvé par beaucoup d'utilisateurs)
         bq = tk.Button(row, text="Fréquence ▾", font=("TkDefaultFont", 8), bg="white", cursor="hand2",
-                       padx=6, pady=0, command=lambda: self._freq_menu_at(bq))
-        bq.pack(side="right", padx=(4, 2), pady=1)
+                       activebackground="#e6ffe6", relief="raised", bd=1, padx=1, pady=0,
+                       command=lambda: self._freq_menu_at(bq))
+        bq.grid(row=4, column=3, sticky="nsew", padx=1, pady=1)       # aligné sur « Dossier »
+        bq._hf_key = "freqmenu"
+        self.gbtn["freqmenu"] = bq            # même style que les tuiles (arrondi, relief, couleurs)
         tip(bq, "Cliquez pour changer de fréquence")
         tk.Checkbutton(row, text="Attendre fréquence libre", variable=self.v_waitfree, bg=GREEN,
                        activebackground=GREEN, font=("TkDefaultFont", 8), anchor="w",
                        command=lambda: (self.conf.__setitem__("wait_free", bool(self.v_waitfree.get())),
                                         self._save_conf_file())
-                       ).pack(side="left", fill="x", expand=True)
+                       ).grid(row=4, column=0, columnspan=3, sticky="ew")
         # compatibilité avec le reste du code
         self.btn_listen = self.gbtn["ecoute"]
         self.btn_bsr = self.gbtn["bsr"]
@@ -1624,12 +1627,14 @@ class App(tk.Tk):
 
     def _round_img(self, w, h, fill, outer):
         cache = self.__dict__.setdefault("_round_cache", {})
-        key = (w, h, fill, outer)
+        relief = bool(self.conf.get("btn_3d"))
+        key = (w, h, fill, outer, relief)
         im = cache.get(key)
         if im is None:
             if len(cache) > 300:
                 cache.clear()
-            im = cache[key] = ImageTk.PhotoImage(theme.round_rect(w, h, fill, outer, theme.Appearance.ROUND_R))
+            im = cache[key] = ImageTk.PhotoImage(theme.round_rect(w, h, fill, outer, theme.Appearance.ROUND_R,
+                                                                  relief=relief))
         return im
 
     def _round_grid(self, b, fill, size=None):
@@ -1657,13 +1662,15 @@ class App(tk.Tk):
             return
         b._hf_round = (w, h)
         b._hf_img = self._round_img(w, h, fill, outer)
-        cw, ch = getattr(b, "_hf_corr", None) or (0, 0)
+        if getattr(b, "_hf_corr", None) is None and getattr(self, "_round_corr", None) is not None:
+            b._hf_corr = self._round_corr     # 2.19 : mesurée une seule fois (une 2e mesure donnait parfois 0
+        cw, ch = getattr(b, "_hf_corr", None) or (0, 0)       # et les boutons grandissaient de 2 px)
         b.configure(image=b._hf_img, compound="center", bg=outer, activebackground=outer, bd=0,
                     highlightthickness=0, padx=0, pady=0, width=nw - cw, height=nh - ch)
         if getattr(b, "_hf_corr", None) is None:
             # Tk ajoute quelques pixels autour d'un bouton à image (selon le système) : on les retire une fois
             b.update_idletasks()
-            b._hf_corr = (b.winfo_reqwidth() - nw, b.winfo_reqheight() - nh)
+            b._hf_corr = self._round_corr = (b.winfo_reqwidth() - nw, b.winfo_reqheight() - nh)
             if b._hf_corr != (0, 0):
                 b.configure(width=nw - b._hf_corr[0], height=nh - b._hf_corr[1])
         if not getattr(b, "_hf_round_bound", False):
@@ -3605,6 +3612,18 @@ class App(tk.Tk):
         ttk.Checkbutton(af, text="Boutons arrondis (style Moderne)", variable=self.v_round,
                         command=_round_toggle).grid(row=5, column=1, columnspan=4, sticky="w", padx=4,
                                                     pady=(2, 0))
+        # 2.19 (M7WUV) : boutons arrondis en relief (3D), décochée au départ
+        self.v_btn3d = tk.BooleanVar(value=bool(self.conf.get("btn_3d")))
+
+        def _3d_toggle():
+            self.conf["btn_3d"] = bool(self.v_btn3d.get())
+            if self.conf["btn_3d"] and not self.v_round.get():
+                self.v_round.set(True)                     # le relief va avec les coins arrondis
+                self.conf["round_btn"] = True
+            self._apply_look()
+        ttk.Checkbutton(af, text="Boutons en relief (3D)", variable=self.v_btn3d,
+                        command=_3d_toggle).grid(row=6, column=1, columnspan=4, sticky="w", padx=4,
+                                                 pady=(2, 0))
 
         nf = ttk.LabelFrame(colR, text="Internet : stations en ligne (comme EasyPal)", padding=8)
         nf.pack(fill="x", pady=(10, 0))

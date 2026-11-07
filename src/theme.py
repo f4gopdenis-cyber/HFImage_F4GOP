@@ -104,8 +104,46 @@ def _readable_on(bg, dark="#111111", light="#ffffff"):
     return dark if _contrast(bg, dark) >= _contrast(bg, light) else light
 
 
-def round_rect(w, h, fill, outer, r=7, scale=4):
-    """Rectangle à coins arrondis (PIL), lissé : fond d'un bouton arrondi (2.06)."""
+def _rgb(c):
+    c = str(c).lstrip("#")
+    return tuple(int(c[i:i + 2], 16) for i in (0, 2, 4)) if len(c) == 6 else (128, 128, 128)
+
+
+def round_rect_3d(w, h, fill, outer, r=7, scale=4):
+    """2.19 (M7WUV) : bouton arrondi en relief : dégradé clair -> foncé, reflet en haut, liseré clair,
+    petite ombre dessous. Même taille que le bouton plat (l'ombre prend 2 px en bas)."""
+    from PIL import Image, ImageDraw, ImageFilter
+    w, h = max(4, int(w)), max(4, int(h))
+    S = scale
+    W, H = w * S, h * S
+    f, o = _rgb(fill), _rgb(outer)
+    mix = lambda a, b, t: tuple(int(x + (y - x) * t) for x, y in zip(a, b))
+    im = Image.new("RGBA", (W, H), o + (255,))
+    sh = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+    ImageDraw.Draw(sh).rounded_rectangle((S, 2 * S, W - S, H - 1), r * S, fill=(0, 0, 0, 140))
+    im.alpha_composite(sh.filter(ImageFilter.GaussianBlur(S)))
+    fh = H - 2 * S                                    # face du bouton
+    top, bot = mix(f, (255, 255, 255), 0.28), mix(f, (0, 0, 0), 0.22)
+    grad = Image.new("RGB", (1, fh))
+    for y in range(fh):
+        grad.putpixel((0, y), mix(top, bot, y / max(1, fh - 1)))
+    grad = grad.resize((W, fh))
+    m = Image.new("L", (W, fh), 0)
+    ImageDraw.Draw(m).rounded_rectangle((0, 0, W - 1, fh - 1), r * S, fill=255)
+    im.paste(grad, (0, 0), m)
+    hl = Image.new("RGBA", (W, fh), (0, 0, 0, 0))
+    ImageDraw.Draw(hl).rounded_rectangle((2 * S, S, W - 3 * S, int(fh * 0.48)), max(1, r - 1) * S,
+                                         fill=(255, 255, 255, 46))
+    im.alpha_composite(hl)
+    ImageDraw.Draw(im).rounded_rectangle((0, 0, W - 1, fh - 1), r * S, outline=mix(f, (255, 255, 255), 0.45) + (170,),
+                                         width=S)
+    return im.convert("RGB").resize((w, h), Image.LANCZOS)
+
+
+def round_rect(w, h, fill, outer, r=7, scale=4, relief=False):
+    """Rectangle à coins arrondis (PIL), lissé : fond d'un bouton arrondi (2.06) ; relief : en 3D (2.19)."""
+    if relief:
+        return round_rect_3d(w, h, fill, outer, r, scale)
     from PIL import Image, ImageDraw
     w, h = max(2, int(w)), max(2, int(h))
     im = Image.new("RGB", (w * scale, h * scale), outer)

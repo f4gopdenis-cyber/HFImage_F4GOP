@@ -1175,4 +1175,5 @@ RU = {
     "jour/mois": "день/месяц",
     "mois/jour": "месяц/день",
     "Dossier Documents déplacé : fichiers HFImage recopiés dans": "Папка «Документы» перемещена: файлы HFImage скопированы в",
+    "Boutons en relief (3D)": "Объёмные кнопки (3D)",
 }
