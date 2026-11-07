@@ -1234,10 +1234,16 @@ class Ptt:
             elif rig is not None and rig.port == port:
                 raise RuntimeError(f"PTT {self.method} : le port {port} est déjà utilisé par le CAT")
             else:
-                try:                                     # lignes basses dès l'ouverture
-                    self.ser = audio.open_serial(port, 9600, dtr=False, rts=False)
-                except RuntimeError as ex:
-                    raise RuntimeError(f"PTT {self.method} : {ex}")
+                # lignes basses dès l'ouverture. 2.16 (VK6ATI) : port refusé -> nouvel essai pendant
+                # ~2 s (Windows libère parfois un port USB virtuel un peu après sa fermeture)
+                for i in range(6):
+                    try:
+                        self.ser = audio.open_serial(port, 9600, dtr=False, rts=False)
+                        break
+                    except RuntimeError as ex:
+                        if i == 5 or "utilisé" not in str(ex):
+                            raise RuntimeError(f"PTT {self.method} : {ex}")
+                        time.sleep(0.4)
                 self.ser.rts = False
                 self.ser.dtr = False
 

@@ -66,7 +66,7 @@ import random
 import wave
 
 APP = "HFImage F4GOP"
-VERSION = "2.15"
+VERSION = "2.16"
 
 
 def _take_profile(argv):
@@ -7680,7 +7680,11 @@ class App(tk.Tk):
         if not hdr.get("preview"):
             # message texte seul : accusé de réception aussi (sans changer la liste Rx Ok de l'image)
             self._net_confirm(hdr["id"], hdr.get("call"), show=hdr.get("fmt") != "txt")
-        if not hdr.get("preview") and self.v_ack_auto.get() and self.rx_stream is not None and not drm:
+        # 2.16 (VK6ATI) : image hybride et nous connectés : le Rx Ok est déjà parti par Internet, pas d'ACK
+        # par radio (avec 20 stations, la série d'accusés couvrait la phonie juste après l'image)
+        hyb_net = bool(hdr.get("hybrid")) and self.net is not None and bool(self.net_ok)
+        if not hdr.get("preview") and self.v_ack_auto.get() and self.rx_stream is not None and not drm \
+                and not hyb_net:
             # (EasyPal ne connaît pas l'ACK de HFImage : rien n'est émis en mode EasyPal)
             act = self.rx_engine.activity.get(hdr["id"], {}) if self.rx_engine else {}
             self.ack_pending[hdr["id"]] = {"call": hdr.get("call"), "end_at": act.get("end", 0)}

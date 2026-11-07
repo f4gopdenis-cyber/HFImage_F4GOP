@@ -1,5 +1,10 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 2.16 (signalé par VK6ATI)
+
+- PTT par RTS / DTR : si Windows refuse un instant le port COM (« déjà utilisé par un autre programme », port USB virtuel pas encore libéré après l'émission précédente), HFImage réessaie tout seul pendant 2 secondes avant d'afficher l'erreur.
+- Image hybride reçue en étant connecté au serveur : plus d'ACK par radio, le Rx Ok part déjà par Internet. Avec 20 stations, la série d'accusés juste après l'image couvrait la phonie. Rien ne change pour les images envoyées par radio.
+
 ## Version 2.15
 
 - Nouvelle icône du programme : le globe (avec la vraie carte de l'Europe), l'anneau doré, les ondes et le « HF » vert, dans l'esprit du logo de F4GOP. Bureau, barre des tâches, fenêtre, et à gauche de la barre du haut (style Moderne) à la place de « HF ».
