@@ -1,5 +1,9 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 2.23
+
+- Barres de titre aux couleurs de l'ambiance : aussi pour les fenêtres détachées (Galerie, Stations…), qui restaient blanches.
+
 ## Version 2.22
 
 - Deux ambiances à trois néons (style Moderne) : « Néon trio » (liserés magenta, boutons actifs cyan, indicatif jaune-vert) et « Néon festival » (liserés cyan, boutons actifs orange, indicatif vert).
