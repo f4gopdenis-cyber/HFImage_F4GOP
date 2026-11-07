@@ -13,7 +13,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."
 import theme  # noqa: E402
 
 D = datetime.date
-NEW = ("Halloween", "Noël", "Hiver", "Printemps", "Été", "Néon bleu", "Néon violet", "Néon vert", "Néon rouge", "Néon ambre", "Néon cyan")
+NEW = ("Halloween", "Noël", "Hiver", "Printemps", "Été", "Néon bleu", "Néon violet", "Néon vert", "Néon rouge", "Néon ambre", "Néon cyan", "Néon trio", "Néon festival")
 
 
 class Palettes(unittest.TestCase):

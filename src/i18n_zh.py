@@ -1173,4 +1173,6 @@ ZH = {
     "Néon rouge": "霓虹红",
     "Néon ambre": "霓虹琥珀",
     "Néon cyan": "霓虹青",
+    "Néon trio": "霓虹三色",
+    "Néon festival": "霓虹节日",
 }

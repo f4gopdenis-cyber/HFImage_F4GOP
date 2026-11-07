@@ -1,5 +1,10 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 2.22
+
+- Deux ambiances à trois néons (style Moderne) : « Néon trio » (liserés magenta, boutons actifs cyan, indicatif jaune-vert) et « Néon festival » (liserés cyan, boutons actifs orange, indicatif vert).
+- Barres de titre des fenêtres aux couleurs de l'ambiance (fenêtre principale, Galerie, Carte, Réglages…) : sur Windows 11, barre de titre, titre et contour colorés ; sur Windows 10, barre de titre sombre. Rien ne change sur Windows 7 et Linux, ni en style Classique.
+
 ## Version 2.21
 
 - Quatre nouvelles ambiances néon (style Moderne) : « Néon vert » (façon écran de terminal), « Néon rouge » (enseigne de nuit), « Néon ambre » (cadrans des postes à lampes) et « Néon cyan » (cyberpunk). Superbes avec les boutons arrondis en relief.

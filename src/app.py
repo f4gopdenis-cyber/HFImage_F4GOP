@@ -66,7 +66,7 @@ import random
 import wave
 
 APP = "HFImage F4GOP"
-VERSION = "2.21"
+VERSION = "2.22"
 
 
 def _take_profile(argv):
@@ -854,6 +854,7 @@ class App(tk.Tk):
         self._data_auto_paint()
         self._topbar_show()
         self._cards(self.look.palette())
+        self._titlebars()                              # 2.22 : barres de titre aux couleurs de l'ambiance
         self.conf.update(theme=th, font_family=fam, font_size=size)
         if hasattr(self, "v_msize") and self.v_msize.get() != size:
             self.v_msize.set(size)
@@ -1069,6 +1070,24 @@ class App(tk.Tk):
         """Texte d'un widget, donné en français : gardé pour les changements de langue."""
         self._orig[str(w)] = fr
         w.configure(text=tr(fr))
+
+    def _titlebars(self, win=None):
+        """2.22 : barre de titre (et contour) de la fenêtre principale et des autres fenêtres aux couleurs
+        de l'ambiance, sur Windows 11 (Windows 10 : sombre). Sans effet ailleurs, rien ne bouge à l'écran."""
+        import titlebar
+        P = self.look.palette() if hasattr(self, "look") else None
+        if not getattr(self, "_titlebar_bound", False):
+            self._titlebar_bound = True
+            # toute nouvelle fenêtre (Galerie, Carte, Réglages…) prend les mêmes couleurs à son ouverture
+            self.bind_class("Toplevel", "<Map>", lambda e: self._titlebars(e.widget)
+                            if isinstance(e.widget, tk.Toplevel) else None, add="+")
+        wins = [win] if win is not None else [self] + [w for w in self.winfo_children() if isinstance(w, tk.Toplevel)]
+        for w in wins:
+            try:
+                if w.winfo_exists():
+                    titlebar.apply(w, P)
+            except tk.TclError:
+                pass
 
     def _translate_ui(self, root=None):
         """(Re)traduit tous les textes fixes de l'interface à partir du français d'origine."""

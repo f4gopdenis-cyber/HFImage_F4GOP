@@ -1963,6 +1963,8 @@ T = [
     ("Néon rouge", "Neon red", "Neonrot", "Rojo neón", "Rosso neon"),
     ("Néon ambre", "Neon amber", "Neonbernstein", "Ámbar neón", "Ambra neon"),
     ("Néon cyan", "Neon cyan", "Neoncyan", "Cian neón", "Ciano neon"),
+    ("Néon trio", "Neon trio", "Neon-Trio", "Trío neón", "Trio neon"),
+    ("Néon festival", "Neon festival", "Neon-Festival", "Festival neón", "Festival neon"),
 ]
 
 _lang = "fr"
