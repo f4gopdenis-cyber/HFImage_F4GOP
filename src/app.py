@@ -772,6 +772,7 @@ class App(tk.Tk):
         for n, v in getattr(self, "v_dock", {}).items():
             v.set(self.dock.detached(n))
         self.conf["detached"] = self.dock.saved()
+        self.after(150, self._titlebars)              # 2.22 : fenêtre détachée (Galerie…) aux couleurs aussi
 
     def show_tab(self, name, focus=True):
         """Montre un onglet : dans la fenêtre principale, ou sa fenêtre séparée (au premier plan
@@ -1081,7 +1082,15 @@ class App(tk.Tk):
             # toute nouvelle fenêtre (Galerie, Carte, Réglages…) prend les mêmes couleurs à son ouverture
             self.bind_class("Toplevel", "<Map>", lambda e: self._titlebars(e.widget)
                             if isinstance(e.widget, tk.Toplevel) else None, add="+")
-        wins = [win] if win is not None else [self] + [w for w in self.winfo_children() if isinstance(w, tk.Toplevel)]
+        if win is not None:
+            wins = [win]
+        else:
+            wins = [self] + [w for w in self.winfo_children() if isinstance(w, tk.Toplevel)]
+            # fenêtres détachées (Galerie, Stations…) : des cadres devenus fenêtres, pas des Toplevel
+            dock = getattr(self, "dock", None)
+            for z in (getattr(dock, "zones", None) or {}).values():
+                if z.get("detached") and z.get("frame") is not None:
+                    wins.append(z["frame"])
         for w in wins:
             try:
                 if w.winfo_exists():
