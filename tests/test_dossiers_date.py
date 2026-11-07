@@ -91,3 +91,30 @@ class DateFmt(unittest.TestCase):
         with mock.patch.object(self.app.clocktz, "fmt", lambda f, *x, **k: (seen.append(f), "x")[1]):
             a.qsl_dialog()
         self.assertIn("%d/%m/%Y %H:%M", seen)
+
+
+class OneDriveRefuse(unittest.TestCase):
+    """2.17 (VK6NJP) : Documents dans OneDrive, création du dossier refusée -> ancien emplacement."""
+    def setUp(self):
+        try:
+            import app
+        except (ImportError, OSError) as e:
+            raise unittest.SkipTest(str(e))
+        self.app = app
+
+    def test_dossier_refuse_ancien_emplacement(self):
+        d = tempfile.mkdtemp()
+        bloque = os.path.join(d, "fichier")
+        with open(bloque, "w") as f:
+            f.write("x")                                   # un fichier : on ne peut rien créer dessous
+        home = os.path.join(d, "home")
+        with mock.patch.object(self.app, "_documents_dir", return_value=bloque), \
+                mock.patch.object(self.app.os.path, "expanduser", return_value=home):
+            out = self.app._main_out()
+        self.assertEqual(out, os.path.join(home, "Documents", "HFImage"))
+
+    def test_dossier_utilisable_garde(self):
+        d = tempfile.mkdtemp()
+        with mock.patch.object(self.app, "_documents_dir", return_value=d):
+            self.assertEqual(self.app._main_out(), os.path.join(d, "HFImage"))
+        self.assertEqual(os.listdir(os.path.join(d, "HFImage")), [])     # fichier de test effacé

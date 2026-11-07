@@ -1,5 +1,9 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 2.17 (correction urgente, signalé par VK6NJP)
+
+- Documents dans OneDrive : depuis la 2.14, HFImage voulait créer son dossier dans le dossier Documents de OneDrive ; quand Windows le refusait, l'émission échouait (« The system cannot find the file specified »). HFImage vérifie maintenant au démarrage qu'il peut écrire dans le vrai dossier Documents ; sinon il reprend l'emplacement d'avant (Documents\HFImage dans le dossier de l'utilisateur), comme en 2.13.
+
 ## Version 2.16 (signalé par VK6ATI)
 
 - PTT par RTS / DTR : si Windows refuse un instant le port COM (« déjà utilisé par un autre programme », port USB virtuel pas encore libéré après l'émission précédente), HFImage réessaie tout seul pendant 2 secondes avant d'afficher l'erreur.

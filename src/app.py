@@ -66,7 +66,7 @@ import random
 import wave
 
 APP = "HFImage F4GOP"
-VERSION = "2.16"
+VERSION = "2.17"
 
 
 def _take_profile(argv):
@@ -113,8 +113,33 @@ def _documents_dir():
     return os.path.join(os.path.expanduser("~"), "Documents")
 
 
+def _writable_dir(d):
+    """2.17 : le dossier existe (ou peut être créé) et on peut y écrire."""
+    try:
+        os.makedirs(d, exist_ok=True)
+        t = os.path.join(d, f".hfimage_test_{os.getpid()}")
+        with open(t, "w") as f:
+            f.write("ok")
+        os.remove(t)
+        return True
+    except Exception:
+        return False
+
+
+def _main_out():
+    """Dossier HFImage principal : dans le vrai dossier Documents (2.14) s'il est utilisable, sinon
+    l'emplacement d'avant (2.17, VK6NJP : Documents dans OneDrive, création refusée par Windows ->
+    « The system cannot find the file specified » et émission impossible)."""
+    old = os.path.join(os.path.expanduser("~"), "Documents", "HFImage")
+    new = os.path.join(_documents_dir(), "HFImage")
+    if os.path.normcase(os.path.abspath(new)) == os.path.normcase(os.path.abspath(old)) or _writable_dir(new):
+        return new
+    return old
+
+
 OLD_OUT = os.path.join(os.path.expanduser("~"), "Documents", "HFImage")     # emplacement d'avant 2.14
-DEFAULT_OUT = os.path.join(_documents_dir(), "HFImage")
+MAIN_OUT = _main_out()
+DEFAULT_OUT = MAIN_OUT
 if PROFILE:
     DEFAULT_OUT = os.path.join(DEFAULT_OUT, PROFILE)
     OLD_OUT = os.path.join(OLD_OUT, PROFILE)
@@ -9070,7 +9095,7 @@ class App(tk.Tk):
     # ---- 1.93 : sauvegarde / restauration
     def _backup_roots(self):
         home = os.path.expanduser("~")
-        main_out = os.path.join(_documents_dir(), "HFImage")
+        main_out = MAIN_OUT
         return home, main_out if not PROFILE else DEFAULT_OUT, self.v_folder.get() or DEFAULT_OUT
 
     def backup_dialog(self):
