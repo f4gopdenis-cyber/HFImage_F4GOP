@@ -71,6 +71,22 @@ MODERN = {
                         fg="#f2e8ff", muted="#b9a3d6", border="#c026d3", button="#2d1a4d", button_fg="#f2e8ff",
                         accent="#22d3ee", accent_fg="#032a33", bad="#ff4d6d", dark=True, top="#0f0720",
                         top_fg="#ff5fd8", top_muted="#b9a3d6"),
+    "Néon vert": dict(bg="#04120a", panel="#071c10", field="#020a05", bar="#0d3a1e", bar_fg="#d8ffe6",
+                      fg="#d8ffe6", muted="#7fc79a", border="#22e07a", button="#0f3320", button_fg="#d8ffe6",
+                      accent="#39ff88", accent_fg="#022611", bad="#ff4d5e", dark=True, top="#020c06",
+                      top_fg="#39ff88", top_muted="#7fc79a"),
+    "Néon rouge": dict(bg="#1a070b", panel="#260b12", field="#100407", bar="#4a1020", bar_fg="#ffe8ec",
+                       fg="#ffe8ec", muted="#d7a0ad", border="#ff2e63", button="#3a1420", button_fg="#ffe8ec",
+                       accent="#ff9f1c", accent_fg="#2b1400", bad="#ff3b3b", dark=True, top="#12050a",
+                       top_fg="#ff4f7b", top_muted="#d7a0ad"),
+    "Néon ambre": dict(bg="#140e04", panel="#1f1607", field="#0c0802", bar="#3d2a0a", bar_fg="#fff1d6",
+                       fg="#fff1d6", muted="#d6b98a", border="#ffb000", button="#33250c", button_fg="#fff1d6",
+                       accent="#ffb000", accent_fg="#2a1a00", bad="#ff4d3d", dark=True, top="#0e0903",
+                       top_fg="#ffc23d", top_muted="#d6b98a"),
+    "Néon cyan": dict(bg="#041418", panel="#072027", field="#020b0e", bar="#0b3a45", bar_fg="#e0fbff",
+                      fg="#e0fbff", muted="#8cc8d4", border="#00e5ff", button="#0d3440", button_fg="#e0fbff",
+                      accent="#ff3ec8", accent_fg="#2a0020", bad="#ff4d5e", dark=True, top="#020d10",
+                      top_fg="#00e5ff", top_muted="#8cc8d4"),
 }
 # « Thème selon la saison » (case, décochée par défaut) : ambiance prise d'office à ces dates
 # (mois, jour) de début et de fin, bornes comprises ; Noël passe d'une année à l'autre.
