@@ -1958,6 +1958,7 @@ T = [
     ("mois/jour", "month/day", "Monat/Tag", "mes/día", "mese/giorno"),
     ("Dossier Documents déplacé : fichiers HFImage recopiés dans", "Documents folder moved: HFImage files copied to", "Dokumente-Ordner verschoben: HFImage-Dateien kopiert nach", "Carpeta Documentos movida: archivos de HFImage copiados en", "Cartella Documenti spostata: file di HFImage copiati in"),
     ("Boutons en relief (3D)", "3D buttons (raised)", "Plastische Tasten (3D)", "Botones en relieve (3D)", "Pulsanti in rilievo (3D)"),
+    ("Néon violet", "Neon purple", "Neonviolett", "Violeta neón", "Viola neon"),
 ]
 
 _lang = "fr"

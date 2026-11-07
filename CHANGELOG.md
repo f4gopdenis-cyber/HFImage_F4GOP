@@ -1,5 +1,9 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 2.20
+
+- Nouvelle ambiance « Néon violet » (style Moderne, d'après l'image de M7WUV) : fond violet nuit, liserés magenta, boutons actifs cyan, indicatif en pastille rose. Superbe avec les boutons arrondis en relief.
+
 ## Version 2.19 (demandes de M7WUV)
 
 - Nouvelle option « Boutons en relief (3D) » (Réglages → Apparence, décochée au départ) : les boutons arrondis prennent un léger relief (dégradé, reflet, liseré, petite ombre). Même place que les boutons plats.

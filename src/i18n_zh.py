@@ -1168,4 +1168,5 @@ ZH = {
     "mois/jour": "月/日",
     "Dossier Documents déplacé : fichiers HFImage recopiés dans": "“文档”文件夹已移动:HFImage 文件已复制到",
     "Boutons en relief (3D)": "立体按钮(3D)",
+    "Néon violet": "霓虹紫",
 }
