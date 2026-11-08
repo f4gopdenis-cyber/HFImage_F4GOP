@@ -1,5 +1,9 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 2.25
+
+- PTT par CAT avec Hamlib (Icom IC-9700…) : certains postes acceptent la commande d'émission « audio arrière » sans passer en émission. HFImage vérifie maintenant auprès du poste qu'il émet vraiment, et sinon essaie aussitôt les autres commandes d'émission ; celle qui marche est retenue pour les émissions suivantes.
+
 ## Version 2.24 (demandes de BH2RMX)
 
 - Site web : l'étiquette ajoutée sous les images mises en ligne s'écrit avec une police qui sait afficher le chinois, le russe… (avant : des carrés). Traduction chinoise de « émise par » corrigée (« 发送者： »). La page hfimage.html n'affiche plus le texte en double sous les images (l'étiquette sur l'image dit déjà tout).

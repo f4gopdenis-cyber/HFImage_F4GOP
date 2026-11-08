@@ -845,10 +845,37 @@ class RigctlRig(RigBase):
             if not self._ok("T 0"):
                 raise RuntimeError("PTT : rigctld refuse T 0")
             return
-        # Hamlib : 3 = émission audio arrière / data, 2 = micro ; repli sur 1 si refusé
-        first = "T 3" if rear else "T 2"
-        if not self._ok(first) and not self._ok("T 1"):
+        # Hamlib : 3 = émission audio arrière / data, 2 = micro ; repli sur 1 si refusé.
+        # 2.25 (IC-9700, F4GOP) : certains postes ACCEPTENT « T 3 » sans passer en émission : on
+        # vérifie avec « t » et, s'il n'émet pas, on essaie les autres commandes.
+        order = ["T 3", "T 2", "T 1"] if rear else ["T 2", "T 3", "T 1"]
+        if getattr(self, "_ptt_cmd", None) in order:          # celle qui a marché : en premier
+            order.remove(self._ptt_cmd)
+            order.insert(0, self._ptt_cmd)
+        accepted = None
+        for c in order:
+            if not self._ok(c):
+                continue
+            accepted = accepted or c
+            state = self._ptt_state()
+            if state is None or state:                      # le poste émet (ou ne sait pas le dire)
+                self._ptt_cmd = c
+                return
+        if accepted is None:
             raise RuntimeError("PTT : le poste refuse la commande d'émission (Hamlib T)")
+        self._ptt_cmd = accepted
+
+    def _ptt_state(self):
+        """« t » -> True / False (le poste émet ?), None s'il ne sait pas répondre."""
+        time.sleep(0.15)
+        try:
+            r = self.cmd("t")
+        except Exception:
+            return None
+        if not r or r[0].startswith("RPRT"):
+            return None
+        v = r[0].strip()
+        return v not in ("0", "")
 
     def set_mode(self, which):
         modes = [("PKTLSB" if self._side() == "LSB" else "PKTUSB")] if which == "data" else ["USB"]
