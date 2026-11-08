@@ -1,5 +1,10 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 2.24 (demandes de BH2RMX)
+
+- Site web : l'étiquette ajoutée sous les images mises en ligne s'écrit avec une police qui sait afficher le chinois, le russe… (avant : des carrés). Traduction chinoise de « émise par » corrigée (« 发送者： »). La page hfimage.html n'affiche plus le texte en double sous les images (l'étiquette sur l'image dit déjà tout).
+- Indicatifs bloqués : ils n'apparaissent plus dans « Sites des stations », et leurs images reçues avant le blocage ne sont plus remises en ligne sur votre site.
+
 ## Version 2.23
 
 - Barres de titre aux couleurs de l'ambiance : aussi pour les fenêtres détachées (Galerie, Stations…), qui restaient blanches.

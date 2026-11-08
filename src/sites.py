@@ -106,16 +106,23 @@ class SitesWindow(tk.Toplevel):
         out, seen = [], set()
         for d in list(self.app.online.values()):
             call, url = str(d.get("call") or ""), d.get("site")
-            if call and valid_url(url) and call not in seen:
+            if call and valid_url(url) and call not in seen and not self._blocked(call):
                 out.append((call, url, True))
                 seen.add(call)
         for e in self.app.conf.get("sites_extra", []):
             call, url = str(e.get("call", "")).upper(), e.get("url")
-            if call and valid_url(url) and call not in seen:
+            if call and valid_url(url) and call not in seen and not self._blocked(call):
                 online = any(str(d.get("call")) == call for d in self.app.online.values())
                 out.append((call, url, online))
                 seen.add(call)
         return out
+
+    def _blocked(self, call):
+        """2.24 (BH2RMX) : les stations bloquées n'apparaissent plus dans « Sites des stations »."""
+        try:
+            return bool(self.app.is_blocked(call))
+        except Exception:
+            return False
 
     def refresh(self, force=False):
         now = time.time()

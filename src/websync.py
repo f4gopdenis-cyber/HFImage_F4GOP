@@ -13,6 +13,7 @@ ralentie, et une coupure Internet ne bloque rien (l'erreur est notée dans le jo
 import ftplib
 import html
 import io
+import os
 import json
 import queue
 import threading
@@ -34,6 +35,32 @@ LIST = "list.txt"
 TX_KEEP = 5
 
 
+_FONT_DIRS = [os.path.join(os.environ.get("WINDIR", r"C:\Windows"), "Fonts"), "/usr/share/fonts/opentype/noto",
+              "/usr/share/fonts/opentype/ipafont-gothic", "/usr/share/fonts/truetype/dejavu",
+              "/System/Library/Fonts", "/Library/Fonts"]
+# 2.24 (BH2RMX) : police qui sait écrire le chinois, le russe… (la police par défaut affichait des carrés)
+_WIDE = ("msyh.ttc", "msyhbd.ttc", "simhei.ttf", "simsun.ttc", "NotoSansCJK-Regular.ttc", "ipagp.ttf",
+         "PingFang.ttc")
+_LATIN = ("segoeui.ttf", "arial.ttf", "DejaVuSans.ttf")
+
+
+def _label_font(caption, size):
+    """Police de l'étiquette : une police « large » (chinois…) si le texte en a besoin."""
+    names = (_WIDE + _LATIN) if any(ord(ch) > 0x24F for ch in caption) else (_LATIN + _WIDE)
+    for n in names:
+        for d in _FONT_DIRS:
+            p = os.path.join(d, n)
+            if os.path.exists(p):
+                try:
+                    return ImageFont.truetype(p, size)
+                except OSError:
+                    pass
+    try:
+        return ImageFont.load_default(size=size)
+    except TypeError:
+        return ImageFont.load_default()
+
+
 def label_image(path, caption, max_w=1024):
     """JPEG étiqueté (bandeau en bas) prêt à mettre en ligne."""
     im = Image.open(path)
@@ -44,18 +71,20 @@ def label_image(path, caption, max_w=1024):
     if im.width > max_w:
         im = im.resize((max_w, round(im.height * max_w / im.width)), Image.LANCZOS)
     size = max(13, im.width // 36)
-    try:
-        font = ImageFont.load_default(size=size)
-    except TypeError:
-        font = ImageFont.load_default()
+    font = _label_font(caption, size)
     # bandeau AJOUTÉ sous l'image (avant, il était posé sur le bas de la photo et cachait
     # le bandeau de la station émettrice : les deux textes se mélangeaient)
-    h = size + 8
+    try:                                           # 2.24 : hauteur du bandeau selon la police réelle
+        x0, y0, x1, y1 = font.getbbox(caption)
+        th = y1 - y0
+    except Exception:
+        y0, th = 0, size
+    h = max(size, th) + 10
     out = Image.new("RGB", (im.width, im.height + h), (0, 0, 0))
     out.paste(im, (0, 0))
     im = out
     d = ImageDraw.Draw(im)
-    d.text((6, im.height - h + 3), caption, fill=(255, 255, 255), font=font)
+    d.text((6, im.height - h + 5 - y0), caption, fill=(255, 255, 255), font=font)
     buf = io.BytesIO()
     im.save(buf, "JPEG", quality=88, optimize=True, progressive=True)
     return buf.getvalue(), im.size
@@ -66,10 +95,10 @@ def _page(call, rx, tx, n):
     def cells(items, prefix, count):
         out = []
         for i in range(1, count + 1):
+            # 2.24 (BH2RMX) : plus de texte sous l'image, l'étiquette SUR l'image dit déjà tout
             cap = html.escape(items[i - 1]["caption"]) if i <= len(items) else ""
-            out.append(f'<figure><a href="{remote(prefix, i)}"><img src="{remote(prefix, i)}" alt="" '
-                       f'onerror="this.closest(\'figure\').style.display=\'none\'"></a>'
-                       f"<figcaption>{cap}</figcaption></figure>")
+            out.append(f'<figure><a href="{remote(prefix, i)}"><img src="{remote(prefix, i)}" alt="{cap}" '
+                       f'title="{cap}" onerror="this.closest(\'figure\').style.display=\'none\'"></a></figure>')
         return "\n".join(out)
     title = html.escape(f"{call} — HFImage")
     return f"""<!doctype html>

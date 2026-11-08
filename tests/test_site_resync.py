@@ -63,6 +63,7 @@ class Resync(unittest.TestCase):
             s = types.SimpleNamespace(gal_store=types.SimpleNamespace(items=items),
                                       conf={"web_block": "F4GOP.HF", "web_tx": True})
             s._gallery_src = app.App._gallery_src.__get__(s)
+            s.is_blocked = lambda c: False
             rx, tx = app.App._web_recent(s)
         self.assertEqual([c.split()[0] for _, c in rx], ["F4FCE"])
         self.assertEqual(len(tx), 1)

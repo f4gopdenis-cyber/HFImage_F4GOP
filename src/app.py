@@ -66,7 +66,7 @@ import random
 import wave
 
 APP = "HFImage F4GOP"
-VERSION = "2.23"
+VERSION = "2.24"
 
 
 def _take_profile(argv):
@@ -8538,7 +8538,7 @@ class App(tk.Tk):
                 continue
             when = time.strftime("%Y-%m-%d %H:%M UTC", time.gmtime(e.get("t") or 0))
             call = str(e.get("call") or "?")
-            if e.get("dir") == "rx" and call.upper() not in skip:
+            if e.get("dir") == "rx" and call.upper() not in skip and not self.is_blocked(call):
                 rx.append((src, "  ".join([call, when, mode.split()[0] if mode else ""]).strip()))
             elif e.get("dir") == "tx" and self.conf.get("web_tx", True):
                 tx.append((src, "  ".join([tr("émise par") + " " + call, when,
@@ -8561,7 +8561,7 @@ class App(tk.Tk):
         if kind == "rx" and iid is not None and iid in self.my_ids:
             return                                  # notre propre image, entendue en retour
         skip = {c.strip().upper() for c in str(self.conf.get("web_block", "")).replace(";", ",").split(",")}
-        if kind == "rx" and (call or "").upper() in skip:
+        if kind == "rx" and ((call or "").upper() in skip or self.is_blocked(call)):
             return
         if not self._web_cfg()["host"]:
             self.log("Site web : serveur FTP non réglé (Réglages → Mode hybride, ou Site web / Digi-Sites).")

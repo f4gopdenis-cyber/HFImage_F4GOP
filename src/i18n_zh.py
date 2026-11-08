@@ -674,7 +674,7 @@ ZH = {
     'Page à donner à Digi-Sites :': '交给 Digi-Sites 的页面:',
     'Envoi de la page en cours… (résultat dans le journal)': '正在上传页面…(结果见日志)',
     "Réglez d'abord le serveur FTP (Réglages → Mode hybride).": '请先设置 FTP 服务器(设置 → 混合模式)。',
-    'émise par': '由…发送',
+    'émise par': '发送者：',
     'Site web : {0}': '网站: {0}',
     'image reçue mise en ligne ({0})': '收到的图像已上传({0})',
     'image émise mise en ligne ({0})': '发送的图像已上传({0})',
