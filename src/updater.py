@@ -52,7 +52,45 @@ def newer(remote, local):
 RATE_LIMIT_MSG = "GitHub limite le nombre de vérifications : réessayez dans une heure."
 
 
+RETRY_WAITS = (5, 15)          # 2.26 : GitHub en panne passagère (504…) -> 2 nouveaux essais, espacés
+
+
+def _transient(e):
+    """Panne passagère du serveur ou du réseau (à réessayer), et non une vraie erreur."""
+    import socket
+    if isinstance(e, urllib.error.HTTPError):
+        return e.code in (408, 425, 429, 500, 502, 503, 504)
+    if isinstance(e, (urllib.error.URLError, socket.timeout, TimeoutError, ConnectionError)):
+        return True
+    return isinstance(e, ValueError) and "incomplet" in str(e)
+
+
+def _retry(fn, stop=None, sleep=None, waits=None):
+    """Appelle fn() ; panne passagère -> nouvel essai après 5 s puis 15 s (annulable par stop)."""
+    import time
+    sleep = sleep or time.sleep
+    waits = RETRY_WAITS if waits is None else waits
+    for i in range(len(waits) + 1):
+        try:
+            return fn()
+        except Exception as e:
+            if i == len(waits) or not _transient(e) or (stop is not None and stop.is_set()):
+                raise
+            w = waits[i]
+            if stop is not None:
+                if stop.wait(w):
+                    raise
+            else:
+                sleep(w)
+
+
 def check(timeout=10):
+    """-> dict(version, notes, url, size, sha256, page) de la dernière version publiée
+    (2.26 : réessayé tout seul si GitHub a une panne passagère)."""
+    return _retry(lambda: _check_once(timeout))
+
+
+def _check_once(timeout=10):
     """-> dict(version, notes, url, size, sha256, page) de la dernière version publiée.
     L'API GitHub n'accepte que 60 questions par heure pour une même connexion Internet (sans
     compte) : si elle refuse, on lit la page « dernière version » du site, qui n'a pas cette limite."""
@@ -127,7 +165,12 @@ def frozen():
 
 
 def download(info, progress=lambda f: None, stop=None):
-    """Télécharge le nouvel exe à côté de l'actuel. -> chemin du fichier téléchargé."""
+    """Télécharge le nouvel exe à côté de l'actuel. -> chemin du fichier téléchargé.
+    2.26 : GitHub en panne passagère (504…) -> deux nouveaux essais avant d'abandonner."""
+    return _retry(lambda: _download_once(info, progress, stop), stop=stop)
+
+
+def _download_once(info, progress=lambda f: None, stop=None):
     url = info.get("url") or ""
     test = bool(os.environ.get("HFIMAGE_UPDATE_URL"))      # essais : serveur local autorisé
     if not test and not url.startswith(ALLOWED):
