@@ -1,5 +1,9 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 2.26
+
+- Mise à jour automatique : si GitHub a une panne passagère (erreur 504…), HFImage réessaie tout seul (après 5 s puis 15 s) avant d'afficher le bandeau rouge. Un vrai problème (fichier abîmé…) reste signalé tout de suite.
+
 ## Version 2.25
 
 - PTT par CAT avec Hamlib (Icom IC-9700…) : certains postes acceptent la commande d'émission « audio arrière » sans passer en émission. HFImage vérifie maintenant auprès du poste qu'il émet vraiment, et sinon essaie aussitôt les autres commandes d'émission ; celle qui marche est retenue pour les émissions suivantes.
