@@ -1,5 +1,9 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 2.28 (signalé par PD1EG)
+
+- CAT par Hamlib avec un serveur « rigctld » qui n'est pas Hamlib lui-même (Cat4om…) : s'il fonctionne en « mode VFO » mais refuse la forme « T currVFO 1 » (émission) ou « F currVFO … » (fréquence), HFImage essaie aussitôt les autres formes (« T VFOA 1 », « T 1 », « \set_ptt currVFO 1 ») et garde celle qui marche. Rien ne change avec le vrai rigctld.
+
 ## Version 2.27 (demande de F4IUJ)
 
 - Petits écrans : les réglages au-dessus de l'image de l'onglet TX (Mode, Durée, Largeur, Format, Robustesse, cases à cocher…) passent maintenant à la ligne quand la fenêtre est trop étroite, au lieu de sortir de l'écran. Une étiquette reste collée à sa liste. Sur un grand écran, rien ne change.

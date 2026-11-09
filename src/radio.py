@@ -746,14 +746,14 @@ class RigctlRig(RigBase):
             self.vfo_mode = False
             raise
 
-    def cmd(self, c, nlines=1):
+    def cmd(self, c, nlines=1, raw=False):
         with self.lock:
             if self.sock is None:
                 self._connect()
             try:
                 if self.vfo_mode is None:
                     self._check_vfo_mode()
-                if self.vfo_mode and c[:1] in "fmFMTl":
+                if self.vfo_mode and not raw and c[:1] in "fmFMTl":
                     c = c[:1] + " currVFO" + c[1:]           # « f » -> « f currVFO », « T 1 » -> « T currVFO 1 »
                 self._drain()
                 self.sock.sendall((c + "\n").encode())
@@ -776,7 +776,38 @@ class RigctlRig(RigBase):
                     raise RuntimeError(f"le poste ne répond pas à la commande Hamlib « {c} »")
                 raise RuntimeError(f"liaison avec Hamlib perdue : {e}")
 
+    _LONG = {"F": "\\set_freq", "M": "\\set_mode", "T": "\\set_ptt"}
+
+    def _variants(self, c):
+        """2.28 (Cat4om, PD1EG) : un faux rigctld en « mode VFO » peut refuser « T currVFO 1 » mais
+        accepter « T VFOA 1 », « T 1 » ou « \\set_ptt currVFO 1 » (comme WSJT-X)."""
+        head, rest = c[:1], c[1:]
+        forms = {"curr": f"{head} currVFO{rest}", "vfoa": f"{head} VFOA{rest}", "none": c,
+                 "long": f"{self._LONG[head]} currVFO{rest}"}
+        order = ["curr", "vfoa", "none", "long"]
+        st = getattr(self, "_set_style", None)
+        if st in order:
+            order.remove(st)
+            order.insert(0, st)
+        return [(k, forms[k]) for k in order]
+
     def _ok(self, c):
+        if c[:1] in self._LONG and c[1:2] == " " and hasattr(self, "sock"):
+            if getattr(self, "vfo_mode", None) is None:
+                with self.lock:
+                    if self.sock is None:
+                        self._connect()
+                    try:
+                        self._check_vfo_mode()
+                    except (OSError, RuntimeError):
+                        pass
+            if self.vfo_mode:
+                for k, form in self._variants(c):
+                    r = self.cmd(form, raw=True)
+                    if r and r[0] == "RPRT 0":
+                        self._set_style = k
+                        return True
+                return False
         r = self.cmd(c)
         return bool(r) and r[0] == "RPRT 0"
 
