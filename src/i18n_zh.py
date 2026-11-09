@@ -1175,4 +1175,6 @@ ZH = {
     "Néon cyan": "霓虹青",
     "Néon trio": "霓虹三色",
     "Néon festival": "霓虹节日",
+    "Carte illustrée": "插图地图",
+    "Carte des reports": "报告地图",
 }

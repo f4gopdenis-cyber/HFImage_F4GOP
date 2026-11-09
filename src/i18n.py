@@ -1965,6 +1965,8 @@ T = [
     ("Néon cyan", "Neon cyan", "Neoncyan", "Cian neón", "Ciano neon"),
     ("Néon trio", "Neon trio", "Neon-Trio", "Trío neón", "Trio neon"),
     ("Néon festival", "Neon festival", "Neon-Festival", "Festival neón", "Festival neon"),
+    ("Carte illustrée", "Illustrated map", "Illustrierte Karte", "Mapa ilustrado", "Mappa illustrata"),
+    ("Carte des reports", "Report map", "Rapportkarte", "Mapa de reportes", "Mappa dei rapporti"),
 ]
 
 _lang = "fr"

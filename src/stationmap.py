@@ -336,8 +336,9 @@ def render(view, stations=(), me=None, lang="fr", show_lines=True, tr=lambda s: 
                 path = [view.xy(lo, la) for la, lo in _great_circle(me["pos"], s["pos"])]
                 for a, b in zip(path, path[1:]):
                     if abs(a[0] - b[0]) < W / 2:
-                        if vivid:                               # trait épais avec liseré clair
-                            g.line([a, b], fill=(255, 255, 255), width=6)
+                        if vivid:                               # trait épais avec liseré sombre puis clair
+                            g.line([a, b], fill=(12, 22, 48), width=8)
+                            g.line([a, b], fill=(255, 255, 255), width=5)
                         g.line([a, b], fill=col, width=3 if vivid else 2)
     for s, (px, py) in zip(shown, pts):
         is_me = s is me
@@ -400,7 +401,7 @@ class MapWindow:
     """Fenêtre « Carte des stations ». provider() -> (moi, [stations]) ; tr : traduction."""
 
     def __init__(self, master, provider, tr=lambda s: s, lang=lambda: "fr", on_paste=None,
-                 show_all=False, on_show_all=None):
+                 show_all=False, on_show_all=None, vivid=False, on_vivid=None):
         import tkinter as tk
         from tkinter import ttk
         self.tk, self.provider, self.tr, self.lang, self.on_paste = tk, provider, tr, lang, on_paste
@@ -431,6 +432,16 @@ class MapWindow:
         tk.Checkbutton(bar, text=tr("Aussi les autres stations (en jaune)"),
                        variable=self.v_heard, bg="#33d633", activebackground="#33d633",
                        command=toggled).pack(side="left", padx=6)
+        # 2.29 : « carte illustrée » (couleurs vives, étiquettes arrondies, titre), d'après M7WUV
+        self.v_vivid = tk.BooleanVar(value=bool(vivid))
+        self.on_vivid = on_vivid
+
+        def vivid_toggled():
+            if self.on_vivid:
+                self.on_vivid(self.v_vivid.get())
+            self.redraw()
+        tk.Checkbutton(bar, text=tr("Carte illustrée"), variable=self.v_vivid, bg="#33d633",
+                       activebackground="#33d633", command=vivid_toggled).pack(side="left", padx=6)
         tk.Button(bar, text=tr("Tout voir"), command=lambda: self.set_view("*")).pack(side="left", padx=6)
         if on_paste:
             tk.Button(bar, text=tr("Coller la carte dans la fenêtre TX"),
@@ -532,7 +543,8 @@ class MapWindow:
         me, st = self._stations()
         st = [dict(s) for s in st]
         me = dict(me) if me else None
-        self._img = render(self.view, st, me, self.lang(), tr=self.tr)
+        self._img = render(self.view, st, me, self.lang(), tr=self.tr,
+                           vivid=bool(getattr(self, "v_vivid", None) and self.v_vivid.get()))
         self._last = (st, me)
         self._ph = ImageTk.PhotoImage(self._img)
         self.cv.delete("all")

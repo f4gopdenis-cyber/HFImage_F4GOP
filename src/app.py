@@ -2835,12 +2835,18 @@ class App(tk.Tk):
                         "name": self.opnames.get(c, "")})
         return me, out
 
+    def _map_vivid_changed(self, on):
+        self.conf["map_vivid"] = bool(on)               # 2.29 : carte illustrée, gardée pour la prochaine fois
+        self._save_conf_file()
+
     def show_map(self, call=None):
         if self.map_win is None or not self.map_win.alive():
             self.map_win = stationmap.MapWindow(self, self._map_data, tr=tr, lang=i18n.get_lang,
                                                 on_paste=self._map_to_tx,
                                                 show_all=bool(self.conf.get("map_all", False)),
-                                                on_show_all=self._map_all_changed)
+                                                on_show_all=self._map_all_changed,
+                                                vivid=bool(self.conf.get("map_vivid", False)),
+                                                on_vivid=self._map_vivid_changed)
             self.look.apply(self.map_win.win)
             self.map_win.win.update_idletasks()
             me, st = self._map_data()
