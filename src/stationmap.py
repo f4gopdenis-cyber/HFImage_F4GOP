@@ -25,6 +25,10 @@ GRID = (150, 190, 215)
 # couleurs « carte politique » (MAPCOLOR7 de Natural Earth : pays voisins différents)
 PALETTE = {1: (247, 214, 222), 2: (214, 238, 198), 3: (251, 240, 180), 4: (253, 214, 178),
            5: (222, 214, 240), 6: (250, 226, 200), 7: (205, 232, 222)}
+# 2.29 : style « carte illustrée » (d'après M7WUV) : couleurs vives, étiquettes arrondies, titre
+PALETTE_VIF = {1: (255, 146, 64), 2: (76, 196, 92), 3: (250, 206, 64), 4: (70, 140, 230),
+               5: (176, 98, 220), 6: (238, 98, 132), 7: (58, 192, 196)}
+OCEAN_VIF, LAKE_VIF = (24, 52, 102), (34, 70, 128)
 GREEN = (51, 214, 51)
 LINE = (20, 140, 20)
 
@@ -203,12 +207,13 @@ def fit_view(points, w, h, margin=0.25, min_span=8.0):
     return View(lon, lat, min(360.0, max(min_span, span_x, span_y)), w, h)
 
 
-def render(view, stations=(), me=None, lang="fr", show_lines=True, tr=lambda s: s):
+def render(view, stations=(), me=None, lang="fr", show_lines=True, tr=lambda s: s, vivid=False):
     """-> image PIL de la carte.
-    stations : [{"call", "pos": (lat, lon), "ok": bool, "info": str}] ; me : idem pour nous."""
+    stations : [{"call", "pos": (lat, lon), "ok": bool, "info": str}] ; me : idem pour nous.
+    vivid (2.29) : « carte illustrée » (couleurs vives, étiquettes arrondies, titre)."""
     d_ = load()
     W, H = view.w, view.h
-    img = Image.new("RGB", (W, H), OCEAN)
+    img = Image.new("RGB", (W, H), OCEAN_VIF if vivid else OCEAN)
     g = ImageDraw.Draw(img)
     lo0, la0, lo1, la1 = view.bbox()
 
@@ -230,19 +235,21 @@ def render(view, stations=(), me=None, lang="fr", show_lines=True, tr=lambda s: 
 
     # pays
     for c in d_["countries"]:
-        col = PALETTE.get(c["c"], (240, 236, 220))
+        col = (PALETTE_VIF if vivid else PALETTE).get(c["c"], (240, 236, 220))
         for pts in rings_of(c["r"], c["bb"]):
             g.polygon(pts, fill=col)
     for r in d_["lakes"]:
         xs, ys = [p[0] for p in r], [p[1] for p in r]
         for pts in rings_of([r], (min(xs), min(ys), max(xs), max(ys))):
-            g.polygon(pts, fill=LAKE)
+            g.polygon(pts, fill=LAKE_VIF if vivid else LAKE)
     for c in d_["countries"]:
         for pts in rings_of(c["r"], c["bb"]):
-            g.line(pts + [pts[0]], fill=BORDER, width=1)
+            g.line(pts + [pts[0]], fill=(250, 250, 250) if vivid else BORDER, width=2 if vivid else 1)
 
     # méridiens / parallèles
     step = 30 if view.span() > 150 else (10 if view.span() > 40 else 5)
+    if vivid:
+        step = 1000                                         # carte illustrée : pas de quadrillage
     for lon in range(-180, 181, step):
         x = view.xy(lon, view.lat)[0]
         if 0 <= x <= W:
@@ -286,7 +293,11 @@ def render(view, stations=(), me=None, lang="fr", show_lines=True, tr=lambda s: 
             tw = g.textlength(name, font=fc)
             if hits_station((px - tw / 2, py - 7, px + tw / 2, py + 7)):
                 continue
-            g.text((px, py), name, fill=(130, 130, 130), font=fc, anchor="mm")
+            if vivid:
+                g.text((px, py), name, fill=(255, 255, 255), font=_font(14 if span < 100 else 12, bold=True),
+                       anchor="mm", stroke_width=3, stroke_fill=(20, 30, 60))
+            else:
+                g.text((px, py), name, fill=(130, 130, 130), font=fc, anchor="mm")
 
     # villes
     city_rank = 1 if span > 200 else (3 if span > 60 else 4)
@@ -308,12 +319,13 @@ def render(view, stations=(), me=None, lang="fr", show_lines=True, tr=lambda s: 
             continue
         taken.append(box)
         img.info.setdefault("cities", []).append(name)
+        tk_ = dict(fill=(255, 255, 255), stroke_width=2, stroke_fill=(20, 30, 60)) if vivid else dict(fill="black")
         if cap:
-            _star(g, px, py, 4)
-            g.text((px + 5, py - 1), name, fill="black", font=f, anchor="lm")
+            _star(g, px, py, 4, (255, 255, 255) if vivid else "black")
+            g.text((px + 5, py - 1), name, font=f, anchor="lm", **tk_)
         else:
-            g.ellipse([px - 2, py - 2, px + 2, py + 2], fill="black")
-            g.text((px + 4, py), name, fill="black", font=f, anchor="lm")
+            g.ellipse([px - 2, py - 2, px + 2, py + 2], fill=(255, 255, 255) if vivid else "black")
+            g.text((px + 4, py), name, font=f, anchor="lm", **tk_)
 
     # trajets (couleur selon le report), puis points, puis étiquettes placées sans chevauchement
     if me and me.get("pos") and show_lines:
@@ -324,7 +336,9 @@ def render(view, stations=(), me=None, lang="fr", show_lines=True, tr=lambda s: 
                 path = [view.xy(lo, la) for la, lo in _great_circle(me["pos"], s["pos"])]
                 for a, b in zip(path, path[1:]):
                     if abs(a[0] - b[0]) < W / 2:
-                        g.line([a, b], fill=col, width=2)
+                        if vivid:                               # trait épais avec liseré clair
+                            g.line([a, b], fill=(255, 255, 255), width=6)
+                        g.line([a, b], fill=col, width=3 if vivid else 2)
     for s, (px, py) in zip(shown, pts):
         is_me = s is me
         dot = (40, 40, 40) if is_me else (report_color(s.get("rep")) if s.get("ok") else (200, 160, 0))
@@ -337,8 +351,14 @@ def render(view, stations=(), me=None, lang="fr", show_lines=True, tr=lambda s: 
             g.line([(px, py), (cx, cy)], fill=(70, 70, 70), width=1)
         fill = (255, 255, 255) if is_me else ((245, 250, 245) if s.get("ok") else (255, 236, 150))
         edge = (30, 30, 30) if is_me else (report_color(s.get("rep")) if s.get("ok") else (170, 130, 0))
-        g.rectangle([bx, by, bx + bw, by + bh], fill=fill, outline=edge, width=2)
-        g.text((bx + bw / 2, by + bh / 2), texts[i], fill="black", font=flab, anchor="mm")
+        if vivid:                                           # étiquette arrondie, ombre, cadre épais
+            g.rounded_rectangle([bx + 2, by + 3, bx + bw + 2, by + bh + 3], 6, fill=(10, 20, 40))
+            g.rounded_rectangle([bx, by, bx + bw, by + bh], 6, fill=(255, 255, 255) if s.get("ok") or is_me
+                                else (255, 236, 150), outline=edge, width=3)
+            g.text((bx + bw / 2, by + bh / 2), texts[i], fill=(20, 20, 30), font=_font(12, bold=True), anchor="mm")
+        else:
+            g.rectangle([bx, by, bx + bw, by + bh], fill=fill, outline=edge, width=2)
+            g.text((bx + bw / 2, by + bh / 2), texts[i], fill="black", font=flab, anchor="mm")
         s["_hit"] = (bx, by, bx + bw, by + bh, px, py)
 
     # légende
@@ -347,21 +367,32 @@ def render(view, stations=(), me=None, lang="fr", show_lines=True, tr=lambda s: 
         rows = [(col, tr(lab)) for _, col, lab in REPORT_COLORS]
         lw = max(g.textlength(lab, font=fl) for _, lab in rows) + 40
         x0, y0 = 8, H - 10 - 16 * len(rows) - 8
-        g.rectangle([x0, y0, x0 + lw, H - 10], fill=(255, 255, 255), outline=(120, 120, 120))
+        if vivid:
+            g.rounded_rectangle([x0, y0, x0 + lw, H - 10], 8, fill=(12, 22, 48), outline=(250, 200, 60), width=2)
+        else:
+            g.rectangle([x0, y0, x0 + lw, H - 10], fill=(255, 255, 255), outline=(120, 120, 120))
         for k, (col, lab) in enumerate(rows):
             y = y0 + 8 + 16 * k + 4
-            g.line([(x0 + 8, y), (x0 + 28, y)], fill=col, width=3)
-            g.text((x0 + 34, y), lab, fill="black", font=fl, anchor="lm")
+            g.line([(x0 + 8, y), (x0 + 28, y)], fill=col, width=4 if vivid else 3)
+            g.text((x0 + 34, y), lab, fill=(255, 255, 255) if vivid else "black", font=fl, anchor="lm")
+    if vivid and me and me.get("call"):                     # titre en haut à gauche
+        ft = _font(20, bold=True)
+        fs = _font(12, bold=True)
+        t1, t2 = str(me["call"]), tr("Carte des reports")
+        tw = max(g.textlength(t1, font=ft), g.textlength(t2, font=fs)) + 28
+        g.rounded_rectangle([10, 10, 10 + tw, 62], 10, fill=(12, 22, 48), outline=(250, 200, 60), width=3)
+        g.text((24, 22), t1, fill=(255, 255, 255), font=ft, anchor="lm")
+        g.text((24, 47), t2, fill=(250, 200, 60), font=fs, anchor="lm")
     return img
 
 
-def _star(g, x, y, r):
+def _star(g, x, y, r, fill="black"):
     pts = []
     for i in range(10):
         a = math.pi / 2 + i * math.pi / 5
         rr = r if i % 2 == 0 else r * 0.45
         pts.append((x + rr * math.cos(a), y - rr * math.sin(a)))
-    g.polygon(pts, fill="black")
+    g.polygon(pts, fill=fill)
 
 
 # ----------------------------------------------------------------------- fenêtre Tk
