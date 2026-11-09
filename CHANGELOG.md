@@ -1,5 +1,9 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 2.27 (demande de F4IUJ)
+
+- Petits écrans : les réglages au-dessus de l'image de l'onglet TX (Mode, Durée, Largeur, Format, Robustesse, cases à cocher…) passent maintenant à la ligne quand la fenêtre est trop étroite, au lieu de sortir de l'écran. Une étiquette reste collée à sa liste. Sur un grand écran, rien ne change.
+
 ## Version 2.26
 
 - Mise à jour automatique : si GitHub a une panne passagère (erreur 504…), HFImage réessaie tout seul (après 5 s puis 15 s) avant d'afficher le bandeau rouge. Un vrai problème (fichier abîmé…) reste signalé tout de suite.

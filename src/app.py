@@ -66,7 +66,7 @@ import random
 import wave
 
 APP = "HFImage F4GOP"
-VERSION = "2.26"
+VERSION = "2.27"
 
 
 def _take_profile(argv):
@@ -855,7 +855,8 @@ class App(tk.Tk):
         self._data_auto_paint()
         self._topbar_show()
         self._cards(self.look.palette())
-        self._titlebars()                              # 2.22 : barres de titre aux couleurs de l'ambiance
+        self._titlebars()
+        self._flow_all()                               # 2.27 : police changée -> réglages TX recalés                              # 2.22 : barres de titre aux couleurs de l'ambiance
         self.conf.update(theme=th, font_family=fam, font_size=size)
         if hasattr(self, "v_msize") and self.v_msize.get() != size:
             self.v_msize.set(size)
@@ -1144,6 +1145,7 @@ class App(tk.Tk):
 
     def set_language(self, code):
         i18n.set_lang(code)
+        self.after(50, self._flow_all)                 # 2.27 : textes de longueur différente
         if hasattr(self, "v_lang"):
             self.v_lang.set(i18n.LANGS.get(code, "Français"))
         self.conf["lang"] = code
@@ -1977,6 +1979,69 @@ class App(tk.Tk):
             self.conf.update(rx_hist=bool(self.v_show_hist.get()), rx_msgs=bool(self.v_show_msgs.get()))
             self._save_conf_file()
 
+    def _flow_row(self, row):
+        """2.27 : ligne de réglages « qui passe à la ligne » comme du texte quand la fenêtre est trop étroite.
+        Une étiquette reste collée à sa liste, un bouton « … » à sa case. Grand écran : rien ne change."""
+        units = []
+        prev = None
+        for w in row.pack_slaves():
+            inf = w.pack_info()
+            px = inf.get("padx", 0)
+            left, right = (px if isinstance(px, (tuple, list)) else (px, px))
+            left, right = int(left), int(right)
+            try:
+                txt = str(w.cget("text"))
+            except tk.TclError:
+                txt = ""
+            glue = prev is not None and (isinstance(prev, ttk.Label) or txt == "…")
+            if glue and units:
+                units[-1].append((w, left, right))
+            else:
+                units.append([(w, left, right)])
+            prev = w
+            w.pack_forget()
+        row._flow_units = units
+        row._flow_h = None
+        self.__dict__.setdefault("_flow_rows", []).append(row)
+        row.bind("<Configure>", lambda e, r=row: self._flow_layout(r), add="+")
+        self.after_idle(lambda r=row: self._flow_layout(r))
+
+    def _flow_layout(self, row):
+        try:
+            W = row.winfo_width()
+            if W <= 1:
+                W = max(row.winfo_reqwidth(), 600)
+            lines, cur, x = [], [], 0
+            for u in row._flow_units:
+                uw = sum(w.winfo_reqwidth() + l + r for w, l, r in u)
+                if cur and x + uw > W:
+                    lines.append(cur)
+                    cur, x = [], 0
+                cur.append(u)
+                x += uw
+            if cur:
+                lines.append(cur)
+            y = 0
+            for ln in lines:
+                lh = max(w.winfo_reqheight() for u in ln for w, _l, _r in u)
+                x = 0
+                for i, u in enumerate(ln):
+                    for j, (w, l, r) in enumerate(u):
+                        lx = 0 if (i == 0 and j == 0) else l          # pas de marge en début de ligne
+                        w.place(x=x + lx, y=y + (lh - w.winfo_reqheight()) // 2)
+                        x += lx + w.winfo_reqwidth() + r
+                y += lh + 3
+            h = max(1, y - 3)
+            if row._flow_h != h:
+                row._flow_h = h
+                row.configure(height=h)
+        except (tk.TclError, AttributeError):
+            pass
+
+    def _flow_all(self):
+        for r in getattr(self, "_flow_rows", []):
+            self.after_idle(lambda r=r: self._flow_layout(r))
+
     def _tab_tx(self, nb):
         t = self.tab_tx = tk.Frame(nb, bg="black")
         nb.add(t, text="  TX  ")
@@ -2086,6 +2151,10 @@ class App(tk.Tk):
         ttk.Checkbutton(r3, text="Logo", variable=self.v_logoon, command=_logo_toggle).pack(side="left",
                                                                                              padx=(12, 0))
         ttk.Button(r3, text="💬 Bulles…", command=self.bubble_dialog).pack(side="left", padx=(12, 0))
+
+        # 2.27 (F4IUJ) : petits écrans : les réglages passent à la ligne au lieu de sortir de la fenêtre
+        for r in (r1, r2, r3):
+            self._flow_row(r)
 
         # réglages du mode EasyPal (HamDRM) : visibles seulement dans ce mode
         self.drm_row = ttk.Frame(tb)
