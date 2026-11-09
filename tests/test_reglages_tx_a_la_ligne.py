@@ -55,9 +55,18 @@ class Flow(unittest.TestCase):
                     self.assertLessEqual(w.winfo_x() + w.winfo_width(), W + 2, str(w))
 
     def test_plus_de_lignes_quand_c_est_etroit(self):
-        large = sum(r.winfo_height() for r in self.layout(1650))
-        etroit = sum(r.winfo_height() for r in self.layout(900))
-        self.assertGreater(etroit, large)
+        # largeur imposée (indépendante de la taille de l'écran de la machine de test)
+        rows = self.layout(900)
+        hauteurs = {}
+        for W in (3000, 500):
+            tot = 0
+            for r in rows:
+                with mock.patch.object(r, "winfo_width", return_value=W):
+                    r._flow_h = None
+                    self.a._flow_layout(r)
+                tot += r._flow_h
+            hauteurs[W] = tot
+        self.assertGreater(hauteurs[500], hauteurs[3000])
 
     def test_etiquette_collee_a_sa_liste(self):
         rows = self.layout(900)
