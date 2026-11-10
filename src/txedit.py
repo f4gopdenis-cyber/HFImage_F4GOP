@@ -16,9 +16,9 @@ import os
 import bubbles
 import trafic
 
-STYLES = ("parole", "pensée", "cri", "cartouche", "texte")
+STYLES = ("parole", "pensée", "cri", "cartouche", "texte", "néon")
 STYLE_NAMES = {"parole": "Parole", "pensée": "Pensée", "cri": "Cri", "cartouche": "Cartouche",
-               "texte": "Texte seul (sans bulle)"}
+               "texte": "Texte seul (sans bulle)", "néon": "Néon (texte lumineux)"}
 SHAPE_NAMES = {"rect": "Rectangle", "arrondi": "Coins arrondis", "rond": "Rond", "ovale": "Ovale"}
 
 

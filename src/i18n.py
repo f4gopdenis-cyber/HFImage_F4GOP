@@ -1967,6 +1967,7 @@ T = [
     ("Néon festival", "Neon festival", "Neon-Festival", "Festival neón", "Festival neon"),
     ("Carte illustrée", "Illustrated map", "Illustrierte Karte", "Mapa ilustrado", "Mappa illustrata"),
     ("Carte des reports", "Report map", "Rapportkarte", "Mapa de reportes", "Mappa dei rapporti"),
+    ("Néon (texte lumineux)", "Neon (glowing text)", "Neon (leuchtender Text)", "Neón (texto luminoso)", "Neon (testo luminoso)"),
 ]
 
 _lang = "fr"

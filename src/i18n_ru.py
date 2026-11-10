@@ -1185,4 +1185,5 @@ RU = {
     "Néon festival": "Неоновый фестиваль",
     "Carte illustrée": "Иллюстрированная карта",
     "Carte des reports": "Карта рапортов",
+    "Néon (texte lumineux)": "Неон (светящийся текст)",
 }

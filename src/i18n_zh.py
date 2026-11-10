@@ -1177,4 +1177,5 @@ ZH = {
     "Néon festival": "霓虹节日",
     "Carte illustrée": "插图地图",
     "Carte des reports": "报告地图",
+    "Néon (texte lumineux)": "霓虹(发光文字)",
 }
