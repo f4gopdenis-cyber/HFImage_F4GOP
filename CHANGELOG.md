@@ -1,5 +1,11 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 2.29 (demandes de F4EEH et M7WUV)
+
+- Les fenêtres « Sites des stations » et « Carte des stations » se rouvrent à la taille et à la place où on les a laissées (F4EEH). Si l'écran a été débranché depuis, elles reviennent sur l'écran principal.
+- Carte des stations : nouvelle case « Carte illustrée » — couleurs vives, noms en blanc sur étiquettes arrondies, liaisons bien visibles (M7WUV).
+- Éditeur de l'image TX : nouveau style de texte « néon » (lettres lumineuses).
+
 ## Version 2.28 (signalé par PD1EG)
 
 - CAT par Hamlib avec un serveur « rigctld » qui n'est pas Hamlib lui-même (Cat4om…) : s'il fonctionne en « mode VFO » mais refuse la forme « T currVFO 1 » (émission) ou « F currVFO … » (fréquence), HFImage essaie aussitôt les autres formes (« T VFOA 1 », « T 1 », « \set_ptt currVFO 1 ») et garde celle qui marche. Rien ne change avec le vrai rigctld.

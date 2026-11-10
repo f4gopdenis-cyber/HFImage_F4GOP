@@ -66,7 +66,7 @@ import random
 import wave
 
 APP = "HFImage F4GOP"
-VERSION = "2.28"
+VERSION = "2.29"
 
 
 def _take_profile(argv):
@@ -2848,6 +2848,7 @@ class App(tk.Tk):
                                                 vivid=bool(self.conf.get("map_vivid", False)),
                                                 on_vivid=self._map_vivid_changed)
             self.look.apply(self.map_win.win)
+            self._geom_keep(self.map_win.win, "map_geom", self.map_win.close)    # 2.29 (F4EEH)
             self.map_win.win.update_idletasks()
             me, st = self._map_data()
             self.map_win.set_view("*" if any(x["ok"] for x in st) or (self.conf.get("map_all") and st)
@@ -7978,6 +7979,27 @@ class App(tk.Tk):
             w.refresh(force=True)
             return
         self.sites_win = sites.SitesWindow(self)
+        self._geom_keep(self.sites_win, "sites_geom", self.sites_win.close)   # 2.29 (F4EEH)
+
+    def _geom_keep(self, win, key, close):
+        """2.29 (F4EEH) : la fenêtre se rouvre à la taille et à la place où on l'a laissée (si elle est
+        encore à l'écran) ; retenues quand on la ferme."""
+        g = self.conf.get(key)
+        if g and docking._on_screen(self, g):
+            try:
+                win.geometry(g)
+            except tk.TclError:
+                pass
+
+        def closing():
+            try:
+                if win.winfo_exists() and win.state() == "normal":
+                    self.conf[key] = win.geometry()
+                    self._save_conf_file()
+            except tk.TclError:
+                pass
+            close()
+        win.protocol("WM_DELETE_WINDOW", closing)
 
     def _my_site(self):
         """Adresse de notre image1 (Site web / Digi-Sites), annoncée dans la présence ; "" sinon."""
