@@ -1965,6 +1965,7 @@ T = [
     ("Néon cyan", "Neon cyan", "Neoncyan", "Cian neón", "Ciano neon"),
     ("Néon trio", "Neon trio", "Neon-Trio", "Trío neón", "Trio neon"),
     ("Néon festival", "Neon festival", "Neon-Festival", "Festival neón", "Festival neon"),
+    ("Néon (texte lumineux)", "Neon (glowing text)", "Neon (leuchtender Text)", "Neón (texto luminoso)", "Neon (testo luminoso)"),
 ]
 
 _lang = "fr"

@@ -5238,7 +5238,7 @@ class App(tk.Tk):
         f = ttk.Frame(w, padding=10)
         f.pack(fill="both", expand=True)
         styles = {"parole": tr("Parole"), "pensée": tr("Pensée"), "cri": tr("Cri"), "cartouche": tr("Cartouche"),
-                  "texte": tr("Texte seul (sans bulle)")}
+                  "texte": tr("Texte seul (sans bulle)"), "néon": tr("Néon (texte lumineux)")}
         sizes = {"petite": tr("Petite"), "moyenne": tr("Moyenne"), "grande": tr("Grande")}
         sel = [len(self.bubbles) - 1 if self.bubbles else None]
         geo = {}
@@ -5393,6 +5393,9 @@ class App(tk.Tk):
                     and b.get("fg", "#000000").lower() == "#000000":
                 b["fg"], b["bg"] = "#ffffff", "#000000"     # texte seul : blanc bordé de noir, lisible partout
                 sw_bg.configure(bg=b["bg"])
+                sw_fg.configure(bg=b["fg"])
+            if b["style"] == "néon" and old_style != "néon" and b.get("fg", "#000000").lower() in ("#000000", "#ffffff"):
+                b["fg"] = "#ff3ec8"                          # 2.29 : néon rose par défaut (couleur du texte)
                 sw_fg.configure(bg=b["fg"])
             b["size"] = next((k for k, v in sizes.items() if v == v_size.get()), "moyenne")
             was = bool(b.get("anim"))

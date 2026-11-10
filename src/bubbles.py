@@ -13,12 +13,12 @@ import math
 import os
 import sys
 
-from PIL import Image, ImageDraw
+from PIL import Image, ImageDraw, ImageFilter
 
 import trafic
 
-STYLES = ("parole", "pensée", "cri", "cartouche", "texte")
-NO_TAIL = ("cartouche", "texte")       # « texte » : texte seul sur l'image, sans bulle (contour = couleur de fond)
+STYLES = ("parole", "pensée", "cri", "cartouche", "texte", "néon")
+NO_TAIL = ("cartouche", "texte", "néon")    # « néon » (2.29) : texte lumineux, sans bulle       # « texte » : texte seul sur l'image, sans bulle (contour = couleur de fond)
 SIZES = {"petite": 0.038, "moyenne": 0.052, "grande": 0.072}
 MIN_PX = 14                     # en dessous, le texte devient illisible après compression
 FONTS = ("Comic Sans MS", "Arial")
@@ -177,7 +177,7 @@ def layout(W, H, b, scale=1.0):
     fpx = max(MIN_PX, int(round(font_px(H, b.get("size")) * k)))
     font = _font(int(fpx * scale))
     # texte seul : lignes plus longues (légende sur toute la largeur)
-    lines = _wrap(b.get("text", ""), font, (0.85 if b.get("style") == "texte" else 0.45) * W * scale)
+    lines = _wrap(b.get("text", ""), font, (0.85 if b.get("style") in ("texte", "néon") else 0.45) * W * scale)
     lh = font.size * 1.18
     tw = max([_measure(font, t) for t in lines] + [font.size * 2])
     th = lh * len(lines)
@@ -185,7 +185,7 @@ def layout(W, H, b, scale=1.0):
     style = b.get("style", "parole")
     if style == "cartouche":
         rx, ry = tw / 2 + pad, th / 2 + pad * 0.7
-    elif style == "texte":
+    elif style in ("texte", "néon"):
         rx, ry = tw / 2 + pad * 0.3, th / 2 + pad * 0.3
     else:
         rx, ry = tw / 2 * 1.22 + pad, th / 2 * 1.5 + pad * 0.6
@@ -244,7 +244,7 @@ def _draw_one(d, g, off, bg, fg, layer=None, t=None):
     lw = g["lw"]
     cx, cy, rx, ry = g["cx"] - ox, g["cy"] - oy, g["rx"], g["ry"]
     style, tail = g["style"], _has_tail(g)
-    if style == "texte":
+    if style in ("texte", "néon"):
         pass                                  # pas de bulle : le texte seul, avec un contour (plus bas)
     elif style == "cartouche":
         d.rounded_rectangle((cx - rx - lw, cy - ry - lw, cx + rx + lw, cy + ry + lw), radius=lw * 2, fill=fg)
@@ -311,6 +311,28 @@ def _draw_one(d, g, off, bg, fg, layer=None, t=None):
         y += lh
 
 
+def _neon(g, off, size, color, t=None):
+    """2.29 : texte « néon » : cœur presque blanc, liseré de la couleur choisie, et lueur colorée autour."""
+    base = Image.new("RGBA", size, (0, 0, 0, 0))
+    _draw_one(ImageDraw.Draw(base), g, off, (0, 0, 0, 0), color + (255,), base, None)
+    alpha = base.split()[3]
+    glow = Image.new("RGBA", size, color + (0,))
+    out = Image.new("RGBA", size, (0, 0, 0, 0))
+    for r, k in ((g["font"].size * 0.7, 2.4), (g["font"].size * 0.3, 2.0), (g["font"].size * 0.12, 1.4)):
+        a = alpha.filter(ImageFilter.GaussianBlur(r)).point(lambda v, k=k: min(255, int(v * k)))
+        glow.putalpha(a)
+        out.alpha_composite(glow)
+    out.alpha_composite(base)                                      # tube de couleur
+    core = Image.new("RGBA", size, (0, 0, 0, 0))
+    light = tuple(int(c + (255 - c) * 0.75) for c in color)
+    gc = dict(g)
+    _draw_one(ImageDraw.Draw(core), gc, off, (0, 0, 0, 0), light + (255,), core, t)
+    core_a = core.split()[3].filter(ImageFilter.MinFilter(3))       # cœur plus fin que le tube
+    core.putalpha(core_a)
+    out.alpha_composite(core)
+    return out
+
+
 def draw(img, bubbles, t=None):
     """-> nouvelle image RGB avec les bulles (l'image d'origine n'est pas modifiée).
     t (0..1) : instant de l'animation des émoticônes des bulles animées (None : fixes)."""
@@ -326,9 +348,18 @@ def draw(img, bubbles, t=None):
         x1, y1 = min(W * SS, x1 + SS), min(H * SS, y1 + SS)
         if x1 <= x0 or y1 <= y0:
             continue
+        if g["style"] == "néon":                     # 2.29 : place pour la lueur autour du texte
+            m = int(g["font"].size * 0.9)
+            x0, y0 = max(0, x0 - m - (x0 - m) % SS), max(0, y0 - m - (y0 - m) % SS)
+            x1, y1 = min(W * SS, x1 + m), min(H * SS, y1 + m)
+            x1, y1 = x0 + (x1 - x0) // SS * SS, y0 + (y1 - y0) // SS * SS
         layer = Image.new("RGBA", (x1 - x0, y1 - y0), (0, 0, 0, 0))
-        _draw_one(ImageDraw.Draw(layer), g, (x0, y0), trafic._rgb(b.get("bg"), (255, 255, 255)) + (255,),
-                  trafic._rgb(b.get("fg"), (0, 0, 0)) + (255,), layer, t if b.get("anim") else None)
+        fg = trafic._rgb(b.get("fg"), (0, 0, 0))
+        if g["style"] == "néon":
+            layer = _neon(g, (x0, y0), layer.size, fg, t if b.get("anim") else None)
+        else:
+            _draw_one(ImageDraw.Draw(layer), g, (x0, y0), trafic._rgb(b.get("bg"), (255, 255, 255)) + (255,),
+                      fg + (255,), layer, t if b.get("anim") else None)
         small = layer.resize(((x1 - x0) // SS, (y1 - y0) // SS), Image.LANCZOS)
         out.alpha_composite(small, (x0 // SS, y0 // SS))
     return out.convert("RGB")
