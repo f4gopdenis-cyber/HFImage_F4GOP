@@ -279,10 +279,13 @@ def render(view, stations=(), me=None, lang="fr", show_lines=True, tr=lambda s: 
     def hits_station(box):
         return any(not (box[2] < b[0] or box[0] > b[2] or box[3] < b[1] or box[1] > b[3]) for b in busy)
 
-    # noms des pays
+    # noms des pays : places calculées d'abord, écrits après les villes (2.30 : un petit pays
+    # dont le nom tomberait sur sa capitale — Liechtenstein, Monaco, Andorre… — ne garde que la capitale)
     span = view.span()
     max_rank = 2 if span > 200 else (4 if span > 60 else (6 if span > 20 else 9))
     fc = _font(13 if span < 100 else 11)
+    fcv = _font(14 if span < 100 else 12, bold=True)
+    countries = []
     for c in d_["countries"]:
         x, y, rank = c["l"]
         if rank > max_rank:
@@ -290,14 +293,17 @@ def render(view, stations=(), me=None, lang="fr", show_lines=True, tr=lambda s: 
         px, py = view.xy(x / 100, y / 100)
         if 0 <= px <= W and 0 <= py <= H:
             name = (c["nf"] if lang == "fr" else c["n"]).upper()
-            tw = g.textlength(name, font=fc)
-            if hits_station((px - tw / 2, py - 7, px + tw / 2, py + 7)):
+            tw = g.textlength(name, font=fcv if vivid else fc)
+            box = (px - tw / 2 - 2, py - 8, px + tw / 2 + 2, py + 8)
+            if hits_station(box):
                 continue
-            if vivid:
-                g.text((px, py), name, fill=(255, 255, 255), font=_font(14 if span < 100 else 12, bold=True),
-                       anchor="mm", stroke_width=3, stroke_fill=(20, 30, 60))
-            else:
-                g.text((px, py), name, fill=(130, 130, 130), font=fc, anchor="mm")
+            x0, y0 = view.xy(c["bb"][0], c["bb"][1], wrap=False)
+            x1, y1 = view.xy(c["bb"][2], c["bb"][3], wrap=False)
+            small = abs(x1 - x0) < tw + 10                      # le nom déborde du pays
+            countries.append((name, px, py, box, small))
+
+    def overlap(a, b):
+        return not (a[2] < b[0] or a[0] > b[2] or a[3] < b[1] or a[1] > b[3])
 
     # villes
     city_rank = 1 if span > 200 else (3 if span > 60 else 4)
@@ -313,7 +319,7 @@ def render(view, stations=(), me=None, lang="fr", show_lines=True, tr=lambda s: 
         f = fcap if cap else fcity
         tw = g.textlength(name, font=f)
         box = (px - 4, py - 8, px + 6 + tw, py + 8)
-        if any(not (box[2] < b[0] or box[0] > b[2] or box[3] < b[1] or box[1] > b[3]) for b in taken):
+        if any(overlap(box, b) for b in taken):
             continue
         if hits_station(box):                               # sous une station : on n'écrit pas la ville
             continue
@@ -326,6 +332,24 @@ def render(view, stations=(), me=None, lang="fr", show_lines=True, tr=lambda s: 
         else:
             g.ellipse([px - 2, py - 2, px + 2, py + 2], fill=(255, 255, 255) if vivid else "black")
             g.text((px + 4, py), name, font=f, anchor="lm", **tk_)
+
+    done = []
+    for name, px, py, box, small in countries:
+        # petit pays (Liechtenstein, Monaco, Andorre…) : si son nom touche une ville, la capitale
+        # suffit ; grand pays : un peu plus haut ou plus bas pour ne pas écrire sur une ville
+        for dy in ((0,) if small else (0, 16, -16, 30, -30)):
+            b = (box[0], box[1] + dy, box[2], box[3] + dy)
+            if not (any(overlap(b, c) for c in taken) or any(overlap(b, c) for c in done) or hits_station(b)):
+                break
+        else:
+            continue
+        box, py = b, py + dy
+        done.append(box)
+        img.info.setdefault("countries", []).append(name)
+        if vivid:
+            g.text((px, py), name, fill=(255, 255, 255), font=fcv, anchor="mm", stroke_width=3, stroke_fill=(20, 30, 60))
+        else:
+            g.text((px, py), name, fill=(130, 130, 130), font=fc, anchor="mm")
 
     # trajets (couleur selon le report), puis points, puis étiquettes placées sans chevauchement
     if me and me.get("pos") and show_lines:
