@@ -52,6 +52,7 @@ class StatusPanel(tk.Frame):
         # vignette de la dernière image reçue, dans la place libre à droite du tableau ; elle prend
         # la place disponible sans élargir le panneau (cachée s'il n'y a pas assez de place)
         tbl.columnconfigure(3, weight=1)
+        self.columnconfigure(3, weight=1)       # 2.32 (BH2RMX) : le tableau prend toute la largeur du panneau
         self.thumb = tk.Canvas(tbl, width=1, height=1, bg=BG, highlightthickness=0, cursor="hand2")
         self.thumb.grid(row=0, column=3, rowspan=7, sticky="nsew", padx=(6, 0))
         self.thumb.bind("<Configure>", lambda e: self._draw_thumb())
@@ -228,8 +229,11 @@ class StatusPanel(tk.Frame):
         c.delete("all")
         im = self._thumb_img
         w, h = c.winfo_width(), c.winfo_height()
-        if im is None or w < 60 or h < 50:
+        if im is None or w < 44 or h < 50:
             return
+        # 2.32 (BH2RMX) : même taille dans toutes les langues (≈ 11 chiffres de large au plus)
+        import tkinter.font as tkfont
+        w = min(w, tkfont.Font(family="TkDefaultFont", size=8).measure("0") * 11)
         from PIL import Image, ImageTk
         import tkinter.font as tkfont
         f = tkfont.Font(family="TkDefaultFont", size=8)
@@ -245,11 +249,12 @@ class StatusPanel(tk.Frame):
         t = im.copy()
         t.thumbnail((w - 2, th - 2), Image.LANCZOS)
         self._thumb_ph = ImageTk.PhotoImage(t)
-        c.create_image(w // 2, (th - t.height) // 2, image=self._thumb_ph, anchor="n")
-        c.create_rectangle(w // 2 - t.width // 2 - 1, (th - t.height) // 2 - 1,
-                           w // 2 + (t.width + 1) // 2, (th - t.height) // 2 + t.height, outline=FG)
+        cx = c.winfo_width() // 2                             # centré dans la place libre
+        c.create_image(cx, (th - t.height) // 2, image=self._thumb_ph, anchor="n")
+        c.create_rectangle(cx - t.width // 2 - 1, (th - t.height) // 2 - 1,
+                           cx + (t.width + 1) // 2, (th - t.height) // 2 + t.height, outline=FG)
         for k, ln in enumerate(lines):
-            c.create_text(w // 2, th + k * lh, text=ln, fill=FG, font=f, anchor="n")
+            c.create_text(cx, th + k * lh, text=ln, fill=FG, font=f, anchor="n")
 
     def set_call(self, call):
         self.call.configure(text=call or "—")
