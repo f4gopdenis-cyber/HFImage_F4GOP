@@ -373,13 +373,17 @@ def render(view, stations=(), me=None, lang="fr", show_lines=True, tr=lambda s: 
     # trajets (couleur selon le report), puis points, puis étiquettes placées sans chevauchement
     if me and me.get("pos") and show_lines:
         # les moins bons d'abord : les bons reports restent visibles par-dessus
+        # 2.34 : avec beaucoup de stations, traits plus fins (sinon un gros faisceau autour de chez nous)
+        many = sum(1 for s in stations if s.get("ok") and s.get("pos")) > 12
         for s in sorted(stations, key=lambda s: -999 if s.get("rep") is None else s["rep"]):
             if s.get("ok") and s.get("pos"):
                 col = report_color(s.get("rep"))
                 path = [view.xy(lo, la) for la, lo in _great_circle(me["pos"], s["pos"])]
                 for a, b in zip(path, path[1:]):
                     if abs(a[0] - b[0]) < W / 2:
-                        if vivid:                               # trait épais avec liseré sombre puis clair
+                        if vivid and many:                      # fin liseré sombre seulement
+                            g.line([a, b], fill=(12, 22, 48), width=5)
+                        elif vivid:                             # trait épais avec liseré sombre puis clair
                             g.line([a, b], fill=(12, 22, 48), width=8)
                             g.line([a, b], fill=(255, 255, 255), width=5)
                         g.line([a, b], fill=col, width=3 if vivid else 2)
