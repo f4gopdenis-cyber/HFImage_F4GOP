@@ -1,5 +1,9 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 2.32 (signalé par BH2RMX)
+
+- La petite vignette de la dernière image reçue (à droite du tableau TX/RX) s'affiche maintenant dans toutes les langues, toujours à peu près à la même taille. Avant, sa place dépendait de la longueur des mots : rien en chinois ni en allemand, trop grande en russe.
+
 ## Version 2.31 (demandes de M7WUV)
 
 - Carte QSL : la carte garde la taille et la forme de son image de fond (jusqu'à 2000 pixels), sans rien couper ; les textes et les bandeaux s'agrandissent avec elle. À l'émission, l'image est toujours envoyée à la largeur choisie dans l'onglet TX.
