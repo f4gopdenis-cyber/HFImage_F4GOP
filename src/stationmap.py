@@ -612,9 +612,14 @@ class MapWindow:
         self._ph = ImageTk.PhotoImage(self._img)
         self.cv.delete("all")
         self.cv.create_image(0, 0, image=self._ph, anchor="nw", tags="map")
-        self.cv.create_text(self.view.w - 6, self.view.h - 6, anchor="se", fill="#555",
-                            text=self.tr("Fond de carte : Natural Earth (domaine public)"),
-                            font=("TkDefaultFont", 8))
+        vivid = bool(getattr(self, "v_vivid", None) and self.v_vivid.get())
+        t = self.cv.create_text(self.view.w - 6, self.view.h - 6, anchor="se", fill="#e8eefc" if vivid else "#555",
+                                text=self.tr("Fond de carte : Natural Earth (domaine public)"),
+                                font=("TkDefaultFont", 8))
+        if vivid:                                           # 2.34 : lisible sur la carte illustrée
+            b = self.cv.bbox(t)
+            r = self.cv.create_rectangle(b[0] - 4, b[1] - 1, b[2] + 3, b[3] + 1, fill="#0c1630", outline="")
+            self.cv.tag_raise(t, r)
         if self._hover_at and not self._drag:               # la bulle survit au rafraîchissement
             self._hover(_Pt(*self._hover_at))
         if not me or not me.get("pos"):
