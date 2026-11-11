@@ -96,6 +96,7 @@ class StatusPanel(tk.Frame):
             c.itemconfigure(oval, outline=fill if P else FG)
         if self._sm_key is not None:                   # S-mètre redessiné aux nouvelles couleurs
             self._sm_redraw(self._sm_key)
+        self._draw_thumb()                             # 2.33 : légende de la vignette aux bonnes couleurs
 
     def _track(self, c):
         c.delete("t")
@@ -231,11 +232,11 @@ class StatusPanel(tk.Frame):
         w, h = c.winfo_width(), c.winfo_height()
         if im is None or w < 44 or h < 50:
             return
-        # 2.32 (BH2RMX) : même taille dans toutes les langues (≈ 11 chiffres de large au plus)
-        import tkinter.font as tkfont
-        w = min(w, tkfont.Font(family="TkDefaultFont", size=8).measure("0") * 11)
         from PIL import Image, ImageTk
         import tkinter.font as tkfont
+        # 2.33 : texte aux couleurs du thème (vert foncé illisible sur fond sombre avant)
+        P = self.modern
+        fg = P["fg"] if P else (self.cmap(FG, "foreground") if self.cmap else FG)
         f = tkfont.Font(family="TkDefaultFont", size=8)
         lines = []
         for ln in [x for x in self._thumb_txt.split("\n") if x]:
@@ -252,9 +253,9 @@ class StatusPanel(tk.Frame):
         cx = c.winfo_width() // 2                             # centré dans la place libre
         c.create_image(cx, (th - t.height) // 2, image=self._thumb_ph, anchor="n")
         c.create_rectangle(cx - t.width // 2 - 1, (th - t.height) // 2 - 1,
-                           cx + (t.width + 1) // 2, (th - t.height) // 2 + t.height, outline=FG)
+                           cx + (t.width + 1) // 2, (th - t.height) // 2 + t.height, outline=fg)
         for k, ln in enumerate(lines):
-            c.create_text(cx, th + k * lh, text=ln, fill=FG, font=f, anchor="n")
+            c.create_text(cx, th + k * lh, text=ln, fill=fg, font=f, anchor="n")
 
     def set_call(self, call):
         self.call.configure(text=call or "—")

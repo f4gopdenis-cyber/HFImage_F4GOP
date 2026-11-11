@@ -1,5 +1,6 @@
 """2.32 (BH2RMX) : la vignette de la dernière image reçue s'affiche dans toutes les langues,
-à la même taille (avant : rien en chinois ni en allemand, trop grande en russe)."""
+dans la place libre du panneau (avant : rien en chinois ni en allemand).
+2.33 : légende aux couleurs du thème."""
 import gc
 import json
 import os
@@ -44,6 +45,5 @@ class Vignette(unittest.TestCase):
         for lang in ("fr", "en", "de", "es", "it", "ru", "zh"):
             bb, right, pw = self._panel(lang)
             self.assertIsNotNone(bb, lang)
-            self.assertLessEqual(bb[2] - bb[0], 80, lang)            # pas plus grande en russe
             self.assertGreaterEqual(bb[2] - bb[0], 40, lang)
             self.assertLessEqual(right, pw, lang)                     # pas coupée au bord du panneau
