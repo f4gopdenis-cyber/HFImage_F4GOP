@@ -66,7 +66,7 @@ import random
 import wave
 
 APP = "HFImage F4GOP"
-VERSION = "2.29"
+VERSION = "2.30"
 
 
 def _take_profile(argv):
@@ -2851,8 +2851,8 @@ class App(tk.Tk):
             self._geom_keep(self.map_win.win, "map_geom", self.map_win.close)    # 2.29 (F4EEH)
             self.map_win.win.update_idletasks()
             me, st = self._map_data()
-            self.map_win.set_view("*" if any(x["ok"] for x in st) or (self.conf.get("map_all") and st)
-                                  else "Europe")
+            # 2.30 (BH2RMX) : la région de notre station, cadrée sur ses stations
+            self.map_win.set_view("home")
         else:
             self.map_win.win.deiconify()
             self.map_win.win.lift()

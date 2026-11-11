@@ -43,6 +43,22 @@ VIEWS = {
     "Océanie": (145.0, -25.0, 80.0),
 }
 
+# 2.30 (BH2RMX) : à l'ouverture, la carte montre la région de notre station
+# (nom de la vue, lat min, lat max, lon min, lon max)
+HOME_REGIONS = (("Europe", 30, 75, -30, 60), ("Asie", -12, 75, 60, 180),
+                ("Océanie", -50, -12, 100, 180), ("Amérique du Nord", 10, 75, -170, -50))
+
+
+def home_region(pos):
+    """Région (nom de vue) qui contient la position (lat, lon), ou None."""
+    if not pos:
+        return None
+    lat, lon = pos[0], pos[1]
+    for name, la0, la1, lo0, lo1 in HOME_REGIONS:
+        if la0 <= lat <= la1 and lo0 <= lon <= lo1:
+            return name
+    return None
+
 
 def _font(size, bold=False):
     import i18n
@@ -292,7 +308,7 @@ def render(view, stations=(), me=None, lang="fr", show_lines=True, tr=lambda s: 
             continue
         px, py = view.xy(x / 100, y / 100)
         if 0 <= px <= W and 0 <= py <= H:
-            name = (c["nf"] if lang == "fr" else c["n"]).upper()
+            name = (c["nf"] if lang == "fr" else (c.get("t") or {}).get(lang, c["n"])).upper()
             tw = g.textlength(name, font=fcv if vivid else fc)
             box = (px - tw / 2 - 2, py - 8, px + tw / 2 + 2, py + 8)
             if hits_station(box):
@@ -310,7 +326,10 @@ def render(view, stations=(), me=None, lang="fr", show_lines=True, tr=lambda s: 
     fcity = _font(12 if span < 100 else 10)
     fcap = _font(14 if span < 100 else 11, bold=True)
     taken = []
-    for name, x, y, rank, cap in sorted(d_["cities"], key=lambda c: (-c[4], c[3])):
+    for city in sorted(d_["cities"], key=lambda c: (-c[4], c[3])):
+        name, x, y, rank, cap = city[:5]
+        if len(city) > 5:                                   # 2.30 : nom dans la langue choisie
+            name = city[5].get(lang, name)
         if rank > city_rank and not (cap and span < 200):
             continue
         px, py = view.xy(x / 100, y / 100)
@@ -421,6 +440,11 @@ def _star(g, x, y, r, fill="black"):
 
 
 # ----------------------------------------------------------------------- fenêtre Tk
+class _Pt:
+    def __init__(self, x, y):
+        self.x, self.y = x, y
+
+
 class MapWindow:
     """Fenêtre « Carte des stations ». provider() -> (moi, [stations]) ; tr : traduction."""
 
@@ -449,8 +473,8 @@ class MapWindow:
         def toggled():
             if self.on_show_all:
                 self.on_show_all(self.v_heard.get())
-            if self._preset == "*" and not self._moved:
-                self.set_view("*")              # recadre sur les stations affichées
+            if self._preset in ("*", "home") and not self._moved:
+                self.set_view(self._preset)     # recadre sur les stations affichées
             else:
                 self.redraw()
         tk.Checkbutton(bar, text=tr("Aussi les autres stations (en jaune)"),
@@ -488,7 +512,8 @@ class MapWindow:
         self.cv.bind("<Button-4>", lambda e: self._zoom(e, 1))
         self.cv.bind("<Button-5>", lambda e: self._zoom(e, -1))
         self.cv.bind("<Motion>", self._hover)
-        self.cv.bind("<Leave>", lambda e: self.cv.delete("tip"))
+        self.cv.bind("<Leave>", self._unhover)
+        self._hover_at = None       # 2.30 (BH2RMX) : la bulle reste tant que la souris est sur la station
         self._preset = "Europe"
         self._focus = None          # station sur laquelle la carte est centrée
         self._moved = False         # l'utilisateur a déplacé / zoomé : on garde sa vue
@@ -518,7 +543,17 @@ class MapWindow:
             self._cb.set(self.tr("Toutes les stations"))
         W, H = self._size()
         me, st = self._stations()
-        if name == "*":
+        if name == "home":
+            # notre région, cadrée sur les stations de la région (sinon la région entière)
+            reg = home_region(me.get("pos") if me else None)
+            if reg is None:
+                return self.set_view("*" if st else "Europe")
+            box = next(r for r in HOME_REGIONS if r[0] == reg)
+            pts = [s["pos"] for s in st if s.get("pos") and home_region(s["pos"]) == reg
+                   and box[1] <= s["pos"][0] <= box[2] and box[3] <= s["pos"][1] <= box[4]]
+            self.view = fit_view(pts + [me["pos"]], W, H) if pts else View(*VIEWS[reg], W, H)
+            self._cb.set(self.tr(reg))
+        elif name == "*":
             pts = [s["pos"] for s in st if s.get("pos")] + ([me["pos"]] if me and me.get("pos") else [])
             self.view = fit_view(pts, W, H) if pts else View(*VIEWS["Europe"], W, H)
         else:
@@ -576,6 +611,8 @@ class MapWindow:
         self.cv.create_text(self.view.w - 6, self.view.h - 6, anchor="se", fill="#555",
                             text=self.tr("Fond de carte : Natural Earth (domaine public)"),
                             font=("TkDefaultFont", 8))
+        if self._hover_at and not self._drag:               # la bulle survit au rafraîchissement
+            self._hover(_Pt(*self._hover_at))
         if not me or not me.get("pos"):
             self.info.configure(text=self.tr("Indiquez votre locator dans les Réglages pour placer votre station."))
         else:
@@ -595,6 +632,7 @@ class MapWindow:
         """Bulle d'information au passage de la souris sur une station."""
         if self._drag:
             return
+        self._hover_at = (e.x, e.y)
         self.cv.delete("tip")
         st, me = self._last
         for s in st + ([me] if me else []):
@@ -619,6 +657,10 @@ class MapWindow:
                                              outline="#555", tags="tip")
                 self.cv.tag_raise(t, r)
                 return
+
+    def _unhover(self, e=None):
+        self._hover_at = None
+        self.cv.delete("tip")
 
     # déplacement / zoom
     def _press(self, e):

@@ -1,7 +1,8 @@
 """Fabrique carte.bin (fond de la carte des stations) à partir de Natural Earth (domaine public).
 
 Fichiers GeoJSON nécessaires (https://github.com/nvkelso/natural-earth-vector, dossier geojson) :
-  ne_50m_admin_0_countries.geojson, ne_50m_lakes.geojson, ne_10m_populated_places_simple.geojson
+  ne_50m_admin_0_countries.geojson, ne_50m_lakes.geojson, ne_10m_populated_places.geojson
+(2.30, d'après BH2RMX : noms des pays et des villes dans chaque langue du programme)
 
 Utilisation :  python build_map.py [dossier_des_geojson] [tolérance_en_degrés]   (défaut : . et 0.02)
 """
@@ -46,6 +47,23 @@ def enc(ring):
 def polys(g):
     return g["coordinates"] if g["type"] == "MultiPolygon" else [g["coordinates"]]
 
+LANGS = ("de", "es", "it", "ru", "zh")
+# noms courts et neutres (le nom officiel complet prendrait trop de place sur la carte)
+SHORT = {"China": {"fr": "Chine", "de": "China", "es": "China", "it": "Cina", "ru": "Китай", "zh": "中国"},
+         "Taiwan": {"fr": "Taïwan", "de": "Taiwan", "es": "Taiwán", "it": "Taiwan", "ru": "Тайвань", "zh": "台湾"}}
+# villes : noms actuels (BH2RMX) et ville natale de BH2RMX visible
+CITY_FIX = {"Jinxi": {"zh": "葫芦岛"}, "Hailar": {"zh": "呼伦贝尔"}}
+CITY_RANK = {"Jinzhou": 3}
+
+def names(p, keys, base, fix=None):
+    """{langue: nom} pour les langues où le nom diffère du nom de base."""
+    out = {}
+    for lg in LANGS:
+        v = (fix or {}).get(lg) or p.get(keys + lg.upper()) or ""
+        if v and v != base:
+            out[lg] = v
+    return out
+
 data = {"countries": [], "lakes": [], "cities": []}
 npts = 0
 for f in json.load(open(NE + "ne_50m_admin_0_countries.geojson"))["features"]:
@@ -55,7 +73,9 @@ for f in json.load(open(NE + "ne_50m_admin_0_countries.geojson"))["features"]:
         for ring in poly[:1]:                  # contour extérieur (les trous sont rares à cette échelle)
             e = enc(ring)
             if e: rings.append(e); npts += len(e) // 2
-    data["countries"].append({"c": p["MAPCOLOR7"], "n": p["NAME"], "nf": p.get("NAME_FR") or p["NAME"],
+    fix = SHORT.get(p["NAME"], {})
+    data["countries"].append({"c": p["MAPCOLOR7"], "n": p["NAME"], "nf": fix.get("fr") or p.get("NAME_FR") or p["NAME"],
+                              "t": names(p, "NAME_", p["NAME"], fix),
                               "l": [round(p["LABEL_X"] * 100), round(p["LABEL_Y"] * 100), p["LABELRANK"]],
                               "r": rings})
 for f in json.load(open(NE + "ne_50m_lakes.geojson"))["features"]:
@@ -63,11 +83,15 @@ for f in json.load(open(NE + "ne_50m_lakes.geojson"))["features"]:
     for poly in polys(f["geometry"]):
         e = enc(poly[0])
         if e: data["lakes"].append(e); npts += len(e) // 2
-for f in json.load(open(NE + "ne_10m_populated_places_simple.geojson"))["features"]:
+for f in json.load(open(NE + "ne_10m_populated_places.geojson"))["features"]:
     p = f["properties"]
-    if p["scalerank"] > 4 and not p["adm0cap"]: continue
-    data["cities"].append([p["name"], round(p["longitude"] * 100), round(p["latitude"] * 100),
-                           p["scalerank"], 1 if p["adm0cap"] else 0])
+    rank = CITY_RANK.get(p["NAME"], p["SCALERANK"])
+    if rank > 4 and not p["ADM0CAP"]: continue
+    t = names(p, "NAME_", p["NAME"], CITY_FIX.get(p["NAME"]))
+    if p.get("NAME_FR") and p["NAME_FR"] != p["NAME"]:
+        t["fr"] = p["NAME_FR"]
+    data["cities"].append([p["NAME"], round(p["LONGITUDE"] * 100), round(p["LATITUDE"] * 100),
+                           rank, 1 if p["ADM0CAP"] else 0] + ([t] if t else []))
 raw = json.dumps(data, separators=(",", ":"), ensure_ascii=False).encode()
 z = zlib.compress(raw, 9)
 open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "carte.bin"), "wb").write(z)

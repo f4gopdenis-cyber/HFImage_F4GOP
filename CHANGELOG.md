@@ -1,5 +1,12 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 2.30 (demandes de BH2RMX)
+
+- Carte des stations : les noms des pays et des villes sont maintenant dans la langue choisie (chinois, allemand, russe, espagnol, italien, français, anglais), d'après les fichiers Natural Earth préparés par BH2RMX. Noms courts et neutres pour la Chine et Taïwan.
+- Carte des stations : elle s'ouvre sur la région de notre station (Europe, Asie, Océanie, Amérique du Nord), cadrée sur les stations de cette région. « Tout voir » montre toujours toutes les stations.
+- Carte des stations : la bulle d'information d'une station reste affichée tant que la souris est dessus (elle disparaissait à chaque mise à jour de la liste).
+- Carte des stations : le nom d'un petit pays qui tombait sur sa capitale (Liechtenstein, Monaco, Andorre…) n'est plus écrit, la capitale suffit ; les autres noms de pays se décalent un peu pour ne plus chevaucher une ville.
+
 ## Version 2.29 (demandes de F4EEH et M7WUV)
 
 - Les fenêtres « Sites des stations » et « Carte des stations » se rouvrent à la taille et à la place où on les a laissées (F4EEH). Si l'écran a été débranché depuis, elles reviennent sur l'écran principal.
