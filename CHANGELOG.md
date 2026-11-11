@@ -1,5 +1,10 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 2.33
+
+- La vignette de la dernière image reçue reprend toute la place libre à droite du tableau (la 2.32 la limitait trop sur un grand panneau). Elle reste visible dans toutes les langues.
+- La légende sous la vignette (indicatif, prénom, distance) prend la couleur du texte du thème choisi : elle est maintenant lisible sur un fond sombre (Nuit, Néon…).
+
 ## Version 2.32 (signalé par BH2RMX)
 
 - La petite vignette de la dernière image reçue (à droite du tableau TX/RX) s'affiche maintenant dans toutes les langues, toujours à peu près à la même taille. Avant, sa place dépendait de la longueur des mots : rien en chinois ni en allemand, trop grande en russe.
