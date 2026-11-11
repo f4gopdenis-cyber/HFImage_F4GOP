@@ -66,7 +66,7 @@ import random
 import wave
 
 APP = "HFImage F4GOP"
-VERSION = "2.30"
+VERSION = "2.31"
 
 
 def _take_profile(argv):
@@ -8349,30 +8349,41 @@ class App(tk.Tk):
             row=7, column=2, columnspan=2, sticky="w", pady=(6, 0))
         # ---- aperçu en direct
         pvf = ttk.Frame(win)
-        pvf.grid(row=0, column=2, rowspan=8, padx=8, pady=8, sticky="n")
+        pvf.grid(row=0, column=2, rowspan=9, padx=8, pady=8, sticky="n")
         pv = tk.Canvas(pvf, width=480, height=300, bg="#000", highlightthickness=0)
         pv.pack()
         ttk.Label(pvf, text="Glissez les textes à la souris pour les placer.", foreground="#555").pack(
             anchor="w", pady=(4, 0))
-        prev = {"job": None, "ph": None, "boxes": {}, "drag": None, "hover": None}
-        KP = 480 / qsl.W                                  # aperçu -> carte : ½
+        prev = {"job": None, "ph": None, "boxes": {}, "drag": None, "hover": None, "pw": 480, "ph_": 300}
+        # 2.31 (M7WUV) : la carte a la forme de son fond ; l'aperçu tient dans 480×300 et il est
+        # dessiné directement à sa taille (cadres des textes en pixels de l'aperçu)
+
+        def preview_size():
+            cw, ch = qsl.card_size(bg["img"])
+            k = min(480 / cw, 300 / ch)
+            return max(40, round(cw * k)), max(40, round(ch * k))
 
         def current_style():
             style.update(font=v_font.get(), call_size=int(v_size.get()), band_alpha=int(v_alpha.get()),
                          head_h=int(v_hh.get()), band_h=int(v_bh.get()))
             return dict(style)
 
-        def build(boxes=None):
+        def build(boxes=None, size=None):
             return qsl.make_card(bg["img"], self.mycall() or "NOCALL", self.v_loc.get().strip(),
                                  fields["to"].get(), fields["freq"].get(), fields["report"].get(),
-                                 fields["msg"].get(), fields["utc"].get(), style=current_style(), boxes=boxes)
+                                 fields["msg"].get(), fields["utc"].get(), style=current_style(), boxes=boxes,
+                                 size=size)
 
         def draw():
             prev["job"] = None
             if not win.winfo_exists():
                 return
             boxes = {}
-            im = build(boxes).resize((480, 300), Image.BILINEAR if prev["drag"] else Image.LANCZOS)
+            pw, ph = preview_size()
+            prev["pw"], prev["ph_"] = pw, ph
+            if int(pv.cget("width")) != pw or int(pv.cget("height")) != ph:
+                pv.configure(width=pw, height=ph)
+            im = build(boxes, size=(pw, ph))
             prev["boxes"] = boxes
             prev["ph"] = ImageTk.PhotoImage(im)
             pv.delete("all")
@@ -8385,7 +8396,7 @@ class App(tk.Tk):
             k = (prev["drag"] or {}).get("key") or prev["hover"]
             b = prev["boxes"].get(k)
             if b:
-                pv.create_rectangle(b[0] * KP - 3, b[1] * KP - 3, b[2] * KP + 3, b[3] * KP + 3,
+                pv.create_rectangle(b[0] - 3, b[1] - 3, b[2] + 3, b[3] + 3,
                                     outline="#ffd400", width=2, dash=(4, 2), tags="sel")
 
         def refresh(*_, delay=150):
@@ -8394,7 +8405,7 @@ class App(tk.Tk):
             prev["job"] = win.after(delay, draw)
 
         def hit(e):
-            x, y = e.x / KP, e.y / KP
+            x, y = e.x, e.y
             for k in reversed(qsl.BLOCKS):                 # le bloc dessiné en dernier d'abord
                 b = prev["boxes"].get(k)
                 if b and b[0] - 6 <= x <= b[2] + 6 and b[1] - 6 <= y <= b[3] + 6:
@@ -8421,8 +8432,8 @@ class App(tk.Tk):
             if not g:
                 return
             pos = dict(style.get("pos") or {})
-            pos[g["key"]] = [round(max(-1.0, min(1.0, g["dx"] + (e.x - g["x"]) / 480)), 4),
-                             round(max(-1.0, min(1.0, g["dy"] + (e.y - g["y"]) / 300)), 4)]
+            pos[g["key"]] = [round(max(-1.0, min(1.0, g["dx"] + (e.x - g["x"]) / prev["pw"])), 4),
+                             round(max(-1.0, min(1.0, g["dy"] + (e.y - g["y"]) / prev["ph_"])), 4)]
             style["pos"] = pos
             refresh(delay=30)
 
@@ -8469,8 +8480,87 @@ class App(tk.Tk):
             win.destroy()
             self.prepare()
 
+        # ---- 2.31 (M7WUV) : modèles de carte (fond + style + place des textes), choisis dans une liste
+        mf = ttk.Frame(win)
+        mf.grid(row=7, column=0, columnspan=2, sticky="we", padx=8, pady=(8, 0))
+        ttk.Label(mf, text="Modèle").pack(side="left")
+        v_model = tk.StringVar(value="")
+        cbm = ttk.Combobox(mf, textvariable=v_model, state="readonly", width=18,
+                           values=sorted(self.conf.get("qsl_models") or {}))
+        cbm.pack(side="left", padx=4)
+
+        def load_model(*_):
+            m = (self.conf.get("qsl_models") or {}).get(v_model.get())
+            if not m:
+                return
+            style.clear()
+            style.update(qsl.DEFAULT_STYLE, **(m.get("style") or {}))
+            v_font.set(style["font"]); v_size.set(int(style["call_size"])); v_alpha.set(int(style["band_alpha"]))
+            v_hh.set(int(style.get("head_h", 100))); v_bh.set(int(style.get("band_h", 100)))
+            for k, b in swatches.items():
+                b.configure(bg=style[k])
+            p = m.get("bg")
+            if p and os.path.exists(p):
+                try:
+                    with Image.open(p) as im:              # fichier refermé (Windows : supprimable)
+                        bg["img"] = im.convert("RGB")
+                    self._set_text(lab_bg, f"Fond : {v_model.get()}")
+                except Exception:
+                    pass
+            refresh(delay=10)
+
+        def save_model():
+            from tkinter import simpledialog
+            name = simpledialog.askstring(APP, tr("Nom du modèle :"), parent=win, initialvalue=v_model.get())
+            name = (name or "").strip()
+            if not name:
+                return
+            models = dict(self.conf.get("qsl_models") or {})
+            entry = {"style": current_style()}
+            if bg["img"] is not None:
+                folder = os.path.join(os.path.dirname(CONF_PATH), "qsl_modeles")
+                safe = "".join(ch if ch.isalnum() or ch in "-_" else "_" for ch in name)[:40] or "modele"
+                try:
+                    os.makedirs(folder, exist_ok=True)
+                    path = os.path.join(folder, safe + ".png")
+                    im = bg["img"].convert("RGB")
+                    w, h = qsl.card_size(im)
+                    if im.size != (w, h) and max(im.size) > qsl.MAX_SIDE:
+                        im = im.resize((w, h), Image.LANCZOS)
+                    im.save(path)
+                    entry["bg"] = path
+                except OSError as e:
+                    messagebox.showerror(APP, str(e), parent=win)
+                    return
+            models[name] = entry
+            self.conf["qsl_models"] = models
+            self._save_conf_file()
+            cbm.configure(values=sorted(models))
+            v_model.set(name)
+
+        def del_model():
+            name = v_model.get()
+            models = dict(self.conf.get("qsl_models") or {})
+            if name not in models or not messagebox.askyesno(
+                    APP, tr("Supprimer le modèle « {0} » ?").replace("{0}", name), parent=win):
+                return
+            p = models.pop(name).get("bg")
+            if p and os.path.exists(p) and not any(m.get("bg") == p for m in models.values()):
+                try:
+                    os.remove(p)
+                except OSError:
+                    pass
+            self.conf["qsl_models"] = models
+            self._save_conf_file()
+            cbm.configure(values=sorted(models))
+            v_model.set("")
+
+        cbm.bind("<<ComboboxSelected>>", load_model)
+        ttk.Button(mf, text="Enregistrer le modèle…", command=save_model).pack(side="left", padx=4)
+        ttk.Button(mf, text="Supprimer", command=del_model).pack(side="left", padx=4)
+
         bf = ttk.Frame(win)
-        bf.grid(row=7, column=0, columnspan=2, pady=8)
+        bf.grid(row=8, column=0, columnspan=2, pady=8)
         ttk.Button(bf, text="Choisir un fond…", command=pick).pack(side="left", padx=4)
         ttk.Button(bf, text="Créer la carte", command=make).pack(side="left", padx=4)
         self._translate_ui(win)

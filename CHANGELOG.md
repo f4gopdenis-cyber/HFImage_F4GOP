@@ -1,5 +1,10 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 2.31 (demandes de M7WUV)
+
+- Carte QSL : la carte garde la taille et la forme de son image de fond (jusqu'à 2000 pixels), sans rien couper ; les textes et les bandeaux s'agrandissent avec elle. À l'émission, l'image est toujours envoyée à la largeur choisie dans l'onglet TX.
+- Carte QSL : modèles de carte. « Enregistrer le modèle… » garde le fond, les couleurs, la police, les tailles et la place de chaque texte ; on choisit ensuite le modèle dans la liste « Modèle » pour faire une nouvelle carte en un clic. « Supprimer » retire le modèle choisi.
+
 ## Version 2.30 (demandes de BH2RMX)
 
 - Carte des stations : les noms des pays et des villes sont maintenant dans la langue choisie (chinois, allemand, russe, espagnol, italien, français, anglais), d'après les fichiers Natural Earth préparés par BH2RMX. Noms courts et neutres pour la Chine et Taïwan.

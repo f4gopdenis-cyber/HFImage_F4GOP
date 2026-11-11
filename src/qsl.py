@@ -4,7 +4,8 @@ from i18n import tr
 
 from PIL import Image, ImageDraw, ImageFont
 
-W, H = 960, 600
+W, H = 960, 600              # carte de base (fond dégradé) ; mise en page dessinée pour cette taille
+MAX_SIDE = 2000             # 2.31 (M7WUV) : la carte garde la taille de son fond, jusqu'à 2000 px
 
 # polices proposées : nom -> (normale, grasse) ; fichiers des polices Windows
 FONTS = {
@@ -30,10 +31,22 @@ BAND_MIN, BAND_MAX = 50, 150
 BLOCKS = ("call", "loc", "to", "info", "msg")
 
 
-def _offset(st, key):
+def card_size(background):
+    """2.31 (M7WUV) : taille de la carte = taille et forme de l'image de fond (sans rien couper),
+    ramenée à MAX_SIDE au plus ; une petite image est agrandie à 960 px de large au moins."""
+    if background is None:
+        return W, H
+    w, h = background.size
+    k = min(1.0, MAX_SIDE / max(w, h))
+    if max(w, h) * k < W:
+        k = W / max(w, h)
+    return max(1, round(w * k)), max(1, round(h * k))
+
+
+def _offset(st, key, cw=W, ch=H):
     try:
         dx, dy = (st.get("pos") or {}).get(key) or (0, 0)
-        return max(-1.0, min(1.0, float(dx))) * W, max(-1.0, min(1.0, float(dy))) * H
+        return max(-1.0, min(1.0, float(dx))) * cw, max(-1.0, min(1.0, float(dy))) * ch
     except (TypeError, ValueError):
         return 0.0, 0.0
 _font_name = "Arial"
@@ -76,10 +89,11 @@ def _dim(rgb, k=0.75):
 
 
 def make_card(background, mycall, locator="", to_call="", freq="", report="", message="",
-              utc=None, style=None, boxes=None):
-    """Retourne une image PIL 960×600. style : police et couleurs (voir DEFAULT_STYLE), et
-    style["pos"] : décalage de chaque bloc de texte. boxes (dict) : reçoit le cadre de chaque
-    bloc (x0, y0, x1, y1), pour le déplacer à la souris."""
+              utc=None, style=None, boxes=None, size=None):
+    """Retourne la carte (image PIL), à la taille de son fond (card_size) ou à size=(l, h)
+    (aperçu). style : police et couleurs (voir DEFAULT_STYLE), et style["pos"] : décalage de
+    chaque bloc de texte. boxes (dict) : reçoit le cadre de chaque bloc (x0, y0, x1, y1),
+    pour le déplacer à la souris."""
     global _font_name
     st = dict(DEFAULT_STYLE, **(style or {}))
     _font_name = st["font"]
@@ -88,14 +102,16 @@ def make_card(background, mycall, locator="", to_call="", freq="", report="", me
     band_top = _rgb(st["band"], int(alpha * 0.85))
     band_bot = _rgb(st["band"], alpha)
     big = max(0.5, min(1.4, int(st["call_size"]) / 100))
+    CW, CH = size or card_size(background)
+    S = min(CW / W, CH / H)                               # échelle de la mise en page (960×600 -> 1)
     if background is None:
-        card = Image.new("RGB", (W, H), "#1d3557")
+        card = Image.new("RGB", (CW, CH), "#1d3557")
         g = ImageDraw.Draw(card)
-        for y in range(H):                                 # dégradé simple
-            c = int(30 + 60 * y / H)
-            g.line([(0, y), (W, y)], fill=(c // 2, c, 90 + c))
+        for y in range(CH):                                # dégradé simple
+            c = int(30 + 60 * y / CH)
+            g.line([(0, y), (CW, y)], fill=(c // 2, c, 90 + c))
     else:
-        card = _cover(background, W, H)
+        card = _cover(background, CW, CH)
     d = ImageDraw.Draw(card, "RGBA")
     import clocktz
     utc = utc or clocktz.fmt("%Y-%m-%d %H:%M", suffix=False)
@@ -105,16 +121,17 @@ def make_card(background, mycall, locator="", to_call="", freq="", report="", me
     kb = max(BAND_MIN, min(BAND_MAX, int(st.get("band_h") or 100))) / 100
 
     def px(v, k):
-        return max(8, int(round(v * k)))
+        return max(8, int(round(v * k * S)))
 
+    M = 28 * S                                            # marge
     # en-tête : indicatif + locator
-    head = int(max(120, int(120 * big)) * kh)
+    head = int(max(120, int(120 * big)) * kh * S)
     if alpha:
-        d.rectangle([0, 0, W, head], fill=band_top)
+        d.rectangle([0, 0, CW, head], fill=band_top)
     box = {} if boxes is None else boxes
 
     def text(key, xy, txt, font, fill, anchor="la"):
-        ox, oy = _offset(st, key)
+        ox, oy = _offset(st, key, CW, CH)
         xy = (xy[0] + ox, xy[1] + oy)
         d.text(xy, txt, font=font, fill=fill, anchor=anchor)
         b = d.textbbox(xy, txt, font=font, anchor=anchor)
@@ -122,34 +139,34 @@ def make_card(background, mycall, locator="", to_call="", freq="", report="", me
         box[key] = b if o is None else (min(o[0], b[0]), min(o[1], b[1]), max(o[2], b[2]), max(o[3], b[3]))
 
     fc = _font(px(76 * big, kh), True)
-    text("call", (28, head / 2), mycall.upper(), fc, call_c, "lm")
+    text("call", (M, head / 2), mycall.upper(), fc, call_c, "lm")
     if locator:
-        text("loc", (W - 28, head / 2 - 8 * kh), locator.upper(), _font(px(34, kh), True), acc_c, "rs")
-    text("loc", (W - 28, head / 2 + 6 * kh), "HFImage", _font(px(22, kh)), _dim(text_c), "ra")
+        text("loc", (CW - M, head / 2 - 8 * kh * S), locator.upper(), _font(px(34, kh), True), acc_c, "rs")
+    text("loc", (CW - M, head / 2 + 6 * kh * S), "HFImage", _font(px(22, kh)), _dim(text_c), "ra")
 
     # bandeau du bas : QSO
-    band = int(190 * kb)
+    band = int(190 * kb * S)
     if alpha:
-        d.rectangle([0, H - band, W, H], fill=band_bot)
-    y0 = H - band + 14 * kb
+        d.rectangle([0, CH - band, CW, CH], fill=band_bot)
+    y0 = CH - band + 14 * kb * S
     if to_call:
-        text("to", (28, y0), tr(f"To : {to_call.upper()}"), _font(px(40, kb), True), acc_c)
+        text("to", (M, y0), tr(f"To : {to_call.upper()}"), _font(px(40, kb), True), acc_c)
     rows = [(tr("Date UTC") if clocktz.utc() else tr("Date"), utc), (tr("Fréquence"), freq), (tr("Report"), report)]
-    x = 28
+    x = M
     # date / fréquence / report : la ligne doit tenir dans la largeur de la carte
     kr = kb
     while True:
         fv = _font(px(28, kr), True)
-        need = 28 + sum(max(int(220 * kr), int(d.textlength(v, font=fv)) + int(40 * kr)) for _, v in rows if v)
-        if need <= W - 10 or kr <= 0.5:
+        need = M + sum(max(int(220 * kr * S), int(d.textlength(v, font=fv)) + int(40 * kr * S)) for _, v in rows if v)
+        if need <= CW - 10 * S or kr <= 0.5:
             break
         kr *= 0.92
     for lab, val in rows:
         if not val:
             continue
-        text("info", (x, y0 + 58 * kb), lab, _font(px(18, kr)), _dim(text_c))
-        text("info", (x, y0 + 80 * kb), val, fv, text_c)
-        x += max(int(220 * kr), int(d.textlength(val, font=fv)) + int(40 * kr))
+        text("info", (x, y0 + 58 * kb * S), lab, _font(px(18, kr)), _dim(text_c))
+        text("info", (x, y0 + 80 * kb * S), val, fv, text_c)
+        x += max(int(220 * kr * S), int(d.textlength(val, font=fv)) + int(40 * kr * S))
     if message:
-        text("msg", (28, y0 + 128 * kb), message, _font(px(26, kb)), text_c)
+        text("msg", (M, y0 + 128 * kb * S), message, _font(px(26, kb)), text_c)
     return card

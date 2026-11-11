@@ -1968,6 +1968,10 @@ T = [
     ("Carte illustrée", "Illustrated map", "Illustrierte Karte", "Mapa ilustrado", "Mappa illustrata"),
     ("Carte des reports", "Report map", "Rapportkarte", "Mapa de reportes", "Mappa dei rapporti"),
     ("Néon (texte lumineux)", "Neon (glowing text)", "Neon (leuchtender Text)", "Neón (texto luminoso)", "Neon (testo luminoso)"),
+    ('Modèle', 'Template', 'Vorlage', 'Plantilla', 'Modello'),
+    ('Enregistrer le modèle…', 'Save template…', 'Vorlage speichern…', 'Guardar plantilla…', 'Salva modello…'),
+    ('Nom du modèle :', 'Template name:', 'Name der Vorlage:', 'Nombre de la plantilla:', 'Nome del modello:'),
+    ('Supprimer le modèle « {0} » ?', 'Delete template “{0}”?', 'Vorlage „{0}“ löschen?', '¿Eliminar la plantilla «{0}»?', 'Eliminare il modello «{0}»?'),
 ]
 
 _lang = "fr"

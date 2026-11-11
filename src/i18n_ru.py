@@ -1186,4 +1186,8 @@ RU = {
     "Carte illustrée": "Иллюстрированная карта",
     "Carte des reports": "Карта рапортов",
     "Néon (texte lumineux)": "Неон (светящийся текст)",
+    'Modèle': 'Шаблон',
+    'Enregistrer le modèle…': 'Сохранить шаблон…',
+    'Nom du modèle :': 'Имя шаблона:',
+    'Supprimer le modèle « {0} » ?': 'Удалить шаблон «{0}»?',
 }

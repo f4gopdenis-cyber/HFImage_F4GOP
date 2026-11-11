@@ -1178,4 +1178,8 @@ ZH = {
     "Carte illustrée": "插图地图",
     "Carte des reports": "报告地图",
     "Néon (texte lumineux)": "霓虹(发光文字)",
+    'Modèle': '模板',
+    'Enregistrer le modèle…': '保存模板…',
+    'Nom du modèle :': '模板名称：',
+    'Supprimer le modèle « {0} » ?': '删除模板“{0}”？',
 }
