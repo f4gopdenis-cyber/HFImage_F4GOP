@@ -1,5 +1,9 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 2.36 (demande de F6BAZ)
+
+- Onglet RX : clic droit sur l'image -> « Envoyer sur le site web (FTP) », comme dans EasyPal. L'image affichée est mise en ligne sur le même serveur et la même page que les envois automatiques (utile si un envoi a été manqué). Fonctionne aussi avec une image rouverte depuis la Galerie ou l'historique.
+
 ## Version 2.35
 
 - Menus : la coche (✓) des cases à cocher (Hybride → Mode hybride, Télécharger automatiquement…) prend la couleur du texte du menu. Elle restait noire, presque invisible sur un menu sombre (Néon, Nuit…).
