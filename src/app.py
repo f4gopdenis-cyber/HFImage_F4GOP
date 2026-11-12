@@ -4874,6 +4874,14 @@ class App(tk.Tk):
         self._set_text(self.lb_src_info, "")
         self.log(tr("Image à émettre retirée."))
 
+    def copy_tx_image(self):
+        """2.34 (VK6ATI) : l'image TX (carte QSL, bulles, logos compris) dans le presse-papiers."""
+        im = self._tx_source() if self.src_img is not None else None
+        if im is None:
+            messagebox.showinfo(APP, tr("Ouvrez d'abord une image."))
+            return False
+        return self.copy_image(im)
+
     def save_tx_image(self):
         """2.13 (BH2RMX) : enregistre l'image TX telle qu'elle partira (carte QSL, bulles, logos…)."""
         im = self._tx_source() if self.src_img is not None else None

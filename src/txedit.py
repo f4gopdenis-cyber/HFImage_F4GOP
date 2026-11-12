@@ -452,6 +452,8 @@ class TxEditor:
             m.add_command(label=tr("Image du correspondant…"), command=a.pip_dialog)
             m.add_command(label=tr("Ouvrir une autre image…"), command=a.open_image, state=busy)
             m.add_command(label=tr("Enregistrer l'image…"), command=a.save_tx_image)     # 2.13 (BH2RMX)
+            # 2.34 (VK6ATI) : copier l'image TX telle qu'elle partira, pour la coller dans Teams…
+            m.add_command(label=tr("Copier l'image"), command=a.copy_tx_image)
         if self.view.zoom > 1.0:
             m.add_separator()
             m.add_command(label=tr("Revenir à l'image entière"), command=self.view.reset_zoom)
