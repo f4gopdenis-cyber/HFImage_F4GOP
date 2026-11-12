@@ -88,6 +88,7 @@ class Waterfall(tk.Canvas):
         self._img = None
         self._img_id = None
         self.mode_mark = None
+        self.mode_label = None
         self.bind("<Configure>", self._resize)
         self.bind("<Motion>", self._hover)
         self.bind("<Leave>", lambda e: self.delete("hover"))
@@ -136,10 +137,11 @@ class Waterfall(tk.Canvas):
         self.spec = None
         self.dirty = True
 
-    def mark_mode(self, mode):
-        """Met en évidence la bande du mode reçu ou émis."""
-        if mode != self.mode_mark:
-            self.mode_mark = mode
+    def mark_mode(self, mode, label=None):
+        """Met en évidence la bande du mode reçu ou émis. label : texte affiché à la place du nom
+        du mode (2.34 : « DATAC3 HYB » pendant une annonce hybride, VK6NJP)."""
+        if mode != self.mode_mark or label != self.mode_label:
+            self.mode_mark, self.mode_label = mode, label
             self._draw_scale()
 
     # ----- affichage
@@ -199,10 +201,11 @@ class Waterfall(tk.Canvas):
             # nom du mode à droite de la bande ; à gauche du trait s'il n'y a pas la place
             # (bandes EasyPal jusqu'au bord : « EasyPal B 2,4 » était coupé — BH2RMX)
             font = ("TkDefaultFont", 8, "bold")
-            tw = tkfont.Font(font=font).measure(self.mode_mark) + 6
+            txt = self.mode_label or self.mode_mark
+            tw = tkfont.Font(font=font).measure(txt) + 6
             x = self._x(hi)
             right = x + 3 + tw <= max(10, self.winfo_width())
-            self.create_text(x + 3 if right else x - 3, self.top + 4, text=self.mode_mark, fill=col,
+            self.create_text(x + 3 if right else x - 3, self.top + 4, text=txt, fill=col,
                              anchor="nw" if right else "ne", font=font, tags="band")
         self.dirty = True
 

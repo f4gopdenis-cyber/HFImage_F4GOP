@@ -1,5 +1,12 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 2.34 (demandes de VK6ATI et VK6NJP)
+
+- Onglet TX : clic droit sur l'image -> « Copier l'image ». L'image est copiée telle qu'elle partira (carte QSL, bulles, logos compris), prête à coller dans MS Teams, un e-mail… avec Ctrl+V (VK6ATI).
+- Waterfall : pendant une émission en mode hybride, le repère affiche « DATAC3 HYB ». En hybride, l'image passe par Internet et la radio n'envoie qu'une courte annonce, toujours en DATAC3, quel que soit le mode choisi (VK6NJP).
+- Carte illustrée : au-delà de 12 stations, les trajets sont plus fins (sans liseré blanc), pour ne plus former un gros faisceau autour de notre station.
+- Carte illustrée : la mention « Natural Earth » en bas à droite est écrite en clair sur une petite bande sombre, lisible.
+
 ## Version 2.33
 
 - La vignette de la dernière image reçue reprend toute la place libre à droite du tableau (la 2.32 la limitait trop sur un grand panneau). Elle reste visible dans toutes les langues.

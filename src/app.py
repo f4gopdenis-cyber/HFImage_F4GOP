@@ -66,7 +66,7 @@ import random
 import wave
 
 APP = "HFImage F4GOP"
-VERSION = "2.33"
+VERSION = "2.34"
 
 
 def _take_profile(argv):
@@ -7074,7 +7074,9 @@ class App(tk.Tk):
         try:
             make_chunks, dur, mode, what = self._job_audio(job)
             if mode:
-                self.ui(self.wf.mark_mode, mode)
+                # 2.34 (VK6NJP) : en hybride, la radio n'envoie que l'annonce (DATAC3) : « DATAC3 HYB »
+                hyb = job.get("kind") == "hybrid" and mode != engine.DRM_MODE
+                self.ui(self.wf.mark_mode, mode, f"{mode} HYB" if hyb else None)
             self.ui(self.log, f"Émission {what} : {_fmt_s(dur)}")
             self.ui(self._panel_tx, job, mode)
             cfg = job["ptt"]
