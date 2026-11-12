@@ -549,6 +549,13 @@ class Appearance:
                         w.configure(**{opt: self.map(c, opt)})
                 except tk.TclError:
                     pass
+            if cls == "Menu":
+                # 2.35 : coche (✓) des menus de la couleur du texte du menu : elle restait noire,
+                # presque invisible sur un menu sombre (Néon, Nuit…)
+                try:
+                    w.configure(selectcolor=w.cget("foreground"))
+                except tk.TclError:
+                    pass
             try:
                 if P:
                     self._flat(w, cls, P, bg_role)
