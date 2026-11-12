@@ -373,13 +373,17 @@ def render(view, stations=(), me=None, lang="fr", show_lines=True, tr=lambda s: 
     # trajets (couleur selon le report), puis points, puis étiquettes placées sans chevauchement
     if me and me.get("pos") and show_lines:
         # les moins bons d'abord : les bons reports restent visibles par-dessus
+        # 2.34 : avec beaucoup de stations, traits plus fins (sinon un gros faisceau autour de chez nous)
+        many = sum(1 for s in stations if s.get("ok") and s.get("pos")) > 12
         for s in sorted(stations, key=lambda s: -999 if s.get("rep") is None else s["rep"]):
             if s.get("ok") and s.get("pos"):
                 col = report_color(s.get("rep"))
                 path = [view.xy(lo, la) for la, lo in _great_circle(me["pos"], s["pos"])]
                 for a, b in zip(path, path[1:]):
                     if abs(a[0] - b[0]) < W / 2:
-                        if vivid:                               # trait épais avec liseré sombre puis clair
+                        if vivid and many:                      # fin liseré sombre seulement
+                            g.line([a, b], fill=(12, 22, 48), width=5)
+                        elif vivid:                             # trait épais avec liseré sombre puis clair
                             g.line([a, b], fill=(12, 22, 48), width=8)
                             g.line([a, b], fill=(255, 255, 255), width=5)
                         g.line([a, b], fill=col, width=3 if vivid else 2)
@@ -608,9 +612,14 @@ class MapWindow:
         self._ph = ImageTk.PhotoImage(self._img)
         self.cv.delete("all")
         self.cv.create_image(0, 0, image=self._ph, anchor="nw", tags="map")
-        self.cv.create_text(self.view.w - 6, self.view.h - 6, anchor="se", fill="#555",
-                            text=self.tr("Fond de carte : Natural Earth (domaine public)"),
-                            font=("TkDefaultFont", 8))
+        vivid = bool(getattr(self, "v_vivid", None) and self.v_vivid.get())
+        t = self.cv.create_text(self.view.w - 6, self.view.h - 6, anchor="se", fill="#e8eefc" if vivid else "#555",
+                                text=self.tr("Fond de carte : Natural Earth (domaine public)"),
+                                font=("TkDefaultFont", 8))
+        if vivid:                                           # 2.34 : lisible sur la carte illustrée
+            b = self.cv.bbox(t)
+            r = self.cv.create_rectangle(b[0] - 4, b[1] - 1, b[2] + 3, b[3] + 1, fill="#0c1630", outline="")
+            self.cv.tag_raise(t, r)
         if self._hover_at and not self._drag:               # la bulle survit au rafraîchissement
             self._hover(_Pt(*self._hover_at))
         if not me or not me.get("pos"):
