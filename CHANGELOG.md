@@ -1,5 +1,9 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 2.35
+
+- Menus : la coche (✓) des cases à cocher (Hybride → Mode hybride, Télécharger automatiquement…) prend la couleur du texte du menu. Elle restait noire, presque invisible sur un menu sombre (Néon, Nuit…).
+
 ## Version 2.34 (demandes de VK6ATI et VK6NJP)
 
 - Onglet TX : clic droit sur l'image -> « Copier l'image ». L'image est copiée telle qu'elle partira (carte QSL, bulles, logos compris), prête à coller dans MS Teams, un e-mail… avec Ctrl+V (VK6ATI).
