@@ -1972,6 +1972,9 @@ T = [
     ('Enregistrer le modèle…', 'Save template…', 'Vorlage speichern…', 'Guardar plantilla…', 'Salva modello…'),
     ('Nom du modèle :', 'Template name:', 'Name der Vorlage:', 'Nombre de la plantilla:', 'Nome del modello:'),
     ('Supprimer le modèle « {0} » ?', 'Delete template “{0}”?', 'Vorlage „{0}“ löschen?', '¿Eliminar la plantilla «{0}»?', 'Eliminare il modello «{0}»?'),
+    ('Envoyer sur le site web (FTP)', 'Upload to website (FTP)', 'Auf die Webseite laden (FTP)', 'Subir al sitio web (FTP)', 'Carica sul sito web (FTP)'),
+    ('Serveur FTP non réglé : Réglages → Mode hybride, ou Images → Site web / Digi-Sites.', 'FTP server not set: Settings → Hybrid mode, or Images → Website / Digi-Sites.', 'FTP-Server nicht eingestellt: Einstellungen → Hybridmodus oder Bilder → Webseite / Digi-Sites.', 'Servidor FTP no configurado: Ajustes → Modo híbrido, o Imágenes → Sitio web / Digi-Sites.', 'Server FTP non impostato: Impostazioni → Modo ibrido, oppure Immagini → Sito web / Digi-Sites.'),
+    ('Site web : image envoyée sur le serveur FTP.', 'Website: image sent to the FTP server.', 'Webseite: Bild an den FTP-Server gesendet.', 'Sitio web: imagen enviada al servidor FTP.', 'Sito web: immagine inviata al server FTP.'),
 ]
 
 _lang = "fr"

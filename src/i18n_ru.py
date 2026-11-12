@@ -1190,4 +1190,7 @@ RU = {
     'Enregistrer le modèle…': 'Сохранить шаблон…',
     'Nom du modèle :': 'Имя шаблона:',
     'Supprimer le modèle « {0} » ?': 'Удалить шаблон «{0}»?',
+    'Envoyer sur le site web (FTP)': 'Отправить на сайт (FTP)',
+    'Serveur FTP non réglé : Réglages → Mode hybride, ou Images → Site web / Digi-Sites.': 'FTP-сервер не настроен: Настройки → Гибридный режим или Изображения → Сайт / Digi-Sites.',
+    'Site web : image envoyée sur le serveur FTP.': 'Сайт: изображение отправлено на FTP-сервер.',
 }

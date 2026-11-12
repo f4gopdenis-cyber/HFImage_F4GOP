@@ -7897,6 +7897,7 @@ class App(tk.Tk):
             mode = mode + " aperçu"
         if png:
             im, anim = self._show_rx(path, png)
+            self._rx_shown = {"png": png, "call": hdr.get("call"), "mode": mode, "kind": "rx"}
             self._panel_thumb(im, hdr.get("call"))
             self._set_text(self.lb_rx_info, f"{os.path.basename(path)}   —   {hdr['call']}   —   {mode}   —   "
                                            f"{im.width}×{im.height}   —   {hdr['size'] / 1000:.1f} K" + anim)
@@ -8181,6 +8182,7 @@ class App(tk.Tk):
         hdr, path, png, mode = self.hist[sel[0]]
         if png and os.path.exists(png):
             im, anim = self._show_rx(path, png)
+            self._rx_shown = {"png": png, "call": hdr.get("call"), "mode": mode, "kind": "rx"}
             self._set_text(self.lb_rx_info, f"{hdr['call']} — {mode} — {im.width}×{im.height}" + anim)
 
     def toggle_record(self):
@@ -8753,6 +8755,25 @@ class App(tk.Tk):
             parts.append(band)
         return "  ".join(parts)
 
+    def web_upload_shown(self):
+        """2.36 (F6BAZ) : clic droit sur l'image RX -> mise en ligne de cette image sur le site
+        (même serveur et même page que la mise en ligne automatique), par exemple si elle a été
+        manquée (envoi coupé, mise en ligne automatique arrêtée)."""
+        sh = getattr(self, "_rx_shown", None)
+        if not sh or not sh.get("png") or not os.path.exists(sh["png"]):
+            return False
+        cfg = self._web_cfg()
+        if not cfg["host"]:
+            messagebox.showinfo(APP, tr("Serveur FTP non réglé : Réglages → Mode hybride, ou Images → "
+                                        "Site web / Digi-Sites."))
+            return False
+        call = sh.get("call") or "?"
+        if sh.get("kind") == "tx":
+            call = tr("émise par") + " " + call
+        self.web.add(cfg, sh.get("kind") or "rx", sh["png"], self._web_caption(call, sh.get("mode")))
+        self.log(tr("Site web : image envoyée sur le serveur FTP.") + f" ({os.path.basename(sh['png'])})")
+        return True
+
     def _web_queue(self, kind, path, call, mode, iid=None):
         if not self.conf.get("web_on") or not path or not os.path.exists(path):
             return
@@ -8935,6 +8956,8 @@ class App(tk.Tk):
         except Exception as ex:
             self.log_exc("Galerie", ex)
             return
+        self._rx_shown = {"png": src, "call": e.get("call"), "mode": e.get("mode", ""),
+                          "kind": "tx" if e.get("dir") == "tx" else "rx"}
         who = e.get("call") if e.get("dir") == "rx" else tr("envoyée")
         self._set_text(self.lb_rx_info, f"{os.path.basename(e.get('file') or '')}   —   {who}   —   "
                                        f"{e.get('mode', '')}   —   {im.width}×{im.height}" + anim)
@@ -9059,6 +9082,11 @@ class App(tk.Tk):
         img = v.frames[0] if v.frames else v.pil
         m.add_command(label=tr("Copier l'image"), command=lambda: self.copy_image(img),
                       state="normal" if img is not None else "disabled")
+        # 2.36 (F6BAZ) : remettre l'image affichée sur le site web (FTP), comme dans EasyPal
+        sh = getattr(self, "_rx_shown", None)
+        ok = bool(img is not None and sh and sh.get("png") and os.path.exists(sh["png"]))
+        m.add_command(label=tr("Envoyer sur le site web (FTP)"), command=self.web_upload_shown,
+                      state="normal" if ok else "disabled")
         if v.zoom > 1.0:
             m.add_command(label=tr("Revenir à l'image entière"), command=v.reset_zoom)
         try:

@@ -1182,4 +1182,7 @@ ZH = {
     'Enregistrer le modèle…': '保存模板…',
     'Nom du modèle :': '模板名称：',
     'Supprimer le modèle « {0} » ?': '删除模板“{0}”？',
+    'Envoyer sur le site web (FTP)': '上传到网站 (FTP)',
+    'Serveur FTP non réglé : Réglages → Mode hybride, ou Images → Site web / Digi-Sites.': '未设置 FTP 服务器：设置 → 混合模式，或 图像 → 网站 / Digi-Sites。',
+    'Site web : image envoyée sur le serveur FTP.': '网站：图像已发送到 FTP 服务器。',
 }
