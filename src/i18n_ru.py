@@ -1193,4 +1193,9 @@ RU = {
     'Envoyer sur le site web (FTP)': 'Отправить на сайт (FTP)',
     'Serveur FTP non réglé : Réglages → Mode hybride, ou Images → Site web / Digi-Sites.': 'FTP-сервер не настроен: Настройки → Гибридный режим или Изображения → Сайт / Digi-Sites.',
     'Site web : image envoyée sur le serveur FTP.': 'Сайт: изображение отправлено на FTP-сервер.',
+    'Lente': 'Медленно',
+    'Rapide': 'Быстро',
+    'Vitesse du défilement': 'Скорость прокрутки',
+    'Bandeau défilant': 'Бегущая строка',
+    'Bandeau défilant : il défile en mode hybride (GIF animé) ; en radio seule, il part fixe.': 'Бегущая строка: движется в гибридном режиме (анимированный GIF); только по радио передаётся неподвижной.',
 }

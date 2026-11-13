@@ -1185,4 +1185,9 @@ ZH = {
     'Envoyer sur le site web (FTP)': '上传到网站 (FTP)',
     'Serveur FTP non réglé : Réglages → Mode hybride, ou Images → Site web / Digi-Sites.': '未设置 FTP 服务器：设置 → 混合模式，或 图像 → 网站 / Digi-Sites。',
     'Site web : image envoyée sur le serveur FTP.': '网站：图像已发送到 FTP 服务器。',
+    'Lente': '慢',
+    'Rapide': '快',
+    'Vitesse du défilement': '滚动速度',
+    'Bandeau défilant': '滚动横幅',
+    'Bandeau défilant : il défile en mode hybride (GIF animé) ; en radio seule, il part fixe.': '滚动横幅：在混合模式下滚动（动画 GIF）；仅通过无线电时为静止。',
 }

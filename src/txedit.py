@@ -18,7 +18,8 @@ import trafic
 
 STYLES = ("parole", "pensée", "cri", "cartouche", "texte", "néon")
 STYLE_NAMES = {"parole": "Parole", "pensée": "Pensée", "cri": "Cri", "cartouche": "Cartouche",
-               "texte": "Texte seul (sans bulle)", "néon": "Néon (texte lumineux)"}
+               "texte": "Texte seul (sans bulle)", "néon": "Néon (texte lumineux)", "bandeau": "Bandeau défilant"}
+SPEED_NAMES = {"lente": "Lente", "moyenne": "Moyenne", "rapide": "Rapide"}
 SHAPE_NAMES = {"rect": "Rectangle", "arrondi": "Coins arrondis", "rond": "Rond", "ovale": "Ovale"}
 
 
@@ -322,7 +323,7 @@ class TxEditor:
         kind, b = self.selected()
         if kind == "b":
             b.update(kw)
-            self.app.conf["bub_last"] = {k: b[k] for k in ("style", "size", "bg", "fg", "anim") if k in b}
+            self.app.conf["bub_last"] = {k: b[k] for k in ("style", "size", "bg", "fg", "anim", "speed") if k in b}
             self.changed()
 
     def restack(self, front):
@@ -422,6 +423,14 @@ class TxEditor:
                     st.add_radiobutton(label=tr(STYLE_NAMES[k]), value=k, variable=v_st,
                                        command=lambda k=k: self.set_bubble(style=k))
                 m.add_cascade(label=tr("Style"), menu=st)
+                if item.get("style") == "bandeau":           # 2.37 : vitesse du bandeau défilant
+                    sp = tk.Menu(m, tearoff=0)
+                    v_sp = tk.StringVar(m, value=item.get("speed") or "moyenne")
+                    keep.append(v_sp)
+                    for k in bubbles.SPEEDS:
+                        sp.add_radiobutton(label=tr(SPEED_NAMES[k]), value=k, variable=v_sp,
+                                           command=lambda k=k: self.set_bubble(speed=k))
+                    m.add_cascade(label=tr("Vitesse du défilement"), menu=sp)
                 m.add_command(label=tr("Couleur du fond…"), command=lambda: self._color("bg"))
                 m.add_command(label=tr("Couleur du texte…"), command=lambda: self._color("fg"))
                 v_an = tk.BooleanVar(m, value=bool(item.get("anim")))

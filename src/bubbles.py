@@ -17,8 +17,13 @@ from PIL import Image, ImageDraw, ImageFilter
 
 import trafic
 
-STYLES = ("parole", "pensée", "cri", "cartouche", "texte", "néon")
-NO_TAIL = ("cartouche", "texte", "néon")    # « néon » (2.29) : texte lumineux, sans bulle       # « texte » : texte seul sur l'image, sans bulle (contour = couleur de fond)
+STYLES = ("parole", "pensée", "cri", "cartouche", "texte", "néon", "bandeau")
+NO_TAIL = ("cartouche", "texte", "néon", "bandeau")
+# 2.37 : « bandeau » : bande sur toute la largeur de l'image, texte qui défile (mode hybride, GIF
+# animé) ; en radio seule, le bandeau part fixe (texte en entier, réduit s'il le faut).
+# Vitesse : fraction de la largeur de l'image parcourue par seconde.
+SPEEDS = {"lente": 0.08, "moyenne": 0.15, "rapide": 0.25}
+BANNER_MAX_FRAMES = 200    # « néon » (2.29) : texte lumineux, sans bulle       # « texte » : texte seul sur l'image, sans bulle (contour = couleur de fond)
 SIZES = {"petite": 0.038, "moyenne": 0.052, "grande": 0.072}
 MIN_PX = 14                     # en dessous, le texte devient illisible après compression
 FONTS = ("Comic Sans MS", "Arial")
@@ -64,8 +69,39 @@ ANIM_KIND = {"2764": "pulse", "1f525": "flicker", "1f389": "pulse", "1f382": "bo
 
 
 def has_anim(bubbles):
-    """Au moins une bulle animée qui contient une émoticône ?"""
-    return any(b.get("anim") and any(ch in EMOJI for ch in (b.get("text") or "")) for b in bubbles or [])
+    """Au moins une bulle animée qui contient une émoticône, ou un bandeau défilant ?"""
+    return any((b.get("style") == "bandeau" and (b.get("text") or "").strip())
+               or (b.get("anim") and any(ch in EMOJI for ch in (b.get("text") or ""))) for b in bubbles or [])
+
+
+def _banner_text(b):
+    return "  •  ".join(x.strip() for x in (b.get("text") or "").split("\n") if x.strip())
+
+
+def banner_period(W, H, b):
+    """Bandeau : (durée d'un tour en ms, longueur d'un tour en pixels) pour une image W×H."""
+    g = layout(W, H, b)
+    P = _banner_loop(g, W)
+    speed = SPEEDS.get(b.get("speed"), SPEEDS["moyenne"]) * W
+    return max(1, int(round(P / speed * 1000))), P
+
+
+def _banner_loop(g, W, scale=1.0):
+    """Longueur d'un tour du bandeau : le texte puis un blanc, au moins la largeur de l'image."""
+    tw = _measure(g["font"], g["lines"][0])
+    return max(tw + g["font"].size * 3, W * scale)
+
+
+def anim_timing(W, H, bubbles):
+    """Animation du GIF : (nombre d'images, durée de chaque image en ms). Avec un bandeau, un tour
+    complet du plus long (le défilement reboucle sans saut) ; sinon les émoticônes animées."""
+    periods = [banner_period(W, H, b)[0] for b in bubbles or []
+               if b.get("style") == "bandeau" and (b.get("text") or "").strip()]
+    if not periods:
+        return ANIM_FRAMES, ANIM_MS
+    total = max(periods)
+    n = max(ANIM_FRAMES, min(BANNER_MAX_FRAMES, int(round(total / ANIM_MS))))
+    return n, max(20, int(round(total / n)))
 
 
 def anim_emoji(ch, px, t):
@@ -177,13 +213,18 @@ def layout(W, H, b, scale=1.0):
     fpx = max(MIN_PX, int(round(font_px(H, b.get("size")) * k)))
     font = _font(int(fpx * scale))
     # texte seul : lignes plus longues (légende sur toute la largeur)
-    lines = _wrap(b.get("text", ""), font, (0.85 if b.get("style") in ("texte", "néon") else 0.45) * W * scale)
+    if b.get("style") == "bandeau":                 # une seule ligne, sans retour
+        lines = [_banner_text(b)]
+    else:
+        lines = _wrap(b.get("text", ""), font, (0.85 if b.get("style") in ("texte", "néon") else 0.45) * W * scale)
     lh = font.size * 1.18
     tw = max([_measure(font, t) for t in lines] + [font.size * 2])
     th = lh * len(lines)
     pad = font.size * 0.55
     style = b.get("style", "parole")
-    if style == "cartouche":
+    if style == "bandeau":
+        rx, ry = W * scale / 2, th / 2 + pad * 0.6
+    elif style == "cartouche":
         rx, ry = tw / 2 + pad, th / 2 + pad * 0.7
     elif style in ("texte", "néon"):
         rx, ry = tw / 2 + pad * 0.3, th / 2 + pad * 0.3
@@ -192,6 +233,8 @@ def layout(W, H, b, scale=1.0):
     if style == "cri":
         rx, ry = rx * 1.08, ry * 1.12
     cx, cy = b.get("cx", 0.5) * W * scale, b.get("cy", 0.3) * H * scale
+    if style == "bandeau":
+        cx = W * scale / 2
     # la bulle reste entièrement dans l'image
     ext = 1.28 if style == "cri" else 1.0
     cx = min(max(cx, rx * ext + 2), W * scale - rx * ext - 2) if 2 * rx * ext < W * scale else W * scale / 2
@@ -244,6 +287,9 @@ def _draw_one(d, g, off, bg, fg, layer=None, t=None):
     lw = g["lw"]
     cx, cy, rx, ry = g["cx"] - ox, g["cy"] - oy, g["rx"], g["ry"]
     style, tail = g["style"], _has_tail(g)
+    if style == "bandeau":
+        _banner(d, g, off, bg, fg, layer, t)
+        return
     if style in ("texte", "néon"):
         pass                                  # pas de bulle : le texte seul, avec un contour (plus bas)
     elif style == "cartouche":
@@ -311,6 +357,53 @@ def _draw_one(d, g, off, bg, fg, layer=None, t=None):
         y += lh
 
 
+def _banner(d, g, off, bg, fg, layer, t):
+    """Bandeau : bande sur toute la largeur, fins filets de la couleur du texte en haut et en bas,
+    texte qui défile de droite à gauche (t : 0..1 sur un tour) ; fixe (t None) : texte centré,
+    réduit s'il est plus long que l'image."""
+    ox, oy = off
+    W = g["rx"] * 2
+    y0, y1 = g["cy"] - g["ry"] - oy, g["cy"] + g["ry"] - oy
+    band = tuple(bg[:3]) + (215,)                   # un peu transparent : la photo se devine dessous
+    d.rectangle((0 - ox, y0, W - ox, y1), fill=band)
+    lw = max(2, int(round(g["lw"])))
+    d.rectangle((0 - ox, y0, W - ox, y0 + lw), fill=fg)
+    d.rectangle((0 - ox, y1 - lw, W - ox, y1), fill=fg)
+    text, font = g["lines"][0], g["font"]
+    ym = g["cy"] - oy
+    tw = _measure(font, text)
+    pad = font.size * 0.6
+    if t is None:
+        if tw > W - 2 * pad:                        # fixe : tout le texte doit tenir
+            px = max(MIN_PX, int(font.size * (W - 2 * pad) / max(1, tw)))
+            font = _font(px)
+            tw = _measure(font, text)
+        xs = [W / 2 - tw / 2 - ox]
+    else:
+        P = _banner_loop(g, W)
+        start = W - (t % 1.0) * P                     # le texte entre par la droite
+        xs = [start + k * P - ox for k in range(-int(W // P) - 2, 2)]
+        xs = [x for x in xs if x < W - ox and x + tw > -ox]
+    for x in xs:
+        _text_runs(d, x, ym, text, font, fg, layer)
+
+
+def _text_runs(d, x, ym, text, font, fg, layer):
+    for kind, v in _runs(text):
+        if kind == "t":
+            d.text((x, ym), v, font=font, fill=fg, anchor="lm")
+            x += font.getlength(v)
+        else:
+            es = _esize(font)
+            em = emoji_image(v, es)
+            if em is not None and layer is not None:
+                px_, py_ = int(x + font.size * 0.04), int(ym - es / 2)
+                if 0 <= py_ <= layer.height - em.height and -em.width < px_ < layer.width:
+                    layer.alpha_composite(em, (max(0, px_), py_)) if px_ >= 0 else \
+                        layer.alpha_composite(em.crop((-px_, 0, em.width, em.height)), (0, py_))
+            x += es + font.size * 0.08
+
+
 def _neon(g, off, size, color, t=None):
     """2.29 : texte « néon » : cœur presque blanc, liseré de la couleur choisie, et lueur colorée autour."""
     base = Image.new("RGBA", size, (0, 0, 0, 0))
@@ -333,15 +426,25 @@ def _neon(g, off, size, color, t=None):
     return out
 
 
-def draw(img, bubbles, t=None):
+def draw(img, bubbles, t=None, clock_ms=None):
     """-> nouvelle image RGB avec les bulles (l'image d'origine n'est pas modifiée).
-    t (0..1) : instant de l'animation des émoticônes des bulles animées (None : fixes)."""
+    t (0..1) : instant de l'animation des émoticônes des bulles animées (None : fixes).
+    clock_ms : instant en millisecondes (GIF animé, aperçu) : chaque bandeau défile à sa vitesse,
+    les émoticônes suivent leur propre cycle. Sans t ni clock_ms, les bandeaux sont fixes."""
     bubbles = [b for b in bubbles or [] if (b.get("text") or "").strip()]
     if not bubbles:
         return img
     out = img.convert("RGBA")
     W, H = out.size
     for b in bubbles:
+        if clock_ms is not None:
+            if b.get("style") == "bandeau":
+                per, _ = banner_period(W, H, b)
+                tb = (clock_ms % per) / per
+            else:
+                tb = (clock_ms % (ANIM_FRAMES * ANIM_MS)) / (ANIM_FRAMES * ANIM_MS)
+        else:
+            tb = t
         g = layout(W, H, b, SS)
         x0, y0, x1, y1 = (int(math.floor(v)) for v in _bounds(g))
         x0, y0 = max(0, x0 - x0 % SS), max(0, y0 - y0 % SS)
@@ -356,18 +459,21 @@ def draw(img, bubbles, t=None):
         layer = Image.new("RGBA", (x1 - x0, y1 - y0), (0, 0, 0, 0))
         fg = trafic._rgb(b.get("fg"), (0, 0, 0))
         if g["style"] == "néon":
-            layer = _neon(g, (x0, y0), layer.size, fg, t if b.get("anim") else None)
+            layer = _neon(g, (x0, y0), layer.size, fg, tb if b.get("anim") else None)
         else:
             _draw_one(ImageDraw.Draw(layer), g, (x0, y0), trafic._rgb(b.get("bg"), (255, 255, 255)) + (255,),
-                      fg + (255,), layer, t if b.get("anim") else None)
+                      fg + (255,), layer, tb if (b.get("anim") or g["style"] == "bandeau") else None)
         small = layer.resize(((x1 - x0) // SS, (y1 - y0) // SS), Image.LANCZOS)
         out.alpha_composite(small, (x0 // SS, y0 // SS))
     return out.convert("RGB")
 
 
-def frames(img, bubbles, n=ANIM_FRAMES):
-    """Images de l'animation (une par instant) pour le GIF animé."""
-    return [draw(img, bubbles, k / n) for k in range(n)]
+def frames(img, bubbles, n=None):
+    """Images de l'animation (une par instant) pour le GIF animé -> (images, durées en ms)."""
+    if n is not None:
+        return [draw(img, bubbles, k / n) for k in range(n)], [ANIM_MS] * n
+    n, ms = anim_timing(img.width, img.height, bubbles)
+    return [draw(img, bubbles, clock_ms=k * ms) for k in range(n)], [ms] * n
 
 
 def make_gif(base, bubbles_json, wmax=800, max_bytes=2_000_000):
@@ -379,8 +485,8 @@ def make_gif(base, bubbles_json, wmax=800, max_bytes=2_000_000):
     bubs = json.loads(bubbles_json)
     if base.width > wmax:
         base = base.resize((wmax, max(1, round(base.height * wmax / base.width))), Image.LANCZOS)
-    fr = frames(base.convert("RGB"), bubs)
-    data = imgfmt._gif_encode(fr, [ANIM_MS] * len(fr), 1.0, 255, 1)
+    fr, du = frames(base.convert("RGB"), bubs)
+    data = imgfmt._gif_encode(fr, du, 1.0, 255, 1)
     return imgfmt.gif_shrink(data, max_bytes)
 
 
@@ -401,7 +507,7 @@ def gif_with_bubbles(gif, bubbles_json, max_bytes=2_000_000, max_frames=240):
         parts = min(parts, max(1, max_frames // max(1, len(src))))
         for k in range(parts):
             dd = d // parts + (d % parts if k == parts - 1 else 0)
-            fr.append(draw(im, bubs, (clock % period) / period if anim else None))
+            fr.append(draw(im, bubs, clock_ms=clock) if anim else draw(im, bubs))
             du.append(max(20, dd))
             clock += dd
     data = imgfmt._gif_encode(fr, du, 1.0, 255, 1)

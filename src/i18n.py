@@ -1975,6 +1975,11 @@ T = [
     ('Envoyer sur le site web (FTP)', 'Upload to website (FTP)', 'Auf die Webseite laden (FTP)', 'Subir al sitio web (FTP)', 'Carica sul sito web (FTP)'),
     ('Serveur FTP non réglé : Réglages → Mode hybride, ou Images → Site web / Digi-Sites.', 'FTP server not set: Settings → Hybrid mode, or Images → Website / Digi-Sites.', 'FTP-Server nicht eingestellt: Einstellungen → Hybridmodus oder Bilder → Webseite / Digi-Sites.', 'Servidor FTP no configurado: Ajustes → Modo híbrido, o Imágenes → Sitio web / Digi-Sites.', 'Server FTP non impostato: Impostazioni → Modo ibrido, oppure Immagini → Sito web / Digi-Sites.'),
     ('Site web : image envoyée sur le serveur FTP.', 'Website: image sent to the FTP server.', 'Webseite: Bild an den FTP-Server gesendet.', 'Sitio web: imagen enviada al servidor FTP.', 'Sito web: immagine inviata al server FTP.'),
+    ('Lente', 'Slow', 'Langsam', 'Lenta', 'Lenta'),
+    ('Rapide', 'Fast', 'Schnell', 'Rápida', 'Veloce'),
+    ('Vitesse du défilement', 'Scrolling speed', 'Laufgeschwindigkeit', 'Velocidad de desplazamiento', 'Velocità di scorrimento'),
+    ('Bandeau défilant', 'Scrolling banner', 'Laufschrift', 'Banda deslizante', 'Banner scorrevole'),
+    ('Bandeau défilant : il défile en mode hybride (GIF animé) ; en radio seule, il part fixe.', 'Scrolling banner: it scrolls in Hybrid mode (animated GIF); over radio only, it is sent still.', 'Laufschrift: Sie läuft im Hybridmodus (animiertes GIF); nur über Funk wird sie unbewegt gesendet.', 'Banda deslizante: se desplaza en modo híbrido (GIF animado); solo por radio, se envía fija.', 'Banner scorrevole: scorre in modo ibrido (GIF animato); solo via radio, viene inviato fisso.'),
 ]
 
 _lang = "fr"

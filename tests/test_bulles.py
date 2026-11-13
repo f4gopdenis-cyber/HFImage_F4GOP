@@ -16,8 +16,8 @@ class Bulles(unittest.TestCase):
 
     def test_dessin_tous_styles(self):
         for st in bubbles.STYLES:
-            if st in ("texte", "néon"):
-                continue                    # sans bulle : voir test_texte_libre
+            if st in ("texte", "néon", "bandeau"):
+                continue                    # sans bulle : voir test_texte_libre, test_bandeau
             b = dict(bubbles.new("Bonjour de Flers ! 73", st, "moyenne", 0.3, 0.3), tx=0.6, ty=0.8)
             out = bubbles.draw(self.im, [b])
             self.assertEqual(out.size, self.im.size)

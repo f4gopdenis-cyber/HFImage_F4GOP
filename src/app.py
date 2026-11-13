@@ -5253,7 +5253,9 @@ class App(tk.Tk):
         f = ttk.Frame(w, padding=10)
         f.pack(fill="both", expand=True)
         styles = {"parole": tr("Parole"), "pensée": tr("Pensée"), "cri": tr("Cri"), "cartouche": tr("Cartouche"),
-                  "texte": tr("Texte seul (sans bulle)"), "néon": tr("Néon (texte lumineux)")}
+                  "texte": tr("Texte seul (sans bulle)"), "néon": tr("Néon (texte lumineux)"),
+                  "bandeau": tr("Bandeau défilant")}
+        speeds = {"lente": tr("Lente"), "moyenne": tr("Moyenne"), "rapide": tr("Rapide")}
         sizes = {"petite": tr("Petite"), "moyenne": tr("Moyenne"), "grande": tr("Grande")}
         sel = [len(self.bubbles) - 1 if self.bubbles else None]
         geo = {}
@@ -5327,6 +5329,11 @@ class App(tk.Tk):
         v_style = tk.StringVar()
         ttk.Combobox(left, textvariable=v_style, values=list(styles.values()), state="readonly",
                      width=16).pack(anchor="w")
+        # 2.37 : vitesse du bandeau défilant (mode hybride : GIF animé ; en radio seule, il part fixe)
+        ttk.Label(left, text="Vitesse du défilement").pack(anchor="w", pady=(6, 0))
+        v_speed = tk.StringVar(value=speeds["moyenne"])
+        cb_speed = ttk.Combobox(left, textvariable=v_speed, values=list(speeds.values()), state="readonly", width=16)
+        cb_speed.pack(anchor="w")
         ttk.Label(left, text="Taille du texte").pack(anchor="w", pady=(6, 0))
         v_size = tk.StringVar()
         ttk.Combobox(left, textvariable=v_size, values=list(sizes.values()), state="readonly",
@@ -5357,8 +5364,8 @@ class App(tk.Tk):
 
         def preview():
             small = base_small()
-            t = geo.get("t") if bubbles.has_anim(self.bubbles) else None
-            pic = bubbles.draw(small, self.bubbles, t)
+            ck = geo.get("clock") if bubbles.has_anim(self.bubbles) else None
+            pic = bubbles.draw(small, self.bubbles, clock_ms=ck)
             geo["ph"] = ImageTk.PhotoImage(pic)
             cv.delete("all")
             ox, oy = geo["off"]
@@ -5393,6 +5400,8 @@ class App(tk.Tk):
                 sw_bg.configure(bg=b.get("bg", "#ffffff"))
                 sw_fg.configure(bg=b.get("fg", "#000000"))
                 v_anim.set(bool(b.get("anim")))
+                v_speed.set(speeds.get(b.get("speed"), speeds["moyenne"]))
+            cb_speed.configure(state="readonly" if b is not None and b.get("style") == "bandeau" else "disabled")
             busy[0] = False
 
         def changed(*_):
@@ -5412,6 +5421,17 @@ class App(tk.Tk):
             if b["style"] == "néon" and old_style != "néon" and b.get("fg", "#000000").lower() in ("#000000", "#ffffff"):
                 b["fg"] = "#ff3ec8"                          # 2.29 : néon rose par défaut (couleur du texte)
                 sw_fg.configure(bg=b["fg"])
+            if b["style"] == "bandeau" and old_style != "bandeau":
+                b["cy"] = 0.9                                # 2.37 : bandeau en bas de l'image par défaut
+                if b.get("bg", "#ffffff").lower() in ("#ffffff", "#000000"):
+                    b["bg"], b["fg"] = "#0a1432", "#ffd75a"  # bleu nuit, texte doré
+                    sw_bg.configure(bg=b["bg"])
+                    sw_fg.configure(bg=b["fg"])
+                if not self.v_hyb.get():
+                    self.log(tr("Bandeau défilant : il défile en mode hybride (GIF animé) ; "
+                                "en radio seule, il part fixe."))
+            b["speed"] = next((k for k, v in speeds.items() if v == v_speed.get()), "moyenne")
+            cb_speed.configure(state="readonly" if b["style"] == "bandeau" else "disabled")
             b["size"] = next((k for k, v in sizes.items() if v == v_size.get()), "moyenne")
             was = bool(b.get("anim"))
             b["anim"] = bool(v_anim.get())
@@ -5427,7 +5447,7 @@ class App(tk.Tk):
                             cy=0.2 + 0.18 * (n % 4), cx=0.3 + 0.2 * (n % 2))
             last = cur() or self.conf.get("bub_last") or {}
             # même style que la précédente (retenu aussi d'une image et d'une séance à l'autre)
-            b.update({k: last[k] for k in ("style", "size", "bg", "fg", "anim") if k in last})
+            b.update({k: last[k] for k in ("style", "size", "bg", "fg", "anim", "speed") if k in last})
             self.bubbles.append(b)
             sel[0] = len(self.bubbles) - 1
             refresh_list()
@@ -5520,12 +5540,14 @@ class App(tk.Tk):
         txt.bind("<<Modified>>", lambda e: (txt.edit_modified(False), changed()))
         v_style.trace_add("write", changed)
         v_size.trace_add("write", changed)
+        v_speed.trace_add("write", changed)
 
         def close():
             self.bubbles[:] = [b for b in self.bubbles if (b.get("text") or "").strip()]
             if self.bubbles:                              # style retenu pour les prochaines bulles
                 last = self.bubbles[-1]
-                self.conf["bub_last"] = {k: last[k] for k in ("style", "size", "bg", "fg", "anim") if k in last}
+                self.conf["bub_last"] = {k: last[k] for k in ("style", "size", "bg", "fg", "anim", "speed")
+                                         if k in last}
                 self._save_conf_file()
             w.destroy()
             self.prepare()
@@ -5550,7 +5572,7 @@ class App(tk.Tk):
             if not w.winfo_exists():
                 return
             if bubbles.has_anim(self.bubbles) and not geo.get("grab"):
-                geo["t"] = (k % bubbles.ANIM_FRAMES) / bubbles.ANIM_FRAMES
+                geo["clock"] = k * bubbles.ANIM_MS
                 preview()
             w.after(bubbles.ANIM_MS, tick, k + 1)
         tick()
