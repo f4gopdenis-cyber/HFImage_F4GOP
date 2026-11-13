@@ -1,5 +1,9 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 2.39 (signalé par BH2RMX)
+
+- Galerie (Reçues et Envoyées) : le **double-clic** sur une image l'ouvre bien en plein format, comme l'indique l'aide. Avant, le premier clic affichait l'image et passait aussitôt à l'onglet RX : le double-clic n'arrivait jamais. Le clic simple affiche toujours l'image dans l'onglet RX (après un très court instant) ; clic droit → « Afficher dans l'onglet RX » reste immédiat.
+
 ## Version 2.38 — corrections
 
 - Bandeau défilant : un texte ajouté directement sur l'image TX (« Ajouter un texte ») après un bandeau arrive maintenant à la place retenue du bandeau, avec la même vitesse. Avant, il se mettait au milieu de l'image.
