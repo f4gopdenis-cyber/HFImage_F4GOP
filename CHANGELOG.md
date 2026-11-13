@@ -1,5 +1,11 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 2.37 — bandeau défilant
+
+- Bulles de texte : nouveau style **« Bandeau défilant »** : une bande sur toute la largeur de l'image, où le texte défile de droite à gauche. Vitesse **lente, moyenne ou rapide**. En mode hybride, l'image part en GIF animé et le bandeau défile ; en radio seule, il part fixe (texte en entier, réduit s'il le faut). Plusieurs lignes de texte sont mises bout à bout, séparées par « • ».
+- Le bandeau se **glisse à la souris vers le haut ou vers le bas** : on le place où l'on veut, par exemple au-dessus des infos d'une carte QSL pour ne pas les cacher. Sa place est **retenue** pour les bandeaux suivants et au prochain lancement (la première fois, il se met en bas).
+- Clic droit sur une bulle de l'image TX → Style : « Bandeau défilant » est proposé, avec le choix de la vitesse.
+
 ## Version 2.36 (demande de F6BAZ)
 
 - Onglet RX : clic droit sur l'image -> « Envoyer sur le site web (FTP) », comme dans EasyPal. L'image affichée est mise en ligne sur le même serveur et la même page que les envois automatiques (utile si un envoi a été manqué). Fonctionne aussi avec une image rouverte depuis la Galerie ou l'historique.
