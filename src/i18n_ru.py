@@ -1198,4 +1198,5 @@ RU = {
     'Vitesse du défilement': 'Скорость прокрутки',
     'Bandeau défilant': 'Бегущая строка',
     'Bandeau défilant : il défile en mode hybride (GIF animé) ; en radio seule, il part fixe.': 'Бегущая строка: движется в гибридном режиме (анимированный GIF); только по радио передаётся неподвижной.',
+    'Le bandeau se glisse vers le haut ou vers le bas : placez-le où vous voulez.': 'Перетащите бегущую строку вверх или вниз: разместите её где угодно.',
 }

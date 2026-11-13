@@ -5345,6 +5345,8 @@ class App(tk.Tk):
         sw_bg._no_theme = sw_fg._no_theme = True
         ttk.Label(left, text="Glissez la bulle à la souris ; le rond rouge est la pointe.",
                   wraplength=190, foreground="#555", justify="left").pack(anchor="w", pady=(10, 0))
+        ttk.Label(left, text="Le bandeau se glisse vers le haut ou vers le bas : placez-le où vous voulez.",
+                  wraplength=190, foreground="#555", justify="left").pack(anchor="w", pady=(4, 0))
 
         cv = tk.Canvas(f, width=640, height=480, bg="#222", highlightthickness=0)
         cv.grid(row=0, column=1)
@@ -5422,7 +5424,8 @@ class App(tk.Tk):
                 b["fg"] = "#ff3ec8"                          # 2.29 : néon rose par défaut (couleur du texte)
                 sw_fg.configure(bg=b["fg"])
             if b["style"] == "bandeau" and old_style != "bandeau":
-                b["cy"] = 0.9                                # 2.37 : bandeau en bas de l'image par défaut
+                # 2.37 : le bandeau reprend la dernière hauteur choisie (en bas de l'image la 1re fois)
+                b["cy"] = self._banner_cy()
                 if b.get("bg", "#ffffff").lower() in ("#ffffff", "#000000"):
                     b["bg"], b["fg"] = "#0a1432", "#ffd75a"  # bleu nuit, texte doré
                     sw_bg.configure(bg=b["bg"])
@@ -5448,6 +5451,8 @@ class App(tk.Tk):
             last = cur() or self.conf.get("bub_last") or {}
             # même style que la précédente (retenu aussi d'une image et d'une séance à l'autre)
             b.update({k: last[k] for k in ("style", "size", "bg", "fg", "anim", "speed") if k in last})
+            if b.get("style") == "bandeau":
+                b["cy"] = self._banner_cy()
             self.bubbles.append(b)
             sel[0] = len(self.bubbles) - 1
             refresh_list()
@@ -5548,6 +5553,7 @@ class App(tk.Tk):
                 last = self.bubbles[-1]
                 self.conf["bub_last"] = {k: last[k] for k in ("style", "size", "bg", "fg", "anim", "speed")
                                          if k in last}
+                self._remember_banner()
                 self._save_conf_file()
             w.destroy()
             self.prepare()
@@ -9208,6 +9214,19 @@ class App(tk.Tk):
             self.log(f"Nouvelle version {info['version']} disponible sur GitHub.")
         elif not quiet:
             messagebox.showinfo(APP, f"Vous avez la dernière version ({VERSION}).")
+
+    def _banner_cy(self):
+        """2.37 : hauteur du bandeau défilant (0 = haut, 1 = bas) : la dernière choisie, 0.9 la 1re fois."""
+        try:
+            return min(1.0, max(0.0, float(self.conf.get("bub_banner_cy", 0.9))))
+        except (TypeError, ValueError):
+            return 0.9
+
+    def _remember_banner(self):
+        """2.37 : retient la place du dernier bandeau défilant pour les suivants (et la séance suivante)."""
+        ban = [b for b in self.bubbles if b.get("style") == "bandeau" and (b.get("text") or "").strip()]
+        if ban:
+            self.conf["bub_banner_cy"] = round(float(ban[-1].get("cy", 0.9)), 4)
 
     def _update_banner(self, text, color="#ff9f1a"):
         for w in (self.upd_bar, self.upd_lbl, self.upd_close):

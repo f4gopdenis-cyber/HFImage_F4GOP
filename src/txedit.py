@@ -16,7 +16,7 @@ import os
 import bubbles
 import trafic
 
-STYLES = ("parole", "pensée", "cri", "cartouche", "texte", "néon")
+STYLES = ("parole", "pensée", "cri", "cartouche", "texte", "néon", "bandeau")
 STYLE_NAMES = {"parole": "Parole", "pensée": "Pensée", "cri": "Cri", "cartouche": "Cartouche",
                "texte": "Texte seul (sans bulle)", "néon": "Néon (texte lumineux)", "bandeau": "Bandeau défilant"}
 SPEED_NAMES = {"lente": "Lente", "moyenne": "Moyenne", "rapide": "Rapide"}
@@ -143,7 +143,11 @@ class TxEditor:
 
     def release(self, e):
         if self.drag is not None:
+            kind, i = self.drag[0], self.drag[1]
             self.drag = None
+            a = self.app
+            if kind == "b" and i < len(a.bubbles) and a.bubbles[i].get("style") == "bandeau":
+                a.conf["bub_banner_cy"] = round(float(a.bubbles[i].get("cy", 0.9)), 4)   # 2.37 : place retenue
             self.changed()
 
     def double(self, e):
@@ -322,6 +326,8 @@ class TxEditor:
     def set_bubble(self, **kw):
         kind, b = self.selected()
         if kind == "b":
+            if kw.get("style") == "bandeau" and b.get("style") != "bandeau":
+                kw.setdefault("cy", self.app._banner_cy())    # 2.37 : dernière place du bandeau
             b.update(kw)
             self.app.conf["bub_last"] = {k: b[k] for k in ("style", "size", "bg", "fg", "anim", "speed") if k in b}
             self.changed()

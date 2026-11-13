@@ -1190,4 +1190,5 @@ ZH = {
     'Vitesse du défilement': '滚动速度',
     'Bandeau défilant': '滚动横幅',
     'Bandeau défilant : il défile en mode hybride (GIF animé) ; en radio seule, il part fixe.': '滚动横幅：在混合模式下滚动（动画 GIF）；仅通过无线电时为静止。',
+    'Le bandeau se glisse vers le haut ou vers le bas : placez-le où vous voulez.': '将滚动横幅向上或向下拖动：放在您想要的位置。',
 }

@@ -1980,6 +1980,7 @@ T = [
     ('Vitesse du défilement', 'Scrolling speed', 'Laufgeschwindigkeit', 'Velocidad de desplazamiento', 'Velocità di scorrimento'),
     ('Bandeau défilant', 'Scrolling banner', 'Laufschrift', 'Banda deslizante', 'Banner scorrevole'),
     ('Bandeau défilant : il défile en mode hybride (GIF animé) ; en radio seule, il part fixe.', 'Scrolling banner: it scrolls in Hybrid mode (animated GIF); over radio only, it is sent still.', 'Laufschrift: Sie läuft im Hybridmodus (animiertes GIF); nur über Funk wird sie unbewegt gesendet.', 'Banda deslizante: se desplaza en modo híbrido (GIF animado); solo por radio, se envía fija.', 'Banner scorrevole: scorre in modo ibrido (GIF animato); solo via radio, viene inviato fisso.'),
+    ('Le bandeau se glisse vers le haut ou vers le bas : placez-le où vous voulez.', 'Drag the banner up or down: put it wherever you like.', 'Die Laufschrift nach oben oder unten ziehen: platzieren Sie sie, wo Sie möchten.', 'Arrastre la banda hacia arriba o hacia abajo: colóquela donde quiera.', 'Trascinate il banner in alto o in basso: mettetelo dove volete.'),
 ]
 
 _lang = "fr"
