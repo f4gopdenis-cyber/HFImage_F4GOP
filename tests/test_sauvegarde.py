@@ -63,6 +63,21 @@ class Sauvegarde(unittest.TestCase):
         gal = json.load(open(os.path.join(new_out, "galerie.json")))
         self.assertEqual(gal[0]["path"], os.path.join(new_out, "2026-10-30", "a.avif"))
 
+    def test_modeles_de_carte_qsl(self):
+        """2.38 : les fonds des modèles de carte QSL partent dans la sauvegarde et reviennent, chemin adapté."""
+        fond = os.path.join(self.old, "qsl_modeles", "M7WUV.png")
+        w(fond, b"png")
+        w(os.path.join(self.old, "qsl_modeles", "piege.exe"), b"x")
+        w(os.path.join(self.old, ".hfimage.json"), json.dumps({"qsl_models": {"M7WUV": {"bg": fond}}}))
+        backup.make(self.zip, ["settings"], self.old, self.out, self.out, "2.38")
+        new_out = os.path.join(self.new, "Documents", "HFImage")
+        backup.restore(self.zip, self.new, new_out, new_out)
+        conf = json.load(open(os.path.join(self.new, ".hfimage.json")))
+        nouveau = os.path.join(self.new, "qsl_modeles", "M7WUV.png")
+        self.assertEqual(conf["qsl_models"]["M7WUV"]["bg"], nouveau)
+        self.assertTrue(os.path.isfile(nouveau))
+        self.assertFalse(os.path.exists(os.path.join(self.new, "qsl_modeles", "piege.exe")))   # seulement les .png
+
     def test_seulement_les_reglages(self):
         backup.make(self.zip, ["settings"], self.old, self.out, self.out)
         new_out = os.path.join(self.new, "Documents", "HFImage")

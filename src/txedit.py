@@ -303,7 +303,9 @@ class TxEditor:
             return
         b = bubbles.new(text, cx=0.5, cy=0.5)
         last = a.conf.get("bub_last") or {}
-        b.update({k: last[k] for k in ("style", "size", "bg", "fg", "anim") if k in last})
+        b.update({k: last[k] for k in ("style", "size", "bg", "fg", "anim", "speed") if k in last})
+        if b.get("style") == "bandeau":
+            b["cy"] = a._banner_cy()                    # 2.38 : dernière place du bandeau, pas le milieu
         b["tx"], b["ty"] = 0.62, 0.72
         a.bubbles.append(b)
         self.sel = ("b", len(a.bubbles) - 1)

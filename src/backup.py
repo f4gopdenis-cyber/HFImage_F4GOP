@@ -19,6 +19,7 @@ import zipfile
 MANIFEST = "hfimage_sauvegarde.json"
 PARTS = ("settings", "rx", "tx")
 SETTINGS_TOP = ("locators.json", "stations.csv")
+QSL_MODELS = "qsl_modeles"           # dossier des fonds des modèles de carte QSL (dossier personnel)
 SKIP_RX = {"envoyees", "wav"}
 SKIP_RX_FILES = {"journal.txt", "LICENCE.txt", "LICENSE_GPL-3.0.txt"}
 STORED = (".jpg", ".jpeg", ".png", ".gif", ".webp", ".avif", ".jp2", ".zip", ".pdf", ".mp3", ".mp4")
@@ -53,6 +54,10 @@ def collect(parts, home, out_dir, folder):
     if "settings" in parts:
         for p in sorted(glob.glob(os.path.join(home, ".hfimage*.json"))):
             items.append((p, "home/" + os.path.basename(p)))
+        # 2.38 : fonds des modèles de carte QSL (2.31), rangés à côté des réglages
+        for p, rel in _walk(os.path.join(home, QSL_MODELS)):
+            if rel.lower().endswith(".png") and "/" not in rel:
+                items.append((p, f"home/{QSL_MODELS}/" + rel))
         for name in SETTINGS_TOP:
             p = os.path.join(out_dir, name)
             if os.path.isfile(p):
@@ -168,7 +173,8 @@ def restore(zip_path, home, out_dir, folder, parts=None, progress=None):
             rel = _safe_rel(rest)
             if rel is None:
                 continue
-            if top == "home" and not (rel.startswith(".hfimage") and rel.endswith(".json") and os.sep not in rel):
+            if top == "home" and not (rel.startswith(".hfimage") and rel.endswith(".json") and os.sep not in rel) \
+                    and not (os.path.dirname(rel) == QSL_MODELS and rel.lower().endswith(".png")):
                 continue                               # dans le dossier personnel : nos réglages seulement
             dst = os.path.join(roots[top], rel)
             os.makedirs(os.path.dirname(dst), exist_ok=True)
