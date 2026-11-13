@@ -599,7 +599,8 @@ s += B(["<b>Incl. text</b>: a message attached to the picture, shown in “Recei
         "<b>CAT menu</b> (1.92, as in MMSSTV): your own commands, one per line “Name = command” (text for "
         "Kenwood / Yaesu / Elecraft, hexadecimal for Icom CI-V), sent to the radio in one click through HFImage's CAT "
         "link. CAT → Edit the menu… Caution: a wrong command can upset the radio settings.",
-        "<b>Back up / Restore</b> (1.93, Files menu): settings (profiles, rig presets, website, sounds), received "
+        "<b>Back up / Restore</b> (1.93, Files menu): settings (profiles, rig presets, website, sounds, QSL card "
+        "template backgrounds), received "
         "pictures and sent pictures, as you choose, in one .zip file; on the new PC, Files → Restore puts everything "
         "back (paths adapted) and HFImage restarts. FTP passwords must be typed again on another PC (encrypted for "
         "the original Windows account).",

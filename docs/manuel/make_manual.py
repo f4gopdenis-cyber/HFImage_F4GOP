@@ -589,7 +589,7 @@ s += B(["<b>Texte inclus</b> : un message joint à l'image, affiché dans « Mes
         "Kenwood / Yaesu / Elecraft, hexadécimal pour Icom CI-V), envoyées au poste en un clic par la liaison CAT "
         "d'HFImage. CAT → Modifier le menu… Attention : une commande fausse peut dérégler le poste.",
         "<b>Sauvegarder / Restaurer</b> (1.93, menu Fichiers) : réglages (profils, préréglages de poste, site web, "
-        "sons), images reçues et images envoyées, au choix, dans un seul fichier .zip ; sur le nouveau PC, "
+        "sons, fonds des modèles de carte QSL), images reçues et images envoyées, au choix, dans un seul fichier .zip ; sur le nouveau PC, "
         "Fichiers → Restaurer remet tout en place (chemins adaptés) et HFImage redémarre. Les mots de passe FTP "
         "sont à retaper sur un autre PC (chiffrés pour le compte Windows d'origine).",
         "<b>IMG/QSL</b> : carte QSL avec photo de fond, indicatif, locator et report remplis automatiquement, "

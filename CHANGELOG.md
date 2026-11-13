@@ -1,5 +1,10 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 2.38 — corrections
+
+- Bandeau défilant : un texte ajouté directement sur l'image TX (« Ajouter un texte ») après un bandeau arrive maintenant à la place retenue du bandeau, avec la même vitesse. Avant, il se mettait au milieu de l'image.
+- Sauvegarde / restauration : les images de fond des **modèles de carte QSL** (2.31) partent maintenant dans la sauvegarde avec les réglages, et reviennent à la restauration. Sur un nouveau PC, les modèles retrouvent leur fond.
+
 ## Version 2.37 — bandeau défilant
 
 - Bulles de texte : nouveau style **« Bandeau défilant »** : une bande sur toute la largeur de l'image, où le texte défile de droite à gauche. Vitesse **lente, moyenne ou rapide**. En mode hybride, l'image part en GIF animé et le bandeau défile ; en radio seule, il part fixe (texte en entier, réduit s'il le faut). Plusieurs lignes de texte sont mises bout à bout, séparées par « • ».
