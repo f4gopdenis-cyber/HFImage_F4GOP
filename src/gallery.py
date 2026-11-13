@@ -336,10 +336,30 @@ class GalleryView(tk.Frame):
         self.lb_status.configure(text=f"{who}{t}   —   {e.get('mode', '')}   —   "
                                       f"{(e.get('size') or 0) / 1000:.1f} K   —   {os.path.basename(e.get('file') or '')}")
 
+    # 2.39 (signalé par BH2RMX) : le clic affichait l'image tout de suite et passait à l'onglet RX ;
+    # la galerie disparaissait avant le 2e clic : le double-clic ne marchait jamais. Le clic attend
+    # maintenant un court instant : un 2e clic dans ce délai ouvre l'image en plein format.
+    DCLICK_MS = 300
+
+    def _cancel_click(self):
+        job = getattr(self, "_click_job", None)
+        self._click_job = None
+        if job:
+            try:
+                self.cv.after_cancel(job)
+            except tk.TclError:
+                pass
+
     def _click(self, e):
-        self.app.gallery_show(e)
+        self._cancel_click()
+
+        def show():
+            self._click_job = None
+            self.app.gallery_show(e)
+        self._click_job = self.cv.after(self.DCLICK_MS, show)
 
     def _full(self, e):
+        self._cancel_click()                       # double-clic : plein format seulement
         self.app.gallery_full(e)
 
     def _popup(self, ev, e):
@@ -352,7 +372,7 @@ class GalleryView(tk.Frame):
             m.add_command(label=self.tr("Annuler le choix des images"), command=self.clear_selection)
         m.add_command(label=self.tr("Choisir toutes les images affichées (envoi groupé)"), command=self.select_all)
         m.add_separator()
-        m.add_command(label=self.tr("Afficher dans l'onglet RX"), command=lambda: self._click(e))
+        m.add_command(label=self.tr("Afficher dans l'onglet RX"), command=lambda: self.app.gallery_show(e))
         m.add_command(label=self.tr("Ouvrir en plein format"), command=lambda: self._full(e))
         m.add_command(label=self.tr("Copier l'image"), command=lambda: self.app.gallery_copy(e))
         m.add_command(label=self.tr("Renvoyer cette image (onglet TX)"), command=lambda: self.app.gallery_to_tx(e))
