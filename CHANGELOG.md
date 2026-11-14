@@ -1,5 +1,11 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 2.40 (demande de VK6NJP)
+
+- Bulles de texte : **bulles enregistrées**. « Phrases ▾ » → **« Enregistrer cette bulle (avec son style) »** garde la bulle entière : texte, style, couleurs, taille, émoticônes animées, vitesse du bandeau et place sur l'image. Elle revient d'un clic en haut du menu « Phrases ▾ » (marquée ★) ; une bulle encore vide (ou celle de départ) est remplacée. {MOI}, {PRENOM} et {LOC} sont remplacés comme dans les phrases.
+- Clic droit sur l'image TX : **« Ajouter une bulle enregistrée »**, et sur une bulle, « Enregistrer cette bulle (avec son style) ».
+- « Modifier la liste… » montre aussi les bulles enregistrées, avec un bouton « Retirer ». Une bulle de même texte et même style remplace l'ancienne ; 30 bulles au plus. Elles sont gardées dans les réglages (et dans la sauvegarde).
+
 ## Version 2.39 (signalé par BH2RMX)
 
 - Galerie (Reçues et Envoyées) : le **double-clic** sur une image l'ouvre bien en plein format, comme l'indique l'aide. Avant, le premier clic affichait l'image et passait aussitôt à l'onglet RX : le double-clic n'arrivait jamais. Le clic simple affiche toujours l'image dans l'onglet RX (après un très court instant) ; clic droit → « Afficher dans l'onglet RX » reste immédiat.
