@@ -1981,6 +1981,10 @@ T = [
     ('Bandeau défilant', 'Scrolling banner', 'Laufschrift', 'Banda deslizante', 'Banner scorrevole'),
     ('Bandeau défilant : il défile en mode hybride (GIF animé) ; en radio seule, il part fixe.', 'Scrolling banner: it scrolls in Hybrid mode (animated GIF); over radio only, it is sent still.', 'Laufschrift: Sie läuft im Hybridmodus (animiertes GIF); nur über Funk wird sie unbewegt gesendet.', 'Banda deslizante: se desplaza en modo híbrido (GIF animado); solo por radio, se envía fija.', 'Banner scorrevole: scorre in modo ibrido (GIF animato); solo via radio, viene inviato fisso.'),
     ('Le bandeau se glisse vers le haut ou vers le bas : placez-le où vous voulez.', 'Drag the banner up or down: put it wherever you like.', 'Die Laufschrift nach oben oder unten ziehen: platzieren Sie sie, wo Sie möchten.', 'Arrastre la banda hacia arriba o hacia abajo: colóquela donde quiera.', 'Trascinate il banner in alto o in basso: mettetelo dove volete.'),
+    ('Enregistrer cette bulle (avec son style)', 'Save this bubble (with its style)', 'Diese Blase speichern (mit Stil)', 'Guardar este bocadillo (con su estilo)', 'Salva questo fumetto (con il suo stile)'),
+    ('Ajouter une bulle enregistrée', 'Add a saved bubble', 'Gespeicherte Blase hinzufügen', 'Añadir un bocadillo guardado', 'Aggiungi un fumetto salvato'),
+    ('Bulle enregistrée (texte, style, couleurs et place) :', 'Bubble saved (text, style, colours and position):', 'Blase gespeichert (Text, Stil, Farben und Position):', 'Bocadillo guardado (texto, estilo, colores y posición):', 'Fumetto salvato (testo, stile, colori e posizione):'),
+    ('Bulles enregistrées (texte, style, couleurs et place) :', 'Saved bubbles (text, style, colours and position):', 'Gespeicherte Blasen (Text, Stil, Farben und Position):', 'Bocadillos guardados (texto, estilo, colores y posición):', 'Fumetti salvati (testo, stile, colori e posizione):'),
 ]
 
 _lang = "fr"

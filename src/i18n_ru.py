@@ -1199,4 +1199,8 @@ RU = {
     'Bandeau défilant': 'Бегущая строка',
     'Bandeau défilant : il défile en mode hybride (GIF animé) ; en radio seule, il part fixe.': 'Бегущая строка: движется в гибридном режиме (анимированный GIF); только по радио передаётся неподвижной.',
     'Le bandeau se glisse vers le haut ou vers le bas : placez-le où vous voulez.': 'Перетащите бегущую строку вверх или вниз: разместите её где угодно.',
+    'Enregistrer cette bulle (avec son style)': 'Сохранить этот пузырь (со стилем)',
+    'Ajouter une bulle enregistrée': 'Добавить сохранённый пузырь',
+    'Bulle enregistrée (texte, style, couleurs et place) :': 'Пузырь сохранён (текст, стиль, цвета и место):',
+    'Bulles enregistrées (texte, style, couleurs et place) :': 'Сохранённые пузыри (текст, стиль, цвета и место):',
 }

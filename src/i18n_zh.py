@@ -1191,4 +1191,8 @@ ZH = {
     'Bandeau défilant': '滚动横幅',
     'Bandeau défilant : il défile en mode hybride (GIF animé) ; en radio seule, il part fixe.': '滚动横幅：在混合模式下滚动（动画 GIF）；仅通过无线电时为静止。',
     'Le bandeau se glisse vers le haut ou vers le bas : placez-le où vous voulez.': '将滚动横幅向上或向下拖动：放在您想要的位置。',
+    'Enregistrer cette bulle (avec son style)': '保存此气泡（含样式）',
+    'Ajouter une bulle enregistrée': '添加已保存的气泡',
+    'Bulle enregistrée (texte, style, couleurs et place) :': '气泡已保存（文字、样式、颜色和位置）：',
+    'Bulles enregistrées (texte, style, couleurs et place) :': '已保存的气泡（文字、样式、颜色和位置）：',
 }

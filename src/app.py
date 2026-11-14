@@ -3031,6 +3031,39 @@ class App(tk.Tk):
             return [str(p) for p in lst if str(p).strip()]
         return [tr(p) for p in self.DEFAULT_PHRASES]
 
+    # 2.40 (demande de VK6NJP) : bulles enregistrées en entier (texte, style, couleurs, taille,
+    # émoticônes animées, vitesse du bandeau, place sur l'image), remises d'un clic
+    SAVED_BUBBLE_KEYS = ("text", "style", "size", "bg", "fg", "anim", "speed", "cx", "cy", "tx", "ty", "k")
+    SAVED_BUBBLES_MAX = 30
+
+    def _saved_bubbles(self):
+        lst = self.conf.get("bub_saved")
+        if not isinstance(lst, list):
+            return []
+        return [d for d in lst if isinstance(d, dict) and str(d.get("text") or "").strip()]
+
+    def _save_bubble(self, b):
+        """Enregistre la bulle b (une bulle de même texte et même style est remplacée)."""
+        if not b or not str(b.get("text") or "").strip():
+            return False
+        d = {k: b[k] for k in self.SAVED_BUBBLE_KEYS if k in b}
+        lst = [x for x in self._saved_bubbles()
+               if not (x.get("text") == d["text"] and x.get("style", "parole") == d.get("style", "parole"))]
+        self.conf["bub_saved"] = (lst + [d])[-self.SAVED_BUBBLES_MAX:]
+        self._save_conf_file()
+        self.log(tr("Bulle enregistrée (texte, style, couleurs et place) :") + " " + d["text"].replace("\n", " "))
+        return True
+
+    def _saved_bubble_new(self, d):
+        """Bulle enregistrée -> nouvelle bulle pour l'image ({MOI}, {PRENOM}, {LOC} remplacés)."""
+        b = bubbles.new(self._phrase_fill(d.get("text", "")))
+        b.update({k: d[k] for k in self.SAVED_BUBBLE_KEYS if k in d and k != "text"})
+        return b
+
+    def _saved_bubble_label(self, d):
+        lab = "★ " + self._phrase_fill(d.get("text", "")).replace("\n", " ")
+        return lab if len(lab) <= 50 else lab[:48] + "…"
+
     def _phrase_fill(self, p):
         """{MOI} / {CALL}, {PRENOM} / {NAME}, {LOC} -> indicatif, prénom, locator."""
         call = self.mycall() or ""
@@ -3056,11 +3089,28 @@ class App(tk.Tk):
         t = tk.Text(f, width=48, height=12, font=("TkDefaultFont", 10), wrap="none")
         t.pack(fill="both", expand=True, pady=6)
         t.insert("1.0", "\n".join(self._bubble_phrases()))
+        # 2.40 : bulles enregistrées (avec leur style) : on peut en retirer
+        saved = list(self._saved_bubbles())
+        ttk.Label(f, text=tr("Bulles enregistrées (texte, style, couleurs et place) :")).pack(anchor="w")
+        sf = ttk.Frame(f)
+        sf.pack(fill="x", pady=(2, 6))
+        lb = tk.Listbox(sf, height=5, font=("TkDefaultFont", 10), exportselection=False)
+        lb.pack(side="left", fill="x", expand=True)
+        for d in saved:
+            lb.insert("end", self._saved_bubble_label(d))
+
+        def remove_saved():
+            i = lb.curselection()
+            if i:
+                del saved[i[0]]
+                lb.delete(i[0])
+        ttk.Button(sf, text=tr("Retirer"), command=remove_saved).pack(side="left", padx=(6, 0), anchor="n")
         b = ttk.Frame(f)
         b.pack(fill="x")
 
         def save():
             self.conf["bub_phrases"] = [x.strip() for x in t.get("1.0", "end").splitlines() if x.strip()]
+            self.conf["bub_saved"] = saved
             self._save_conf_file()
             w.destroy()
 
@@ -5296,14 +5346,39 @@ class App(tk.Tk):
                 self._save_conf_file()
                 self.log(tr("Phrase enregistrée pour les bulles :") + f" {t}")
 
+        def use_saved(d):
+            b, nb = cur(), self._saved_bubble_new(d)
+            fresh = tr("73 de") + f" {self.mycall() or 'F4GOP'} !"
+            if b is not None and (txt.get("1.0", "end").strip() in ("", fresh)):
+                self.bubbles[sel[0]] = nb                   # bulle vide ou de départ : remplacée
+            else:
+                self.bubbles.append(nb)
+                sel[0] = len(self.bubbles) - 1
+            refresh_list()
+            load_fields()
+            preview()
+
+        def save_bubble():
+            b = cur()
+            if b is not None:
+                b["text"] = txt.get("1.0", "end").rstrip("\n")
+                self._save_bubble(b)
+
         def fill_menu():
             pmenu.delete(0, "end")
+            saved = self._saved_bubbles()
+            for d in saved:
+                pmenu.add_command(label=self._saved_bubble_label(d), command=lambda d=d: use_saved(d))
+            if saved:
+                pmenu.add_separator()
             for p in self._bubble_phrases():
                 label = self._phrase_fill(p).replace("\n", " ")
                 pmenu.add_command(label=label if len(label) <= 50 else label[:48] + "…",
                                   command=lambda p=p: use_phrase(p))
             pmenu.add_separator()
             pmenu.add_command(label=tr("Enregistrer cette phrase"), command=save_phrase)
+            pmenu.add_command(label=tr("Enregistrer cette bulle (avec son style)"), command=save_bubble,
+                              state="normal" if cur() is not None else "disabled")
             pmenu.add_command(label=tr("Modifier la liste…"), command=lambda: self._phrases_edit(w))
         pmenu.configure(postcommand=fill_menu)
         # émoticônes : un clic l'ajoute dans le texte, à l'endroit du curseur

@@ -311,6 +311,13 @@ class TxEditor:
         self.sel = ("b", len(a.bubbles) - 1)
         self.changed()
 
+    def add_saved_bubble(self, d):
+        """2.40 : bulle enregistrée (texte, style, couleurs, place) ajoutée sur l'image."""
+        a = self.app
+        a.bubbles.append(a._saved_bubble_new(d))
+        self.sel = ("b", len(a.bubbles) - 1)
+        self.changed()
+
     def edit_text(self):
         kind, b = self.selected()
         if kind != "b":
@@ -421,9 +428,18 @@ class TxEditor:
                 sub.add_command(label=lab, command=lambda c=c: self.add_pip(dict(c), logo=False))
             m.add_cascade(label=tr("Ajouter l'image d'un correspondant"), menu=sub,
                           state="normal" if recues and not a.tx_busy else "disabled")
+            # 2.40 (VK6NJP) : bulles enregistrées avec leur style, remises d'un clic
+            saved = a._saved_bubbles()
+            sb = tk.Menu(m, tearoff=0)
+            for d in saved:
+                sb.add_command(label=a._saved_bubble_label(d), command=lambda d=d: self.add_saved_bubble(d))
+            m.add_cascade(label=tr("Ajouter une bulle enregistrée"), menu=sb,
+                          state="normal" if saved and not a.tx_busy else "disabled")
             if kind == "b":
                 m.add_separator()
                 m.add_command(label=tr("Modifier le texte…"), command=self.edit_text)
+                m.add_command(label=tr("Enregistrer cette bulle (avec son style)"),
+                              command=lambda: a._save_bubble(item))
                 st = tk.Menu(m, tearoff=0)
                 v_st = tk.StringVar(m, value=item.get("style", "parole"))
                 keep.append(v_st)
