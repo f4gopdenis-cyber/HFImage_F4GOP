@@ -1,5 +1,11 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 2.41 (signalé par BH2RMX)
+
+- Texte en mode EasyPal : un message en chinois, en russe… n'arrive plus en « ???? ». Les lettres européennes partent comme avant (codage d'EasyPal) ; les autres écritures partent en UTF-8, relu correctement par les stations HFImage.
+- « Inclure ce texte avec l'image » en mode EasyPal ou hybride : le texte se perdait sans rien dire. Il part maintenant en petit message séparé, juste après l'image (la fenêtre d'émission l'indique). STOP pendant l'image : le texte ne part pas ; dans un envoi groupé, l'image suivante attend la fin du texte.
+- « Envoyer le texte seul » : la zone de texte se vide une fois le message parti, prête pour le suivant (le message reste dans la liste des messages envoyés).
+
 ## Version 2.40 (demande de VK6NJP)
 
 - Bulles de texte : **bulles enregistrées**. « Phrases ▾ » → **« Enregistrer cette bulle (avec son style) »** garde la bulle entière : texte, style, couleurs, taille, émoticônes animées, vitesse du bandeau et place sur l'image. Elle revient d'un clic en haut du menu « Phrases ▾ » (marquée ★) ; une bulle encore vide (ou celle de départ) est remplacée. {MOI}, {PRENOM} et {LOC} sont remplacés comme dans les phrases.

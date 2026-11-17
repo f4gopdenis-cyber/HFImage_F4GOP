@@ -587,8 +587,9 @@ s.append(P("Tick <b>My station info</b> (TX tab) and click <b>…</b> next to it
            "callsign colour, outline, background and its opacity, and a coloured border; <b>Presets…</b> offers "
            "ready-made styles."))
 s.append(P("Other transmissions", "h2"))
-s += B(["<b>Incl. text</b>: a message attached to the picture, shown in “Received messages”.",
-        "<b>Send Text</b>: message alone.",
+s += B(["<b>Incl. text</b>: a message attached to the picture, shown in “Received messages”. In EasyPal or "
+        "hybrid mode, it goes as a short separate message right after the picture.",
+        "<b>Send Text</b>: message alone (any language, Chinese included); the box is cleared after sending.",
         "<b>Send a file…</b> (HFImage modes): any file (text, PDF, ZIP, ADIF log…), compressed when useful and "
         "protected by the same fountain code (BSR / FIX and ACK included); with hybrid mode, the file goes via the "
         "Internet and only the link goes over the air. Received files are stored under their original name in the "

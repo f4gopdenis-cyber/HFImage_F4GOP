@@ -580,8 +580,9 @@ s.append(P("Bouton <b>Envoyer un fichier…</b> (onglet TX) ou menu Images : n'i
 s += tip("ordre de grandeur en DATAC1X : environ 8 ko par minute. Un fichier texte de 30 ko compressé à 9 ko "
          "passe en un peu plus d'une minute.")
 s.append(P("Autres envois", "h2"))
-s += B(["<b>Texte inclus</b> : un message joint à l'image, affiché dans « Messages reçus ».",
-        "<b>Envoi Texte</b> : message seul.",
+s += B(["<b>Texte inclus</b> : un message joint à l'image, affiché dans « Messages reçus ». En mode EasyPal ou "
+        "hybride, il part en petit message séparé, juste après l'image.",
+        "<b>Envoi Texte</b> : message seul (toutes langues, chinois compris) ; la zone se vide après l'envoi.",
         "<b>Accord</b> (10 s) : porteuse pour régler l'ampli / la boîte d'accord. <b>ID</b> : indicatif en morse.",
         "<b>WAVE</b> / texte waterfall : fichiers begin.wav / end.wav, <b>texte ou image</b> dessinés dans le "
         "waterfall du correspondant (Action → Texte waterfall… → « Image… » pour une photo, un logo, votre QSL) ; "
