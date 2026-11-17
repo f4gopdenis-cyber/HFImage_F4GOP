@@ -1985,6 +1985,8 @@ T = [
     ('Ajouter une bulle enregistrée', 'Add a saved bubble', 'Gespeicherte Blase hinzufügen', 'Añadir un bocadillo guardado', 'Aggiungi un fumetto salvato'),
     ('Bulle enregistrée (texte, style, couleurs et place) :', 'Bubble saved (text, style, colours and position):', 'Blase gespeichert (Text, Stil, Farben und Position):', 'Bocadillo guardado (texto, estilo, colores y posición):', 'Fumetto salvato (testo, stile, colori e posizione):'),
     ('Bulles enregistrées (texte, style, couleurs et place) :', 'Saved bubbles (text, style, colours and position):', 'Gespeicherte Blasen (Text, Stil, Farben und Position):', 'Bocadillos guardados (texto, estilo, colores y posición):', 'Fumetti salvati (testo, stile, colori e posizione):'),
+    ("Texte inclus : il part juste après l'image, en petit message séparé.", 'Text included: it is sent right after the picture, as a short separate message.', 'Text eingeschlossen: Er wird direkt nach dem Bild als kurze eigene Nachricht gesendet.', 'Texto incluido: se envía justo después de la imagen, como un mensaje corto aparte.', "Testo incluso: viene inviato subito dopo l'immagine, come breve messaggio separato."),
+    ("Texte inclus : envoi du message juste après l'image.", 'Text included: sending the message right after the picture.', 'Text eingeschlossen: Nachricht wird direkt nach dem Bild gesendet.', 'Texto incluido: envío del mensaje justo después de la imagen.', "Testo incluso: invio del messaggio subito dopo l'immagine."),
 ]
 
 _lang = "fr"

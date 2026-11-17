@@ -684,7 +684,7 @@ class RxEngine:
             # message texte d'EasyPal / QSSTV (ou de HFImage en mode EasyPal)
             raw = data.split(b"\0", 1)[0]
             try:
-                text = raw.decode("utf-8")
+                text = raw.decode("utf-8-sig")
             except UnicodeDecodeError:
                 text = raw.decode("cp1252", "replace")
             text = text.replace("\r\n", "\n").strip()

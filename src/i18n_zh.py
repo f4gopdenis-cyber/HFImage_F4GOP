@@ -1195,4 +1195,6 @@ ZH = {
     'Ajouter une bulle enregistrée': '添加已保存的气泡',
     'Bulle enregistrée (texte, style, couleurs et place) :': '气泡已保存（文字、样式、颜色和位置）：',
     'Bulles enregistrées (texte, style, couleurs et place) :': '已保存的气泡（文字、样式、颜色和位置）：',
+    "Texte inclus : il part juste après l'image, en petit message séparé.": '附带文字：在图像之后立即作为单独的短消息发送。',
+    "Texte inclus : envoi du message juste après l'image.": '附带文字：图像之后立即发送消息。',
 }

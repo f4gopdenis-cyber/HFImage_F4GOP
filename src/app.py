@@ -6506,7 +6506,7 @@ class App(tk.Tk):
                  "Lisible par les stations EasyPal et QSSTV ; réparation par BSR / FIX",
                  f"Durée d'émission : {_fmt_s(self.tx.estimate_s())}"]
         if self.v_txtinc.get():
-            lines.append("« Texte inclus » n'existe pas en mode EasyPal : seule l'image part.")
+            lines.append(tr("Texte inclus : il part juste après l'image, en petit message séparé."))
         self.v_txinfo.set("\n".join(lines))
         self._update_comp()
 
@@ -6594,6 +6594,7 @@ class App(tk.Tk):
                               f"Annonce radio : ~{ann:.0f} s (HamDRM mode E, QAM4)\n"
                               f"Attention : l'identifiant et le mot de passe FTP partent dans l'annonce "
                               f"(compte FTP dédié conseillé)")
+            self._txinfo_text_apart()
             self._update_comp()
             return
         srv = self.v_hurl.get().strip() or "(lien public non réglé)"
@@ -6604,7 +6605,14 @@ class App(tk.Tk):
                              if self.v_flash.get() else "Annonce radio : ~11 s (DATAC3)")
                           + ("\n" + tr("AVIF sur une grande photo : choisissez jpg ou original pour une image "
                                         "prête tout de suite.") if slow else ""))
+        self._txinfo_text_apart()
         self._update_comp()
+
+    def _txinfo_text_apart(self):
+        """2.41 : hybride avec « Texte inclus » : le texte part juste après l'image."""
+        if self.v_txtinc.get() and self.txt_msg.get("1.0", "end").strip():
+            self.v_txinfo.set(self.v_txinfo.get() + "\n"
+                              + tr("Texte inclus : il part juste après l'image, en petit message séparé."))
 
     def _update_comp(self):
         if isinstance(self.tx, HybridJob):
@@ -6760,7 +6768,9 @@ class App(tk.Tk):
             self._rxok_reset(None if isinstance(tx, HybridJob) else tx.image_id)
             if not isinstance(tx, HybridJob):
                 self.last_tx_id = tx.image_id     # pour la carte : qui a reçu NOTRE dernière image
+        text = self.txt_msg.get("1.0", "end").strip() if self.v_txtinc.get() else ""
         ok = self._start_job(job, quiet)
+        self._text_after = text if (ok and not complement and text and self._text_mode_apart(tx)) else None
         if ok and isinstance(tx, engine.DrmTransmission):
             self.drm_last_tx = tx                 # pour répondre aux BSR des stations EasyPal
         if ok and not complement and not isinstance(tx, HybridJob) and getattr(tx, "msg_text", ""):
@@ -6865,11 +6875,28 @@ class App(tk.Tk):
         if not text:
             messagebox.showinfo(APP, "Écrivez d'abord le texte à envoyer.")
             return
+        if self._send_text_now(text):
+            # 2.41 (BH2RMX) : zone vidée, prête pour le message suivant (l'envoyé reste dans la liste)
+            self.txt_msg.delete("1.0", "end")
+
+    @staticmethod
+    def _drm_text_bytes(text):
+        """Texte du mode EasyPal -> octets du petit fichier .txt (fins de ligne Windows).
+        Lettres européennes : cp1252, comme EasyPal / QSSTV. 2.41 (BH2RMX) : chinois, russe… :
+        UTF-8 (avant, chaque caractère devenait « ? » au départ)."""
+        t = text.replace("\r\n", "\n").replace("\n", "\r\n")
+        try:
+            return t.encode("cp1252")
+        except UnicodeEncodeError:
+            return t.encode("utf-8")
+
+    def _send_text_now(self, text, after_image=False):
+        """Émet un message texte. -> True si l'émission est partie."""
         call = self.mycall() or "NOCALL"
         mode = self._tx_mode()
         if mode == engine.DRM_MODE:
-            # comme EasyPal / QSSTV : un petit fichier .txt (Windows : CRLF, accents en cp1252)
-            data = text.replace("\r\n", "\n").replace("\n", "\r\n").encode("cp1252", "replace")
+            # comme EasyPal / QSSTV : un petit fichier .txt
+            data = self._drm_text_bytes(text)
             params = self._drm_params()
             tx = engine.DrmTransmission(data, "txt", call, params,
                                         f"{call}_texte_{time.strftime('%H%M%S', time.gmtime())}")
@@ -6877,16 +6904,30 @@ class App(tk.Tk):
             self.my_ids.add(tx.image_id)
             self.log(f"Texte EasyPal : {len(text)} caractères, {hamdrm.describe(params)}, "
                      f"~{_fmt_s(tx.estimate_s())}")
-            if self._start_job({"kind": "text", "tx": tx, "complement": False, "extra": None}):
+            if self._start_job({"kind": "text", "tx": tx, "complement": False, "extra": None}, quiet=after_image):
                 self.drm_last_tx = tx             # une station EasyPal peut aussi demander un BSR
-                self._msg_sent(tx.image_id, text, engine.DRM_MODE)
-            return
+                self._msg_sent(tx.image_id, text, engine.DRM_MODE, with_image=after_image)
+                return True
+            return False
         tx = engine.Transmission(protocol.pack_text(text), "hft", call, mode, 0.25)
         self._remember_sent(tx)
         self.log(f"Texte : {len(text)} caractères, {mode}, ~{_fmt_s(tx.estimate_s())}")
         self.my_ids.add(tx.image_id)
-        if self._start_job({"kind": "text", "tx": tx, "complement": False, "extra": None}):
-            self._msg_sent(tx.image_id, text, mode)
+        if self._start_job({"kind": "text", "tx": tx, "complement": False, "extra": None}, quiet=after_image):
+            self._msg_sent(tx.image_id, text, mode, with_image=after_image)
+            return True
+        return False
+
+    def _text_mode_apart(self, tx):
+        """Mode EasyPal ou hybride : le texte ne peut pas voyager DANS l'image."""
+        return isinstance(tx, (HybridJob, engine.DrmTransmission))
+
+    def _send_text_after(self, text):
+        """2.41 (BH2RMX) : « Inclure ce texte avec l'image » en mode EasyPal ou hybride : le texte part
+        en petit message séparé, juste après l'image (avant, il se perdait sans rien dire)."""
+        self.log(tr("Texte inclus : envoi du message juste après l'image."))
+        if not self._send_text_now(text, after_image=True):
+            self._batch_after_tx()
 
     def send_file(self, p=None):
         """Envoi d'un fichier quelconque (texte, PDF, ZIP, ADIF…) par radio, ou par Internet en hybride."""
@@ -7346,6 +7387,10 @@ class App(tk.Tk):
         self._update_comp()
         if relisten and self.rx_stream is None and self.v_in.get():
             self.toggle_listen(quiet=True)
+        text, self._text_after = getattr(self, "_text_after", None), None
+        if text and not self.stop_tx.is_set():
+            self.after(800, lambda: self._send_text_after(text))    # la série reprend après le texte
+            return
         self._batch_after_tx()
 
     def test_audio(self):
