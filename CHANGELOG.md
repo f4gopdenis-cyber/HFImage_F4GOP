@@ -1,5 +1,10 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 2.42
+
+- Menu « Fréquence ▾ » : nouveau choix **« Ajouter la fréquence du poste »** : la fréquence lue par le CAT entre dans la liste en un clic, à sa place dans l'ordre (LSB ou USB d'après le mode du poste ; sinon LSB sous 10 MHz, USB au-dessus). Grisé si la fréquence est déjà dans la liste ou si le poste ne donne pas sa fréquence.
+- « Autre fréquence… » : case **« Ajouter à la liste »** : la fréquence tapée est gardée dans le menu en plus d'y envoyer le poste. Entrée valide, Échap ferme.
+
 ## Version 2.41 (signalé par BH2RMX)
 
 - Texte en mode EasyPal : un message en chinois, en russe… n'arrive plus en « ???? ». Les lettres européennes partent comme avant (codage d'EasyPal) ; les autres écritures partent en UTF-8, relu correctement par les stations HFImage.

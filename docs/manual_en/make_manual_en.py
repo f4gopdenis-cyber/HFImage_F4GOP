@@ -351,7 +351,9 @@ s.append(P("With a CAT link, the <b>“Frequency ▾”</b> button (right of “
            "picture-frequency menu: <b>3.733 – 7.058 – 14.233 – 21.340 – 28.680 MHz</b>. One click and the radio goes "
            "there, with that frequency's sideband (LSB below 10 MHz, USB above); if it was in DATA, it stays in DATA. "
            "Same menu in <b>Action → Go to a frequency</b>, with “Other frequency…” and “Edit the list…” (one line per "
-           "frequency, e.g. “7.058 LSB”). Right-click in the station list: <b>Go to this station's frequency</b>. "
+           "frequency, e.g. “7.058 LSB”). “<b>Add the radio's frequency</b>” puts the frequency read by CAT into the "
+           "list with one click; in “Other frequency…”, the “Add to the list” box keeps the typed frequency. "
+           "Right-click in the station list: <b>Go to this station's frequency</b>. "
            "Never during a transmission. (Idea from Allan G7VQV.)"))
 s.append(P("Several frequencies at once (profiles)", "h2"))
 s.append(P("One HFImage listens to one frequency (one audio input). To monitor e.g. 40 m, 20 m and 28.680 MHz at the "

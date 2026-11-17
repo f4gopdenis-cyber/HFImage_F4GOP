@@ -343,7 +343,9 @@ s.append(P("Avec une liaison CAT, le bouton <b>« Fréquence ▾ »</b> (à droi
            "<b>clic sur la fréquence</b> affichée (panneau en haut à gauche, marquée ▾, ou barre d'état en bas) ouvre le menu des fréquences image : <b>3,733 – 7,058 – 14,233 – 21,340 – 28,680 MHz</b>. Un clic, et le "
            "poste y va, avec la bande latérale de la fréquence (LSB en dessous de 10 MHz, USB au-dessus) ; s'il était en "
            "DATA, il y reste. Même menu dans <b>Action → Aller sur une fréquence</b>, avec « Autre fréquence… » et "
-           "« Modifier la liste… » (une ligne par fréquence, ex. « 7.058 LSB »). Clic droit dans la liste des stations : "
+           "« Modifier la liste… » (une ligne par fréquence, ex. « 7.058 LSB »). « <b>Ajouter la fréquence du poste</b> » "
+           "met la fréquence lue par le CAT dans la liste en un clic ; dans « Autre fréquence… », la case « Ajouter à la "
+           "liste » garde la fréquence tapée. Clic droit dans la liste des stations : "
            "<b>Aller sur la fréquence de cette station</b>. Jamais pendant une émission. (Idée d'Allan G7VQV.)"))
 s.append(P("Plusieurs fréquences à la fois (profils)", "h2"))
 s.append(P("Un HFImage écoute une fréquence (une entrée audio). Pour surveiller par exemple le 40 m, le 20 m et le "
