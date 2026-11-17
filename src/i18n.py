@@ -1987,6 +1987,9 @@ T = [
     ('Bulles enregistrées (texte, style, couleurs et place) :', 'Saved bubbles (text, style, colours and position):', 'Gespeicherte Blasen (Text, Stil, Farben und Position):', 'Bocadillos guardados (texto, estilo, colores y posición):', 'Fumetti salvati (testo, stile, colori e posizione):'),
     ("Texte inclus : il part juste après l'image, en petit message séparé.", 'Text included: it is sent right after the picture, as a short separate message.', 'Text eingeschlossen: Er wird direkt nach dem Bild als kurze eigene Nachricht gesendet.', 'Texto incluido: se envía justo después de la imagen, como un mensaje corto aparte.', "Testo incluso: viene inviato subito dopo l'immagine, come breve messaggio separato."),
     ("Texte inclus : envoi du message juste après l'image.", 'Text included: sending the message right after the picture.', 'Text eingeschlossen: Nachricht wird direkt nach dem Bild gesendet.', 'Texto incluido: envío del mensaje justo después de la imagen.', "Testo incluso: invio del messaggio subito dopo l'immagine."),
+    ('Ajouter la fréquence du poste', "Add the radio's frequency", 'Frequenz des Geräts hinzufügen', 'Añadir la frecuencia del equipo', 'Aggiungi la frequenza della radio'),
+    ('Ajouter à la liste', 'Add to the list', 'Zur Liste hinzufügen', 'Añadir a la lista', "Aggiungi all'elenco"),
+    ('Fréquence ajoutée au menu :', 'Frequency added to the menu:', 'Frequenz zum Menü hinzugefügt:', 'Frecuencia añadida al menú:', 'Frequenza aggiunta al menu:'),
 ]
 
 _lang = "fr"

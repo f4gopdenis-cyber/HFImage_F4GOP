@@ -1205,4 +1205,7 @@ RU = {
     'Bulles enregistrées (texte, style, couleurs et place) :': 'Сохранённые пузыри (текст, стиль, цвета и место):',
     "Texte inclus : il part juste après l'image, en petit message séparé.": 'Текст включён: он передаётся сразу после изображения отдельным коротким сообщением.',
     "Texte inclus : envoi du message juste après l'image.": 'Текст включён: сообщение передаётся сразу после изображения.',
+    'Ajouter la fréquence du poste': 'Добавить частоту трансивера',
+    'Ajouter à la liste': 'Добавить в список',
+    'Fréquence ajoutée au menu :': 'Частота добавлена в меню:',
 }

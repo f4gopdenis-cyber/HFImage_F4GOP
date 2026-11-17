@@ -2948,8 +2948,39 @@ class App(tk.Tk):
             m.add_command(label=f"{mark}{hz / 1e6:.3f} MHz   {band}  {side}",
                           command=lambda h=hz, s=side: self._qsy(h, s))
         m.add_separator()
+        # 2.42 (demande de F4GOP) : la fréquence du poste ajoutée à la liste en un clic
+        fr, side = self._rig_freq_side()
+        if fr:
+            m.add_command(label=tr("Ajouter la fréquence du poste") + f" ({fr / 1e6:.3f} MHz {side})",
+                          command=lambda: self._freq_add(fr, side),
+                          state="disabled" if self._freq_in_list(fr) else "normal")
+        else:
+            m.add_command(label=tr("Ajouter la fréquence du poste"), state="disabled")
         m.add_command(label=tr("Autre fréquence…"), command=self._qsy_ask)
         m.add_command(label=tr("Modifier la liste…"), command=self._qsy_edit)
+
+    def _rig_freq_side(self):
+        """Fréquence lue par le CAT et sa bande latérale (mode du poste, sinon LSB sous 10 MHz)."""
+        if not self.rig_freq:
+            return None, None
+        hz = int(self.rig_freq)
+        mode = str(self.rig_mode or "").upper()
+        side = "LSB" if "LSB" in mode else ("USB" if "USB" in mode else ("LSB" if hz < 10_000_000 else "USB"))
+        return hz, side
+
+    def _freq_in_list(self, hz):
+        return any(abs(f - int(hz)) < 1500 for f, _s in self._freq_presets())
+
+    def _freq_add(self, hz, side=None):
+        """Ajoute une fréquence au menu « Fréquence ▾ » (à sa place, sans doublon). -> True si ajoutée."""
+        hz = int(hz)
+        if self._freq_in_list(hz):
+            return False
+        side = side if side in ("LSB", "USB") else ("LSB" if hz < 10_000_000 else "USB")
+        self.conf["freq_presets"] = sorted([[f, s] for f, s in self._freq_presets()] + [[hz, side]])
+        self._save_conf_file()
+        self.log(tr("Fréquence ajoutée au menu :") + f" {hz / 1e6:.3f} MHz {side}")
+        return True
 
     def _freq_menu_at(self, w):
         """Menu des fréquences ouvert sous le bouton « Fréquence ▾ »."""
@@ -3009,16 +3040,44 @@ class App(tk.Tk):
         return int(round(hz)) if 1_000_000 <= hz <= 470_000_000 else None
 
     def _qsy_ask(self):
-        from tkinter import simpledialog
-        cur = f"{self.rig_freq / 1e6:.3f}" if self.rig_freq else ""
-        t = simpledialog.askstring(APP, tr("Fréquence (MHz), ex. 7.058 :"), initialvalue=cur, parent=self)
-        if t is None:
-            return
-        hz = self._parse_mhz(t)
+        """« Autre fréquence… » : fréquence tapée ; 2.42 : case « Ajouter à la liste »."""
+        w = tk.Toplevel(self)
+        w.title(APP)
+        w.transient(self)
+        w.resizable(False, False)
+        f = ttk.Frame(w, padding=12)
+        f.pack(fill="both", expand=True)
+        ttk.Label(f, text=tr("Fréquence (MHz), ex. 7.058 :")).pack(anchor="w")
+        v = tk.StringVar(value=f"{self.rig_freq / 1e6:.3f}" if self.rig_freq else "")
+        e = ttk.Entry(f, textvariable=v, width=18)
+        e.pack(anchor="w", pady=(4, 6))
+        v_add = tk.BooleanVar(value=False)
+        ttk.Checkbutton(f, text=tr("Ajouter à la liste"), variable=v_add).pack(anchor="w")
+        b = ttk.Frame(f)
+        b.pack(fill="x", pady=(10, 0))
+
+        def ok(_e=None):
+            if self._qsy_go(v.get(), v_add.get(), parent=w):
+                w.destroy()
+        ttk.Button(b, text="OK", command=ok).pack(side="right")
+        ttk.Button(b, text=tr("Annuler"), command=w.destroy).pack(side="right", padx=6)
+        e.bind("<Return>", ok)
+        w.bind("<Escape>", lambda _e: w.destroy())
+        self._translate_ui(w)
+        e.focus_set()
+        e.select_range(0, "end")
+        return w
+
+    def _qsy_go(self, text, add=False, parent=None):
+        """Fréquence tapée -> le poste y va (et elle est ajoutée au menu si demandé). -> True si lisible."""
+        hz = self._parse_mhz(text)
         if hz is None:
-            messagebox.showerror(APP, tr("Fréquence illisible :") + f" {t}")
-            return
+            messagebox.showerror(APP, tr("Fréquence illisible :") + f" {text}", parent=parent or self)
+            return False
+        if add:
+            self._freq_add(hz)
         self._qsy(hz)
+        return True
 
     # ------------------------------------------------------------- phrases des bulles
     DEFAULT_PHRASES = ("Bonjour de {MOI}", "Bonsoir de {MOI}", "Merci pour l'image ! 73 de {MOI}",
