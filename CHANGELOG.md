@@ -1,5 +1,11 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 2.43 (demande de VK6ATI)
+
+- Galerie, clic droit : **« Vider la galerie »** (Dernières reçues ou Dernières envoyées, selon l'onglet affiché), avec confirmation. Les images sont seulement retirées de la galerie : les fichiers restent dans le dossier.
+- Galerie : avec plusieurs images choisies (Ctrl+clic, ou « Choisir toutes les images affichées »), **« Retirer les N images choisies de la galerie »**.
+- Le clic droit marche aussi sur le fond de la galerie, à côté des images.
+
 ## Version 2.42
 
 - Menu « Fréquence ▾ » : nouveau choix **« Ajouter la fréquence du poste »** : la fréquence lue par le CAT entre dans la liste en un clic, à sa place dans l'ordre (LSB ou USB d'après le mode du poste ; sinon LSB sous 10 MHz, USB au-dessus). Grisé si la fréquence est déjà dans la liste ou si le poste ne donne pas sa fréquence.
