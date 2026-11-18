@@ -1990,6 +1990,10 @@ T = [
     ('Ajouter la fréquence du poste', "Add the radio's frequency", 'Frequenz des Geräts hinzufügen', 'Añadir la frecuencia del equipo', 'Aggiungi la frequenza della radio'),
     ('Ajouter à la liste', 'Add to the list', 'Zur Liste hinzufügen', 'Añadir a la lista', "Aggiungi all'elenco"),
     ('Fréquence ajoutée au menu :', 'Frequency added to the menu:', 'Frequenz zum Menü hinzugefügt:', 'Frecuencia añadida al menú:', 'Frequenza aggiunta al menu:'),
+    ('Retirer les {0} images choisies de la galerie', 'Remove the {0} chosen pictures from the gallery', 'Die {0} gewählten Bilder aus der Galerie entfernen', 'Quitar las {0} imágenes elegidas de la galería', 'Rimuovi le {0} immagini scelte dalla galleria'),
+    ('Vider la galerie', 'Clear the gallery', 'Galerie leeren', 'Vaciar la galería', 'Svuota la galleria'),
+    ('Retirer les {0} images de la galerie ?', 'Remove the {0} pictures from the gallery?', 'Die {0} Bilder aus der Galerie entfernen?', '¿Quitar las {0} imágenes de la galería?', 'Rimuovere le {0} immagini dalla galleria?'),
+    ('Les fichiers restent dans le dossier (bouton « Dossier »).', 'The files stay in the folder (“Folder” button).', 'Die Dateien bleiben im Ordner (Schaltfläche „Ordner“).', 'Los archivos permanecen en la carpeta (botón «Carpeta»).', 'I file restano nella cartella (pulsante «Cartella»).'),
 ]
 
 _lang = "fr"

@@ -117,6 +117,29 @@ class GalleryStore:
             self.items = [e for e in self.items if e is not entry]
         self.save()
 
+    def remove_many(self, entries):
+        """2.43 (VK6ATI) : retire plusieurs images de la galerie (les fichiers restent). -> nombre."""
+        ids = {id(e) for e in entries}
+        with self.lock:
+            n = len(self.items)
+            self.items = [e for e in self.items if id(e) not in ids]
+            n -= len(self.items)
+        self.save()
+        return n
+
+    def count(self, direction):
+        with self.lock:
+            return sum(1 for e in self.items if e.get("dir") == direction)
+
+    def clear_dir(self, direction):
+        """2.43 (VK6ATI) : vide la galerie « reçues » ou « envoyées » (les fichiers restent). -> nombre."""
+        with self.lock:
+            n = len(self.items)
+            self.items = [e for e in self.items if e.get("dir") != direction]
+            n -= len(self.items)
+        self.save()
+        return n
+
     def latest(self, direction, n):
         with self.lock:
             return [e for e in self.items if e.get("dir") == direction
@@ -166,6 +189,7 @@ class GalleryView(tk.Frame):
         self.cv.bind("<MouseWheel>", lambda e: self.cv.yview_scroll(-1 if e.delta > 0 else 1, "units"))
         self.cv.bind("<Button-4>", lambda e: self.cv.yview_scroll(-1, "units"))
         self.cv.bind("<Button-5>", lambda e: self.cv.yview_scroll(1, "units"))
+        self.cv.bind("<Button-3>", self._popup_bg)     # 2.43 : clic droit à côté des images
         self.lb_status = tk.Label(self, text="", bg="black", fg="#bbbbbb", anchor="w")
         self.lb_status.pack(fill="x", padx=6)
         self.menu = tk.Menu(self, tearoff=0)
@@ -386,6 +410,7 @@ class GalleryView(tk.Frame):
         m.add_separator()
         m.add_command(label=self.tr("Ouvrir le dossier"), command=lambda: self.app.gallery_folder(e))
         m.add_command(label=self.tr("Retirer de la galerie"), command=lambda: self._remove(e))
+        self._add_clear_items(m)
         try:
             m.tk_popup(ev.x_root, ev.y_root)
         finally:
@@ -394,6 +419,57 @@ class GalleryView(tk.Frame):
     def _remove(self, e):
         self.store.remove(e)
         self.refresh()
+
+    # 2.43 (demande de VK6ATI) : retirer plusieurs images, ou vider la galerie d'un coup
+    def _add_clear_items(self, m):
+        k = len(self.selected())
+        if k > 1:
+            m.add_command(label=self.tr(f"Retirer les {k} images choisies de la galerie"),
+                          command=self._remove_selection)
+        name = self.tr("Dernières reçues") if self.v_dir.get() == "rx" else self.tr("Dernières envoyées")
+        m.add_command(label=self.tr("Vider la galerie") + f" ({name})…", command=self._clear_dir,
+                      state="normal" if self.store and self.store.count(self.v_dir.get()) else "disabled")
+
+    def _popup_bg(self, ev):
+        """Clic droit sur le fond de la galerie (pas sur une image)."""
+        if self.cv.find_withtag("current"):
+            return                                  # sur une image : son propre menu
+        m = self.menu
+        m.delete(0, "end")
+        m.add_command(label=self.tr("Choisir toutes les images affichées (envoi groupé)"), command=self.select_all)
+        if self.sel:
+            m.add_command(label=self.tr("Annuler le choix des images"), command=self.clear_selection)
+        m.add_separator()
+        self._add_clear_items(m)
+        try:
+            m.tk_popup(ev.x_root, ev.y_root)
+        finally:
+            m.grab_release()
+
+    def _remove_selection(self):
+        n = self.store.remove_many(self.selected())
+        self.sel = []
+        self.refresh()
+        return n
+
+    def _clear_dir(self, ask=True):
+        if self.store is None:
+            return 0
+        d = self.v_dir.get()
+        n = self.store.count(d)
+        if not n:
+            return 0
+        if ask:
+            from tkinter import messagebox
+            if not messagebox.askyesno(self.tr("Galerie"),
+                                       self.tr(f"Retirer les {n} images de la galerie ?") + "\n\n"
+                                       + self.tr("Les fichiers restent dans le dossier (bouton « Dossier »)."),
+                                       parent=self):
+                return 0
+        n = self.store.clear_dir(d)
+        self.sel = []
+        self.refresh()
+        return n
 
     def _open_dir(self):
         d = self.store.folder if self.store else None

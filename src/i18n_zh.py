@@ -1200,4 +1200,8 @@ ZH = {
     'Ajouter la fréquence du poste': '添加电台当前频率',
     'Ajouter à la liste': '添加到列表',
     'Fréquence ajoutée au menu :': '频率已添加到菜单：',
+    'Retirer les {0} images choisies de la galerie': '从图库中移除所选的 {0} 张图像',
+    'Vider la galerie': '清空图库',
+    'Retirer les {0} images de la galerie ?': '从图库中移除这 {0} 张图像？',
+    'Les fichiers restent dans le dossier (bouton « Dossier »).': '文件仍保留在文件夹中（“文件夹”按钮）。',
 }

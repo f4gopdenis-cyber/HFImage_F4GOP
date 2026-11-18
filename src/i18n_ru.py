@@ -1208,4 +1208,8 @@ RU = {
     'Ajouter la fréquence du poste': 'Добавить частоту трансивера',
     'Ajouter à la liste': 'Добавить в список',
     'Fréquence ajoutée au menu :': 'Частота добавлена в меню:',
+    'Retirer les {0} images choisies de la galerie': 'Убрать {0} выбранных изображений из галереи',
+    'Vider la galerie': 'Очистить галерею',
+    'Retirer les {0} images de la galerie ?': 'Убрать {0} изображений из галереи?',
+    'Les fichiers restent dans le dossier (bouton « Dossier »).': 'Файлы остаются в папке (кнопка «Папка»).',
 }
