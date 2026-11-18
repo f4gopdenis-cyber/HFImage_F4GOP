@@ -1204,4 +1204,5 @@ ZH = {
     'Vider la galerie': '清空图库',
     'Retirer les {0} images de la galerie ?': '从图库中移除这 {0} 张图像？',
     'Les fichiers restent dans le dossier (bouton « Dossier »).': '文件仍保留在文件夹中（“文件夹”按钮）。',
+    'serveurs': '服务器',
 }

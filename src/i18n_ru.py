@@ -1212,4 +1212,5 @@ RU = {
     'Vider la galerie': 'Очистить галерею',
     'Retirer les {0} images de la galerie ?': 'Убрать {0} изображений из галереи?',
     'Les fichiers restent dans le dossier (bouton « Dossier »).': 'Файлы остаются в папке (кнопка «Папка»).',
+    'serveurs': 'серверов',
 }

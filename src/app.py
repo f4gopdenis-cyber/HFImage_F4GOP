@@ -2641,7 +2641,7 @@ class App(tk.Tk):
             host, port = self.v_nethost.get().strip() or presence.DEFAULT_HOST, int(self.v_netport.get())
         except (tk.TclError, ValueError):
             host, port = presence.DEFAULT_HOST, presence.DEFAULT_PORT
-        self.net = presence.Presence(
+        self.net = presence.MultiPresence(
             host, port,
             on_station=lambda k, d: self.ui(self._net_station, k, d),
             on_rxok=lambda d: self.ui(self._net_rxok, d),
@@ -2668,14 +2668,23 @@ class App(tk.Tk):
 
     def _net_state(self, ok, why):
         if ok and not self.net_ok:
-            self.log(f"Internet : connecté au serveur de présence ({self.net.host if self.net else '?'}).")
+            self.log(f"Internet : connecté au serveur de présence ({self._net_servers_text()}).")
         elif not ok and self.net_ok:
             self.log("Internet : serveur de présence injoignable, nouvel essai automatique…")
         self.net_ok = ok
-        if not ok:
-            self.online.clear()
+        # 2.44 : la liste n'est plus vidée à la moindre coupure : les stations restent affichées
+        # jusqu'à 5 minutes sans nouvelles (comme une station silencieuse), le temps de se reconnecter
         self._net_status()
         self._heard_refresh()
+
+    def _net_servers_text(self):
+        net = self.net
+        if net is None:
+            return "?"
+        if hasattr(net, "servers"):
+            on = [h for h, c in net.servers() if c]
+            return ", ".join(on) if on else net.host
+        return net.host
 
     def _net_status(self):
         if not hasattr(self, "lb_netstat"):
@@ -2684,6 +2693,9 @@ class App(tk.Tk):
             txt = "Désactivé" if not self.v_net.get() else "Indicatif manquant"
         elif self.net_ok:
             txt = tr(f"Connecté — {len(self.online)} station(s) en ligne")
+            srv = self.net.servers() if hasattr(self.net, "servers") else []
+            if len(srv) > 1:
+                txt += f"  ({sum(1 for _h, c in srv if c)}/{len(srv)} " + tr("serveurs") + ")"
         else:
             txt = "Connexion en cours…"
         self._set_text(self.lb_netstat, txt)

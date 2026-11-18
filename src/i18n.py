@@ -1994,6 +1994,7 @@ T = [
     ('Vider la galerie', 'Clear the gallery', 'Galerie leeren', 'Vaciar la galería', 'Svuota la galleria'),
     ('Retirer les {0} images de la galerie ?', 'Remove the {0} pictures from the gallery?', 'Die {0} Bilder aus der Galerie entfernen?', '¿Quitar las {0} imágenes de la galería?', 'Rimuovere le {0} immagini dalla galleria?'),
     ('Les fichiers restent dans le dossier (bouton « Dossier »).', 'The files stay in the folder (“Folder” button).', 'Die Dateien bleiben im Ordner (Schaltfläche „Ordner“).', 'Los archivos permanecen en la carpeta (botón «Carpeta»).', 'I file restano nella cartella (pulsante «Cartella»).'),
+    ('serveurs', 'servers', 'Server', 'servidores', 'server'),
 ]
 
 _lang = "fr"

@@ -28,6 +28,13 @@ import time
 BASE = "hfimage/v1"
 DEFAULT_HOST = "broker.hivemq.com"
 DEFAULT_PORT = 1883
+# 2.44 : deuxième serveur public, utilisé EN MÊME TEMPS que le serveur par défaut (HiveMQ est
+# souvent surchargé : connexions refusées « rate exceeded », coupures). Les deux listes sont fusionnées.
+SECOND_HOST = "broker.emqx.io"
+# accès de secours de chaque serveur public si le port 1883 est bloqué (TLS, puis websockets)
+FALLBACKS = {DEFAULT_HOST: (8883, 8884, 8000), SECOND_HOST: (8883, 8084, 8083)}
+WS_PORTS = (8000, 8080, 8083, 8084, 8884, 443)
+TLS_PORTS = (8883, 8884, 8084, 443)
 STALE_S = 5 * 60          # une présence non rafraîchie depuis 5 min est considérée hors ligne
 FLASH_KEEP_S = 3600       # hybride éclair : liens gardés 1 h
 FLASH_MAX = 300           # et au plus 300 (les plus récents)
@@ -65,8 +72,8 @@ class Presence:
         # serveur par défaut : si le port réglé est bloqué (pare-feu, fournisseur d'accès),
         # on essaie tout seul les autres accès du même serveur, jusqu'à ce que l'un réponde
         self._ports = [self.port]
-        if self.host == DEFAULT_HOST:
-            self._ports += [p for p in self.FALLBACK_PORTS if p != self.port]
+        if self.host in FALLBACKS:
+            self._ports += [p for p in FALLBACKS[self.host] if p != self.port]
         self._try = 0
         self._connect()
 
@@ -76,12 +83,12 @@ class Presence:
         cid = f"hfimage-{_topic_call(self.call)}-{random.randrange(1 << 30):x}"
         # 1883 : MQTT simple ; 8883 : chiffré (TLS) ; 8000 / 8884 : par le web (websockets),
         # utile si un pare-feu bloque le port 1883
-        ws = self.port in (8000, 8080, 8884, 443)
+        ws = self.port in WS_PORTS
         c = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2, client_id=cid, clean_session=True,
                         transport="websockets" if ws else "tcp")
         if ws:
             c.ws_set_options(path="/mqtt")
-        if self.port in (8883, 8884, 443):
+        if self.port in TLS_PORTS:
             c.tls_set()
         c.will_set(self._st_topic(), b"", qos=1, retain=True)       # effacé si on disparaît
         c.on_connect = self._on_connect
@@ -195,11 +202,33 @@ class Presence:
                     del self.flash[k]
 
     # ------------------------------------------------------------------ rappels MQTT
+    def _why(self, reason):
+        """2.44 : raison d'un refus ou d'une coupure, en clair pour le journal."""
+        r = str(reason or "")
+        low = r.lower()
+        if "rate" in low or "quota" in low or "busy" in low or "unavailable" in low:
+            txt = "serveur surchargé (trop de connexions)"
+        elif "authoriz" in low or "bad user" in low:
+            txt = "connexion refusée par le serveur"
+        elif not r or low in ("success", "normal disconnection"):
+            txt = "connexion coupée"
+        else:
+            txt = r
+        return f"{txt} ({r})" if r and txt != r else txt
+
+    def _note(self, msg):
+        """Message dans le journal, une seule fois tant qu'il ne change pas (pas de répétition)."""
+        if msg != getattr(self, "_last_note", None):
+            self._last_note = msg
+            self.log(msg)
+
     def _on_connect(self, client, userdata, flags, reason, props=None):
         if getattr(reason, "is_failure", False):
             self.connected = False
+            self._note(f"Présence : {self.host} — {self._why(reason)}, nouvel essai automatique…")
             self.on_state(False, str(reason))
             return
+        self._last_note = None
         self.connected = True
         if not self.ever and self._try:
             self.log(f"Présence : connecté par le port {self.port} (le port {self._ports[0]} semble bloqué).")
@@ -215,6 +244,8 @@ class Presence:
         was = self.connected
         self.connected = False
         if was:
+            if self.client is client:                  # pas un arrêt voulu (stop)
+                self._note(f"Présence : {self.host} — {self._why(reason)}, nouvel essai automatique…")
             self.on_state(False, str(reason))
 
     def _on_message(self, client, userdata, msg):
@@ -243,3 +274,116 @@ class Presence:
                     self.on_rxok(d)
         except Exception as e:                                 # message mal formé : ignoré
             self.log(f"Présence : message ignoré ({e})")
+
+
+class MultiPresence:
+    """2.44 : présence sur plusieurs serveurs à la fois (serveur par défaut + serveur public de secours).
+    Même interface que Presence pour le programme : on publie sur tous les serveurs joignables, et les
+    stations, reports (Rx Ok) et liens d'hybride éclair reçus sont fusionnés, sans doublon.
+    Un serveur réglé à la main (club…) est utilisé seul, comme avant."""
+
+    DEDUP_S = 600                 # un même Rx Ok reçu par les deux serveurs : pris une seule fois
+
+    def __init__(self, host, port, on_station, on_rxok, on_state, log=lambda m: None, hosts=None):
+        host = host or DEFAULT_HOST
+        if hosts is None:
+            hosts = [(host, port)] + ([(SECOND_HOST, DEFAULT_PORT)] if host == DEFAULT_HOST else [])
+        self.on_station, self.on_rxok, self.on_state, self.log = on_station, on_rxok, on_state, log
+        self._lock = threading.Lock()
+        self._where = {}          # clé de station -> {indice du serveur: données}
+        self._rx_seen = {}        # empreinte d'un Rx Ok -> heure
+        self.members = []
+        for i, (h, p) in enumerate(hosts):
+            self.members.append(Presence(h, p, on_station=lambda k, d, i=i: self._station(i, k, d),
+                                         on_rxok=lambda d: self._rxok(d),
+                                         on_state=lambda ok, why, i=i: self._state(i, ok, why), log=log))
+        self.host = " + ".join(m.host for m in self.members)
+        self._ok = False
+
+    # --- interface de Presence
+    @property
+    def connected(self):
+        return any(m.connected for m in self.members)
+
+    @property
+    def call(self):
+        return self.members[0].call
+
+    @property
+    def tag(self):
+        return self.members[0].tag
+
+    @tag.setter
+    def tag(self, v):
+        for m in self.members:
+            m.tag = v
+
+    def start(self, call, info):
+        for m in self.members:
+            m.start(call, info)
+
+    def stop(self):
+        for m in self.members:
+            m.stop()
+        with self._lock:
+            self._where.clear()
+        self._ok = False
+
+    def update(self, **info):
+        for m in self.members:
+            m.update(**info)
+
+    def send_rxok(self, to_call, image_id, report=None, loc=""):
+        return any([m.send_rxok(to_call, image_id, report, loc) for m in self.members])
+
+    def publish_flash(self, key, call, url, size, crc, fmt, image_id):
+        return any([m.publish_flash(key, call, url, size, crc, fmt, image_id) for m in self.members])
+
+    def get_flash(self, key):
+        for m in self.members:
+            r = m.get_flash(key)
+            if r is not None:
+                return r
+        return None
+
+    def servers(self):
+        """-> [(serveur, connecté ?)]"""
+        return [(m.host, m.connected) for m in self.members]
+
+    # --- fusion
+    def _station(self, i, key, d):
+        with self._lock:
+            where = self._where.setdefault(key, {})
+            if d is None:
+                where.pop(i, None)
+                rest = next(iter(where.values()), None)
+                if not where:
+                    del self._where[key]
+            else:
+                where[i] = d
+                rest = d
+        # partie d'un serveur mais encore présente sur l'autre : on garde la station
+        self.on_station(key, rest)
+
+    def _rxok(self, d):
+        k = (str(d.get("from")).upper(), d.get("id"), str(d.get("to") or "").upper(), d.get("report"))
+        now = time.time()
+        with self._lock:
+            for x in [x for x, t in self._rx_seen.items() if now - t > self.DEDUP_S]:
+                del self._rx_seen[x]
+            if k in self._rx_seen:
+                return
+            self._rx_seen[k] = now
+        self.on_rxok(d)
+
+    def _state(self, i, ok, why):
+        if not ok:
+            with self._lock:                         # ses stations ne sont plus « vues » par ce serveur
+                for where in self._where.values():
+                    where.pop(i, None)
+                self._where = {k: w for k, w in self._where.items() if w}
+        now_ok = self.connected
+        if now_ok != self._ok or ok:
+            self._ok = now_ok
+            self.on_state(now_ok, "" if now_ok else why)
+
