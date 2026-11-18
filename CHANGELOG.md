@@ -1,5 +1,11 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 2.44 — stations en ligne plus fiables
+
+- Stations en ligne : HFImage se connecte maintenant à **deux serveurs publics à la fois**, HiveMQ (broker.hivemq.com) et EMQX (broker.emqx.io). La présence est publiée sur les deux et les listes sont réunies, sans doublon ; un « Rx Ok » reçu par les deux n'est compté qu'une fois. Le serveur HiveMQ est souvent surchargé (connexions refusées, coupures) : un seul serveur qui répond suffit maintenant. Les stations qui n'ont pas encore mis à jour restent visibles (HiveMQ). Un serveur réglé à la main (club…) est utilisé seul, comme avant. Réglages : « Connecté — N station(s) en ligne (2/2 serveurs) ».
+- La liste des stations n'est plus vidée à la moindre coupure : les stations restent affichées jusqu'à 5 minutes sans nouvelles, le temps de se reconnecter.
+- Journal : la raison d'un refus ou d'une coupure du serveur est écrite en clair (par exemple « serveur surchargé (trop de connexions) »), une seule fois et non à chaque essai.
+
 ## Version 2.43 (demande de VK6ATI)
 
 - Galerie, clic droit : **« Vider la galerie »** (Dernières reçues ou Dernières envoyées, selon l'onglet affiché), avec confirmation. Les images sont seulement retirées de la galerie : les fichiers restent dans le dossier.

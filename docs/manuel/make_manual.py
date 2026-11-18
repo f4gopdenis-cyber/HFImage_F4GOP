@@ -676,7 +676,10 @@ s.append(PageBreak())
 s.append(P("7. Stations en ligne, Rx Ok et carte", "h1"))
 s.append(P("Avec <b>Réglages → Internet</b> coché, chaque HFImage ouvert se signale sur un serveur public "
            "(indicatif, locator, fréquence, émission / réception) : la liste <b>Stations</b> montre tout de suite "
-           "les stations qui ont HFImage ouvert, avec leur fréquence. Aucune autre donnée n'est partagée."))
+           "les stations qui ont HFImage ouvert, avec leur fréquence. Aucune autre donnée n'est partagée. "
+           "Depuis la version 2.44, HFImage utilise <b>deux serveurs publics à la fois</b> (HiveMQ et EMQX) et réunit "
+           "les deux listes : si l'un est surchargé ou en panne, l'autre prend le relais. Pendant une coupure, les "
+           "stations restent affichées jusqu'à 5 minutes ; la raison d'un refus du serveur est écrite dans le journal."))
 s.append(P("Dans la liste, <b>*</b> signale une station en émission (en rouge) et <b>HYB</b> une station en <b>mode "
            "hybride</b> (en bleu) : coché chez elle, ou annonce hybride entendue par radio dans la dernière demi-heure. "
            "Vos correspondants vous voient de même quand vous cochez « Mode hybride » (version 0.46 ou plus récente). "

@@ -641,7 +641,10 @@ s.append(P("<b>Did my correspondent receive my message?</b> As soon as a message
 s.append(P("9. Stations online, Rx Ok and map", "h1"))
 s.append(P("With <b>Settings → Internet</b> ticked, each running HFImage announces itself on a public server "
            "(callsign, locator, frequency, transmitting / receiving): the <b>Stations</b> list immediately shows the "
-           "stations that have HFImage open, with their frequency. No other data is shared."))
+           "stations that have HFImage open, with their frequency. No other data is shared. "
+           "Since version 2.44, HFImage uses <b>two public servers at once</b> (HiveMQ and EMQX) and merges both lists: "
+           "if one is overloaded or down, the other takes over. During a short outage, stations stay listed for up to "
+           "5 minutes; the reason a server refuses the connection is written in the log."))
 s += B(["In the list, <b>*</b> marks a station transmitting (red) and <b>HYB</b> a station in hybrid mode (blue). "
         "Double-click a station for details in the log.",
         "<b>Rx Ok</b>: the stations that received your picture, with their <b>report in dB</b>, visible to everyone "

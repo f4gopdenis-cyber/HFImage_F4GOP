@@ -66,7 +66,7 @@ import random
 import wave
 
 APP = "HFImage F4GOP"
-VERSION = "2.43"
+VERSION = "2.44"
 
 
 def _take_profile(argv):
