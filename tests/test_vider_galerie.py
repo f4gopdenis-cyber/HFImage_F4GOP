@@ -88,10 +88,10 @@ class ViderGalerie(unittest.TestCase):
         self.assertIn("Vider la galerie (Dernières reçues)…", labels)
         g.clear_selection()
         g.set_dir("tx")
-        with mock.patch.object(g.menu, "tk_popup"), mock.patch.object(g.cv, "find_withtag", return_value=()):
+        with mock.patch.object(g.menu_bg, "tk_popup"), mock.patch.object(g, "_on_image", return_value=False):
             g._popup_bg(Ev())
-        labels = [g.menu.entrycget(i, "label") for i in range(g.menu.index("end") + 1)
-                  if g.menu.type(i) != "separator"]
+        labels = [g.menu_bg.entrycget(i, "label") for i in range(g.menu_bg.index("end") + 1)
+                  if g.menu_bg.type(i) != "separator"]
         self.assertIn("Vider la galerie (Dernières envoyées)…", labels)
         self.assertNotIn("Retirer les 2 images choisies de la galerie", labels)
 

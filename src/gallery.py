@@ -193,6 +193,7 @@ class GalleryView(tk.Frame):
         self.lb_status = tk.Label(self, text="", bg="black", fg="#bbbbbb", anchor="w")
         self.lb_status.pack(fill="x", padx=6)
         self.menu = tk.Menu(self, tearoff=0)
+        self.menu_bg = tk.Menu(self, tearoff=0)      # 2.45 : menu du fond, séparé de celui des images
         self._cols = 0
         self._paint_btns()
 
@@ -387,6 +388,7 @@ class GalleryView(tk.Frame):
         self.app.gallery_full(e)
 
     def _popup(self, ev, e):
+        self._img_click = getattr(ev, "serial", None)    # 2.45 : le menu du fond ne s'ouvrira pas
         m = self.menu
         m.delete(0, "end")
         if self.sel:
@@ -430,11 +432,23 @@ class GalleryView(tk.Frame):
         m.add_command(label=self.tr("Vider la galerie") + f" ({name})…", command=self._clear_dir,
                       state="normal" if self.store and self.store.count(self.v_dir.get()) else "disabled")
 
+    def _on_image(self, ev):
+        """2.45 : le clic était-il sur une image ? D'après la place de la souris AU MOMENT du clic (sous
+        Windows, le menu de l'image bloque jusqu'au choix : ensuite la souris n'est plus sur l'image)."""
+        if getattr(ev, "serial", None) is not None and ev.serial == getattr(self, "_img_click", None):
+            return True                             # même clic que le menu de l'image
+        try:
+            x, y = self.cv.canvasx(ev.x), self.cv.canvasy(ev.y)
+            items = self.cv.find_overlapping(x, y, x, y)
+        except (tk.TclError, AttributeError, TypeError):
+            return False
+        return any(re.fullmatch(r"t\d+", t) for i in items for t in self.cv.gettags(i))
+
     def _popup_bg(self, ev):
         """Clic droit sur le fond de la galerie (pas sur une image)."""
-        if self.cv.find_withtag("current"):
+        if self._on_image(ev):
             return                                  # sur une image : son propre menu
-        m = self.menu
+        m = self.menu_bg
         m.delete(0, "end")
         m.add_command(label=self.tr("Choisir toutes les images affichées (envoi groupé)"), command=self.select_all)
         if self.sel:
