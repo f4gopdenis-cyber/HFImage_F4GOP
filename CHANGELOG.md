@@ -1,5 +1,9 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 2.45 — correction (signalé par F4GOP)
+
+- Galerie, sous Windows : le clic droit sur une image ouvrait aussi, après coup, le menu du fond de la galerie, qui effaçait le choix fait. « Renvoyer cette image (onglet TX) », « Répondre avec cette image »… ne faisaient plus rien depuis la 2.43. Le menu du fond ne s'ouvre plus que sur un clic à côté des images, et il est séparé du menu des images.
+
 ## Version 2.44 — stations en ligne plus fiables
 
 - Stations en ligne : HFImage se connecte maintenant à **deux serveurs publics à la fois**, HiveMQ (broker.hivemq.com) et EMQX (broker.emqx.io). La présence est publiée sur les deux et les listes sont réunies, sans doublon ; un « Rx Ok » reçu par les deux n'est compté qu'une fois. Le serveur HiveMQ est souvent surchargé (connexions refusées, coupures) : un seul serveur qui répond suffit maintenant. Les stations qui n'ont pas encore mis à jour restent visibles (HiveMQ). Un serveur réglé à la main (club…) est utilisé seul, comme avant. Réglages : « Connecté — N station(s) en ligne (2/2 serveurs) ».
