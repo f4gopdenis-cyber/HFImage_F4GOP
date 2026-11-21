@@ -1,5 +1,18 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 2.47 (signalé par Keith Woodley, WASSTV)
+
+- Traductions : les phrases qui commencent par des espaces (« ↳ message ci-dessous envoyé par… ») restaient en français ; elles sont maintenant traduites.
+- Traduction des messages : quand le service gratuit répond par une erreur (« PLEASE SELECT TWO DISTINCT LANGUAGES », message déjà dans la bonne langue…), plus rien ne s'affiche à la place de la traduction.
+- Listes (journal des stations, messages envoyés…) : la hauteur des lignes suit la taille de la police ; sous Linux, les lignes se chevauchaient ou le texte était coupé à moitié.
+- « Envoyer le texte seul » : un deuxième clic pendant l'émission est ignoré (il affichait « Écrivez d'abord le texte », la zone étant déjà vidée).
+- Les boîtes de message s'ouvrent toujours devant la fenêtre active (sous Linux, certaines restaient cachées derrière).
+- Dépôt hybride : délai porté à 60 s et nouvel essai automatique si la liaison coupe (une image de 1 Mo sur une liaison lente échouait).
+- Messages envoyés : double-clic dans la liste pour voir le message en entier (et le copier). Dans « Messages reçus », les accusés de réception ne répètent plus le texte coupé pour chaque station.
+- Linux : une image glissée depuis Chrome ou Firefox est téléchargée (8 Mo au plus) et ouverte ; un fichier ou un lien d'image copié est accepté par Ctrl+V ; s'il manque l'outil du presse-papiers, le message dit quoi installer (wl-clipboard ou xclip).
+- « Ouvrir une image » s'ouvre dans le dernier dossier utilisé (sinon le dossier Images).
+- Texte waterfall : « Enregistrer » ouvre une fenêtre « Enregistrer sous » (nom libre) ; « begin.wav » est toujours copié dans le dossier des sons. Bulle d'aide du choix Normal / Inversé (LSB).
+
 ## Version 2.46 (demande de VK6ATI)
 
 - Mode hybride : après « ⇪ Déposer », le bouton devient **vert « ✔ Déposée »** tant que l'image déposée d'avance attend d'être émise. Il redevient normal après l'émission, quand on choisit une autre image ou quand on décoche le mode hybride. Pratique pour un animateur de réseau : on voit d'un coup d'œil que l'image du prochain passage est déjà sur le serveur.
