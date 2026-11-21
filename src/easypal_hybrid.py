@@ -148,20 +148,8 @@ def _order_for(callsign):
 def upload(cfg, name: str, data: bytes, progress=None, keep=0, call=None, log=None):
     """Dépose l'image dans <dossier>/HybridFiles1 du serveur FTP de l'onglet Réglages.
     keep > 0 : ensuite, on ne garde que nos `keep` dernières images."""
-    ftp = hybrid._ftp_connect(cfg)
+    ftp = hybrid.store(cfg, _files_path(cfg.get("dir")), name, data, progress, log=log)
     try:
-        hybrid._ftp_cd(ftp, _files_path(cfg.get("dir")))
-        sent = [0]
-
-        def cb(block):
-            sent[0] += len(block)
-            if progress:
-                progress(sent[0] / max(1, len(data)))
-
-        ftp.storbinary(f"STOR {name}", io.BytesIO(data), blocksize=8192, callback=cb)
-    except ftplib.all_errors as e:
-        raise RuntimeError(f"envoi FTP impossible : {e}") from e
-    else:
         if keep and call:
             hybrid.prune(ftp, mine_pattern(call), keep, order=_order_for(call), log=log)
     finally:

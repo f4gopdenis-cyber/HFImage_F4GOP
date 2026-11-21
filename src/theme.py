@@ -426,7 +426,17 @@ class Appearance:
         self.map = mapper
         self._named_fonts()
         self._ttk()
+        self._row_height()
         self.apply(self.root)
+
+    def _row_height(self):
+        """2.47 (Keith Woodley, Linux) : hauteur des lignes des listes d'après la police réelle ; sinon,
+        avec une police plus grande (écrans Linux), les lignes se chevauchent ou le texte est coupé."""
+        try:
+            ls = max(tkfont.nametofont(n).metrics("linespace") for n in ("TkDefaultFont", "TkTextFont"))
+            self.style.configure("Treeview", rowheight=max(18, ls + 6))
+        except (tk.TclError, ValueError):
+            pass
 
     # ---------------------------------------------------------------- polices
     def _size(self, size):

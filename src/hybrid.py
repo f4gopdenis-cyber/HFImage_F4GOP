@@ -112,6 +112,46 @@ def public_url(base: str, name: str) -> str:
     return base.rstrip("/") + "/" + urllib.parse.quote(name)
 
 
+UPLOAD_TIMEOUT = 60       # 2.47 (Keith Woodley) : 20 s coupaient l'envoi d'une image de 1 Mo sur une liaison lente
+
+
+def store(cfg, directory, name, data, progress=None, tries=2, log=None):
+    """Dépose `data` sous `name` dans `directory`, avec un nouvel essai si la liaison coupe ou
+    dépasse le délai. -> connexion FTP encore ouverte (pour le ménage), à fermer par l'appelant."""
+    last = None
+    for k in range(tries):
+        ftp = _ftp_connect(cfg, timeout=UPLOAD_TIMEOUT)
+        try:
+            _ftp_cd(ftp, directory)
+            sent = [0]
+
+            def cb(block):
+                sent[0] += len(block)
+                if progress:
+                    progress(sent[0] / max(1, len(data)))
+            ftp.storbinary(f"STOR {name}", io.BytesIO(data), blocksize=8192, callback=cb)
+            return ftp
+        except ftplib.error_perm as e:                 # refus du serveur : inutile de réessayer
+            _close(ftp)
+            raise RuntimeError(f"envoi FTP impossible : {e}") from e
+        except (OSError, EOFError, ftplib.Error) as e:
+            _close(ftp)
+            last = e
+            if k + 1 < tries and log:
+                log(f"Serveur : envoi interrompu ({e}), nouvel essai…")
+    raise RuntimeError(f"envoi FTP impossible : {last} (liaison Internet lente ou serveur occupé)")
+
+
+def _close(ftp):
+    try:
+        ftp.quit()
+    except Exception:
+        try:
+            ftp.close()
+        except Exception:
+            pass
+
+
 def _ftp_connect(cfg, timeout=20):
     host, port = cfg["host"].strip(), int(cfg.get("port") or 21)
     if not host:
@@ -253,27 +293,12 @@ def upload(cfg, name: str, data: bytes, progress=None, keep=0, call=None, log=No
     sur le serveur que nos `keep` dernières images (indicatif `call`)."""
     if not cfg.get("url", "").strip().lower().startswith(("http://", "https://")):
         raise RuntimeError("lien public (http/https) non renseigné (onglet Réglages)")
-    ftp = _ftp_connect(cfg)
+    ftp = store(cfg, cfg.get("dir"), name, data, progress, log=log)
     try:
-        _ftp_cd(ftp, cfg.get("dir"))
-        sent = [0]
-
-        def cb(block):
-            sent[0] += len(block)
-            if progress:
-                progress(sent[0] / len(data))
-
-        ftp.storbinary(f"STOR {name}", io.BytesIO(data), blocksize=8192, callback=cb)
-    except ftplib.all_errors as e:
-        raise RuntimeError(f"envoi FTP impossible : {e}") from e
-    else:
         if keep and call:
             prune(ftp, mine_pattern(call), keep, log=log)
     finally:
-        try:
-            ftp.quit()
-        except Exception:
-            ftp.close()
+        _close(ftp)
     return public_url(cfg["url"], name)
 
 

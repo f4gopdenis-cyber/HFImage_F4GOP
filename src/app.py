@@ -525,9 +525,43 @@ def on_air(d, now=None):
     return now - float(d.get("seen") or d.get("t") or 0) <= TX_FRESH_S
 
 
+def _front_messages(root):
+    """2.47 (Keith Woodley, Linux) : les boîtes de message s'ouvrent devant la fenêtre active ;
+    sans fenêtre « parent », Linux pouvait les mettre derrière (le programme semblait bloqué)."""
+    if getattr(messagebox, "_hf_front", False):
+        return
+    messagebox._hf_front = True
+    for name in ("showinfo", "showwarning", "showerror", "askyesno", "askokcancel", "askyesnocancel",
+                 "askquestion", "askretrycancel"):
+        fn = getattr(messagebox, name, None)
+        if fn is None:
+            continue
+
+        def wrap(*a, _fn=fn, **k):
+            if k.get("parent") is None:
+                k["parent"] = _active_toplevel(getattr(tk, "_default_root", None) or root)
+            return _fn(*a, **k)
+        setattr(messagebox, name, wrap)
+
+
+def _active_toplevel(root):
+    try:
+        w = root.focus_get()
+        top = w.winfo_toplevel() if w is not None else root
+        if top.winfo_viewable():
+            return top
+    except Exception:
+        pass
+    try:
+        return root if root.winfo_exists() else None
+    except Exception:
+        return None
+
+
 class App(tk.Tk):
     def __init__(self):
         super().__init__()
+        _front_messages(self)
         self.title(f"{APP} {VERSION}" + (f" — {PROFILE}" if PROFILE else ""))
         self._set_icon()
         self._linux_menu()
@@ -2252,6 +2286,8 @@ class App(tk.Tk):
             self.tv_sent.heading(c, text=tr(title))
             self.tv_sent.column(c, width=wd, anchor="w", stretch=c != "h")
         self.tv_sent.pack(fill="both", expand=True)
+        self.tv_sent.bind("<Double-Button-1>", self._sent_msg_show)     # 2.47 : message en entier
+        tip(self.tv_sent, "Double-clic : le message envoyé en entier.")
 
     # ------------------------------------------------------------ fenêtre « Lire fichier Wave »
     def _build_wav_window(self):
@@ -2411,6 +2447,8 @@ class App(tk.Tk):
                            width=22, state="readonly")
         cbs.pack(side="left", padx=4)
         cbs.bind("<<ComboboxSelected>>", lambda e: self._wft_sens_changed())
+        tip(cbs, "Inversé (LSB) : lisible à l'endroit sur les cascades RF (SDR, WebSDR). Les stations qui "
+                 "regardent un waterfall audio en LSB le voient alors en miroir : pour elles, choisissez Normal (USB).")
         oi = ttk.Frame(f)
         oi.pack(fill="x", pady=(4, 0))
         ttk.Button(oi, text="Image…", command=self.wft_image).pack(side="left")
@@ -2501,25 +2539,24 @@ class App(tk.Tk):
         self._start_job({"kind": "wftext", "bitmap": bm, "mirror": mirror})
 
     def wft_save(self):
-        from tkinter import simpledialog
         bm = self._wft_bitmap()
         if bm is None:
             messagebox.showinfo(APP, "Écrivez d'abord le texte à envoyer.")
             return
-        name = simpledialog.askstring(APP, tr("Nom du fichier :"),
-                                      initialvalue="image_waterfall.wav" if self._wft_img is not None
-                                      else "texte_waterfall.wav",
-                                      parent=self.win_wft)
-        if not name:
+        # 2.47 (Keith Woodley) : vraie fenêtre « Enregistrer sous » : nom libre (et dossier)
+        d = wavtext.wav_dir(DEFAULT_OUT)
+        p = filedialog.asksaveasfilename(parent=self.win_wft, initialdir=d, defaultextension=".wav",
+                                         initialfile="image_waterfall.wav" if self._wft_img is not None
+                                         else "texte_waterfall.wav", filetypes=[("WAV", "*.wav")])
+        if not p:
             return
-        if not name.lower().endswith(".wav"):
-            name += ".wav"
-        p = os.path.join(wavtext.wav_dir(DEFAULT_OUT), os.path.basename(name))
+        if not p.lower().endswith(".wav"):
+            p += ".wav"
         engine.write_wav(p, wavtext.synth(bm, int(self.v_wavvol.get()), mirror=self._wft_mirror()), 8000)
         self.log(f"Texte waterfall enregistré : {p}")
         self._wav_refresh()
         if messagebox.askyesno(APP, "L'utiliser comme « begin.wav » (avant chaque émission) ?"):
-            shutil.copyfile(p, os.path.join(os.path.dirname(p), "begin.wav"))
+            shutil.copyfile(p, os.path.join(d, "begin.wav"))         # toujours dans le dossier des sons
             self._wav_refresh()
 
     def show_text(self):
@@ -4869,9 +4906,47 @@ class App(tk.Tk):
     IMAGE_EXTS = (".jpg", ".jpeg", ".png", ".gif", ".bmp", ".webp", ".avif", ".svg", ".svgz", ".tif", ".tiff",
                   ".jp2", ".j2k")
 
+    @staticmethod
+    def _local_path(p):
+        """« file:///home/…/photo.jpg » (Linux) -> chemin du fichier."""
+        p = (p or "").strip()
+        if p.lower().startswith("file://"):
+            import urllib.parse
+            p = urllib.parse.unquote(urllib.parse.urlparse(p).path)
+        return p
+
+    URL_MAX_BYTES = 8_000_000
+
+    def _fetch_image_url(self, url):
+        """2.47 (Keith Woodley) : image glissée ou copiée depuis un navigateur (lien http/https) :
+        téléchargée (8 Mo au plus) dans le dossier « collées », puis ouverte dans l'onglet TX."""
+        import urllib.request
+
+        def run():
+            try:
+                req = urllib.request.Request(url, headers={"User-Agent": f"HFImage/{VERSION}"})
+                with urllib.request.urlopen(req, timeout=20) as r:
+                    data = r.read(self.URL_MAX_BYTES + 1)
+                if len(data) > self.URL_MAX_BYTES:
+                    raise RuntimeError(tr("image trop lourde (8 Mo au plus)"))
+                im = Image.open(io.BytesIO(data))
+                im.load()
+            except Exception as e:
+                self.ui(messagebox.showinfo, APP, tr("Le lien glissé ou copié n'est pas une image lisible.")
+                        + f"\n{url}\n\n{e}")
+                return
+            self.ui(self._paste_pil, im)
+        threading.Thread(target=run, daemon=True).start()
+
     def _dropped(self, paths):
         """Fichiers glissés depuis l'Explorateur : une image s'ouvre dans l'onglet TX ;
-        un autre fichier est proposé à l'envoi (par radio, ou en hybride sans limite)."""
+        un autre fichier est proposé à l'envoi (par radio, ou en hybride sans limite).
+        2.47 : une image glissée depuis un navigateur (lien http/https) est téléchargée."""
+        paths = [self._local_path(p) for p in paths]
+        urls = [p for p in paths if p.lower().startswith(("http://", "https://"))]
+        if urls and not any(os.path.isfile(p) for p in paths):
+            self._fetch_image_url(urls[0])
+            return
         paths = [p for p in paths if os.path.isfile(p)]
         if not paths:
             return
@@ -4882,12 +4957,27 @@ class App(tk.Tk):
         elif messagebox.askyesno(APP, tr("Envoyer ce fichier ?") + f"\n{os.path.basename(p)}"):
             self.send_file(p)
 
+    def _img_dir(self):
+        """2.47 (Keith Woodley) : dossier proposé par « Ouvrir une image » : le dernier utilisé, sinon
+        le dossier Images (sous Linux, le dossier personnel est souvent plein de fichiers)."""
+        d = self.conf.get("last_img_dir") or ""
+        if d and os.path.isdir(d):
+            return d
+        home = os.path.expanduser("~")
+        for name in ("Pictures", "Images", "Bilder", "Imágenes", "Immagini"):
+            p = os.path.join(home, name)
+            if os.path.isdir(p):
+                return p
+        return home
+
     def open_image(self):
-        p = filedialog.askopenfilename(filetypes=[("Images", "*.jpg *.jpeg *.png *.svg *.svgz *.bmp *.gif *.webp *.avif *.tif *.tiff"),
+        p = filedialog.askopenfilename(parent=self, initialdir=self._img_dir(),
+                                       filetypes=[("Images", "*.jpg *.jpeg *.png *.svg *.svgz *.bmp *.gif *.webp *.avif *.tif *.tiff"),
                                                   ("JPEG", "*.jpg *.jpeg"), ("SVG", "*.svg *.svgz"),
                                                   ("Tous", "*.*")])
         if not p:
             return
+        self.conf["last_img_dir"] = os.path.dirname(p)
         self.load_image(p)
 
     PASTE_EXT = (".jpg", ".jpeg", ".png", ".svg", ".svgz", ".bmp", ".gif", ".webp", ".avif", ".tif", ".tiff")
@@ -4911,12 +5001,27 @@ class App(tk.Tk):
         « collées » des images, pour garder un fichier (nom repris pour l'envoi, galerie…)."""
         if self.tx_busy:
             return
+        missing = False
         try:
             from PIL import ImageGrab
             data = ImageGrab.grabclipboard()
         except Exception as e:
             data = None
+            missing = "wl-paste" in str(e) or "xclip" in str(e)
             self.log(f"Presse-papiers illisible : {e}")
+        if data is None:
+            # 2.47 (Keith Woodley, Linux) : fichier copié (« file:// ») ou lien d'image copié en texte
+            try:
+                txt = self.clipboard_get().strip()
+            except tk.TclError:
+                txt = ""
+            items = [self._local_path(x) for x in txt.splitlines() if x.strip()]
+            files = [f for f in items if f.lower().endswith(self.PASTE_EXT) and os.path.isfile(f)]
+            if files:
+                data = files
+            elif items and items[0].lower().startswith(("http://", "https://")) and " " not in items[0]:
+                self._fetch_image_url(items[0])
+                return
         if isinstance(data, list):                       # fichier(s) copié(s) dans l'explorateur
             files = [f for f in data if isinstance(f, str) and f.lower().endswith(self.PASTE_EXT)
                      and os.path.isfile(f)]
@@ -4926,11 +5031,21 @@ class App(tk.Tk):
                 return
             data = None
         if not isinstance(data, Image.Image):
+            hint = ""
+            if missing:
+                hint = "\n\n" + tr("Linux : pour lire une image copiée, installez") + (
+                    " wl-clipboard (sudo apt install wl-clipboard)" if os.environ.get("WAYLAND_DISPLAY")
+                    else " xclip (sudo apt install xclip)")
             messagebox.showinfo(APP, tr("Le presse-papiers ne contient pas d'image.") + "\n\n" +
                                 tr("Dans le navigateur : clic droit sur l'image → « Copier l'image », puis Ctrl+V "
-                                   "ou clic droit sur l'image TX → « Coller l'image »."))
+                                   "ou clic droit sur l'image TX → « Coller l'image ».") + hint)
             return
-        im = data
+        self._paste_pil(data)
+
+    def _paste_pil(self, im):
+        """Image collée ou téléchargée -> PNG dans le dossier « collées », ouverte dans l'onglet TX."""
+        if self.tx_busy:
+            return
         if im.mode not in ("RGB", "RGBA", "L"):
             im = im.convert("RGBA" if "A" in im.getbands() else "RGB")
         folder = os.path.join(self.v_folder.get() if hasattr(self, "v_folder") else DEFAULT_OUT, "collées")
@@ -6973,6 +7088,8 @@ class App(tk.Tk):
         threading.Thread(target=run, daemon=True).start()
 
     def send_text(self):
+        if self.tx_busy:
+            return              # 2.47 : 2e clic pendant l'émission (zone déjà vidée) : rien, pas de message
         text = self.txt_msg.get("1.0", "end").strip()
         if not text:
             messagebox.showinfo(APP, "Écrivez d'abord le texte à envoyer.")
@@ -8323,14 +8440,49 @@ class App(tk.Tk):
             return
         short = m["text"] if len(m["text"]) <= 40 else m["text"][:38] + "…"
         rs = "" if rep is None else f" ({rep:+d} dB)"
-        line = tr("✓ {0} a bien reçu votre message").replace("{0}", call) + f" « {short} »{rs}"
-        self.log(line)
+        line = tr("✓ {0} a bien reçu votre message").replace("{0}", call)
+        self.log(line + f" « {short} »{rs}")
+        # 2.47 (Keith Woodley) : dans « Messages reçus », l'accusé ne répète plus le texte coupé pour
+        # chaque station ; l'heure du message envoyé suffit (double-clic dans la liste : texte complet)
         self.msgbox.configure(state="normal")
-        self.msgbox.insert("1.0", f"[{time.strftime('%H:%M')}] {line}\n", "ack")
+        self.msgbox.insert("1.0", f"[{time.strftime('%H:%M')}] {line} "
+                                  f"({tr('message de')} {clocktz.fmt('%H:%M', m['t'], suffix=False)}){rs}\n", "ack")
         self.msgbox.tag_configure("ack", foreground="#1c7f1c")
         self.msgbox.configure(state="disabled")
         self.station_event(call, "Message reçu par le correspondant", "", None,
                            f"« {short} »" + ("" if rep is None else f", report {rep:+d} dB") + f" — {via}")
+
+    def _sent_msg_show(self, e=None):
+        """2.47 (Keith Woodley) : message envoyé affiché en entier (la liste le coupe), à copier."""
+        tv = self.tv_sent
+        sel = tv.focus() or (tv.selection()[0] if tv.selection() else "")
+        if not sel:
+            return None
+        idx = tv.index(sel)
+        items = list(reversed(list(self.sent_msgs.items())))
+        if not 0 <= idx < len(items):
+            return None
+        iid, m = items[idx]
+        w = tk.Toplevel(self.win_txt if getattr(self, "win_txt", None) else self)
+        w.title(tr("Message envoyé") + " — " + clocktz.fmt("%H:%M", m["t"]))
+        w.transient(self)
+        f = ttk.Frame(w, padding=10)
+        f.pack(fill="both", expand=True)
+        t = tk.Text(f, width=60, height=8, wrap="word", font=("TkDefaultFont", 10))
+        t.pack(fill="both", expand=True)
+        t.insert("1.0", m["text"])
+        t.insert("end", "\n\n" + tr("Reçu par") + " : " + self._msg_status(m))
+        t.configure(state="disabled")
+        b = ttk.Frame(f)
+        b.pack(fill="x", pady=(8, 0))
+
+        def copy():
+            self.clipboard_clear()
+            self.clipboard_append(m["text"])
+        ttk.Button(b, text=tr("Fermer"), command=w.destroy).pack(side="right")
+        ttk.Button(b, text=tr("Copier"), command=copy).pack(side="right", padx=6)
+        self._translate_ui(w)
+        return w
 
     def _msg_status(self, m):
         if m["acks"]:

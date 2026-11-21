@@ -32,6 +32,9 @@ class Coller(unittest.TestCase):
         s.PASTE_EXT = A.PASTE_EXT
         s.v_folder.get.return_value = self.dir
         s.paste_image = lambda: A.paste_image(s)
+        s.clipboard_get = lambda: ""                     # 2.47 : presse-papiers texte (Linux) vide
+        s._local_path = A._local_path
+        s._paste_pil = lambda im: A._paste_pil(s, im)
         return s
 
     def test_image_du_navigateur(self):

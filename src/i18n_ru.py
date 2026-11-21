@@ -1215,4 +1215,11 @@ RU = {
     'serveurs': 'серверов',
     '✔ Déposée': '✔ Загружено',
     "Mode hybride : met l'image sur le serveur tout de suite ; à votre tour, « Émettre » envoie directement l'annonce. Vert : image déposée, prête à émettre.": 'Гибридный режим: сразу загружает изображение на сервер; в вашу очередь «Передача» сразу отправляет анонс. Зелёный: изображение загружено, готово к передаче.',
+    'Message envoyé': 'Отправленное сообщение',
+    'Double-clic : le message envoyé en entier.': 'Двойной щелчок: всё отправленное сообщение.',
+    'message de': 'сообщение от',
+    'image trop lourde (8 Mo au plus)': 'изображение слишком большое (не более 8 МБ)',
+    "Le lien glissé ou copié n'est pas une image lisible.": 'Перетащенная или скопированная ссылка не является читаемым изображением.',
+    'Linux : pour lire une image copiée, installez': 'Linux: чтобы читать скопированное изображение, установите',
+    "Inversé (LSB) : lisible à l'endroit sur les cascades RF (SDR, WebSDR). Les stations qui regardent un waterfall audio en LSB le voient alors en miroir : pour elles, choisissez Normal (USB).": 'Инвертировано (LSB): читается правильно на ВЧ-водопадах (SDR, WebSDR). Станции с аудиоводопадом в LSB видят зеркально: для них выберите «Обычно (USB)».',
 }

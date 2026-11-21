@@ -1997,6 +1997,13 @@ T = [
     ('serveurs', 'servers', 'Server', 'servidores', 'server'),
     ('✔ Déposée', '✔ Uploaded', '✔ Hochgeladen', '✔ Subida', '✔ Caricata'),
     ("Mode hybride : met l'image sur le serveur tout de suite ; à votre tour, « Émettre » envoie directement l'annonce. Vert : image déposée, prête à émettre.", 'Hybrid mode: puts the picture on the server right away; when it is your turn, “Transmit” sends the announcement directly. Green: picture uploaded, ready to transmit.', 'Hybridmodus: legt das Bild sofort auf den Server; wenn Sie an der Reihe sind, sendet „Senden“ direkt die Ankündigung. Grün: Bild hochgeladen, bereit zum Senden.', 'Modo híbrido: sube la imagen al servidor enseguida; cuando sea su turno, «Transmitir» envía directamente el anuncio. Verde: imagen subida, lista para transmitir.', "Modo ibrido: carica subito l'immagine sul server; al vostro turno, «Trasmetti» invia direttamente l'annuncio. Verde: immagine caricata, pronta da trasmettere."),
+    ('Message envoyé', 'Sent message', 'Gesendete Nachricht', 'Mensaje enviado', 'Messaggio inviato'),
+    ('Double-clic : le message envoyé en entier.', 'Double-click: the whole sent message.', 'Doppelklick: die ganze gesendete Nachricht.', 'Doble clic: el mensaje enviado completo.', 'Doppio clic: il messaggio inviato per intero.'),
+    ('message de', 'message of', 'Nachricht von', 'mensaje de las', 'messaggio delle'),
+    ('image trop lourde (8 Mo au plus)', 'picture too large (8 MB at most)', 'Bild zu groß (höchstens 8 MB)', 'imagen demasiado grande (8 MB como máximo)', 'immagine troppo grande (al massimo 8 MB)'),
+    ("Le lien glissé ou copié n'est pas une image lisible.", 'The dragged or copied link is not a readable picture.', 'Der gezogene oder kopierte Link ist kein lesbares Bild.', 'El enlace arrastrado o copiado no es una imagen legible.', "Il link trascinato o copiato non è un'immagine leggibile."),
+    ('Linux : pour lire une image copiée, installez', 'Linux: to read a copied picture, install', 'Linux: um ein kopiertes Bild zu lesen, installieren Sie', 'Linux: para leer una imagen copiada, instale', "Linux: per leggere un'immagine copiata, installate"),
+    ("Inversé (LSB) : lisible à l'endroit sur les cascades RF (SDR, WebSDR). Les stations qui regardent un waterfall audio en LSB le voient alors en miroir : pour elles, choisissez Normal (USB).", 'Reversed (LSB): reads the right way on RF waterfalls (SDR, WebSDR). Stations watching an audio waterfall in LSB then see it mirrored: for them, choose Normal (USB).', 'Umgekehrt (LSB): auf HF-Wasserfällen (SDR, WebSDR) richtig lesbar. Stationen mit Audio-Wasserfall in LSB sehen es dann gespiegelt: für sie Normal (USB) wählen.', 'Invertido (LSB): se lee al derecho en las cascadas RF (SDR, WebSDR). Las estaciones que miran una cascada de audio en LSB lo ven en espejo: para ellas, elija Normal (USB).', 'Invertito (LSB): leggibile dritto sulle cascate RF (SDR, WebSDR). Le stazioni che guardano un waterfall audio in LSB lo vedono a specchio: per loro scegliete Normale (USB).'),
 ]
 
 _lang = "fr"
@@ -2018,6 +2025,11 @@ def _build():
     for row in T:
         fr = row[0]
         row = tuple(row) + (ZH.get(fr) or row[1], RU.get(fr) or row[1])   # chinois, russe (sinon l'anglais)
+        if fr != fr.strip():
+            # 2.47 (signalé par Keith Woodley) : texte avec des espaces autour (« ↳ message… ») : tr()
+            # cherche le texte sans ces espaces, qui sont remis tels quels autour de la traduction
+            row = tuple(v.strip() for v in row)
+            fr = row[0]
         if "{0}" in fr:
             parts = re.split(r"\{(\d)\}", fr)
             rx = ""

@@ -11,7 +11,7 @@ l'interface. -> True si le glisser-déposer est actif.
 
 def hook(root, widgets, callback):
     try:
-        from tkinterdnd2 import DND_FILES, TkinterDnD
+        from tkinterdnd2 import DND_FILES, DND_TEXT, TkinterDnD
     except ImportError:
         return False
     TkinterDnD._require(root)                  # charge tkdnd (lève une erreur si impossible)
@@ -28,7 +28,9 @@ def hook(root, widgets, callback):
     ok = False
     for w in widgets:
         try:
-            w.drop_target_register(DND_FILES)      # méthodes ajoutées aux widgets Tk par tkinterdnd2
+            # méthodes ajoutées aux widgets Tk par tkinterdnd2 ; 2.47 : aussi les liens (image glissée
+            # depuis un navigateur), que le programme télécharge
+            w.drop_target_register(DND_FILES, DND_TEXT)
             w.dnd_bind("<<Drop>>", on_drop)
             ok = True
         except Exception:

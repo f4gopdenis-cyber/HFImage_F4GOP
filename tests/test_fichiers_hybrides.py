@@ -69,7 +69,7 @@ class Glisser(unittest.TestCase):
         for q in (img, doc):
             open(q, "wb").close()
         got = []
-        s = types.SimpleNamespace(IMAGE_EXTS=app.App.IMAGE_EXTS, show_tab=lambda t: got.append(t),
+        s = types.SimpleNamespace(IMAGE_EXTS=app.App.IMAGE_EXTS, _local_path=app.App._local_path, show_tab=lambda t: got.append(t),
                                   load_image=lambda p: got.append(("image", p)),
                                   send_file=lambda p: got.append(("fichier", p)))
         app.App._dropped(s, [img])

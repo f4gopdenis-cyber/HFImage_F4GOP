@@ -46,7 +46,15 @@ def _mymemory(text, target):
         src = (m.get("source") or "")[:2].lower()
         if src:
             break
-    if "MYMEMORY WARNING" in out.upper() or "INVALID" in out.upper():
+    # 2.47 : message déjà dans la langue voulue -> MyMemory répond « PLEASE SELECT TWO DISTINCT
+    # LANGUAGES » (état 403) au lieu d'une traduction ; tout état autre que 200 est une erreur
+    try:
+        status = int(data.get("responseStatus") or 200)
+    except (TypeError, ValueError):
+        status = 200
+    up = out.upper()
+    if status != 200 or any(w in up for w in ("MYMEMORY WARNING", "INVALID", "PLEASE SELECT",
+                                              "DISTINCT LANGUAGES", "QUERY LENGTH LIMIT")):
         return "", ""
     return out, src
 

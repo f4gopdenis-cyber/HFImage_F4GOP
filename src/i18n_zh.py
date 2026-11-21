@@ -1207,4 +1207,11 @@ ZH = {
     'serveurs': '服务器',
     '✔ Déposée': '✔ 已上传',
     "Mode hybride : met l'image sur le serveur tout de suite ; à votre tour, « Émettre » envoie directement l'annonce. Vert : image déposée, prête à émettre.": '混合模式：立即把图像上传到服务器；轮到您时，“发射”直接发送公告。绿色：图像已上传，可以发射。',
+    'Message envoyé': '已发送的消息',
+    'Double-clic : le message envoyé en entier.': '双击：查看完整的已发送消息。',
+    'message de': '消息时间',
+    'image trop lourde (8 Mo au plus)': '图像太大（最多 8 MB）',
+    "Le lien glissé ou copié n'est pas une image lisible.": '拖入或复制的链接不是可读的图像。',
+    'Linux : pour lire une image copiée, installez': 'Linux：要读取复制的图像，请安装',
+    "Inversé (LSB) : lisible à l'endroit sur les cascades RF (SDR, WebSDR). Les stations qui regardent un waterfall audio en LSB le voient alors en miroir : pour elles, choisissez Normal (USB).": '反转 (LSB)：在射频瀑布图（SDR、WebSDR）上正向显示。用 LSB 查看音频瀑布图的电台会看到镜像：对他们请选择正常 (USB)。',
 }
