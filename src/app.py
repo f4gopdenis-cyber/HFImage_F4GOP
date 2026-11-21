@@ -4912,7 +4912,9 @@ class App(tk.Tk):
         p = (p or "").strip()
         if p.lower().startswith("file://"):
             import urllib.parse
-            p = urllib.parse.unquote(urllib.parse.urlparse(p).path)
+            import urllib.request
+            # url2pathname : « /C:/Users/… » -> « C:\\Users\\… » sous Windows, chemin tel quel ailleurs
+            p = urllib.request.url2pathname(urllib.parse.urlparse(p).path)
         return p
 
     URL_MAX_BYTES = 8_000_000

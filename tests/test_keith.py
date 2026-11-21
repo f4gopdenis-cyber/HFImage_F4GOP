@@ -133,12 +133,16 @@ class AvecFenetre(unittest.TestCase):
         a = self.a
         p = os.path.join(self.d, "photo.png")
         Image.new("RGB", (40, 30), (10, 20, 30)).save(p)
+        import pathlib
         a.clipboard_clear()
-        a.clipboard_append("file://" + p)
+        a.clipboard_append(pathlib.Path(p).as_uri())             # « file:///… » (Windows : file:///C:/…)
         with mock.patch("PIL.ImageGrab.grabclipboard", return_value=None), \
+                mock.patch.object(self.appmod.messagebox, "showinfo") as info, \
                 mock.patch.object(a, "load_image") as load:
             a.paste_image()
-        load.assert_called_once_with(p)
+        info.assert_not_called()
+        load.assert_called_once()
+        self.assertEqual(os.path.normcase(os.path.abspath(load.call_args[0][0])), os.path.normcase(p))
 
     def test_lien_glisse_depuis_le_navigateur(self):
         a = self.a
@@ -160,13 +164,21 @@ class AvecFenetre(unittest.TestCase):
 
             def __exit__(self, *a):
                 return False
-        with mock.patch("urllib.request.urlopen", return_value=R()), mock.patch.object(a, "load_image") as load:
+        with mock.patch("urllib.request.urlopen", return_value=R()), mock.patch.object(a, "load_image") as load, \
+                mock.patch.object(self.appmod.messagebox, "showinfo"):
             a._fetch_image_url("https://example.org/photo.png")
             end = time.time() + 3
             while time.time() < end and not load.called:
                 a.update()
                 time.sleep(0.02)
         load.assert_called_once()
+
+    def test_chemin_file_windows(self):
+        import urllib.request
+        import nturl2path                                        # la version Windows, utilisable partout
+        with mock.patch.object(urllib.request, "url2pathname", nturl2path.url2pathname):
+            self.assertEqual(self.appmod.App._local_path("file:///C:/Users/Keith/photo%20a.jpg"),
+                             "C:\\Users\\Keith\\photo a.jpg")
 
     def test_dernier_dossier(self):
         a = self.a
