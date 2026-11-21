@@ -673,7 +673,8 @@ s.append(P("In the HFImage modes, hybrid mode sends the picture through your <b>
 s.append(P("<b>Upload in advance</b>: in hybrid mode, the <b>⇪ Upload</b> button (TX tab, right of WAV…) puts the "
            "picture on the server right away, as the old EasyPal did. When it is your turn, <b>Transmit</b> sends the "
            "radio announcement at once, without waiting for the upload. If the picture or the server change in the "
-           "meantime, the picture is uploaded again when transmitting."))
+           "meantime, the picture is uploaded again when transmitting. Once uploaded, the button turns <b>green “✔ Uploaded”</b> "
+           "until the transmission: you can see at a glance that the picture for your next turn is ready."))
 s.append(P("<b>Flash hybrid</b>: tick <b>Flash (9 s)</b> next to “Hybrid mode” (TX tab), <b>ticked by default</b> since 0.98. The announcement no longer carries "
            "the link, only the picture's <b>fingerprint</b> (shortened SHA-256), size and format, in a 14-byte frame. Since "
            "version 0.93 it is sent <b>3 times in DATAC13</b> (a very narrow 200 Hz mode made to get through noise and QRM), "

@@ -1,5 +1,9 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 2.46 (demande de VK6ATI)
+
+- Mode hybride : après « ⇪ Déposer », le bouton devient **vert « ✔ Déposée »** tant que l'image déposée d'avance attend d'être émise. Il redevient normal après l'émission, quand on choisit une autre image ou quand on décoche le mode hybride. Pratique pour un animateur de réseau : on voit d'un coup d'œil que l'image du prochain passage est déjà sur le serveur.
+
 ## Version 2.45 — correction (signalé par F4GOP)
 
 - Galerie, sous Windows : le clic droit sur une image ouvrait aussi, après coup, le menu du fond de la galerie, qui effaçait le choix fait. « Renvoyer cette image (onglet TX) », « Répondre avec cette image »… ne faisaient plus rien depuis la 2.43. Le menu du fond ne s'ouvre plus que sur un clic à côté des images, et il est séparé du menu des images.

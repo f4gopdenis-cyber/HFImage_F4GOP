@@ -716,7 +716,8 @@ s.append(P("L'image passe par votre <b>hébergement web</b> (FTP) ; seul le <b>l
 s.append(P("<b>Déposer d'avance</b> : en mode hybride, le bouton <b>⇪ Déposer</b> (onglet TX, à droite de WAV…) met "
            "l'image sur le serveur tout de suite, comme l'ancien EasyPal. Quand vient votre tour, <b>Émettre</b> envoie "
            "directement l'annonce radio, sans attendre le dépôt. Si l'image ou le serveur changent entre-temps, "
-           "l'image est redéposée au moment d'émettre."))
+           "l'image est redéposée au moment d'émettre. Une fois le dépôt fait, le bouton devient <b>vert « ✔ Déposée »</b> "
+           "jusqu'à l'émission : on voit d'un coup d'œil que l'image du prochain passage est prête."))
 s.append(P("Hybride éclair", "h2"))
 s.append(P("Case <b>Éclair (9 s)</b>, à côté de « Mode hybride » (onglet TX), <b>cochée par défaut</b> depuis la 0.98. L'annonce radio ne porte plus le lien, seulement "
            "l'<b>empreinte</b> de l'image (SHA-256 abrégé), sa taille et son format, dans une trame de 14 octets. Depuis la "
