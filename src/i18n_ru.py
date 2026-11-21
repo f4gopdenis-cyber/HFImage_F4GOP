@@ -1213,4 +1213,6 @@ RU = {
     'Retirer les {0} images de la galerie ?': 'Убрать {0} изображений из галереи?',
     'Les fichiers restent dans le dossier (bouton « Dossier »).': 'Файлы остаются в папке (кнопка «Папка»).',
     'serveurs': 'серверов',
+    '✔ Déposée': '✔ Загружено',
+    "Mode hybride : met l'image sur le serveur tout de suite ; à votre tour, « Émettre » envoie directement l'annonce. Vert : image déposée, prête à émettre.": 'Гибридный режим: сразу загружает изображение на сервер; в вашу очередь «Передача» сразу отправляет анонс. Зелёный: изображение загружено, готово к передаче.',
 }

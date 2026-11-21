@@ -24,6 +24,7 @@ class DepotAvance(unittest.TestCase):
         s.log_exc = lambda *a: s.logs.append(a)
         s.ui = lambda fn, *a: fn(*a)
         s._set_text = lambda *a: None
+        s._pre_btn_paint = lambda *a: None          # 2.46 : bouton vert (testé à part)
         s.pb_tx = types.SimpleNamespace(configure=lambda *a: None)
         s._hyb_cfg = lambda: dict(cfg)
         s._pre_sig = app.App._pre_sig

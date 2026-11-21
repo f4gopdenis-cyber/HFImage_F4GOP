@@ -853,6 +853,7 @@ class App(tk.Tk):
             if modern or st != "off":                  # Classique : boutons au repos laissés au thème
                 self._btn_color(b, st)
         self._data_auto_paint()
+        self._pre_btn_paint(force=True)
         self._topbar_show()
         self._cards(self.look.palette())
         self._titlebars()
@@ -2200,10 +2201,12 @@ class App(tk.Tk):
         tip(self.bt_dauto, "Allumé : le poste passe en LSB-DATA (ou USB-DATA) au moment d'émettre, puis "
                            "revient tout seul en LSB (ou USB) à la fin de l'image.")
         # mode hybride : déposer l'image d'avance (l'annonce part tout de suite à l'émission)
-        self.btn_pre = ttk.Button(bt, text="⇪ Déposer", command=self.hyb_preupload)
+        self.btn_pre = tk.Button(bt, text="⇪ Déposer", command=self.hyb_preupload, cursor="hand2",
+                                 padx=4, pady=0)
         tip(self.btn_pre, "Mode hybride : met l'image sur le serveur tout de suite ; à votre tour, "
-                          "« Émettre » envoie directement l'annonce.")
+                          "« Émettre » envoie directement l'annonce. Vert : image déposée, prête à émettre.")
         self._show_pre_btn()
+        self._pre_btn_paint(force=True)
         info = tk.Frame(t, bg=GREEN)
         info.pack(fill="x", side="bottom")
         self.lb_src_info = tk.Label(info, text="", bg=GREEN, anchor="w", font=("TkDefaultFont", 8))
@@ -4356,6 +4359,7 @@ class App(tk.Tk):
             self._update_panel()
             self._bsr_check()
             self._fix_due()
+            self._pre_btn_paint()
         except Exception as e:
             self.log_exc("Mise à jour", e)
         self.after(300, self._tick)
@@ -6893,6 +6897,33 @@ class App(tk.Tk):
         hybrid.cleanup_async(cfg, cfg.get("dir"), hybrid.mine_pattern(tx.call), keep, log=log)
         return url
 
+    PRE_DONE_BG, PRE_DONE_FG = "#1fa83a", "#ffffff"      # 2.46 : vert « image déposée »
+
+    def _pre_ready(self):
+        """2.46 (VK6ATI) : l'image prête est-elle déjà déposée sur le serveur (dépôt d'avance) ?"""
+        tx = self.tx
+        return bool(self.v_hyb.get()) and isinstance(tx, HybridJob) and getattr(tx, "pre", None) is not None
+
+    def _pre_btn_paint(self, force=False):
+        """2.46 (VK6ATI) : bouton « ⇪ Déposer » en vert « ✔ Déposée » tant que l'image déposée d'avance
+        attend d'être émise ; il redevient normal quand l'image change ou après l'émission."""
+        b = getattr(self, "btn_pre", None)
+        if b is None or getattr(self, "_preupload_busy", False):
+            return
+        done = self._pre_ready()
+        if not force and getattr(self, "_pre_painted", None) == done:
+            return
+        self._pre_painted = done
+        try:
+            if done:
+                b.configure(text=tr("✔ Déposée"), bg=self.PRE_DONE_BG, fg=self.PRE_DONE_FG,
+                            activebackground=self.PRE_DONE_BG, activeforeground=self.PRE_DONE_FG)
+            else:
+                b.configure(text=tr("⇪ Déposer"))
+                self._btn_color(b, "off")
+        except tk.TclError:
+            pass
+
     def _pre_or_upload(self, tx, cfg, drm):
         """À l'émission : réutilise le dépôt fait d'avance s'il correspond à cette image et à ce
         serveur (l'annonce part tout de suite), sinon dépose maintenant."""
@@ -6937,7 +6968,7 @@ class App(tk.Tk):
                 self.ui(messagebox.showerror, APP, tr("Dépôt impossible :") + f"\n{e}")
             finally:
                 self.ui(setattr, self, "_preupload_busy", False)
-                self.ui(self._set_text, self.btn_pre, "⇪ Déposer")
+                self.ui(self._pre_btn_paint, True)
                 self.ui(self.pb_tx.configure, {"value": 0})
         threading.Thread(target=run, daemon=True).start()
 

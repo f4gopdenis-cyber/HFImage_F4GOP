@@ -1205,4 +1205,6 @@ ZH = {
     'Retirer les {0} images de la galerie ?': '从图库中移除这 {0} 张图像？',
     'Les fichiers restent dans le dossier (bouton « Dossier »).': '文件仍保留在文件夹中（“文件夹”按钮）。',
     'serveurs': '服务器',
+    '✔ Déposée': '✔ 已上传',
+    "Mode hybride : met l'image sur le serveur tout de suite ; à votre tour, « Émettre » envoie directement l'annonce. Vert : image déposée, prête à émettre.": '混合模式：立即把图像上传到服务器；轮到您时，“发射”直接发送公告。绿色：图像已上传，可以发射。',
 }

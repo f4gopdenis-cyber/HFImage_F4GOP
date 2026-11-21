@@ -1995,6 +1995,8 @@ T = [
     ('Retirer les {0} images de la galerie ?', 'Remove the {0} pictures from the gallery?', 'Die {0} Bilder aus der Galerie entfernen?', '¿Quitar las {0} imágenes de la galería?', 'Rimuovere le {0} immagini dalla galleria?'),
     ('Les fichiers restent dans le dossier (bouton « Dossier »).', 'The files stay in the folder (“Folder” button).', 'Die Dateien bleiben im Ordner (Schaltfläche „Ordner“).', 'Los archivos permanecen en la carpeta (botón «Carpeta»).', 'I file restano nella cartella (pulsante «Cartella»).'),
     ('serveurs', 'servers', 'Server', 'servidores', 'server'),
+    ('✔ Déposée', '✔ Uploaded', '✔ Hochgeladen', '✔ Subida', '✔ Caricata'),
+    ("Mode hybride : met l'image sur le serveur tout de suite ; à votre tour, « Émettre » envoie directement l'annonce. Vert : image déposée, prête à émettre.", 'Hybrid mode: puts the picture on the server right away; when it is your turn, “Transmit” sends the announcement directly. Green: picture uploaded, ready to transmit.', 'Hybridmodus: legt das Bild sofort auf den Server; wenn Sie an der Reihe sind, sendet „Senden“ direkt die Ankündigung. Grün: Bild hochgeladen, bereit zum Senden.', 'Modo híbrido: sube la imagen al servidor enseguida; cuando sea su turno, «Transmitir» envía directamente el anuncio. Verde: imagen subida, lista para transmitir.', "Modo ibrido: carica subito l'immagine sul server; al vostro turno, «Trasmetti» invia direttamente l'annuncio. Verde: immagine caricata, pronta da trasmettere."),
 ]
 
 _lang = "fr"
