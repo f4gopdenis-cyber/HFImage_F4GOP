@@ -1,5 +1,9 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 2.48 — cadres lumineux sur la carte QSL
+
+- IMG/QSL : nouvelle case **« Cadres lumineux (à la place des bandeaux) »** : chaque texte est dans un petit cadre arrondi, sombre, à contour lumineux (indicatif, locator, correspondant, message, et date / fréquence / report dans trois cadres séparés), d'après la carte de M7WUV. Les grands bandeaux disparaissent : la photo reste visible. Couleur des cadres au choix (doré par défaut) et réglette « Halo des cadres ». Les cadres suivent les textes déplacés à la souris ; le réglage est gardé dans les modèles de carte. Case décochée : carte inchangée.
+
 ## Version 2.47 (signalé par Keith Woodley, WASSTV)
 
 - Traductions : les phrases qui commencent par des espaces (« ↳ message ci-dessous envoyé par… ») restaient en français ; elles sont maintenant traduites.

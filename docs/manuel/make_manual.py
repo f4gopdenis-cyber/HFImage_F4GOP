@@ -603,7 +603,8 @@ s += B(["<b>Texte inclus</b> : un message joint à l'image, affiché dans « Mes
         "police et couleurs au choix, <b>hauteur des bandeaux</b> du haut et du bas réglable (50 à 150 %, le texte "
         "suit). Les <b>textes se déplacent à la souris</b> dans l'aperçu (indicatif, locator, correspondant, "
         "date / fréquence / report, message) : cadre jaune au survol, place gardée pour les cartes suivantes, bouton "
-        "« Textes à leur place d'origine »."])
+        "« Textes à leur place d'origine ». Case <b>« Cadres lumineux »</b> : chaque texte dans un petit cadre arrondi "
+        "à contour lumineux (couleur et halo réglables), à la place des bandeaux ; la photo reste visible."])
 
 # ------------------------------------------------------------------ 6 EasyPal
 s.append(PageBreak())
