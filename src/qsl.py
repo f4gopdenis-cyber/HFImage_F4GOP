@@ -2,7 +2,7 @@
 
 from i18n import tr
 
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image, ImageDraw, ImageFilter, ImageFont
 
 W, H = 960, 600              # carte de base (fond dégradé) ; mise en page dessinée pour cette taille
 MAX_SIDE = 2000             # 2.31 (M7WUV) : la carte garde la taille de son fond, jusqu'à 2000 px
@@ -25,7 +25,10 @@ FONTS = {
 # style d'origine (celui des versions précédentes)
 DEFAULT_STYLE = {"font": "Arial", "call": "#ffffff", "text": "#ffffff", "accent": "#ffd166",
                  "band": "#000000", "band_alpha": 60, "call_size": 100,
-                 "head_h": 100, "band_h": 100}          # hauteur des bandeaux du haut / du bas (%)
+                 "head_h": 100, "band_h": 100,          # hauteur des bandeaux du haut / du bas (%)
+                 # 2.48 (F4GOP, d'après la carte de M7WUV) : cadres lumineux autour des textes, à la place
+                 # des bandeaux ; couleur du contour et force du halo (0 à 100)
+                 "frames": False, "frame_color": "#ffc440", "frame_glow": 60}
 BAND_MIN, BAND_MAX = 50, 150
 # 1.68 : blocs de texte déplaçables à la souris (style["pos"] : bloc -> [dx, dy] en fraction de la carte)
 BLOCKS = ("call", "loc", "to", "info", "msg")
@@ -124,19 +127,23 @@ def make_card(background, mycall, locator="", to_call="", freq="", report="", me
         return max(8, int(round(v * k * S)))
 
     M = 28 * S                                            # marge
+    frames = bool(st.get("frames"))
     # en-tête : indicatif + locator
     head = int(max(120, int(120 * big)) * kh * S)
-    if alpha:
+    if alpha and not frames:
         d.rectangle([0, 0, CW, head], fill=band_top)
     box = {} if boxes is None else boxes
+    ops = []                   # textes à écrire, après les cadres (2.48) : (xy, texte, police, couleur, ancre)
+    groups = {}                # cadre lumineux de chaque groupe de textes
 
-    def text(key, xy, txt, font, fill, anchor="la"):
+    def text(key, xy, txt, font, fill, anchor="la", group=None):
         ox, oy = _offset(st, key, CW, CH)
         xy = (xy[0] + ox, xy[1] + oy)
-        d.text(xy, txt, font=font, fill=fill, anchor=anchor)
+        ops.append((xy, txt, font, fill, anchor))
         b = d.textbbox(xy, txt, font=font, anchor=anchor)
-        o = box.get(key)
-        box[key] = b if o is None else (min(o[0], b[0]), min(o[1], b[1]), max(o[2], b[2]), max(o[3], b[3]))
+        for k, dst in ((key, box), (group or key, groups)):
+            o = dst.get(k)
+            dst[k] = b if o is None else (min(o[0], b[0]), min(o[1], b[1]), max(o[2], b[2]), max(o[3], b[3]))
 
     fc = _font(px(76 * big, kh), True)
     text("call", (M, head / 2), mycall.upper(), fc, call_c, "lm")
@@ -146,7 +153,7 @@ def make_card(background, mycall, locator="", to_call="", freq="", report="", me
 
     # bandeau du bas : QSO
     band = int(190 * kb * S)
-    if alpha:
+    if alpha and not frames:
         d.rectangle([0, CH - band, CW, CH], fill=band_bot)
     y0 = CH - band + 14 * kb * S
     if to_call:
@@ -161,12 +168,43 @@ def make_card(background, mycall, locator="", to_call="", freq="", report="", me
         if need <= CW - 10 * S or kr <= 0.5:
             break
         kr *= 0.92
-    for lab, val in rows:
+    for n, (lab, val) in enumerate(rows):
         if not val:
             continue
-        text("info", (x, y0 + 58 * kb * S), lab, _font(px(18, kr)), _dim(text_c))
-        text("info", (x, y0 + 80 * kb * S), val, fv, text_c)
+        text("info", (x, y0 + 58 * kb * S), lab, _font(px(18, kr)), _dim(text_c), group=f"info{n}")
+        text("info", (x, y0 + 80 * kb * S), val, fv, text_c, group=f"info{n}")
         x += max(int(220 * kr * S), int(d.textlength(val, font=fv)) + int(40 * kr * S))
     if message:
         text("msg", (M, y0 + 128 * kb * S), message, _font(px(26, kb)), text_c)
+    if frames:
+        card = _frames(card, groups.values(), _rgb(st.get("frame_color") or "#ffc440"),
+                       int(st.get("frame_glow", 60)), S)
+        d = ImageDraw.Draw(card, "RGBA")
+    for xy, txt, font, fill, anchor in ops:
+        d.text(xy, txt, font=font, fill=fill, anchor=anchor)
     return card
+
+
+def _frames(card, rects, color, glow, S):
+    """2.48 : cadres arrondis sombres, contour de la couleur choisie et halo lumineux, autour de chaque
+    groupe de textes (indicatif, locator, correspondant, date, fréquence, report, message)."""
+    W, H = card.size
+    glow = max(0, min(100, glow))
+    layer = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+    halo = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+    d, g = ImageDraw.Draw(layer), ImageDraw.Draw(halo)
+    px, py = max(6, int(14 * S)), max(3, int(6 * S))     # marges : à côté larges, dessus / dessous étroites
+    lw = max(2, int(round(2.5 * S)))
+    for x0, y0, x1, y1 in rects:
+        r = (int(x0 - px), int(y0 - py), int(x1 + px), int(y1 + py))
+        rad = max(4, int((r[3] - r[1]) * 0.28))
+        if glow:
+            g.rounded_rectangle(r, rad, outline=color + (int(120 + 1.35 * glow),), width=lw + int(glow * S / 7) + 4)
+        d.rounded_rectangle(r, rad, fill=(10, 12, 25, 170), outline=color + (255,), width=lw)
+    out = card.convert("RGBA")
+    if glow:
+        blur = halo.filter(ImageFilter.GaussianBlur(max(2, 3 + glow * S / 11)))
+        out.alpha_composite(blur)
+        out.alpha_composite(blur)                         # deux fois : halo bien visible sur une photo claire
+    out.alpha_composite(layer)
+    return out.convert("RGB")

@@ -1222,4 +1222,8 @@ RU = {
     "Le lien glissé ou copié n'est pas une image lisible.": 'Перетащенная или скопированная ссылка не является читаемым изображением.',
     'Linux : pour lire une image copiée, installez': 'Linux: чтобы читать скопированное изображение, установите',
     "Inversé (LSB) : lisible à l'endroit sur les cascades RF (SDR, WebSDR). Les stations qui regardent un waterfall audio en LSB le voient alors en miroir : pour elles, choisissez Normal (USB).": 'Инвертировано (LSB): читается правильно на ВЧ-водопадах (SDR, WebSDR). Станции с аудиоводопадом в LSB видят зеркально: для них выберите «Обычно (USB)».',
+    'Cadres lumineux (à la place des bandeaux)': 'Светящиеся рамки (вместо полос)',
+    'Couleur des cadres': 'Цвет рамок',
+    'Couleur du contour des cadres': 'Цвет контура рамок',
+    'Halo des cadres': 'Свечение рамок',
 }

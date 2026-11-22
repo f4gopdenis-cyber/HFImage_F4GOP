@@ -2004,6 +2004,10 @@ T = [
     ("Le lien glissé ou copié n'est pas une image lisible.", 'The dragged or copied link is not a readable picture.', 'Der gezogene oder kopierte Link ist kein lesbares Bild.', 'El enlace arrastrado o copiado no es una imagen legible.', "Il link trascinato o copiato non è un'immagine leggibile."),
     ('Linux : pour lire une image copiée, installez', 'Linux: to read a copied picture, install', 'Linux: um ein kopiertes Bild zu lesen, installieren Sie', 'Linux: para leer una imagen copiada, instale', "Linux: per leggere un'immagine copiata, installate"),
     ("Inversé (LSB) : lisible à l'endroit sur les cascades RF (SDR, WebSDR). Les stations qui regardent un waterfall audio en LSB le voient alors en miroir : pour elles, choisissez Normal (USB).", 'Reversed (LSB): reads the right way on RF waterfalls (SDR, WebSDR). Stations watching an audio waterfall in LSB then see it mirrored: for them, choose Normal (USB).', 'Umgekehrt (LSB): auf HF-Wasserfällen (SDR, WebSDR) richtig lesbar. Stationen mit Audio-Wasserfall in LSB sehen es dann gespiegelt: für sie Normal (USB) wählen.', 'Invertido (LSB): se lee al derecho en las cascadas RF (SDR, WebSDR). Las estaciones que miran una cascada de audio en LSB lo ven en espejo: para ellas, elija Normal (USB).', 'Invertito (LSB): leggibile dritto sulle cascate RF (SDR, WebSDR). Le stazioni che guardano un waterfall audio in LSB lo vedono a specchio: per loro scegliete Normale (USB).'),
+    ('Cadres lumineux (à la place des bandeaux)', 'Glowing frames (instead of the bands)', 'Leuchtende Rahmen (statt der Balken)', 'Marcos luminosos (en lugar de las bandas)', 'Cornici luminose (al posto delle bande)'),
+    ('Couleur des cadres', 'Frame colour', 'Rahmenfarbe', 'Color de los marcos', 'Colore delle cornici'),
+    ('Couleur du contour des cadres', 'Colour of the frame outline', 'Farbe des Rahmens', 'Color del contorno de los marcos', 'Colore del bordo delle cornici'),
+    ('Halo des cadres', 'Frame glow', 'Rahmenleuchten', 'Halo de los marcos', 'Alone delle cornici'),
 ]
 
 _lang = "fr"

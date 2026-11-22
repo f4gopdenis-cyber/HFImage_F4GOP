@@ -8745,24 +8745,38 @@ class App(tk.Tk):
         ttk.Label(sf, text="Hauteur du bandeau du bas").grid(row=6, column=0, columnspan=2, sticky="w")
         ttk.Scale(sf, from_=qsl.BAND_MIN, to=qsl.BAND_MAX, variable=v_bh, command=lambda v: refresh()).grid(
             row=6, column=2, columnspan=2, sticky="we")
+        # 2.48 : cadres lumineux autour des textes, à la place des bandeaux (d'après la carte de M7WUV)
+        v_frames = tk.BooleanVar(value=bool(style.get("frames")))
+        v_glow = tk.IntVar(value=int(style.get("frame_glow", 60)))
+        ttk.Checkbutton(sf, text="Cadres lumineux (à la place des bandeaux)", variable=v_frames,
+                        command=lambda: refresh()).grid(row=7, column=0, columnspan=3, sticky="w", pady=(6, 0))
+        b = tk.Button(sf, text="    ", bg=style.get("frame_color", "#ffc440"), relief="ridge", width=3,
+                      command=lambda: pick_color("frame_color", "Couleur des cadres"))
+        b.grid(row=7, column=3, sticky="e", pady=(6, 0))
+        swatches["frame_color"] = b
+        tip(b, "Couleur du contour des cadres")
+        ttk.Label(sf, text="Halo des cadres").grid(row=8, column=0, columnspan=2, sticky="w")
+        ttk.Scale(sf, from_=0, to=100, variable=v_glow, command=lambda v: refresh()).grid(
+            row=8, column=2, columnspan=2, sticky="we")
 
         def reset_style():
             style.update(qsl.DEFAULT_STYLE)
             style["pos"] = {}
             v_font.set(style["font"]); v_size.set(style["call_size"]); v_alpha.set(style["band_alpha"])
             v_hh.set(style["head_h"]); v_bh.set(style["band_h"])
+            v_frames.set(style["frames"]); v_glow.set(style["frame_glow"])
             for k, b in swatches.items():
                 b.configure(bg=style[k])
             refresh()
 
-        ttk.Button(sf, text="Style d'origine", command=reset_style).grid(row=7, column=0, columnspan=2,
+        ttk.Button(sf, text="Style d'origine", command=reset_style).grid(row=9, column=0, columnspan=2,
                                                                         sticky="w", pady=(6, 0))
 
         def reset_pos():
             style["pos"] = {}
             refresh()
         ttk.Button(sf, text="Textes à leur place d'origine", command=reset_pos).grid(
-            row=7, column=2, columnspan=2, sticky="w", pady=(6, 0))
+            row=9, column=2, columnspan=2, sticky="w", pady=(6, 0))
         # ---- aperçu en direct
         pvf = ttk.Frame(win)
         pvf.grid(row=0, column=2, rowspan=9, padx=8, pady=8, sticky="n")
@@ -8781,7 +8795,8 @@ class App(tk.Tk):
 
         def current_style():
             style.update(font=v_font.get(), call_size=int(v_size.get()), band_alpha=int(v_alpha.get()),
-                         head_h=int(v_hh.get()), band_h=int(v_bh.get()))
+                         head_h=int(v_hh.get()), band_h=int(v_bh.get()), frames=bool(v_frames.get()),
+                         frame_glow=int(v_glow.get()))
             return dict(style)
 
         def build(boxes=None, size=None):
@@ -8913,6 +8928,7 @@ class App(tk.Tk):
             style.update(qsl.DEFAULT_STYLE, **(m.get("style") or {}))
             v_font.set(style["font"]); v_size.set(int(style["call_size"])); v_alpha.set(int(style["band_alpha"]))
             v_hh.set(int(style.get("head_h", 100))); v_bh.set(int(style.get("band_h", 100)))
+            v_frames.set(bool(style.get("frames"))); v_glow.set(int(style.get("frame_glow", 60)))
             for k, b in swatches.items():
                 b.configure(bg=style[k])
             p = m.get("bg")

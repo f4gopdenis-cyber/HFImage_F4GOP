@@ -1214,4 +1214,8 @@ ZH = {
     "Le lien glissé ou copié n'est pas une image lisible.": '拖入或复制的链接不是可读的图像。',
     'Linux : pour lire une image copiée, installez': 'Linux：要读取复制的图像，请安装',
     "Inversé (LSB) : lisible à l'endroit sur les cascades RF (SDR, WebSDR). Les stations qui regardent un waterfall audio en LSB le voient alors en miroir : pour elles, choisissez Normal (USB).": '反转 (LSB)：在射频瀑布图（SDR、WebSDR）上正向显示。用 LSB 查看音频瀑布图的电台会看到镜像：对他们请选择正常 (USB)。',
+    'Cadres lumineux (à la place des bandeaux)': '发光边框（代替横条）',
+    'Couleur des cadres': '边框颜色',
+    'Couleur du contour des cadres': '边框轮廓颜色',
+    'Halo des cadres': '边框光晕',
 }
