@@ -615,7 +615,9 @@ s += B(["<b>Incl. text</b>: a message attached to the picture, shown in “Recei
         "text follows). The <b>texts can be moved with the mouse</b> in the preview (callsign, locator, "
         "correspondent, date / frequency / report, message): yellow frame on hover, position kept for the next "
         "cards, “Texts back to their original place” button. <b>“Glowing frames”</b> box: each text in a small rounded "
-        "frame with a glowing outline (colour and glow adjustable), instead of the banners; the photo stays visible."])
+        "frame with a glowing outline (colour and glow adjustable), instead of the banners; the photo stays visible. "
+        "<b>Gold</b> (sharp outline) or <b>Neon</b> (glowing tube) style, with six neon colours in one click; the inside of "
+        "the frames stays dark and the glow outside, so the texts stay readable."])
 
 # ------------------------------------------------------------------ 8
 s.append(PageBreak())

@@ -604,7 +604,9 @@ s += B(["<b>Texte inclus</b> : un message joint à l'image, affiché dans « Mes
         "suit). Les <b>textes se déplacent à la souris</b> dans l'aperçu (indicatif, locator, correspondant, "
         "date / fréquence / report, message) : cadre jaune au survol, place gardée pour les cartes suivantes, bouton "
         "« Textes à leur place d'origine ». Case <b>« Cadres lumineux »</b> : chaque texte dans un petit cadre arrondi "
-        "à contour lumineux (couleur et halo réglables), à la place des bandeaux ; la photo reste visible."])
+        "à contour lumineux (couleur et halo réglables), à la place des bandeaux ; la photo reste visible. "
+        "Style <b>Doré</b> (contour net) ou <b>Néon</b> (tube lumineux), avec six couleurs néon en un clic ; l'intérieur "
+        "des cadres reste sombre et la lueur à l'extérieur : les textes restent lisibles."])
 
 # ------------------------------------------------------------------ 6 EasyPal
 s.append(PageBreak())

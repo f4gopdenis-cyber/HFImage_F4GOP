@@ -1,5 +1,11 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 2.49 — cadres néon sur la carte QSL
+
+- IMG/QSL : **« Style des cadres »** : *Doré (contour net)* ou *Néon (tube lumineux)* : cœur presque blanc, couleur vive et lueur autour. **Six couleurs néon en un clic** (rose, bleu, vert, violet, orange, rouge) ; le carré de couleur garde le choix libre.
+- Lisibilité, pour les deux styles : l'intérieur des cadres est presque noir et la lueur reste à l'extérieur, jamais derrière les lettres ; un texte de la même couleur que le cadre passe en blanc.
+- Correction (2.48) : le halo des cadres dorés était presque invisible (tracé à l'intérieur du cadre) ; il entoure maintenant bien le cadre.
+
 ## Version 2.48 — cadres lumineux sur la carte QSL
 
 - IMG/QSL : nouvelle case **« Cadres lumineux (à la place des bandeaux) »** : chaque texte est dans un petit cadre arrondi, sombre, à contour lumineux (indicatif, locator, correspondant, message, et date / fréquence / report dans trois cadres séparés), d'après la carte de M7WUV. Les grands bandeaux disparaissent : la photo reste visible. Couleur des cadres au choix (doré par défaut) et réglette « Halo des cadres ». Les cadres suivent les textes déplacés à la souris ; le réglage est gardé dans les modèles de carte. Case décochée : carte inchangée.
