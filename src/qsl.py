@@ -28,7 +28,12 @@ DEFAULT_STYLE = {"font": "Arial", "call": "#ffffff", "text": "#ffffff", "accent"
                  "head_h": 100, "band_h": 100,          # hauteur des bandeaux du haut / du bas (%)
                  # 2.48 (F4GOP, d'après la carte de M7WUV) : cadres lumineux autour des textes, à la place
                  # des bandeaux ; couleur du contour et force du halo (0 à 100)
-                 "frames": False, "frame_color": "#ffc440", "frame_glow": 60}
+                 "frames": False, "frame_color": "#ffc440", "frame_glow": 60,
+                 "frame_style": "dore"}                  # 2.49 : « dore » (contour net) ou « neon » (tube lumineux)
+FRAME_STYLES = ("dore", "neon")
+# 2.49 : couleurs néon toutes prêtes (rose, bleu, vert, violet, orange, rouge)
+NEON_COLORS = {"Rose": "#ff2ec8", "Bleu": "#20e8ff", "Vert": "#39ff6a", "Violet": "#b04dff",
+               "Orange": "#ff8a1f", "Rouge": "#ff2a3a"}
 BAND_MIN, BAND_MAX = 50, 150
 # 1.68 : blocs de texte déplaçables à la souris (style["pos"] : bloc -> [dx, dy] en fraction de la carte)
 BLOCKS = ("call", "loc", "to", "info", "msg")
@@ -177,34 +182,63 @@ def make_card(background, mycall, locator="", to_call="", freq="", report="", me
     if message:
         text("msg", (M, y0 + 128 * kb * S), message, _font(px(26, kb)), text_c)
     if frames:
-        card = _frames(card, groups.values(), _rgb(st.get("frame_color") or "#ffc440"),
-                       int(st.get("frame_glow", 60)), S)
+        fcol = _rgb(st.get("frame_color") or "#ffc440")
+        card = _frames(card, groups.values(), fcol, int(st.get("frame_glow", 60)), S,
+                       neon=st.get("frame_style") == "neon")
         d = ImageDraw.Draw(card, "RGBA")
+        # 2.49 : dans un cadre, un texte de la couleur du contour se lirait mal : il passe en blanc
+        ops = [(xy, txt, font, (255, 255, 255) if _close(fill, fcol) else fill, anchor)
+               for xy, txt, font, fill, anchor in ops]
     for xy, txt, font, fill, anchor in ops:
         d.text(xy, txt, font=font, fill=fill, anchor=anchor)
     return card
 
 
-def _frames(card, rects, color, glow, S):
-    """2.48 : cadres arrondis sombres, contour de la couleur choisie et halo lumineux, autour de chaque
-    groupe de textes (indicatif, locator, correspondant, date, fréquence, report, message)."""
+def _close(a, b, limit=110):
+    """Deux couleurs proches (distance RVB) ?"""
+    return sum((int(x) - int(y)) ** 2 for x, y in zip(a[:3], b[:3])) ** 0.5 < limit
+
+
+def _frames(card, rects, color, glow, S, neon=False):
+    """Cadres arrondis autour de chaque groupe de textes (indicatif, locator, correspondant, date,
+    fréquence, report, message). 2.48 : contour de la couleur choisie et halo. 2.49 : intérieur presque
+    noir et lueur seulement à l'extérieur (textes bien lisibles) ; style « néon » : tube lumineux, cœur
+    presque blanc et lueur de couleur autour."""
     W, H = card.size
     glow = max(0, min(100, glow))
-    layer = Image.new("RGBA", (W, H), (0, 0, 0, 0))
-    halo = Image.new("RGBA", (W, H), (0, 0, 0, 0))
-    d, g = ImageDraw.Draw(layer), ImageDraw.Draw(halo)
     px, py = max(6, int(14 * S)), max(3, int(6 * S))     # marges : à côté larges, dessus / dessous étroites
     lw = max(2, int(round(2.5 * S)))
+    box = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+    halo = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+    line = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+    inside = Image.new("L", (W, H), 0)
+    bd, hd, ld, idr = ImageDraw.Draw(box), ImageDraw.Draw(halo), ImageDraw.Draw(line), ImageDraw.Draw(inside)
+    core = tuple(int(c + (255 - c) * 0.75) for c in color)
     for x0, y0, x1, y1 in rects:
         r = (int(x0 - px), int(y0 - py), int(x1 + px), int(y1 + py))
         rad = max(4, int((r[3] - r[1]) * 0.28))
+        idr.rounded_rectangle(r, rad, fill=255)
+        bd.rounded_rectangle(r, rad, fill=(6, 8, 20, 230))
         if glow:
-            g.rounded_rectangle(r, rad, outline=color + (int(120 + 1.35 * glow),), width=lw + int(glow * S / 7) + 4)
-        d.rounded_rectangle(r, rad, fill=(10, 12, 25, 170), outline=color + (255,), width=lw)
+            hw = (lw * 5 if neon else lw + 4) + int(glow * S / 7)
+            e = hw // 2                                   # le trait de PIL est tracé vers l'intérieur
+            hd.rounded_rectangle((r[0] - e, r[1] - e, r[2] + e, r[3] + e), rad + e,
+                                 outline=color + (int(120 + 1.35 * glow),), width=hw)
+        if neon:
+            ld.rounded_rectangle(r, rad, outline=color + (255,), width=lw * 2)
+            ld.rounded_rectangle(r, rad, outline=core + (255,), width=max(1, lw // 2 + 1))
+        else:
+            ld.rounded_rectangle(r, rad, outline=color + (255,), width=lw)
     out = card.convert("RGBA")
     if glow:
-        blur = halo.filter(ImageFilter.GaussianBlur(max(2, 3 + glow * S / 11)))
+        # la lueur reste à l'extérieur des cadres : rien ne brille derrière les lettres
+        outside = Image.eval(inside, lambda v: 255 - v)
+        halo.putalpha(Image.composite(halo.getchannel("A"), Image.new("L", (W, H), 0), outside))
+        blur = halo.filter(ImageFilter.GaussianBlur(max(2, (10 if neon else 3) * S + glow * S / 14)))
         out.alpha_composite(blur)
-        out.alpha_composite(blur)                         # deux fois : halo bien visible sur une photo claire
-    out.alpha_composite(layer)
+        out.alpha_composite(blur)                         # deux fois : lueur bien visible sur une photo claire
+        if neon:
+            out.alpha_composite(halo.filter(ImageFilter.GaussianBlur(max(1, 3 * S))))
+    out.alpha_composite(box)
+    out.alpha_composite(line)
     return out.convert("RGB")

@@ -53,6 +53,34 @@ class Cadres(unittest.TestCase):
         self.assertEqual(c.size, (480, 300))
 
 
+class Neon(unittest.TestCase):
+    """2.49 : cadres néon, intérieur sombre et lueur seulement à l'extérieur (textes lisibles)."""
+
+    def test_neon_different_du_dore(self):
+        bg = photo()
+        st = dict(qsl.DEFAULT_STYLE, frames=True, frame_color="#ff2ec8")
+        a = qsl.make_card(bg, *ARGS, style=st)
+        b = qsl.make_card(bg, *ARGS, style=dict(st, frame_style="neon"))
+        self.assertNotEqual(a.tobytes(), b.tobytes())
+        self.assertIn("Rose", qsl.NEON_COLORS)
+
+    def test_interieur_sombre_et_lueur_dehors(self):
+        bg = Image.new("RGB", (1200, 750), (220, 220, 220))          # photo très claire
+        boxes = {}
+        card = qsl.make_card(bg, *ARGS, style=dict(qsl.DEFAULT_STYLE, frames=True, frame_style="neon",
+                                                  frame_color="#20e8ff", frame_glow=100), boxes=boxes)
+        k = card.size[0] / 960
+        x0, y0, x1, y1 = boxes["msg"]
+        inner = card.getpixel((int(x1 + 6 * k), int((y0 + y1) / 2)))      # dans le cadre, après le texte
+        self.assertLess(sum(inner), 200)                                 # intérieur sombre : texte lisible
+        outer = card.getpixel((int(x1 + 30 * k), int((y0 + y1) / 2)))    # juste à l'extérieur : lueur bleue
+        self.assertGreater(outer[2], outer[0])
+
+    def test_texte_de_la_couleur_du_cadre_en_blanc(self):
+        self.assertTrue(qsl._close((255, 209, 102), (255, 196, 64)))
+        self.assertFalse(qsl._close((255, 255, 255), (32, 232, 255)))
+
+
 class Fenetre(unittest.TestCase):
     """La case « Cadres lumineux » de la fenêtre Carte QSL change l'aperçu et reste dans le style."""
 

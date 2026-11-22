@@ -1218,4 +1218,13 @@ ZH = {
     'Couleur des cadres': '边框颜色',
     'Couleur du contour des cadres': '边框轮廓颜色',
     'Halo des cadres': '边框光晕',
+    'Doré (contour net)': '金色（清晰轮廓）',
+    'Néon (tube lumineux)': '霓虹（发光灯管）',
+    'Style des cadres': '边框样式',
+    'Couleurs néon': '霓虹颜色',
+    'Néon': '霓虹',
+    'Rose': '粉红',
+    'Vert': '绿色',
+    'Orange': '橙色',
+    'Rouge': '红色',
 }

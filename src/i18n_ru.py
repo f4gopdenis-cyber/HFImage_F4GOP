@@ -1226,4 +1226,13 @@ RU = {
     'Couleur des cadres': 'Цвет рамок',
     'Couleur du contour des cadres': 'Цвет контура рамок',
     'Halo des cadres': 'Свечение рамок',
+    'Doré (contour net)': 'Золотой (чёткий контур)',
+    'Néon (tube lumineux)': 'Неон (светящаяся трубка)',
+    'Style des cadres': 'Стиль рамок',
+    'Couleurs néon': 'Неоновые цвета',
+    'Néon': 'Неон',
+    'Rose': 'Розовый',
+    'Vert': 'Зелёный',
+    'Orange': 'Оранжевый',
+    'Rouge': 'Красный',
 }

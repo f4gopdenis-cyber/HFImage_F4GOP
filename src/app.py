@@ -8758,6 +8758,29 @@ class App(tk.Tk):
         ttk.Label(sf, text="Halo des cadres").grid(row=8, column=0, columnspan=2, sticky="w")
         ttk.Scale(sf, from_=0, to=100, variable=v_glow, command=lambda v: refresh()).grid(
             row=8, column=2, columnspan=2, sticky="we")
+        # 2.49 : style des cadres (doré : contour net ; néon : tube lumineux) et couleurs néon en un clic
+        fstyles = {"dore": tr("Doré (contour net)"), "neon": tr("Néon (tube lumineux)")}
+        v_fstyle = tk.StringVar(value=fstyles.get(style.get("frame_style"), fstyles["dore"]))
+        ttk.Label(sf, text="Style des cadres").grid(row=9, column=0, columnspan=2, sticky="w")
+        cbs = ttk.Combobox(sf, textvariable=v_fstyle, values=list(fstyles.values()), state="readonly", width=20)
+        cbs.grid(row=9, column=2, columnspan=2, sticky="w", pady=2)
+        cbs.bind("<<ComboboxSelected>>", lambda e: refresh())
+        pf = ttk.Frame(sf)
+        pf.grid(row=10, column=0, columnspan=4, sticky="w", pady=(2, 0))
+        ttk.Label(pf, text="Couleurs néon").pack(side="left", padx=(0, 6))
+
+        def preset(col):
+            style["frame_color"] = col
+            swatches["frame_color"].configure(bg=col)
+            v_frames.set(True)
+            v_fstyle.set(fstyles["neon"])
+            refresh()
+        for name, col in qsl.NEON_COLORS.items():
+            pb = tk.Button(pf, text="  ", bg=col, activebackground=col, relief="ridge", width=2,
+                           command=lambda c=col: preset(c))
+            pb._no_theme = True
+            pb.pack(side="left", padx=1)
+            tip(pb, tr("Néon") + " : " + tr(name))
 
         def reset_style():
             style.update(qsl.DEFAULT_STYLE)
@@ -8765,18 +8788,19 @@ class App(tk.Tk):
             v_font.set(style["font"]); v_size.set(style["call_size"]); v_alpha.set(style["band_alpha"])
             v_hh.set(style["head_h"]); v_bh.set(style["band_h"])
             v_frames.set(style["frames"]); v_glow.set(style["frame_glow"])
+            v_fstyle.set(fstyles["dore"])
             for k, b in swatches.items():
                 b.configure(bg=style[k])
             refresh()
 
-        ttk.Button(sf, text="Style d'origine", command=reset_style).grid(row=9, column=0, columnspan=2,
+        ttk.Button(sf, text="Style d'origine", command=reset_style).grid(row=11, column=0, columnspan=2,
                                                                         sticky="w", pady=(6, 0))
 
         def reset_pos():
             style["pos"] = {}
             refresh()
         ttk.Button(sf, text="Textes à leur place d'origine", command=reset_pos).grid(
-            row=9, column=2, columnspan=2, sticky="w", pady=(6, 0))
+            row=11, column=2, columnspan=2, sticky="w", pady=(6, 0))
         # ---- aperçu en direct
         pvf = ttk.Frame(win)
         pvf.grid(row=0, column=2, rowspan=9, padx=8, pady=8, sticky="n")
@@ -8796,7 +8820,8 @@ class App(tk.Tk):
         def current_style():
             style.update(font=v_font.get(), call_size=int(v_size.get()), band_alpha=int(v_alpha.get()),
                          head_h=int(v_hh.get()), band_h=int(v_bh.get()), frames=bool(v_frames.get()),
-                         frame_glow=int(v_glow.get()))
+                         frame_glow=int(v_glow.get()),
+                         frame_style=next((k for k, v in fstyles.items() if v == v_fstyle.get()), "dore"))
             return dict(style)
 
         def build(boxes=None, size=None):
@@ -8929,6 +8954,7 @@ class App(tk.Tk):
             v_font.set(style["font"]); v_size.set(int(style["call_size"])); v_alpha.set(int(style["band_alpha"]))
             v_hh.set(int(style.get("head_h", 100))); v_bh.set(int(style.get("band_h", 100)))
             v_frames.set(bool(style.get("frames"))); v_glow.set(int(style.get("frame_glow", 60)))
+            v_fstyle.set(fstyles.get(style.get("frame_style"), fstyles["dore"]))
             for k, b in swatches.items():
                 b.configure(bg=style[k])
             p = m.get("bg")

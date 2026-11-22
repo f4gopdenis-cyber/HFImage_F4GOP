@@ -2008,6 +2008,15 @@ T = [
     ('Couleur des cadres', 'Frame colour', 'Rahmenfarbe', 'Color de los marcos', 'Colore delle cornici'),
     ('Couleur du contour des cadres', 'Colour of the frame outline', 'Farbe des Rahmens', 'Color del contorno de los marcos', 'Colore del bordo delle cornici'),
     ('Halo des cadres', 'Frame glow', 'Rahmenleuchten', 'Halo de los marcos', 'Alone delle cornici'),
+    ('Doré (contour net)', 'Gold (sharp outline)', 'Gold (scharfer Rand)', 'Dorado (contorno nítido)', 'Dorato (bordo netto)'),
+    ('Néon (tube lumineux)', 'Neon (glowing tube)', 'Neon (Leuchtröhre)', 'Neón (tubo luminoso)', 'Neon (tubo luminoso)'),
+    ('Style des cadres', 'Frame style', 'Rahmenstil', 'Estilo de los marcos', 'Stile delle cornici'),
+    ('Couleurs néon', 'Neon colours', 'Neonfarben', 'Colores neón', 'Colori neon'),
+    ('Néon', 'Neon', 'Neon', 'Neón', 'Neon'),
+    ('Rose', 'Pink', 'Rosa', 'Rosa', 'Rosa'),
+    ('Vert', 'Green', 'Grün', 'Verde', 'Verde'),
+    ('Orange', 'Orange', 'Orange', 'Naranja', 'Arancione'),
+    ('Rouge', 'Red', 'Rot', 'Rojo', 'Rosso'),
 ]
 
 _lang = "fr"
