@@ -6,7 +6,37 @@ from PIL import Image, ImageDraw, ImageFont
 DEFAULT = {"tc_on": False, "tc_rig": "", "tc_power": "", "tc_ant": "", "tc_qth": "", "tc_extra": "",
            "tc_call": True, "tc_loc": True, "tc_freq": True, "tc_date": True, "tc_pos": "bas", "tc_size": "normale",
            "tc_font": "Arial", "tc_bold": True, "tc_italic": False, "tc_color": "#ffffff", "tc_stroke": "#000000",
-           "tc_bg": "#000000", "tc_alpha": 60, "tc_callcolor": "", "tc_frame": False, "tc_datefmt": "iso"}
+           "tc_bg": "#000000", "tc_alpha": 60, "tc_callcolor": "", "tc_frame": False, "tc_datefmt": "iso",
+           "tc_time": "auto"}
+# 2.50 (Keith Woodley) : heure du bandeau : « auto » (comme l'horloge du programme), « utc », « local »
+# (heure locale avec son décalage, ex. UTC+8), « date » (date seule, sans heure)
+TIME_MODES = ("auto", "utc", "local", "date")
+
+
+def utc_offset(t=None):
+    """Décalage de l'heure locale : « UTC+8 », « UTC+5:30 », « UTC-3 », « UTC »."""
+    import time
+    lt = time.localtime(t)
+    off = lt.tm_gmtoff if hasattr(lt, "tm_gmtoff") and lt.tm_gmtoff is not None else \
+        -(time.altzone if lt.tm_isdst > 0 and time.daylight else time.timezone)
+    if not off:
+        return "UTC"
+    sign = "+" if off > 0 else "-"
+    h, m = divmod(abs(int(off)) // 60, 60)
+    return f"UTC{sign}{h}" + (f":{m:02d}" if m else "")
+
+
+def date_text(fmt_date, mode="auto", t=None):
+    """Date (et heure) du bandeau selon le réglage « Heure »."""
+    import time
+    import clocktz
+    if mode == "utc":
+        return time.strftime(fmt_date + " %H:%M", time.gmtime(t)) + " UTC"
+    if mode == "local":
+        return time.strftime(fmt_date + " %H:%M", time.localtime(t)) + " " + utc_offset(t)
+    if mode == "date":
+        return clocktz.fmt(fmt_date, t, suffix=False)
+    return clocktz.fmt(fmt_date + " %H:%M", t)
 # 2.04 (demande de VK6NJP) : format de la date du bandeau (international, jour/mois/année, mois/jour/année)
 DATE_FORMATS = {"iso": "%Y-%m-%d", "jma": "%d/%m/%Y", "mja": "%m/%d/%Y"}
 STYLE_WORDS = ("Bold", "Italic", "Oblique", "Light", "Semibold", "SemiBold", "Black", "Medium", "Thin",
@@ -194,8 +224,7 @@ def parts(conf, call="", loc="", rig_model="", freq_text=""):
     if c["tc_freq"] and freq_text:
         out.append(freq_text)
     if c["tc_date"]:
-        import clocktz
-        out.append(clocktz.fmt(DATE_FORMATS.get(c.get("tc_datefmt"), DATE_FORMATS["iso"]) + " %H:%M"))
+        out.append(date_text(DATE_FORMATS.get(c.get("tc_datefmt"), DATE_FORMATS["iso"]), c.get("tc_time", "auto")))
     if c["tc_extra"]:
         out.append(c["tc_extra"])
     return out

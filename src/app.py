@@ -5242,12 +5242,15 @@ class App(tk.Tk):
         style = {k: self.conf[k] for k in ("tc_font", "tc_bold", "tc_italic", "tc_color", "tc_stroke", "tc_bg",
                                            "tc_alpha", "tc_callcolor", "tc_frame") if k in self.conf}
         call = self.mycall()
+        # l'heure n'est pas dans la clé : l'image n'est pas refaite chaque minute (elle l'est avant d'émettre)
         key = (id(base), tuple(i for i in items if not re.match(r"(\d{4}-\d\d-\d\d|\d\d/\d\d/\d{4}) \d\d:\d\d", i)),
                self.conf.get("tc_pos"), self.conf.get("tc_size"), tuple(sorted(style.items())),
-               self.conf.get("tc_datefmt"))
+               self.conf.get("tc_datefmt"), self.conf.get("tc_time"))
         c = getattr(self, "_tc_cache", None)
         if cache and c and c[0] == key and c[2] is base:
             return c[1]
+        if self.conf.get("tc_date", True) and self.conf.get("tc_time", "auto") != "date":
+            self._tc_stamp = time.time()          # 2.50 : heure écrite sur l'image (remise à jour avant d'émettre)
         im = trafic.overlay(base, items, self.conf.get("tc_pos", "bas"), self.conf.get("tc_size", "normale"),
                             style, call)
         if cache:
@@ -6284,6 +6287,15 @@ class App(tk.Tk):
         ttk.Label(pf, text="Taille du texte").pack(side="left", padx=(10, 0))
         ttk.Combobox(pf, textvariable=v_size, values=list(size_names.values()), width=9, state="readonly").pack(
             side="left", padx=6)
+        # 2.50 (Keith Woodley) : heure du bandeau en UTC, en heure locale avec son décalage, ou date seule
+        time_names = {"auto": tr("Comme l'horloge"), "utc": "UTC",
+                      "local": tr("Heure locale") + f" ({trafic.utc_offset()})", "date": tr("Date seule")}
+        v_time = tk.StringVar(value=time_names.get(c.get("tc_time", "auto"), time_names["auto"]))
+        ttk.Label(pf, text="Heure").pack(side="left", padx=(10, 0))
+        cbt = ttk.Combobox(pf, textvariable=v_time, values=list(time_names.values()), width=18, state="readonly")
+        cbt.pack(side="left", padx=6)
+        tip(cbt, "Heure écrite sur l'image : UTC (pour les correspondants lointains), heure locale avec son "
+                 "décalage, ou la date seule. Elle est remise à jour juste avant d'émettre.")
         # format de la date : 2.14, un seul réglage dans Réglages → Station (bandeau et carte QSL)
         # --- police et couleurs
         fams = list(trafic.fonts()) or ["Arial"]
@@ -6372,6 +6384,7 @@ class App(tk.Tk):
                 self.conf[k] = bool(var.get())
             self.conf["tc_pos"] = next(k for k, n in pos_names.items() if n == v_pos.get())
             self.conf["tc_size"] = next(k for k, n in size_names.items() if n == v_size.get())
+            self.conf["tc_time"] = next((k for k, n in time_names.items() if n == v_time.get()), "auto")
             self.conf["tc_font"] = v_font.get()
             for k, var in sb.items():
                 self.conf[k] = bool(var.get())
@@ -6900,10 +6913,30 @@ class App(tk.Tk):
         threading.Thread(target=self._tx_thread, args=(job,), daemon=True).start()
         return True
 
+    TC_STALE_S = 120           # 2.50 : heure du bandeau plus vieille que ça : image refaite avant d'émettre
+
+    def _tc_stale(self, tx):
+        """L'heure écrite dans le bandeau « Mes conditions de trafic » est-elle trop ancienne ?
+        (Pas pour une image déjà déposée d'avance : c'est l'heure du dépôt qui compte.)"""
+        if not (self.conf.get("tc_on") and self.conf.get("tc_date", True)
+                and self.conf.get("tc_time", "auto") != "date"):
+            return False
+        if isinstance(tx, HybridJob) and getattr(tx, "pre", None) is not None:
+            return False
+        stamp = getattr(self, "_tc_stamp", None)
+        return stamp is not None and time.time() - stamp > self.TC_STALE_S
+
     def transmit(self, complement=False, extra=None, tx=None, quiet=False):
         if tx is None and getattr(self, "_prep_waiting", False) and not self.tx_busy:
             self.prepare(sync=True)       # calcul de l'image encore en cours : on le termine maintenant
             self._prep_show_busy(False)
+        if (tx is None and not complement and not self.tx_busy and self.tx is not None
+                and self._tc_stale(self.tx)):
+            # 2.50 (Keith Woodley) : l'heure du bandeau est celle de l'émission, pas de la préparation
+            self._tc_cache = None
+            self.tx = None
+            self.prepare(sync=True)
+            self.log(tr("Bandeau : heure remise à jour avant l'émission."))
         if tx is None and self.tx is not None and isinstance(self.tx, HybridJob) != bool(self.v_hyb.get()):
             self.tx = None
             self.prepare(sync=True)       # l'image prête était pour l'autre mode
