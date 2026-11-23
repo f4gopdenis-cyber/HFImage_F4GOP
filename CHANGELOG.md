@@ -1,5 +1,11 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 2.50 (signalé par Keith Woodley, WASSTV)
+
+- Journal : les lignes qui restaient en français dans l'interface anglaise (hybride éclair, présence, serveur, dépôt…) sont traduites dans toutes les langues. Un test vérifie désormais que chaque phrase du journal est traduite.
+- « Mes conditions de trafic » : nouvelle liste **« Heure »** : comme l'horloge (par défaut), **UTC** (« 2026-11-23 08:35 UTC »), **heure locale avec son décalage** (« 23/11/2026 16:35 UTC+8 ») ou **date seule**.
+- L'heure du bandeau est **remise à jour juste avant d'émettre** : si l'image a été préparée il y a plus de 2 minutes, elle est refaite au moment de l'émission. Image déposée d'avance (hybride) : c'est l'heure du dépôt qui reste.
+
 ## Version 2.49 — cadres néon sur la carte QSL
 
 - IMG/QSL : **« Style des cadres »** : *Doré (contour net)* ou *Néon (tube lumineux)* : cœur presque blanc, couleur vive et lueur autour. **Six couleurs néon en un clic** (rose, bleu, vert, violet, orange, rouge) ; le carré de couleur garde le choix libre.

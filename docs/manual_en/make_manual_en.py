@@ -586,7 +586,9 @@ s.append(P("Tick <b>My station info</b> (TX tab) and click <b>…</b> next to it
            "the field is empty), power, antenna, frequency, UTC date and time, and free text. Each item can be ticked "
            "or not; the preview updates live. The banner is part of the picture, so every correspondent sees it, "
            "whatever program they use. <b>Date</b> list: international format (2026-11-04, default), day/month/year "
-           "(04/11/2026) or month/day/year (11/04/2026). The <b>Font and colours</b> frame sets the font, bold / italic, text colour, "
+           "(04/11/2026) or month/day/year (11/04/2026). <b>Time</b> list: same as the program clock, <b>UTC</b>, "
+           "<b>local time with its offset</b> (16:35 UTC+8) or <b>date only</b>; the time is updated just before "
+           "transmitting (except for a picture pre-uploaded in hybrid mode: the upload time is kept). The <b>Font and colours</b> frame sets the font, bold / italic, text colour, "
            "callsign colour, outline, background and its opacity, and a coloured border; <b>Presets…</b> offers "
            "ready-made styles."))
 s.append(P("Other transmissions", "h2"))
