@@ -1280,4 +1280,6 @@ ZH = {
     "Les bulles restent à la même place quand vous changez d'image (annonce répétée avant un réseau, par exemple). Décochez, ou « Tout effacer », quand vous n'en voulez plus. Décochée à chaque lancement du programme.": '更换图像时气泡保持在原位（例如在网络活动前重复发布的通知）。不再需要时取消勾选或点击“全部清除”。每次启动程序时自动取消勾选。',
     'Tout sélectionner': '全选',
     'Copier tout le journal': '复制全部日志',
+    "Entrée audio : {0} coupure(s) de son (l'ordinateur n'a pas suivi) : des segments peuvent être perdus.": '音频输入：{0} 次声音中断（计算机来不及处理）：可能丢失分段。',
+    "Réception en retard de {0} s : l'ordinateur est trop chargé.": '接收延迟 {0} 秒：计算机负载过高。',
 }

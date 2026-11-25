@@ -66,7 +66,7 @@ import random
 import wave
 
 APP = "HFImage F4GOP"
-VERSION = "2.52"
+VERSION = "2.53"
 
 
 def _take_profile(argv):
@@ -4442,9 +4442,35 @@ class App(tk.Tk):
             self._bsr_check()
             self._fix_due()
             self._pre_btn_paint()
+            self._audio_health()
         except Exception as e:
             self.log_exc("Mise à jour", e)
         self.after(300, self._tick)
+
+    _in_overflows = 0            # coupures signalées par la carte son (callback d'entrée)
+    _in_overflows_seen = 0
+    _audio_health_t = 0.0
+    _audio_late_logged = False
+
+    def _audio_health(self):
+        """2.53 : écrit dans le journal les coupures de son en réception (au plus toutes les 10 s), et un
+        retard de traitement (ordinateur trop chargé). Une coupure fait perdre des segments EasyPal."""
+        now = time.time()
+        if now - self._audio_health_t < 10:
+            return
+        self._audio_health_t = now
+        n = self._in_overflows - self._in_overflows_seen
+        if n > 0:
+            self._in_overflows_seen = self._in_overflows
+            self.log(tr("Entrée audio : {0} coupure(s) de son (l'ordinateur n'a pas suivi) : "
+                        "des segments peuvent être perdus.").format(n))
+        if self.rx_stream is not None:
+            late = self.audio_q.qsize() / 10.0                    # blocs de 0,1 s en attente
+            if late >= 3 and not self._audio_late_logged:
+                self._audio_late_logged = True
+                self.log(tr("Réception en retard de {0} s : l'ordinateur est trop chargé.").format(round(late)))
+            elif late < 1:
+                self._audio_late_logged = False
 
     _drm_rates = {}
 
@@ -8076,6 +8102,8 @@ class App(tk.Tk):
         wf_rows = RowMaker()
 
         def cb(indata, frames, t, status):
+            if status and status.input_overflow:       # 2.53 : son perdu par la carte (programme trop lent)
+                self._in_overflows += 1
             self.audio_q.put(indata[:, 0].copy())
 
         S = sd()
@@ -8085,7 +8113,9 @@ class App(tk.Tk):
             try:
                 fs, ch = audio.pick_rate(S, dev, output=False)
                 rs = audio.LinearResampler(fs, audio.FS_CARD)
-                self.rx_stream = S.InputStream(device=dev, channels=ch, samplerate=fs,
+                # 2.53 (F4GOP : EasyPal décodait mieux, même poste) : tampon d'entrée « haut » : une
+                # seconde chargée de l'ordinateur ne fait plus perdre de son (donc de segments)
+                self.rx_stream = S.InputStream(device=dev, channels=ch, samplerate=fs, latency="high",
                                                dtype="float32", blocksize=fs // 10, callback=cb)
                 self.rx_stream.start()
                 self.log(f"Entrée : {audio.device_label(S, dev)}, {fs} Hz, {ch} voie(s)")

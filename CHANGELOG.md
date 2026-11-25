@@ -1,5 +1,10 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 2.53 — réception EasyPal plus sûre (signalé par F4GOP)
+
+- Réception : tampon d'entrée de la carte son agrandi. Un instant de surcharge de l'ordinateur ne fait plus perdre de son, donc plus de segments EasyPal (EasyPal recevait 597 segments sur 597 et HFImage 487, même poste, même carte son).
+- Journal : les **coupures de son** en réception sont signalées (« Entrée audio : 3 coupure(s) de son… : des segments peuvent être perdus »), ainsi qu'un **retard de réception** quand l'ordinateur est trop chargé.
+
 ## Version 2.52 (demande de F4EEH)
 
 - « Sites des stations » : chaque station est relue **toutes les minutes** au lieu de 2 (pendant un réseau, plusieurs images passaient en 2 minutes). Toujours une simple question au serveur : l'image n'est téléchargée que si elle a changé. Le bouton « Actualiser » relit tout tout de suite.

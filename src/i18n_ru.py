@@ -1288,4 +1288,6 @@ RU = {
     "Les bulles restent à la même place quand vous changez d'image (annonce répétée avant un réseau, par exemple). Décochez, ou « Tout effacer », quand vous n'en voulez plus. Décochée à chaque lancement du programme.": 'Выноски остаются на том же месте при смене изображения (например, повторяемое объявление перед сетью). Снимите отметку или нажмите «Очистить всё», когда они больше не нужны. Отметка снимается при каждом запуске программы.',
     'Tout sélectionner': 'Выделить всё',
     'Copier tout le journal': 'Копировать весь журнал',
+    "Entrée audio : {0} coupure(s) de son (l'ordinateur n'a pas suivi) : des segments peuvent être perdus.": 'Аудиовход: {0} пропуск(ов) звука (компьютер не успевал): сегменты могут быть потеряны.',
+    "Réception en retard de {0} s : l'ordinateur est trop chargé.": 'Приём отстаёт на {0} с: компьютер слишком загружен.',
 }
