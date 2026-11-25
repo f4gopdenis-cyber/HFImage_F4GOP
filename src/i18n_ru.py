@@ -1284,4 +1284,8 @@ RU = {
     'Date seule': 'Только дата',
     "Heure écrite sur l'image : UTC (pour les correspondants lointains), heure locale avec son décalage, ou la date seule. Elle est remise à jour juste avant d'émettre.": 'Время на изображении: UTC (для дальних станций), местное время со смещением или только дата. Обновляется перед самой передачей.',
     "Bandeau : heure remise à jour avant l'émission.": 'Баннер: время обновлено перед передачей.',
+    'Garder les bulles pour les images suivantes': 'Сохранять выноски для следующих изображений',
+    "Les bulles restent à la même place quand vous changez d'image (annonce répétée avant un réseau, par exemple). Décochez, ou « Tout effacer », quand vous n'en voulez plus. Décochée à chaque lancement du programme.": 'Выноски остаются на том же месте при смене изображения (например, повторяемое объявление перед сетью). Снимите отметку или нажмите «Очистить всё», когда они больше не нужны. Отметка снимается при каждом запуске программы.',
+    'Tout sélectionner': 'Выделить всё',
+    'Copier tout le journal': 'Копировать весь журнал',
 }

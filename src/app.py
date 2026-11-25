@@ -598,6 +598,8 @@ class App(tk.Tk):
         self.pips = []              # images des correspondants incrustées dans l'image TX
         self._pip_keep_load()       # 1.66 : logos et images du PC gardés d'un lancement à l'autre
         self.bubbles = []           # bulles de texte (BD) dessinées sur l'image TX
+        # 2.51 (VK6NJP) : bulles gardées d'une image à l'autre (non enregistré : décoché au lancement)
+        self.v_keep_bubbles = tk.BooleanVar(value=False)
 
         self.sent_images = {}       # id -> Transmission émise (pour répondre aux BSR)
         self.my_ids = set()         # id de nos images (normales et annonces hybrides)
@@ -745,6 +747,7 @@ class App(tk.Tk):
         logbox = tk.Frame(rpw, bg=GREEN)
         self.logbox = tk.Text(logbox, height=4, state="disabled", wrap="word", bg="#f4fff4")
         self.logbox.pack(fill="both", expand=True)
+        self._log_copy_setup(self.logbox)
         rpw.add(logbox, minsize=40, stretch="never", height=70)
         bar = tk.Frame(right, bg=GREEN_DARK)
         bar.pack(fill="x", pady=(2, 0))
@@ -1286,6 +1289,7 @@ class App(tk.Tk):
         i.add_command(label="Mes conditions de trafic…", command=self.trafic_dialog)
         i.add_command(label="Image du correspondant…", command=self.pip_dialog)
         i.add_command(label="Bulles de texte…", command=self.bubble_dialog)
+        i.add_checkbutton(label="Garder les bulles pour les images suivantes", variable=self.v_keep_bubbles)
         i.add_command(label="Carte QSL…", command=self.qsl_dialog)
         i.add_separator()
         i.add_command(label="Image reçue en plein format", command=self._open_full)
@@ -3986,6 +3990,47 @@ class App(tk.Tk):
 
     LOG_KEEP = 300               # lignes gardées dans le journal à l'écran
 
+    def _log_copy_setup(self, w):
+        """2.51 (VK6ATI) : copier le texte du journal (lignes BSR / segments manquants à faire suivre au groupe).
+        Le journal est en lecture seule : sous Windows, un clic ne lui donnait pas la main, Ctrl+C ne faisait rien."""
+        def copy(text):
+            if text:
+                self.clipboard_clear()
+                self.clipboard_append(text)
+
+        def copy_sel(e=None):
+            try:
+                copy(w.get("sel.first", "sel.last"))
+            except tk.TclError:
+                pass
+            return "break"
+
+        def select_all(e=None):
+            w.tag_add("sel", "1.0", "end-1c")
+            w.focus_set()
+            return "break"
+
+        def menu(e):
+            has_sel = bool(w.tag_ranges("sel"))
+            m = tk.Menu(w, tearoff=0)
+            m.add_command(label=tr("Copier"), command=copy_sel, state="normal" if has_sel else "disabled")
+            m.add_command(label=tr("Tout sélectionner"), command=select_all)
+            m.add_command(label=tr("Copier tout le journal"), command=lambda: copy(w.get("1.0", "end-1c")))
+            try:
+                m.tk_popup(e.x_root, e.y_root)
+            finally:
+                m.grab_release()
+            return "break"
+
+        w.bind("<Button-1>", lambda e: w.focus_set(), add="+")
+        for seq in ("<Control-c>", "<Control-C>", "<Control-Insert>"):
+            w.bind(seq, copy_sel)
+        w.bind("<Control-a>", select_all)
+        w.bind("<Button-3>", menu)
+        if sys.platform == "darwin":
+            w.bind("<Button-2>", menu)
+        w._copy_sel, w._select_all, w._menu = copy_sel, select_all, menu      # pour les tests
+
     def log(self, msg):
         line = time.strftime("%H:%M:%S ") + tr(msg) + "\n"
         self.logbox.configure(state="normal")
@@ -5068,7 +5113,7 @@ class App(tk.Tk):
             self.src_img, self.src_raw, self.src_kind = imgfmt.load_source(p, notes)
             if notes:
                 self.log(tr("Photo remise dans le bon sens (indication du téléphone)."))
-            self.bubbles = []                 # les bulles étaient placées pour l'image précédente
+            self._drop_bubbles()              # les bulles étaient placées pour l'image précédente
             self.src_path = p                 # nom repris pour les fichiers EasyPal (« de_…-photo.jpg »)
         except Exception as e:
             messagebox.showerror(APP, f"Image illisible : {e}")
@@ -5099,6 +5144,12 @@ class App(tk.Tk):
                      "(« original » reste possible en mode hybride).")
         self.prepare()
 
+    def _drop_bubbles(self):
+        """Nouvelle image : bulles effacées, sauf « Garder les bulles pour les images suivantes » (2.51, VK6NJP).
+        Leur place est en proportion de l'image : elles restent au même endroit sur la suivante."""
+        if not self.v_keep_bubbles.get():
+            self.bubbles = []
+
     def clear_tx_image(self):
         """2.13 (BH2RMX) : retire l'image de l'onglet TX (Fichiers → Effacer → Image à émettre)."""
         if self.tx_busy:
@@ -5106,7 +5157,7 @@ class App(tk.Tk):
             return
         self.src_img = self.src_raw = self.src_kind = self.src_anim = None
         self.src_path = ""
-        self.bubbles = []                     # placées sur l'image retirée
+        self._drop_bubbles()                  # placées sur l'image retirée
         self._qsl_card = self._qsl_bg = None
         self.tx = None
         if getattr(self, "tx_editor", None) is not None:
@@ -5833,6 +5884,11 @@ class App(tk.Tk):
         ttk.Button(bot, text="Tout effacer", command=lambda: (self.bubbles.clear(), sel.__setitem__(0, None),
                                                               refresh_list(), load_fields(), preview())
                    ).pack(side="left")
+        ck = ttk.Checkbutton(bot, text="Garder les bulles pour les images suivantes", variable=self.v_keep_bubbles)
+        ck.pack(side="left", padx=(12, 0))
+        tip(ck, "Les bulles restent à la même place quand vous changez d'image (annonce répétée avant un "
+                "réseau, par exemple). Décochez, ou « Tout effacer », quand vous n'en voulez plus. "
+                "Décochée à chaque lancement du programme.")
         ttk.Button(bot, text="OK", command=close).pack(side="right")
         w.protocol("WM_DELETE_WINDOW", close)
         if not self.bubbles:

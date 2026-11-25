@@ -1276,4 +1276,8 @@ ZH = {
     'Date seule': '仅日期',
     "Heure écrite sur l'image : UTC (pour les correspondants lointains), heure locale avec son décalage, ou la date seule. Elle est remise à jour juste avant d'émettre.": '写在图像上的时间：UTC（用于远方电台）、带时差的本地时间，或仅日期。在发射前更新。',
     "Bandeau : heure remise à jour avant l'émission.": '横幅：发射前已更新时间。',
+    'Garder les bulles pour les images suivantes': '为后续图像保留气泡',
+    "Les bulles restent à la même place quand vous changez d'image (annonce répétée avant un réseau, par exemple). Décochez, ou « Tout effacer », quand vous n'en voulez plus. Décochée à chaque lancement du programme.": '更换图像时气泡保持在原位（例如在网络活动前重复发布的通知）。不再需要时取消勾选或点击“全部清除”。每次启动程序时自动取消勾选。',
+    'Tout sélectionner': '全选',
+    'Copier tout le journal': '复制全部日志',
 }
