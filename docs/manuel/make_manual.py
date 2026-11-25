@@ -462,7 +462,9 @@ s.append(P("Bouton <b>Bulles…</b> (onglet TX) ou menu <b>Images → Bulles de 
            "<b>Glissez la bulle</b> à la souris, et le <b>rond rouge</b> (la pointe) vers ce qu'elle doit montrer ; "
            "plusieurs bulles possibles, clic droit sur une bulle pour la supprimer. La bulle fait partie de l'image : "
            "tout le monde la voit, en radio comme en hybride, y compris les stations EasyPal. Les bulles sont effacées "
-           "quand on ouvre une autre image."))
+           "quand on ouvre une autre image, sauf avec la case <b>« Garder les bulles pour les images suivantes »</b> "
+           "(fenêtre des bulles ou menu Images) : elles restent alors à la même place, image après image (annonce "
+           "répétée avant un réseau), jusqu'à ce qu'on la décoche ou « Tout effacer ». Case décochée à chaque lancement."))
 s.append(P("Mode Auto et robustesse", "h2"))
 s.append(P("En mode <b>Auto</b>, HFImage choisit le mode d'après le <b>report le plus faible</b> des stations "
            "qui ont reçu vos images ces 45 dernières minutes (liste Rx Ok). Sans report, il prend le SNR des "
@@ -652,6 +654,8 @@ s += B(["Le panneau d'état affiche l'indicatif, « EP B/16 » (mode EasyPal / Q
         "reçus et attendus, la position et les voyants Sync / Trame / Image / BSR.",
         "Si une image reste incomplète, le voyant BSR passe à l'orange et le journal vous invite à cliquer sur <b>BSR</b> : "
         "le BSR EasyPal demande à l'émetteur les segments manquants.",
+        "Pour faire suivre ces lignes (au groupe d'un réseau, par exemple) : sélectionnez-les dans le journal puis "
+        "<b>Ctrl+C</b>, ou <b>clic droit</b> dans le journal → Copier, Tout sélectionner, Copier tout le journal.",
         "Les textes envoyés par EasyPal / QSSTV (fichiers .txt) s'affichent dans les messages reçus avec l'indicatif."])
 s.append(P("Répondre aux BSR (FIX)", "h2"))
 s.append(P("Quand une station EasyPal ou QSSTV demande les segments manquants de votre dernière image (BSR), HFImage "

@@ -463,7 +463,9 @@ s.append(P("<b>Bubbles…</b> button (TX tab) or <b>Images → Speech bubbles…
            "<b>Drag the bubble</b> with the mouse, and the <b>red dot</b> "
            "(the tail) towards what it points at; several bubbles are possible, right-click a bubble to delete it. The "
            "bubble is part of the picture: everyone sees it, over the air or in hybrid mode, EasyPal stations too. "
-           "Bubbles are cleared when you open another picture."))
+           "Bubbles are cleared when you open another picture, except with the <b>“Keep the bubbles for the next pictures”</b> "
+           "box (bubbles window or Images menu): they then stay in the same place, picture after picture (an announcement "
+           "repeated before a net), until you untick it or use “Clear all”. Unticked each time the program starts."))
 s.append(P("Auto mode and robustness", "h2"))
 s.append(P("In <b>Auto</b> mode, HFImage chooses the mode from the <b>weakest report</b> of the stations that "
            "received your pictures during the last 45 minutes (Rx Ok list). Without reports it uses the SNR of the "
@@ -530,6 +532,8 @@ s += B(["The status panel shows the callsign, “EP B/16” (EasyPal mode / QAM)
         "received segments, position, and the Sync / Frame / Image / BSR lights.",
         "If a picture remains incomplete, the BSR light turns amber and the log tells you to click <b>BSR</b>: "
         "the EasyPal BSR asks the sender for the missing segments.",
+        "To pass these lines on (to the group of a net, for example): select them in the log and press <b>Ctrl+C</b>, "
+        "or <b>right-click</b> in the log → Copy, Select all, Copy the whole log.",
         "Texts sent by EasyPal / QSSTV (.txt files) appear in the received messages window with the callsign."])
 s.append(P("Answering BSR (FIX)", "h2"))
 s.append(P("When an EasyPal or QSSTV station asks for missing segments of your last picture (BSR), HFImage answers "

@@ -1,5 +1,10 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 2.51 (demandes de VK6ATI et VK6NJP)
+
+- Journal : le texte peut être copié. Un clic dans le journal lui donne la main : **Ctrl+C** copie la sélection, Ctrl+A sélectionne tout. **Clic droit** : Copier, Tout sélectionner, Copier tout le journal. Pratique pour faire suivre au groupe d'un réseau les lignes de segments manquants / BSR (demande de Tony VK6ATI).
+- Bulles : nouvelle case **« Garder les bulles pour les images suivantes »** (fenêtre des bulles et menu Images). Cochée, les bulles restent à la même place quand on ouvre une autre image : une annonce répétée avant un réseau n'est à placer qu'une fois. On la décoche, ou « Tout effacer », quand on n'en veut plus ; elle est décochée à chaque lancement (demande de James VK6NJP).
+
 ## Version 2.50 (signalé par Keith Woodley, WASSTV)
 
 - Journal : les lignes qui restaient en français dans l'interface anglaise (hybride éclair, présence, serveur, dépôt…) sont traduites dans toutes les langues. Un test vérifie désormais que chaque phrase du journal est traduite.
