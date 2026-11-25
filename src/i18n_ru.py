@@ -957,7 +957,7 @@ RU = {
     'Sites des stations…': 'Сайты станций…',
     'Ajouter une station…': 'Добавить станцию…',
     'Ajouter une station': 'Добавить станцию',
-    'station(s) avec un site — relues toutes les 2 minutes': 'станций с сайтом — читается каждые 2 минуты',
+    'station(s) avec un site — relues toutes les minutes': 'станций с сайтом — читается каждую минуту',
     "pas d'image": 'нет изображения',
     'image du': 'изображение',
     "Aucune station en ligne n'a encore de site. Les stations HFImage apparaissent ici dès qu'elles mettent leurs images en ligne (Images → Site web / Digi-Sites). « Ajouter une station… » pour le site d'une station EasyPal.": 'Ни у одной онлайн станции ещё нет сайта. Станции HFImage появляются здесь, как только загружают свои изображения (Изображения → Сайт / Digi-Sites). «Добавить станцию…» для сайта станции EasyPal.',

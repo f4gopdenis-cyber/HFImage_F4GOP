@@ -23,7 +23,7 @@ import hybrid
 from i18n import tr
 
 MAX_BYTES = 5_000_000
-POLL_S = 120                     # chaque station relue toutes les 2 minutes (si le fichier a changé)
+POLL_S = 60                      # 2.52 (F4EEH) : chaque station relue toutes les minutes (si le fichier a changé)
 TW, TH = 200, 150                # taille des vignettes
 
 
@@ -175,7 +175,7 @@ class SitesWindow(tk.Toplevel):
             except (TypeError, ValueError, IndexError):
                 return 0
         sts.sort(key=key)
-        self.lb.configure(text=f"{len(sts)} " + tr("station(s) avec un site — relues toutes les 2 minutes"))
+        self.lb.configure(text=f"{len(sts)} " + tr("station(s) avec un site — relues toutes les minutes"))
         W = max(cv.winfo_width(), TW + 20)
         cw, ch = TW + 16, TH + 52
         cols = max(1, W // cw)

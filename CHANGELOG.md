@@ -1,5 +1,9 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 2.52 (demande de F4EEH)
+
+- « Sites des stations » : chaque station est relue **toutes les minutes** au lieu de 2 (pendant un réseau, plusieurs images passaient en 2 minutes). Toujours une simple question au serveur : l'image n'est téléchargée que si elle a changé. Le bouton « Actualiser » relit tout tout de suite.
+
 ## Version 2.51 (demandes de VK6ATI et VK6NJP)
 
 - Journal : le texte peut être copié. Un clic dans le journal lui donne la main : **Ctrl+C** copie la sélection, Ctrl+A sélectionne tout. **Clic droit** : Copier, Tout sélectionner, Copier tout le journal. Pratique pour faire suivre au groupe d'un réseau les lignes de segments manquants / BSR (demande de Tony VK6ATI).

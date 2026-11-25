@@ -956,7 +956,7 @@ ZH = {
     'Sites des stations…': '台站站点…',
     'Ajouter une station…': '添加台站…',
     'Ajouter une station': '添加台站',
-    'station(s) avec un site — relues toutes les 2 minutes': '有站点的台站 — 每 2 分钟读取一次',
+    'station(s) avec un site — relues toutes les minutes': '有站点的台站 — 每分钟读取一次',
     "pas d'image": '无图片',
     'image du': '图片来自',
     "Aucune station en ligne n'a encore de site. Les stations HFImage apparaissent ici dès qu'elles mettent leurs images en ligne (Images → Site web / Digi-Sites). « Ajouter une station… » pour le site d'une station EasyPal.": '还没有在线台站提供站点。HFImage 台站上传图像后就会出现在这里(图像 → 网站 / Digi-Sites)。若要为 EasyPal 台站添加站点,请用“添加台站…”。',

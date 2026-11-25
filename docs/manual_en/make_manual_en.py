@@ -718,7 +718,7 @@ s.append(P("<b>Station sites</b>: menu <b>Images → Station sites…</b> (or Ac
            "like Digi-Sites, which is no longer maintained, one thumbnail per station with the <b>last picture it "
            "received</b> (its image1), the time of that picture and the distance. Online HFImage stations that upload "
            "their pictures appear by themselves; “<b>Add a station…</b>” for an EasyPal station (address of its image1, "
-           "the one given to Digi-Sites). Read every 2 minutes, only if the picture changed; a click enlarges it, "
+           "the one given to Digi-Sites). Read every minute, only if the picture changed; a click enlarges it, "
            "right-click: the station's page."))
 
 # ------------------------------------------------------------------ 10
