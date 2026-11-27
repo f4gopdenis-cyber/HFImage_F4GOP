@@ -1290,4 +1290,8 @@ RU = {
     'Copier tout le journal': 'Копировать весь журнал',
     "Entrée audio : {0} coupure(s) de son (l'ordinateur n'a pas suivi) : des segments peuvent être perdus.": 'Аудиовход: {0} пропуск(ов) звука (компьютер не успевал): сегменты могут быть потеряны.',
     "Réception en retard de {0} s : l'ordinateur est trop chargé.": 'Приём отстаёт на {0} с: компьютер слишком загружен.',
+    'Copier les lignes choisies': 'Копировать выбранные строки',
+    'Copier toute la liste': 'Копировать весь список',
+    'Copier les images reçues seulement': 'Копировать только принятые изображения',
+    'images reçues': 'принятые изображения',
 }

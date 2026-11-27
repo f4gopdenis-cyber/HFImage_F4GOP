@@ -2072,6 +2072,10 @@ T = [
     ('Copier tout le journal', 'Copy the whole log', 'Ganzes Protokoll kopieren', 'Copiar todo el registro', 'Copia tutto il registro'),
     ("Entrée audio : {0} coupure(s) de son (l'ordinateur n'a pas suivi) : des segments peuvent être perdus.", 'Audio input: {0} sound dropout(s) (the computer did not keep up): segments may be lost.', 'Audioeingang: {0} Tonaussetzer (der Computer kam nicht nach): Segmente können verloren gehen.', 'Entrada de audio: {0} corte(s) de sonido (el ordenador no siguió el ritmo): pueden perderse segmentos.', 'Ingresso audio: {0} interruzione/i del suono (il computer non ha tenuto il passo): alcuni segmenti possono andare persi.'),
     ("Réception en retard de {0} s : l'ordinateur est trop chargé.", 'Reception {0} s behind: the computer is too busy.', 'Empfang {0} s im Rückstand: der Computer ist zu stark ausgelastet.', 'Recepción con {0} s de retraso: el ordenador está demasiado cargado.', 'Ricezione in ritardo di {0} s: il computer è troppo carico.'),
+    ('Copier les lignes choisies', 'Copy the selected lines', 'Ausgewählte Zeilen kopieren', 'Copiar las líneas seleccionadas', 'Copia le righe selezionate'),
+    ('Copier toute la liste', 'Copy the whole list', 'Ganze Liste kopieren', 'Copiar toda la lista', "Copia tutto l'elenco"),
+    ('Copier les images reçues seulement', 'Copy received pictures only', 'Nur empfangene Bilder kopieren', 'Copiar solo las imágenes recibidas', 'Copia solo le immagini ricevute'),
+    ('images reçues', 'received pictures', 'empfangene Bilder', 'imágenes recibidas', 'immagini ricevute'),
 ]
 
 _lang = "fr"

@@ -680,6 +680,12 @@ s += B(["réception EasyPal → mode <b>EasyPal</b> ; quand l'image est complèt
         "Rien ne change pendant vos émissions ni lors du décodage d'un fichier WAV. Chaque changement est noté dans le journal.",
         "Un mode <b>choisi à la main</b> dans l'onglet TX est gardé <b>10 minutes</b>, même si d'autres images arrivent "
         "dans l'autre famille de modes. Pour choisir toujours soi-même : décochez l'option."])
+s.append(P("Journal des stations", "h2"))
+s.append(P("La liste de l'onglet Stations (heure, indicatif, événement, mode, SNR, détail) se copie : choisissez des "
+           "lignes (Maj ou Ctrl pour plusieurs, Ctrl+A pour toutes) puis <b>Ctrl+C</b>, ou <b>clic droit</b> → Copier "
+           "les lignes choisies, Copier toute la liste, ou <b>Copier les images reçues seulement</b> (le « log » des "
+           "images reçues, comme dans EasyPal). Le texte commence par l'indicatif et la date ; les colonnes sont "
+           "séparées par des tabulations : il se colle dans un e-mail, ou en colonnes dans un tableur."))
 
 # ------------------------------------------------------------------ 6
 s.append(PageBreak())

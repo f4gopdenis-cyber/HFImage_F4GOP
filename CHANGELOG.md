@@ -1,5 +1,10 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 2.54 (demande de VK6ATI)
+
+- Onglet Stations : le journal des stations se copie. Ctrl+C copie les lignes choisies (Maj / Ctrl pour en prendre plusieurs, Ctrl+A pour toutes) ; **clic droit** : Copier les lignes choisies, Copier toute la liste, **Copier les images reçues seulement** (le « log » des images reçues, comme dans EasyPal). Le texte commence par l'indicatif et la date, colonnes séparées par des tabulations (e-mail ou tableur).
+- Correction : dans l'interface anglaise (et les autres langues), « Image reçue (hybride) » et la taille « … octets » restaient en français dans ce journal.
+
 ## Version 2.53 — réception EasyPal plus sûre (signalé par F4GOP)
 
 - Réception : tampon d'entrée de la carte son agrandi. Un instant de surcharge de l'ordinateur ne fait plus perdre de son, donc plus de segments EasyPal (EasyPal recevait 597 segments sur 597 et HFImage 487, même poste, même carte son).

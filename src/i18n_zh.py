@@ -1282,4 +1282,8 @@ ZH = {
     'Copier tout le journal': '复制全部日志',
     "Entrée audio : {0} coupure(s) de son (l'ordinateur n'a pas suivi) : des segments peuvent être perdus.": '音频输入：{0} 次声音中断（计算机来不及处理）：可能丢失分段。',
     "Réception en retard de {0} s : l'ordinateur est trop chargé.": '接收延迟 {0} 秒：计算机负载过高。',
+    'Copier les lignes choisies': '复制所选行',
+    'Copier toute la liste': '复制整个列表',
+    'Copier les images reçues seulement': '仅复制已接收的图像',
+    'images reçues': '已接收的图像',
 }

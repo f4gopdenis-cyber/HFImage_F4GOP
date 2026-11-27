@@ -669,6 +669,10 @@ s += B(["In the list, <b>*</b> marks a station transmitting (red) and <b>HYB</b>
         "Firewall or Internet provider blocking port 1883: HFImage tries the other accesses of the same server by itself "
         "(8883 encrypted, then 8884 and 8000 via the web); the log shows which one worked."])
 s.append(img("en_stations.png", 160, "Stations tab: BSR / FIX options, mode following, and the station log."))
+s.append(P("The station log list can be copied: select lines (Shift or Ctrl for several, Ctrl+A for all) and press "
+           "<b>Ctrl+C</b>, or <b>right-click</b> → Copy the selected lines, Copy the whole list, or <b>Copy received "
+           "pictures only</b> (a log of received pictures, as in EasyPal). The text starts with your callsign and the "
+           "date; columns are separated by tabs, so it pastes into an e-mail, or into columns in a spreadsheet."))
 s.append(P("Hybrid mode (HFImage) and website", "h2"))
 s.append(P("In the HFImage modes, hybrid mode sends the picture through your <b>web hosting</b> (FTP); only the "
            "<b>link</b> goes over the air (~11 s in DATAC3). Stations download it automatically. Ideal for large "

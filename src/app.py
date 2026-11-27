@@ -66,7 +66,7 @@ import random
 import wave
 
 APP = "HFImage F4GOP"
-VERSION = "2.53"
+VERSION = "2.54"
 
 
 def _take_profile(argv):
@@ -2614,6 +2614,7 @@ class App(tk.Tk):
             self.tree.heading(c, text=title)
             self.tree.column(c, width=w, anchor="w")
         self.tree.pack(fill="both", expand=True, pady=8)
+        self._tree_copy_setup(self.tree)
         bf = ttk.Frame(t)
         bf.pack(fill="x")
         self.btn_fix = ttk.Button(bf, text="FIX", command=self.send_fix)
@@ -2621,6 +2622,65 @@ class App(tk.Tk):
         ttk.Button(bf, text="Effacer la liste", command=lambda: self.tree.delete(*self.tree.get_children())).pack(
             side="left", padx=6)
         ttk.Label(bf, text="Journal complet : Documents\\HFImage\\stations.csv", foreground="#555").pack(side="right")
+
+    def _tree_text(self, which="sel"):
+        """2.54 (VK6ATI) : journal des stations en texte (titre + colonnes séparées par des tabulations,
+        du plus ancien au plus récent). which : « sel » (lignes choisies), « all », « images »."""
+        t = self.tree
+        rows = t.selection() if which == "sel" else t.get_children()
+        rows = [r for r in t.get_children() if r in set(rows)][::-1]     # ordre d'affichage, puis chronologique
+        img = tr("Image reçue")
+        out = []
+        for r in rows:
+            v = [str(x) for x in t.item(r, "values")]
+            if which == "images" and not (len(v) > 2 and v[2].startswith(img)):
+                continue
+            out.append("\t".join(v))
+        if not out:
+            return ""
+        cols = ("heure", "call", "evt", "mode", "snr", "detail")
+        head = "\t".join(t.heading(c, "text") for c in cols)
+        title = "HFImage — " + (self.v_call.get().strip().upper() or "?") + " — " + time.strftime("%Y-%m-%d")
+        if which == "images":
+            title += " — " + tr("images reçues")
+        return "\n".join([title, head] + out) + "\n"
+
+    def _tree_copy_setup(self, t):
+        def copy(which):
+            txt = self._tree_text(which)
+            if txt:
+                self.clipboard_clear()
+                self.clipboard_append(txt)
+            return "break"
+
+        def select_all(e=None):
+            t.selection_set(t.get_children())
+            return "break"
+
+        def menu(e):
+            row = t.identify_row(e.y)
+            if row and row not in t.selection():
+                t.selection_set(row)
+            m = tk.Menu(t, tearoff=0)
+            m.add_command(label=tr("Copier les lignes choisies"), command=lambda: copy("sel"),
+                          state="normal" if t.selection() else "disabled")
+            m.add_command(label=tr("Copier toute la liste"), command=lambda: copy("all"))
+            m.add_command(label=tr("Copier les images reçues seulement"), command=lambda: copy("images"))
+            m.add_separator()
+            m.add_command(label=tr("Tout sélectionner"), command=select_all)
+            try:
+                m.tk_popup(e.x_root, e.y_root)
+            finally:
+                m.grab_release()
+            return "break"
+
+        t.bind("<Button-1>", lambda e: t.focus_set(), add="+")
+        for seq in ("<Control-c>", "<Control-C>", "<Control-Insert>"):
+            t.bind(seq, lambda e: copy("sel"))
+        t.bind("<Control-a>", select_all)
+        t.bind("<Button-3>", menu)
+        if sys.platform == "darwin":
+            t.bind("<Button-2>", menu)
 
     # ------------------------------------------------- stations entendues / Rx Ok (EasyPal)
     def _stations_box(self, parent):
@@ -3565,9 +3625,10 @@ class App(tk.Tk):
         snr_s = "" if snr is None else f"{snr:+.0f} dB"
         if call and call != "?" and snr is not None and mode != "DATAC0":
             self.snr_by_call[call] = snr
+        detail = tr(detail) if detail else ""               # traduit avant d'ajouter la fréquence
         if self.rig_freq:
             detail = (detail + " — " if detail else "") + audio.format_freq(self.rig_freq, True)
-        self.tree.insert("", 0, values=(hh, call or "?", tr(evt), mode, snr_s, tr(detail)))
+        self.tree.insert("", 0, values=(hh, call or "?", tr(evt), mode, snr_s, detail))
         try:
             os.makedirs(DEFAULT_OUT, exist_ok=True)
             p = os.path.join(DEFAULT_OUT, "stations.csv")
@@ -8358,7 +8419,7 @@ class App(tk.Tk):
         snr = hdr.get("snr") if drm else (self.rx_engine.last.get("snr") if self.rx_engine else None)
         if snr is not None:
             self.snr_by_id[hdr["id"]] = snr
-        self.station_event(hdr.get("call"), kind + (" (hybride)" if hdr.get("hybrid") else ""), mode, snr,
+        self.station_event(hdr.get("call"), tr(kind) + (" (" + tr("hybride") + ")" if hdr.get("hybrid") else ""), mode, snr,
                            f"{hdr['size']} octets")
         self._heard(hdr.get("call"), snr, kind, hdr.get("loc"), hyb=bool(hdr.get("hybrid")))
         if not hdr.get("preview"):
