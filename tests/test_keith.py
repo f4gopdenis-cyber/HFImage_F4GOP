@@ -116,7 +116,10 @@ class AvecFenetre(unittest.TestCase):
         a._msg_ack(1234, "VK6ATI", 5, "radio")
         a._msg_ack(1234, "VK6NJP", 3, "radio")
         box = a.msgbox.get("1.0", "end")
-        self.assertNotIn("WASSTV net", box)                   # l'accusé ne répète plus le texte coupé
+        acks = [ln for ln in box.splitlines() if "✓" in ln]
+        self.assertEqual(len(acks), 2)
+        self.assertNotIn("WASSTV net", "".join(acks))         # l'accusé ne répète plus le texte coupé
+        self.assertEqual(sum(ln.startswith("TX [") for ln in box.splitlines()), 1)   # 2.55 : message en entier
         self.assertIn("VK6ATI", box)
         tv = a.tv_sent
         first = tv.get_children()[0]

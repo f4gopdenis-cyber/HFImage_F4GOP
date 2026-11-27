@@ -1,5 +1,10 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 2.55 (demande de Keith Woodley, WASSTV)
+
+- Onglet RX : le cadre « Messages reçus » devient **« Messages (RX / TX) »** : vos messages envoyés y apparaissent aussi, **en entier**, mêlés aux messages reçus dans l'ordre (le plus récent en haut). Chaque ligne commence par **RX** (reçu, sur fond vert) ou **TX** (envoyé, en rose) : toute la conversation se relit d'un coup d'œil.
+- Journal : le texte des messages envoyés est noté (« Message envoyé (DATAC3) : … »).
+
 ## Version 2.54 (demande de VK6ATI)
 
 - Onglet Stations : le journal des stations se copie. Ctrl+C copie les lignes choisies (Maj / Ctrl pour en prendre plusieurs, Ctrl+A pour toutes) ; **clic droit** : Copier les lignes choisies, Copier toute la liste, **Copier les images reçues seulement** (le « log » des images reçues, comme dans EasyPal). Le texte commence par l'indicatif et la date, colonnes séparées par des tabulations (e-mail ou tableur).

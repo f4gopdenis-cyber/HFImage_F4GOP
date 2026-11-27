@@ -534,13 +534,17 @@ s.append(P("Quand un correspondant envoie un message (texte seul, ou texte joint
            "s'ouvre au premier plan avec un bip : indicatif, heure UTC, mode, SNR, le texte en grand et la vignette de "
            "l'image s'il y en a une (clic = plein format). Les flèches ◀ ▶ parcourent les messages de la session. "
            "<b>Répondre…</b> ouvre l'envoi de texte prérempli « F1BAL de F4GOP : ». L'indicatif de l'expéditeur est aussi "
-           "écrit au-dessus de chaque message dans le cadre « Messages reçus ». Les cases du bas permettent de ne "
+           "écrit au-dessus de chaque message dans le cadre « Messages ». Les cases du bas permettent de ne "
            "plus l'ouvrir automatiquement ou de couper le bip ; on la rouvre par Action → Messages reçus… ou par un "
-           "double-clic dans le cadre « Messages reçus ». Le cadre peut être masqué (menu Fenêtres) : les messages "
+           "double-clic dans le cadre « Messages ». Le cadre peut être masqué (menu Fenêtres) : les messages "
            "arrivent toujours dans la fenêtre « Message reçu »."))
+s.append(P("Depuis la 2.55, le cadre <b>« Messages (RX / TX) »</b> de l'onglet RX montre aussi <b>vos messages envoyés</b>, "
+           "en entier : chaque ligne commence par <b>RX</b> (message reçu, sur fond vert) ou <b>TX</b> (message envoyé, "
+           "en rose), le plus récent en haut ; on peut relire toute la conversation. Le texte envoyé est aussi écrit "
+           "dans le journal (« Message envoyé (DATAC3) : … »)."))
 s.append(P("<b>Traduction automatique</b> : un message écrit dans une autre langue que celle du programme est "
            "traduit à l'arrivée (par Internet, service gratuit). La traduction s'affiche en premier, l'original en "
-           "dessous, en gris ; dans le cadre « Messages reçus », une ligne bleue « ↳ traduction (EN → FR) » s'ajoute. "
+           "dessous, en gris ; dans le cadre « Messages », une ligne bleue « ↳ traduction (EN → FR) » s'ajoute. "
            "Le message part par radio tel que vous l'avez écrit : chacun le lit traduit dans sa propre langue. "
            "Sans Internet, le message s'affiche simplement tel quel. La case <b>Traduire</b> de la fenêtre "
            "« Message reçu » coupe la traduction."))
@@ -588,7 +592,7 @@ s.append(P("Bouton <b>Envoyer un fichier…</b> (onglet TX) ou menu Images : n'i
 s += tip("ordre de grandeur en DATAC1X : environ 8 ko par minute. Un fichier texte de 30 ko compressé à 9 ko "
          "passe en un peu plus d'une minute.")
 s.append(P("Autres envois", "h2"))
-s += B(["<b>Texte inclus</b> : un message joint à l'image, affiché dans « Messages reçus ». En mode EasyPal ou "
+s += B(["<b>Texte inclus</b> : un message joint à l'image, affiché dans « Messages ». En mode EasyPal ou "
         "hybride, il part en petit message séparé, juste après l'image.",
         "<b>Envoi Texte</b> : message seul (toutes langues, chinois compris) ; la zone se vide après l'envoi.",
         "<b>Accord</b> (10 s) : porteuse pour régler l'ampli / la boîte d'accord. <b>ID</b> : indicatif en morse.",

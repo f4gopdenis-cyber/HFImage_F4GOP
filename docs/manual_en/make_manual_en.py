@@ -596,7 +596,7 @@ s.append(P("Tick <b>My station info</b> (TX tab) and click <b>…</b> next to it
            "callsign colour, outline, background and its opacity, and a coloured border; <b>Presets…</b> offers "
            "ready-made styles."))
 s.append(P("Other transmissions", "h2"))
-s += B(["<b>Incl. text</b>: a message attached to the picture, shown in “Received messages”. In EasyPal or "
+s += B(["<b>Incl. text</b>: a message attached to the picture, shown in “Messages”. In EasyPal or "
         "hybrid mode, it goes as a short separate message right after the picture.",
         "<b>Send Text</b>: message alone (any language, Chinese included); the box is cleared after sending.",
         "<b>Send a file…</b> (HFImage modes): any file (text, PDF, ZIP, ADIF log…), compressed when useful and "
@@ -632,11 +632,15 @@ s.append(P("When a correspondent sends a message (text alone, or text attached t
            "received</b> window opens in front with a beep: callsign, UTC time, mode, SNR, the text in large print "
            "and the thumbnail of the picture if there is one (click = full size). The ◀ ▶ arrows browse the messages "
            "of the session. <b>Reply…</b> opens the text window pre-filled with “F1BAL de F4GOP: ”. The sender's "
-           "callsign is also written above each message in the “Received messages” frame. That frame can be hidden "
+           "callsign is also written above each message in the “Messages” frame. That frame can be hidden "
            "(menu Windows): messages still arrive in the “Message received” window."))
+s.append(P("Since 2.55, the <b>“Messages (RX / TX)”</b> frame of the RX tab also shows <b>your sent messages</b>, in full: "
+           "each line starts with <b>RX</b> (received message, green label) or <b>TX</b> (sent message, in pink), newest "
+           "at the top, so the whole conversation can be read back. The sent text is also written in the log "
+           "(“Message sent (DATAC3): …”)."))
 s.append(P("<b>Automatic translation</b>: a message written in another language than the program's is translated "
            "on arrival (via the Internet, free service). The translation is shown first, the original below in grey; "
-           "in the “Received messages” frame a blue line “↳ translation (FR → EN)” is added. The message goes over the "
+           "in the “Messages” frame a blue line “↳ translation (FR → EN)” is added. The message goes over the "
            "air exactly as it was written: everyone reads it translated into their own language. Without Internet, "
            "the message is simply shown as is. The <b>Translate</b> box in the “Message received” window turns "
            "translation off."))

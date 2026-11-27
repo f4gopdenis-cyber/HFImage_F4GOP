@@ -2076,6 +2076,10 @@ T = [
     ('Copier toute la liste', 'Copy the whole list', 'Ganze Liste kopieren', 'Copiar toda la lista', "Copia tutto l'elenco"),
     ('Copier les images reçues seulement', 'Copy received pictures only', 'Nur empfangene Bilder kopieren', 'Copiar solo las imágenes recibidas', 'Copia solo le immagini ricevute'),
     ('images reçues', 'received pictures', 'empfangene Bilder', 'imágenes recibidas', 'immagini ricevute'),
+    ('Messages (onglet RX)', 'Messages (RX tab)', 'Nachrichten (RX-Reiter)', 'Mensajes (pestaña RX)', 'Messaggi (scheda RX)'),
+    ('Messages (RX / TX)', 'Messages (RX / TX)', 'Nachrichten (RX / TX)', 'Mensajes (RX / TX)', 'Messaggi (RX / TX)'),
+    ('Afficher les messages (onglet RX)', 'Show messages (RX tab)', 'Nachrichten anzeigen (RX-Reiter)', 'Mostrar los mensajes (pestaña RX)', 'Mostra i messaggi (scheda RX)'),
+    ('Message envoyé ({0}) :', 'Message sent ({0}):', 'Nachricht gesendet ({0}):', 'Mensaje enviado ({0}):', 'Messaggio inviato ({0}):'),
 ]
 
 _lang = "fr"

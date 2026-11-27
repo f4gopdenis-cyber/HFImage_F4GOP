@@ -1294,4 +1294,8 @@ RU = {
     'Copier toute la liste': 'Копировать весь список',
     'Copier les images reçues seulement': 'Копировать только принятые изображения',
     'images reçues': 'принятые изображения',
+    'Messages (onglet RX)': 'Сообщения (вкладка RX)',
+    'Messages (RX / TX)': 'Сообщения (RX / TX)',
+    'Afficher les messages (onglet RX)': 'Показывать сообщения (вкладка RX)',
+    'Message envoyé ({0}) :': 'Сообщение отправлено ({0}):',
 }

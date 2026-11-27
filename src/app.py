@@ -66,7 +66,7 @@ import random
 import wave
 
 APP = "HFImage F4GOP"
-VERSION = "2.54"
+VERSION = "2.55"
 
 
 def _take_profile(argv):
@@ -1242,7 +1242,7 @@ class App(tk.Tk):
         fw = tk.Menu(m, tearoff=0)
         fw.add_checkbutton(label="Afficher l'historique (onglet RX)", variable=self.v_show_hist,
                            command=lambda: self._rx_side_apply(save=True))
-        fw.add_checkbutton(label="Afficher les messages reçus (onglet RX)", variable=self.v_show_msgs,
+        fw.add_checkbutton(label="Afficher les messages (onglet RX)", variable=self.v_show_msgs,
                            command=lambda: self._rx_side_apply(save=True))
         fw.add_separator()
         self.v_dock = {}
@@ -1318,7 +1318,7 @@ class App(tk.Tk):
                           command=self._sim_tab_toggle)
         e = tk.Menu(f, tearoff=0)
         e.add_command(label="Historique des images", command=self._clear_hist)
-        e.add_command(label="Messages reçus", command=lambda: self._clear_text(self.msgbox))
+        e.add_command(label="Messages (onglet RX)", command=lambda: self._clear_text(self.msgbox))
         e.add_command(label="Journal des stations", command=lambda: self.tree.delete(*self.tree.get_children()))
         e.add_command(label="Waterfall", command=lambda: self.wf.clear())
         e.add_command(label="Journal à l'écran", command=lambda: self._clear_text(self.logbox))
@@ -1979,7 +1979,7 @@ class App(tk.Tk):
         self.lst.pack(fill="both", expand=True, padx=4)
         h2 = self._rx_msgs = tk.Frame(side, bg=GREEN)
         side.add(h2, minsize=60, stretch="always")
-        tk.Label(h2, text="Messages reçus", bg=GREEN, font=("TkDefaultFont", 9, "bold")).pack(anchor="w", padx=4,
+        tk.Label(h2, text="Messages (RX / TX)", bg=GREEN, font=("TkDefaultFont", 9, "bold")).pack(anchor="w", padx=4,
                                                                                               pady=(6, 0))
         self.msgbox = tk.Text(h2, height=8, wrap="word", state="disabled")
         self.msgbox.pack(fill="both", expand=True, padx=4, pady=(0, 4))
@@ -8595,14 +8595,30 @@ class App(tk.Tk):
         return im, ""
 
     def _show_message(self, call, text):
+        # 2.55 (Keith Woodley) : messages reçus (RX) et envoyés (TX) dans le même cadre « Messages »
         self.msgbox.configure(state="normal")
-        self.msgbox.insert("1.0", f"[{time.strftime('%H:%M')}] {call or '?'} : {text}\n")
+        self.msgbox.insert("1.0", "RX", "rx", f" [{time.strftime('%H:%M')}] {call or '?'} : {text}\n", ())
+        self.msgbox.tag_configure("rx", foreground="#ffffff", background="#1c8f1c")
         self.msgbox.configure(state="disabled")
         self.log(f"Message de {call or '?'} : {text[:80]}")
+
+    def _show_sent(self, text, mode):
+        """2.55 (Keith Woodley) : message envoyé, en entier, dans le cadre « Messages » (marque TX, autre
+        couleur) et dans le journal."""
+        self.msgbox.configure(state="normal")
+        self.msgbox.insert("1.0", "TX", "tx", f" [{time.strftime('%H:%M')}] {self.mycall() or '?'} : {text}\n", "txt_tx")
+        self.msgbox.tag_configure("tx", foreground="#ffffff", background="#c01f7a")
+        self.msgbox.tag_configure("txt_tx", foreground="#c01f7a")
+        self.msgbox.configure(state="disabled")
+        self.log(tr("Message envoyé ({0}) :").format(mode) + " " + text.replace("\n", " ")[:300])
 
     # ------------------------------------------------------------- messages envoyés : accusés de réception
     def _msg_sent(self, iid, text, mode, with_image=False):
         self._last_sent_text = text           # « Répondre » peut remplacer ce texte sans demander
+        try:
+            self._show_sent(text, mode)
+        except Exception as e:
+            self.log_exc("Messages", e)
         self.sent_msgs[iid] = {"text": text, "t": time.time(), "mode": mode, "acks": {}, "image": with_image}
         for k in list(self.sent_msgs)[:-50]:
             del self.sent_msgs[k]

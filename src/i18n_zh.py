@@ -1286,4 +1286,8 @@ ZH = {
     'Copier toute la liste': '复制整个列表',
     'Copier les images reçues seulement': '仅复制已接收的图像',
     'images reçues': '已接收的图像',
+    'Messages (onglet RX)': '消息（RX 选项卡）',
+    'Messages (RX / TX)': '消息（RX / TX）',
+    'Afficher les messages (onglet RX)': '显示消息（RX 选项卡）',
+    'Message envoyé ({0}) :': '已发送消息（{0}）：',
 }
