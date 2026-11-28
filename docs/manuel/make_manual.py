@@ -386,7 +386,8 @@ s += B(["<b>Panneau d'état</b> (en haut à gauche) : indicatif de la station re
         "Ce dossier n'est jamais effacé.",
         "<b>Relire RX</b> : redécode les 15 dernières minutes (si une image a été manquée)."])
 s.append(P("Galerie", "h2"))
-s.append(P("Onglet <b>Galerie</b> : les 30, 60 ou 100 dernières images reçues (« de F4EMK ») ou envoyées. Clic : "
+s.append(P("Onglet <b>Galerie</b> : les 30, 60 ou 100 dernières images reçues (« de F4EMK ») ou envoyées ; les <b>GIF animés</b> "
+           "bougent dans leur vignette (marque « GIF »). Clic : "
            "afficher ; double-clic : plein format ; clic droit : <b>copier l'image</b> (à coller avec Ctrl+V dans Teams, "
            "un e-mail… ; un GIF animé est copié comme image fixe), renvoyer l'image, voir la station sur la carte, "
            "ouvrir le dossier, retirer de la galerie ; « Retirer les N images choisies » et « <b>Vider la galerie</b> » "

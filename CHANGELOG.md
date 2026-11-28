@@ -1,5 +1,9 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 2.56 (demande de VK6NJP)
+
+- Galerie : les **GIF animés bougent dans leur vignette**, avec une petite marque « GIF ». Seules les vignettes visibles à l'écran sont animées, à la taille vignette, et l'animation s'arrête quand l'onglet Galerie n'est pas affiché (peu de mémoire et de calcul).
+
 ## Version 2.55 (demande de Keith Woodley, WASSTV)
 
 - Onglet RX : le cadre « Messages reçus » devient **« Messages (RX / TX) »** : vos messages envoyés y apparaissent aussi, **en entier**, mêlés aux messages reçus dans l'ordre (le plus récent en haut). Chaque ligne commence par **RX** (reçu, sur fond vert) ou **TX** (envoyé, en rose) : toute la conversation se relit d'un coup d'œil.

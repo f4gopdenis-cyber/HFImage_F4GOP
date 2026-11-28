@@ -156,6 +156,9 @@ class GalleryView(tk.Frame):
         self.v_dir = tk.StringVar(value="rx")
         self.v_n = tk.StringVar(value="30")
         self.thumbs = {}            # (chemin, date) -> PhotoImage
+        self.anim_cache = {}        # 2.56 (VK6NJP) : (chemin, date) -> ([PhotoImage], [durées ms]) des GIF animés
+        self._anims = []            # vignettes animées affichées : {"item", "frames", "durs", "k", "due"}
+        self._anim_job = None
         self.shown = []
         self._job = None
         self._gen = 0
@@ -241,6 +244,7 @@ class GalleryView(tk.Frame):
         gen = self._gen
         cv = self.cv
         cv.delete("all")
+        self._anims = []
         if not self.shown:
             cv.create_text(W // 2, 60, fill="#bbbbbb", text=self.tr(
                 "Aucune image reçue pour l'instant." if self.v_dir.get() == "rx"
@@ -285,6 +289,12 @@ class GalleryView(tk.Frame):
         e = self.shown[i]
         src = e.get("png") or e.get("file")
         try:
+            r, c = divmod(i, cols)
+            x = x0 + c * (self.TW + self.GAP)
+            y = self.GAP + r * (self.TH + self.CAP + self.GAP)
+            if self._add_anim(e, i, x, y):
+                self.after(1, lambda: self._load_thumbs(gen, x0, cols, i + 1))
+                return
             key = (src, os.path.getmtime(src))
             ph = self.thumbs.get(key)
             if ph is None:
@@ -298,14 +308,88 @@ class GalleryView(tk.Frame):
                 if len(self.thumbs) > 400:
                     self.thumbs.clear()
                 self.thumbs[key] = ph
-            r, c = divmod(i, cols)
-            x = x0 + c * (self.TW + self.GAP)
-            y = self.GAP + r * (self.TH + self.CAP + self.GAP)
             self.cv.create_image(x + self.TW // 2, y + self.TH // 2, image=ph, tags=(f"t{i}",))
             self.cv.tag_raise(f"s{i}")              # cadre de sélection au-dessus de la vignette
         except Exception:
             pass
         self.after(1, lambda: self._load_thumbs(gen, x0, cols, i + 1))
+
+    # ------------------------------------------------------------------ GIF animés (2.56, VK6NJP)
+    ANIM_MAX_FRAMES = 40            # images gardées par vignette (on en saute au-delà, durée conservée)
+    ANIM_MAX_BYTES = 12_000_000     # GIF plus gros : vignette fixe
+    ANIM_TICK_MS = 40
+
+    def _gif_thumb_frames(self, path):
+        """GIF animé -> ([PhotoImage à la taille vignette], [durées ms]) ; None si une seule image."""
+        if os.path.getsize(path) > self.ANIM_MAX_BYTES:
+            return None
+        im = Image.open(path)
+        n = getattr(im, "n_frames", 1)
+        if n <= 1:
+            return None
+        step = max(1, -(-n // self.ANIM_MAX_FRAMES))
+        frames, durs = [], []
+        for k in range(n):
+            im.seek(k)
+            d = max(20, im.info.get("duration", 100) or 100)
+            if k % step == 0:
+                fr = im.convert("RGB")
+                fr.thumbnail((self.TW, self.TH), Image.BILINEAR)
+                frames.append(ImageTk.PhotoImage(fr))
+                durs.append(d)
+            else:
+                durs[-1] += d
+        return frames, durs
+
+    def _add_anim(self, e, i, x, y):
+        """Vignette d'un GIF animé : jouée en boucle (seulement à l'écran, onglet Galerie visible)."""
+        path = e.get("file") or ""
+        if not path.lower().endswith(".gif") or not os.path.exists(path):
+            return False
+        key = (path, os.path.getmtime(path))
+        if key not in self.anim_cache:
+            got = self._gif_thumb_frames(path)
+            if len(self.anim_cache) > 60:
+                self.anim_cache.clear()
+            self.anim_cache[key] = got
+        got = self.anim_cache[key]
+        if not got:
+            return False
+        frames, durs = got
+        item = self.cv.create_image(x + self.TW // 2, y + self.TH // 2, image=frames[0], tags=(f"t{i}",))
+        self.cv.create_rectangle(x + 3, y + self.TH - 17, x + 31, y + self.TH - 3, fill="#c01f7a", outline="",
+                                 tags=(f"t{i}",))
+        self.cv.create_text(x + 17, y + self.TH - 10, text="GIF", fill="white", font=("TkDefaultFont", 8, "bold"),
+                            tags=(f"t{i}",))
+        self.cv.tag_raise(f"s{i}")
+        self._anims.append({"item": item, "frames": frames, "durs": durs, "k": 0, "due": time.time() + durs[0] / 1000,
+                            "y": y})
+        if self._anim_job is None:
+            self._anim_job = self.after(self.ANIM_TICK_MS, self._anim_tick)
+        return True
+
+    def _anim_tick(self):
+        self._anim_job = None
+        if not self._anims:
+            return
+        try:
+            visible = self.winfo_viewable()
+        except tk.TclError:
+            return
+        if visible:
+            now = time.time()
+            top = self.cv.canvasy(0)
+            bottom = top + self.cv.winfo_height()
+            for a in self._anims:
+                if now < a["due"] or a["y"] + self.TH < top or a["y"] > bottom:
+                    continue
+                a["k"] = (a["k"] + 1) % len(a["frames"])
+                a["due"] = now + a["durs"][a["k"]] / 1000
+                try:
+                    self.cv.itemconfigure(a["item"], image=a["frames"][a["k"]])
+                except tk.TclError:
+                    pass
+        self._anim_job = self.after(self.ANIM_TICK_MS if visible else 500, self._anim_tick)
 
     # ------------------------------------------------------------------ sélection (envoi groupé)
     @staticmethod

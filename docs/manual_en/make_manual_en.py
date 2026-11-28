@@ -393,7 +393,8 @@ s += B(["<b>Status panel</b> (top left): callsign of the station received, radio
         "is never deleted.",
         "<b>Replay RX</b>: decodes the last 15 minutes again (if a picture was missed)."])
 s.append(P("Gallery", "h2"))
-s.append(P("<b>Gallery</b> tab: the last 30, 60 or 100 pictures received (“from F4EMK”) or sent. Click: show; "
+s.append(P("<b>Gallery</b> tab: the last 30, 60 or 100 pictures received (“from F4EMK”) or sent; <b>animated GIFs</b> "
+           "play in their thumbnail (“GIF” mark). Click: show; "
            "double-click: full size; right-click: <b>copy image</b> (paste it with Ctrl+V into Teams, an e-mail…; an animated "
            "GIF is copied as a still image; on Linux this needs xclip: sudo apt install xclip), send the picture again, reply with this picture, show the station "
            "on the map, open the folder, remove from the gallery; “Remove the N chosen pictures” and “<b>Clear the gallery</b>” "
