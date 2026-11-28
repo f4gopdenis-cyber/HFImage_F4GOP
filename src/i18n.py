@@ -2080,6 +2080,8 @@ T = [
     ('Messages (RX / TX)', 'Messages (RX / TX)', 'Nachrichten (RX / TX)', 'Mensajes (RX / TX)', 'Messaggi (RX / TX)'),
     ('Afficher les messages (onglet RX)', 'Show messages (RX tab)', 'Nachrichten anzeigen (RX-Reiter)', 'Mostrar los mensajes (pestaña RX)', 'Mostra i messaggi (scheda RX)'),
     ('Message envoyé ({0}) :', 'Message sent ({0}):', 'Nachricht gesendet ({0}):', 'Mensaje enviado ({0}):', 'Messaggio inviato ({0}):'),
+    ('Couper', 'Cut', 'Ausschneiden', 'Cortar', 'Taglia'),
+    ('Coller', 'Paste', 'Einfügen', 'Pegar', 'Incolla'),
 ]
 
 _lang = "fr"

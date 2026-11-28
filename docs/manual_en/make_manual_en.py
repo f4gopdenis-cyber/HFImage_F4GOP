@@ -599,7 +599,8 @@ s.append(P("Tick <b>My station info</b> (TX tab) and click <b>…</b> next to it
 s.append(P("Other transmissions", "h2"))
 s += B(["<b>Incl. text</b>: a message attached to the picture, shown in “Messages”. In EasyPal or "
         "hybrid mode, it goes as a short separate message right after the picture.",
-        "<b>Send Text</b>: message alone (any language, Chinese included); the box is cleared after sending.",
+        "<b>Send Text</b>: message alone (any language, Chinese included); the box is cleared after sending. Right-click in "
+        "any text box: Cut, Copy, Paste, Select all (to paste, for example, a line copied from the log).",
         "<b>Send a file…</b> (HFImage modes): any file (text, PDF, ZIP, ADIF log…), compressed when useful and "
         "protected by the same fountain code (BSR / FIX and ACK included); with hybrid mode, the file goes via the "
         "Internet and only the link goes over the air. Received files are stored under their original name in the "

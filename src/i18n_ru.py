@@ -1298,4 +1298,6 @@ RU = {
     'Messages (RX / TX)': 'Сообщения (RX / TX)',
     'Afficher les messages (onglet RX)': 'Показывать сообщения (вкладка RX)',
     'Message envoyé ({0}) :': 'Сообщение отправлено ({0}):',
+    'Couper': 'Вырезать',
+    'Coller': 'Вставить',
 }

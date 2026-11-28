@@ -595,7 +595,8 @@ s += tip("ordre de grandeur en DATAC1X : environ 8 ko par minute. Un fichier tex
 s.append(P("Autres envois", "h2"))
 s += B(["<b>Texte inclus</b> : un message joint à l'image, affiché dans « Messages ». En mode EasyPal ou "
         "hybride, il part en petit message séparé, juste après l'image.",
-        "<b>Envoi Texte</b> : message seul (toutes langues, chinois compris) ; la zone se vide après l'envoi.",
+        "<b>Envoi Texte</b> : message seul (toutes langues, chinois compris) ; la zone se vide après l'envoi. Clic droit dans "
+        "toute case de texte : Couper, Copier, Coller, Tout sélectionner (pour coller, par exemple, une ligne copiée du journal).",
         "<b>Accord</b> (10 s) : porteuse pour régler l'ampli / la boîte d'accord. <b>ID</b> : indicatif en morse.",
         "<b>WAVE</b> / texte waterfall : fichiers begin.wav / end.wav, <b>texte ou image</b> dessinés dans le "
         "waterfall du correspondant (Action → Texte waterfall… → « Image… » pour une photo, un logo, votre QSL) ; "

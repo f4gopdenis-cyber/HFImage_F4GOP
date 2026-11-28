@@ -66,7 +66,7 @@ import random
 import wave
 
 APP = "HFImage F4GOP"
-VERSION = "2.56"
+VERSION = "2.57"
 
 
 def _take_profile(argv):
@@ -672,6 +672,7 @@ class App(tk.Tk):
         self.protocol("WM_SAVE_YOURSELF", self._save_layout)
         self.bind_all("<Control-v>", self._ctrl_v, add="+")         # 1.67 : coller une image (onglet TX)
         self.bind_all("<Control-V>", self._ctrl_v, add="+")
+        self._edit_menu_setup()            # 2.57 (VK6ATI) : clic droit Couper / Copier / Coller dans les cases de texte
         self.journal_devices()
         self.log(f"{APP} {VERSION} prêt. Images reçues : {self.conf['folder']}")
 
@@ -5115,6 +5116,57 @@ class App(tk.Tk):
         self.load_image(p)
 
     PASTE_EXT = (".jpg", ".jpeg", ".png", ".svg", ".svgz", ".bmp", ".gif", ".webp", ".avif", ".tif", ".tiff")
+
+    EDIT_CLASSES = ("Text", "Entry", "TEntry", "TCombobox", "Spinbox", "TSpinbox")
+
+    def _edit_menu_setup(self):
+        """Menu au clic droit de toutes les cases de texte : Couper, Copier, Coller, Tout sélectionner.
+        (Les zones qui ont leur propre menu, comme le journal, le gardent : leur liaison passe avant.)"""
+        for cls in self.EDIT_CLASSES:
+            self.bind_class(cls, "<Button-3>", self._edit_menu, add="+")
+            if sys.platform == "darwin":
+                self.bind_class(cls, "<Button-2>", self._edit_menu, add="+")
+
+    def _edit_menu(self, e):
+        w = e.widget
+        try:
+            cls = w.winfo_class()
+            state = str(w.cget("state"))
+        except (AttributeError, tk.TclError):
+            return None
+        text = cls == "Text"
+        editable = state == "normal"
+        try:
+            has_sel = bool(w.tag_ranges("sel")) if text else bool(w.selection_present())
+        except tk.TclError:
+            has_sel = False
+
+        def select_all():
+            w.focus_set()
+            if text:
+                w.tag_add("sel", "1.0", "end-1c")
+            else:
+                w.select_range(0, "end")
+                w.icursor("end")
+
+        def do(ev):
+            w.focus_set()
+            w.event_generate(ev)
+
+        m = tk.Menu(w, tearoff=0)
+        if editable:
+            m.add_command(label=tr("Couper"), command=lambda: do("<<Cut>>"),
+                          state="normal" if has_sel else "disabled")
+        m.add_command(label=tr("Copier"), command=lambda: do("<<Copy>>"), state="normal" if has_sel else "disabled")
+        if editable:
+            m.add_command(label=tr("Coller"), command=lambda: do("<<Paste>>"))
+        m.add_separator()
+        m.add_command(label=tr("Tout sélectionner"), command=select_all)
+        try:
+            m.tk_popup(e.x_root, e.y_root)
+        finally:
+            m.grab_release()
+        return "break"
 
     def _ctrl_v(self, e):
         """Ctrl+V : colle une image dans l'onglet TX (dans une case de texte, Ctrl+V colle le texte)."""

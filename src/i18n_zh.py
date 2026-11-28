@@ -1290,4 +1290,6 @@ ZH = {
     'Messages (RX / TX)': '消息（RX / TX）',
     'Afficher les messages (onglet RX)': '显示消息（RX 选项卡）',
     'Message envoyé ({0}) :': '已发送消息（{0}）：',
+    'Couper': '剪切',
+    'Coller': '粘贴',
 }

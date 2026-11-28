@@ -1,5 +1,9 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 2.57 (demande de VK6ATI)
+
+- **Clic droit dans toutes les cases de texte** (envoi de texte, indicatif, réglages…) : Couper, Copier, Coller, Tout sélectionner. Dans les zones en lecture seule (cadre Messages…) : Copier, Tout sélectionner. Une ligne copiée du journal (« incomplète (5/174 segments) ») se colle ainsi dans le message à envoyer, comme avec Ctrl+V.
+
 ## Version 2.56 (demande de VK6NJP)
 
 - Galerie : les **GIF animés bougent dans leur vignette**, avec une petite marque « GIF ». Seules les vignettes visibles à l'écran sont animées, à la taille vignette, et l'animation s'arrête quand l'onglet Galerie n'est pas affiché (peu de mémoire et de calcul).
