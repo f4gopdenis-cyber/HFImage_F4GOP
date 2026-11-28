@@ -66,7 +66,7 @@ import random
 import wave
 
 APP = "HFImage F4GOP"
-VERSION = "2.57"
+VERSION = "2.58"
 
 
 def _take_profile(argv):
@@ -4108,7 +4108,7 @@ class App(tk.Tk):
 
     def log_exc(self, where, e):
         """Message court à l'écran, trace complète dans le journal."""
-        self.log(f"Erreur ({where}) : {e}")
+        self.log(tr("Erreur ({0}) :").format(tr(where)) + f" {e}")
         tb = "".join(traceback.format_exception(type(e), e, e.__traceback__))
         self._journal(tb)
 
@@ -9917,6 +9917,10 @@ class App(tk.Tk):
             messagebox.showinfo(APP, "Attendez la fin de l'émission pour mettre à jour.")
             return
         size = f" ({info['size'] / 1e6:.0f} Mo)" if info.get("size") else ""
+        if i18n.get_lang() != "fr":
+            # 2.58 (Keith Woodley) : les notes de version sont écrites en français : lien vers la page
+            notes = tr("Les nouveautés sont décrites sur la page de la version :") + "\n" + \
+                (info.get("page") or updater.PAGE_URL)
         if not messagebox.askyesno(APP, f"Mettre à jour HFImage {VERSION} → {info['version']}{size} ?\n\n"
                                         f"{notes}\n\nLe programme redémarrera tout seul."):
             return
@@ -9938,6 +9942,14 @@ class App(tk.Tk):
     def _update_failed(self, e):
         self.upd_busy = False
         self.log_exc("Mise à jour", e)
+        if isinstance(e, updater.InstallError) and os.path.exists(e.path):
+            # 2.58 : téléchargée et vérifiée, mais pas mise en place (disque réseau, dossier protégé…)
+            msg = tr("La nouvelle version est téléchargée et vérifiée, mais elle n'a pas pu remplacer le programme "
+                     "({0}). Fermez HFImage et mettez à sa place ce fichier :").format(e) + f"\n{e.path}"
+            self.log(msg)
+            self._update_banner(tr("Mise à jour à mettre en place à la main : voir le journal"), "#ff6b6b")
+            messagebox.showwarning(APP, msg)
+            return
         self._update_banner(tr(f"Mise à jour impossible : {e} — cliquez pour réessayer"), "#ff6b6b")
 
     def _update_install(self, path):

@@ -2082,6 +2082,11 @@ T = [
     ('Message envoyé ({0}) :', 'Message sent ({0}):', 'Nachricht gesendet ({0}):', 'Mensaje enviado ({0}):', 'Messaggio inviato ({0}):'),
     ('Couper', 'Cut', 'Ausschneiden', 'Cortar', 'Taglia'),
     ('Coller', 'Paste', 'Einfügen', 'Pegar', 'Incolla'),
+    ('Mise à jour', 'Update', 'Aktualisierung', 'Actualización', 'Aggiornamento'),
+    ('Erreur ({0}) :', 'Error ({0}):', 'Fehler ({0}):', 'Error ({0}):', 'Errore ({0}):'),
+    ('Les nouveautés sont décrites sur la page de la version :', "What's new is described on the release page:", 'Die Neuerungen stehen auf der Seite der Version:', 'Las novedades están descritas en la página de la versión:', 'Le novità sono descritte nella pagina della versione:'),
+    ("La nouvelle version est téléchargée et vérifiée, mais elle n'a pas pu remplacer le programme ({0}). Fermez HFImage et mettez à sa place ce fichier :", 'The new version is downloaded and checked, but it could not replace the program ({0}). Close HFImage and put this file in its place:', 'Die neue Version ist heruntergeladen und geprüft, konnte aber das Programm nicht ersetzen ({0}). Schließen Sie HFImage und setzen Sie diese Datei an seine Stelle:', 'La nueva versión está descargada y verificada, pero no pudo reemplazar el programa ({0}). Cierre HFImage y ponga este archivo en su lugar:', 'La nuova versione è scaricata e verificata, ma non ha potuto sostituire il programma ({0}). Chiudere HFImage e mettere questo file al suo posto:'),
+    ('Mise à jour à mettre en place à la main : voir le journal', 'Update to install by hand: see the log', 'Aktualisierung von Hand einspielen: siehe Protokoll', 'Actualización para instalar a mano: ver el registro', 'Aggiornamento da installare a mano: vedere il registro'),
 ]
 
 _lang = "fr"

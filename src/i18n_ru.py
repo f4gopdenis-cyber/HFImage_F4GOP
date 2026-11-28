@@ -1300,4 +1300,9 @@ RU = {
     'Message envoyé ({0}) :': 'Сообщение отправлено ({0}):',
     'Couper': 'Вырезать',
     'Coller': 'Вставить',
+    'Mise à jour': 'Обновление',
+    'Erreur ({0}) :': 'Ошибка ({0}):',
+    'Les nouveautés sont décrites sur la page de la version :': 'Новое описано на странице версии:',
+    "La nouvelle version est téléchargée et vérifiée, mais elle n'a pas pu remplacer le programme ({0}). Fermez HFImage et mettez à sa place ce fichier :": 'Новая версия загружена и проверена, но не смогла заменить программу ({0}). Закройте HFImage и поставьте на её место этот файл:',
+    'Mise à jour à mettre en place à la main : voir le journal': 'Обновление нужно установить вручную: см. журнал',
 }

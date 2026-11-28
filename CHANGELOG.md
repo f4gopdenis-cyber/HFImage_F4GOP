@@ -1,5 +1,10 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 2.58 (signalé par Keith Woodley, WASSTV)
+
+- Mise à jour automatique : la nouvelle version est téléchargée, vérifiée et décompressée dans un dossier de l'ordinateur, puis copiée à la place du programme. Elle marche ainsi quand HFImage est lancé depuis un **disque réseau** (« No such file or directory … .tar.gz.part » sous Linux). Si la copie échoue quand même, l'ancien programme est remis en place et le message dit où se trouve la nouvelle version, pour la mettre en place à la main.
+- Fenêtre de mise à jour : dans les autres langues que le français, les notes de version (écrites en français) sont remplacées par le lien de la page de la version. Le journal n'affiche plus « Error (Mise à jour) » en français.
+
 ## Version 2.57 (demande de VK6ATI)
 
 - **Clic droit dans toutes les cases de texte** (envoi de texte, indicatif, réglages…) : Couper, Copier, Coller, Tout sélectionner. Dans les zones en lecture seule (cadre Messages…) : Copier, Tout sélectionner. Une ligne copiée du journal (« incomplète (5/174 segments) ») se colle ainsi dans le message à envoyer, comme avec Ctrl+V.

@@ -1292,4 +1292,9 @@ ZH = {
     'Message envoyé ({0}) :': '已发送消息（{0}）：',
     'Couper': '剪切',
     'Coller': '粘贴',
+    'Mise à jour': '更新',
+    'Erreur ({0}) :': '错误（{0}）：',
+    'Les nouveautés sont décrites sur la page de la version :': '更新内容见版本页面：',
+    "La nouvelle version est téléchargée et vérifiée, mais elle n'a pas pu remplacer le programme ({0}). Fermez HFImage et mettez à sa place ce fichier :": '新版本已下载并校验，但无法替换程序（{0}）。请关闭 HFImage，并用此文件替换它：',
+    'Mise à jour à mettre en place à la main : voir le journal': '需手动安装更新：请查看日志',
 }

@@ -13,7 +13,9 @@ import hashlib
 import json
 import os
 import re
+import shutil
 import subprocess
+import tempfile
 import sys
 import urllib.error
 import urllib.parse
@@ -164,8 +166,25 @@ def frozen():
     return bool(getattr(sys, "frozen", False))
 
 
+class InstallError(RuntimeError):
+    """2.58 : la nouvelle version est téléchargée et vérifiée, mais n'a pas pu remplacer le programme
+    (dossier en lecture seule, disque réseau…) : `path` dit où elle est, pour la mettre en place à la main."""
+
+    def __init__(self, msg, path):
+        super().__init__(msg)
+        self.path = path
+
+
+def work_dir():
+    """2.58 (Keith Woodley, programme sur un disque réseau) : la mise à jour est téléchargée, vérifiée et
+    décompressée dans un dossier de l'ordinateur ; elle n'est copiée à côté du programme qu'à la fin."""
+    d = os.path.join(tempfile.gettempdir(), "HFImage_F4GOP_update")
+    os.makedirs(d, exist_ok=True)
+    return d
+
+
 def download(info, progress=lambda f: None, stop=None):
-    """Télécharge le nouvel exe à côté de l'actuel. -> chemin du fichier téléchargé.
+    """Télécharge le nouvel exe (dossier de travail local). -> chemin du fichier téléchargé.
     2.26 : GitHub en panne passagère (504…) -> deux nouveaux essais avant d'abandonner."""
     return _retry(lambda: _download_once(info, progress, stop), stop=stop)
 
@@ -175,7 +194,7 @@ def _download_once(info, progress=lambda f: None, stop=None):
     test = bool(os.environ.get("HFIMAGE_UPDATE_URL"))      # essais : serveur local autorisé
     if not test and not url.startswith(ALLOWED):
         raise ValueError(f"adresse de téléchargement refusée : {url}")
-    folder = os.path.dirname(os.path.abspath(sys.executable if frozen() else __file__))
+    folder = work_dir()
     dest = os.path.join(folder, f"HFImage_F4GOP_{info['version']}" + (".exe" if WIN else ".tar.gz"))
     part = dest + ".part"
     h = hashlib.sha256()
@@ -241,14 +260,26 @@ def install(new_exe):
             os.remove(old)
     except OSError:
         old = exe + f".{os.getpid()}.old"
-    os.replace(exe, old)                     # Windows (et Linux) permettent de renommer l'exe en cours
     try:
-        os.replace(new_exe, exe)
+        os.replace(exe, old)                 # Windows (et Linux) permettent de renommer l'exe en cours
+    except OSError as e:
+        raise InstallError(str(e), new_exe) from e
+    try:
+        shutil.copyfile(new_exe, exe)        # 2.58 : copie (et non renommage) : marche d'un disque à l'autre
         if not WIN:
             os.chmod(exe, 0o755)
+    except OSError as e:
+        try:
+            if os.path.exists(exe):
+                os.remove(exe)
+            os.replace(old, exe)             # on remet l'ancien en place
+        except OSError:
+            pass
+        raise InstallError(str(e), new_exe) from e
+    try:
+        os.remove(new_exe)
     except OSError:
-        os.replace(old, exe)                 # on remet l'ancien en place
-        raise
+        pass
     env = dict(os.environ, PYINSTALLER_RESET_ENVIRONMENT="1")   # nouvel exe : environnement neuf
     flags = 0x00000008 | 0x00000200 if sys.platform.startswith("win") else 0   # DETACHED | NEW_GROUP
     subprocess.Popen([exe], cwd=os.path.dirname(exe), env=env, close_fds=True, creationflags=flags)
