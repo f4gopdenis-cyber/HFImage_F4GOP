@@ -1317,4 +1317,6 @@ RU = {
     'Chercher :': 'Найти:',
     '{0} : pas sur la carte': '{0}: нет на карте',
     'Tous': 'Все',
+    "{0} : ce Hamlib ne connaît pas ce poste ; piloté comme {1} à l'adresse CI-V {2}h (Hamlib {3} le connaît : bouton de la fenêtre Poste radio)": '{0}: этот Hamlib не знает эту радиостанцию; управляется как {1} по адресу CI-V {2}h (Hamlib {3} её знает: кнопка в окне радиостанции)',
+    '{0} : ce Hamlib ne connaît pas ce poste (« {1} »). Installez Hamlib {2} (bouton de la fenêtre Poste radio), ou choisissez un modèle proche (avec son adresse CI-V pour un Icom).': '{0}: этот Hamlib не знает эту радиостанцию («{1}»). Установите Hamlib {2} (кнопка в окне радиостанции) или выберите похожую модель (для Icom — с её адресом CI-V).',
 }

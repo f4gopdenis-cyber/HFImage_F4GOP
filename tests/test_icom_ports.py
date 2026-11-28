@@ -172,7 +172,9 @@ class Rigctld(unittest.TestCase):
                 mock.patch.object(radio.RigctlRig, "freq", lambda self: 7100000), \
                 mock.patch.object(radio.time, "sleep", lambda s: None), \
                 mock.patch.object(radio, "_kill_with_us", lambda p: None), \
-                mock.patch("builtins.open", mock.mock_open()):
+                mock.patch("builtins.open", mock.mock_open()), \
+                mock.patch.object(radio.HamlibRig, "_unknown_model",
+                                  lambda self: self.proc is not None and self.proc.returncode is not None):
             r = radio.HamlibRig(c, model, radio.rig_label(f"hamlib:{model}"))
         return r, runs
 
@@ -200,6 +202,21 @@ class Rigctld(unittest.TestCase):
         self.assertEqual(len(runs), 2)
         self.assertEqual(runs[1][2], "3073")
         self.assertEqual(runs[1][runs[1].index("-c") + 1], "0xB6")
+
+    def test_mk2_adresse_reglee_et_hamlib_trop_ancien(self):
+        # 2.60 (M0KLL) : adresse CI-V B6 réglée à la main : le modèle de secours est aussi essayé
+        r, runs = self.start({"port": "COM4", "civ": "B6"}, model=3094, exits=("3094",))
+        self.assertEqual(len(runs), 2)
+        self.assertEqual(runs[1][2], "3073")
+        self.assertEqual(runs[1][runs[1].index("-c") + 1], "0xB6")
+        self.assertIn("IC-7300", r.note)
+
+    def test_modele_inconnu_message_clair(self):
+        # 2.60 : autre modèle inconnu d'un vieux Hamlib : message qui dit quoi faire
+        with self.assertRaises(RuntimeError) as c:
+            self.start({"port": "COM4"}, model=3073, exits=("3073",))
+        self.assertIn("ne connaît pas ce poste", str(c.exception))
+        self.assertIn(radio.HAMLIB_VERSION, str(c.exception))
 
     def test_mk2_avec_hamlib_recent(self):
         _, runs = self.start({"port": "COM4"}, model=3094)

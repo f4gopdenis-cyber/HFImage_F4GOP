@@ -1,5 +1,10 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 2.60 (signalé par Keith M0KLL)
+
+- Icom **IC-7300MK2** avec un Hamlib trop ancien (« Unknown rig num 3094 ») : HFImage le pilote tout seul comme un IC-7300 à l'adresse CI-V B6h, **même quand l'adresse CI-V est réglée à la main** (avant, le secours ne marchait que case vide). Le journal le signale et rappelle que Hamlib 4.7.2 (bouton de la fenêtre Poste radio) connaît ce poste.
+- Tout autre poste inconnu d'un Hamlib trop ancien : message clair (installer Hamlib 4.7.2, ou choisir un modèle proche avec son adresse CI-V pour un Icom), au lieu de « rigctld s'est arrêté ».
+
 ## Version 2.59 (demandes de Keith Woodley, WASSTV)
 
 - Carte des stations : elle se redessine au plus toutes les 2 secondes (elle l'était à chaque message de présence, deux serveurs depuis la 2.44 : fenêtre lente ou figée sous Linux), et un coup de molette ne la dessine qu'une fois. Nouvelle case **Chercher** : un indicatif (ou son début) + Entrée, la carte se centre dessus (station en jaune : les autres stations s'affichent).

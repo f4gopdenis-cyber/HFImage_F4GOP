@@ -1309,4 +1309,6 @@ ZH = {
     'Chercher :': '查找：',
     '{0} : pas sur la carte': '{0}：不在地图上',
     'Tous': '全部',
+    "{0} : ce Hamlib ne connaît pas ce poste ; piloté comme {1} à l'adresse CI-V {2}h (Hamlib {3} le connaît : bouton de la fenêtre Poste radio)": '{0}：此 Hamlib 不认识该电台；按 {1} 控制，CI-V 地址 {2}h（Hamlib {3} 认识它：电台窗口中的按钮）',
+    '{0} : ce Hamlib ne connaît pas ce poste (« {1} »). Installez Hamlib {2} (bouton de la fenêtre Poste radio), ou choisissez un modèle proche (avec son adresse CI-V pour un Icom).': '{0}：此 Hamlib 不认识该电台（“{1}”）。请安装 Hamlib {2}（电台窗口中的按钮），或选择相近型号（Icom 需填写其 CI-V 地址）。',
 }

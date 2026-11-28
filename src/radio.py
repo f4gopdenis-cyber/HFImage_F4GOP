@@ -943,19 +943,30 @@ class HamlibRig(RigctlRig):
         self.logpath = os.path.join(os.path.dirname(exe) if os.access(os.path.dirname(exe), os.W_OK)
                                     else os.path.expanduser("~"), "rigctld_hfimage.log")
         civ = civ_addr(cfg)
+        self.note = ""                                       # remarque pour le journal (modèle de secours)
         try:
             tport = self._start(exe, cfg, model_id, civ)
-            if model_id in self.FALLBACK and civ is None:
+            # 2.60 (M0KLL) : aussi quand l'adresse CI-V est réglée (B6 pour l'IC-7300MK2)
+            if model_id in self.FALLBACK:
                 for _ in range(12):                          # rigctld trop ancien : il s'arrête aussitôt
                     if self.proc.poll() is not None:
                         break
                     time.sleep(0.1)
-                if self.proc.poll() is not None:             # il ne connaît pas ce modèle
-                    old, civ = self.FALLBACK[model_id]
+                if self.proc.poll() is not None and self._unknown_model():     # il ne connaît pas ce modèle
+                    old, dciv = self.FALLBACK[model_id]
+                    civ = civ if civ is not None else dciv
+                    self.note = (f"{label} : ce Hamlib ne connaît pas ce poste ; piloté comme "
+                                 f"{rig_label('hamlib:' + str(old))} à l'adresse CI-V {civ:02X}h "
+                                 f"(Hamlib {HAMLIB_VERSION} le connaît : bouton de la fenêtre Poste radio)")
                     tport = self._start(exe, cfg, old, civ)
             t0 = time.time()
             while True:
                 if self.proc.poll() is not None:
+                    if self._unknown_model():
+                        # 2.60 (M0KLL) : « Unknown rig num 3094 » : Hamlib trop ancien pour ce poste
+                        raise RuntimeError(f"{label} : ce Hamlib ne connaît pas ce poste (« {self._last_err()} »). "
+                                           f"Installez Hamlib {HAMLIB_VERSION} (bouton de la fenêtre Poste radio), "
+                                           "ou choisissez un modèle proche (avec son adresse CI-V pour un Icom).")
                     raise RuntimeError("Hamlib (rigctld) s'est arrêté : " + (self._last_err() or
                                                                           f"code {self.proc.returncode}"))
                 try:
@@ -1038,13 +1049,22 @@ class HamlibRig(RigctlRig):
         _kill_with_us(self.proc)
         return tport
 
+    def _unknown_model(self):
+        """rigctld a refusé le numéro de modèle (« Unknown rig num … »)."""
+        try:
+            with open(self.logpath, "rb") as f:
+                txt = f.read()[-4000:].decode(errors="replace").lower()
+        except OSError:
+            return False
+        return "unknown rig num" in txt
+
     def _last_err(self):
         try:
             with open(self.logpath, "rb") as f:
                 lines = [l.strip() for l in f.read()[-4000:].decode(errors="replace").splitlines() if l.strip()]
             errs = [l for l in lines if "error" in l.lower() or "failed" in l.lower() or "timeout" in l.lower()]
             return (errs or lines or [""])[-1][:160]
-        except OSError:
+        except Exception:
             return ""
 
     def close(self):

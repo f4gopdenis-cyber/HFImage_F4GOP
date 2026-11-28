@@ -66,7 +66,7 @@ import random
 import wave
 
 APP = "HFImage F4GOP"
-VERSION = "2.59"
+VERSION = "2.60"
 
 
 def _take_profile(argv):
@@ -4328,6 +4328,8 @@ class App(tk.Tk):
             self._sm_reset()
             self.rig = r
             self.ui(self.log, f"Liaison CAT : {r.model or 'poste'} ({r.port})")
+            if getattr(r, "note", ""):
+                self.ui(self.log, r.note)
             if cfg.get("share") and radio.can_share(cfg) and getattr(r, "kind", "") == "hamlib":
                 self.ui(self.log, tr("Poste partagé : dans WSJT-X ou le logger, poste « Hamlib NET rigctl », "
                                      "serveur") + f" 127.0.0.1:{radio.share_port(cfg)}")
