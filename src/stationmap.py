@@ -499,6 +499,13 @@ class MapWindow:
             tk.Button(bar, text=tr("Coller la carte dans la fenêtre TX"),
                       command=self._paste).pack(side="left", padx=6)
         tk.Button(bar, text=tr("Copier la carte"), command=self.copy).pack(side="left", padx=6)
+        # 2.59 (Keith Woodley) : chercher un indicatif (les étiquettes sont petites)
+        self.v_find = tk.StringVar()
+        ef = tk.Entry(bar, textvariable=self.v_find, width=10)
+        ef.pack(side="right", padx=(0, 6))
+        ef.bind("<Return>", lambda e: self.find(self.v_find.get()))
+        tk.Button(bar, text="🔍", command=lambda: self.find(self.v_find.get())).pack(side="right")
+        tk.Label(bar, text=tr("Chercher :"), bg="#33d633").pack(side="right", padx=(6, 2))
         self.cv = tk.Canvas(w, bg="#bee2f7", highlightthickness=0, cursor="fleur")
         self.cv.pack(fill="both", expand=True)
         self.info = tk.Label(w, text="", anchor="w", bg="#e8f7e6")
@@ -522,6 +529,9 @@ class MapWindow:
         self._focus = None          # station sur laquelle la carte est centrée
         self._moved = False         # l'utilisateur a déplacé / zoomé : on garde sa vue
         self._cb = cb
+        self._redraw_job = None
+        self._redraw_t = 0.0
+        self._zoom_job = None
 
     def alive(self):
         try:
@@ -599,8 +609,46 @@ class MapWindow:
         self.view = View(self.view.lon, self.view.lat, self.view.span(), W, H)
         self.redraw()
 
+    REDRAW_MIN_S = 2.0          # 2.59 : redessin par les listes de stations au plus toutes les 2 s
+
+    def redraw_soon(self):
+        """Redessin demandé à chaque message de présence (deux serveurs, beaucoup de stations) : regroupé,
+        sinon la carte (0,1 à 0,5 s de calcul) bloquait la fenêtre (signalé par Keith Woodley, Ubuntu)."""
+        import time
+        if self._redraw_job is not None:
+            return
+        wait = max(0.0, self.REDRAW_MIN_S - (time.time() - self._redraw_t))
+
+        def go():
+            self._redraw_job = None
+            if self.alive() and self._drag is None:
+                self.redraw()
+        self._redraw_job = self.win.after(int(wait * 1000), go)
+
+    def find(self, text):
+        """Centre la carte sur l'indicatif cherché (exact, sinon début, sinon contenu)."""
+        q = (text or "").strip().upper()
+        if not q:
+            return False
+        me, st = self.provider()
+        calls = [s["call"] for s in st if s.get("call")]
+        hit = next((c for c in calls if c.upper() == q), None) or \
+            next((c for c in calls if c.upper().startswith(q)), None) or \
+            next((c for c in calls if q in c.upper()), None)
+        if hit is None:
+            self.info.configure(text=self.tr("{0} : pas sur la carte").replace("{0}", q))
+            return False
+        s = next(s for s in st if s["call"] == hit)
+        if not s.get("ok") and not self.v_heard.get():
+            self.v_heard.set(True)                       # station en jaune : on affiche aussi les autres
+            if self.on_show_all:
+                self.on_show_all(True)
+        return self.focus(hit)
+
     def redraw(self):
+        import time
         from PIL import ImageTk
+        self._redraw_t = time.time()
         if self.view is None:
             return self.set_view(self._preset)
         me, st = self._stations()
@@ -707,7 +755,15 @@ class MapWindow:
         lon2, lat2 = v.lonlat(e.x, e.y)
         self.view = View(self.view.lon + lon - lon2, max(-80, min(80, self.view.lat + lat - lat2)),
                          span, self.view.w, self.view.h)
-        self.redraw()
+        # 2.59 : un coup de molette (plusieurs crans sous Linux) = un seul dessin, à la fin
+        if self._zoom_job is not None:
+            self.win.after_cancel(self._zoom_job)
+        self._zoom_job = self.win.after(120, self._zoom_done)
+
+    def _zoom_done(self):
+        self._zoom_job = None
+        if self.alive():
+            self.redraw()
 
     def _click(self, x, y):
         st, me = self._last

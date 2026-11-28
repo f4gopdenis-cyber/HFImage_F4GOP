@@ -2087,6 +2087,18 @@ T = [
     ('Les nouveautés sont décrites sur la page de la version :', "What's new is described on the release page:", 'Die Neuerungen stehen auf der Seite der Version:', 'Las novedades están descritas en la página de la versión:', 'Le novità sono descritte nella pagina della versione:'),
     ("La nouvelle version est téléchargée et vérifiée, mais elle n'a pas pu remplacer le programme ({0}). Fermez HFImage et mettez à sa place ce fichier :", 'The new version is downloaded and checked, but it could not replace the program ({0}). Close HFImage and put this file in its place:', 'Die neue Version ist heruntergeladen und geprüft, konnte aber das Programm nicht ersetzen ({0}). Schließen Sie HFImage und setzen Sie diese Datei an seine Stelle:', 'La nueva versión está descargada y verificada, pero no pudo reemplazar el programa ({0}). Cierre HFImage y ponga este archivo en su lugar:', 'La nuova versione è scaricata e verificata, ma non ha potuto sostituire il programma ({0}). Chiudere HFImage e mettere questo file al suo posto:'),
     ('Mise à jour à mettre en place à la main : voir le journal', 'Update to install by hand: see the log', 'Aktualisierung von Hand einspielen: siehe Protokoll', 'Actualización para instalar a mano: ver el registro', 'Aggiornamento da installare a mano: vedere il registro'),
+    ('o', 'B', 'B', 'B', 'B'),
+    ('ko', 'kB', 'kB', 'kB', 'kB'),
+    ('Mo', 'MB', 'MB', 'MB', 'MB'),
+    ('aperçu', 'preview', 'Vorschau', 'vista previa', 'anteprima'),
+    ("Enregistrer l'image sous…", 'Save image as…', 'Bild speichern unter…', 'Guardar la imagen como…', 'Salva immagine con nome…'),
+    ('Image reçue précédente (flèche gauche)', 'Previous received picture (left arrow)', 'Vorheriges empfangenes Bild (Pfeil links)', 'Imagen recibida anterior (flecha izquierda)', 'Immagine ricevuta precedente (freccia sinistra)'),
+    ('Image reçue suivante (flèche droite) — Échap : onglet TX', 'Next received picture (right arrow) — Esc: TX tab', 'Nächstes empfangenes Bild (Pfeil rechts) — Esc: TX-Reiter', 'Imagen recibida siguiente (flecha derecha) — Esc: pestaña TX', 'Immagine ricevuta successiva (freccia destra) — Esc: scheda TX'),
+    ('Fermer HFImage ?', 'Close HFImage?', 'HFImage schließen?', '¿Cerrar HFImage?', 'Chiudere HFImage?'),
+    ('Demander confirmation avant de fermer HFImage (croix de la fenêtre)', 'Ask for confirmation before closing HFImage (window close button)', 'Vor dem Schließen von HFImage nachfragen (Fenster-Schließknopf)', 'Pedir confirmación antes de cerrar HFImage (botón de cierre)', 'Chiedere conferma prima di chiudere HFImage (pulsante di chiusura)'),
+    ('Chercher :', 'Find:', 'Suchen:', 'Buscar:', 'Cerca:'),
+    ('{0} : pas sur la carte', '{0}: not on the map', '{0}: nicht auf der Karte', '{0}: no está en el mapa', '{0}: non è sulla mappa'),
+    ('Tous', 'All', 'Alle', 'Todos', 'Tutti'),
 ]
 
 _lang = "fr"

@@ -1,5 +1,12 @@
 # Historique des versions — HFImage F4GOP
 
+## Version 2.59 (demandes de Keith Woodley, WASSTV)
+
+- Carte des stations : elle se redessine au plus toutes les 2 secondes (elle l'était à chaque message de présence, deux serveurs depuis la 2.44 : fenêtre lente ou figée sous Linux), et un coup de molette ne la dessine qu'une fois. Nouvelle case **Chercher** : un indicatif (ou son début) + Entrée, la carte se centre dessus (station en jaune : les autres stations s'affichent).
+- Onglet RX : **◀ ▶** sous l'image et **flèches gauche / droite** du clavier : image reçue précédente / suivante ; **Échap** revient à l'onglet TX. Clic droit sur l'image : **« Enregistrer l'image sous… »**.
+- **Fermer HFImage ?** : la croix de la fenêtre demande confirmation (Réglages : case pour ne plus demander).
+- Traductions : « aperçu » et les unités (o, ko, Mo) dans l'historique et sous l'image.
+
 ## Version 2.58 (signalé par Keith Woodley, WASSTV)
 
 - Mise à jour automatique : la nouvelle version est téléchargée, vérifiée et décompressée dans un dossier de l'ordinateur, puis copiée à la place du programme. Elle marche ainsi quand HFImage est lancé depuis un **disque réseau** (« No such file or directory … .tar.gz.part » sous Linux). Si la copie échoue quand même, l'ancien programme est remis en place et le message dit où se trouve la nouvelle version, pour la mettre en place à la main.

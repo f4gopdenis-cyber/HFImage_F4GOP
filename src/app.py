@@ -66,7 +66,7 @@ import random
 import wave
 
 APP = "HFImage F4GOP"
-VERSION = "2.58"
+VERSION = "2.59"
 
 
 def _take_profile(argv):
@@ -178,6 +178,7 @@ DEFAULTS = {
     "hyb_width": "originale", "hyb_kb": 3000, "hyb_fmt": "original", "gif_kb": 2000, "hyb_rx_max_mb": 200, "hyb_keep": 3,
     "net_on": True, "net_host": presence.DEFAULT_HOST, "net_port": presence.DEFAULT_PORT,
     "update_check": True,
+    "confirm_close": True,
     "look_style": "classique", "modern_theme": "Vert EasyPal",
     "theme": "Vert EasyPal", "theme_color": "#3a8ee6", "font_family": "(par défaut)", "font_size": "9",
     "locator": "", "bsr_auto": True, "fix_auto": True, "ack_auto": True, "listen_after": True, "follow_mode": True,
@@ -471,7 +472,14 @@ def load_conf():
 
 def _fmt_size(n):
     n = int(n or 0)
-    return f"{n} o" if n < 1000 else (f"{n / 1000:.1f} ko" if n < 1_000_000 else f"{n / 1e6:.2f} Mo")
+    return f"{n} {tr('o')}" if n < 1000 else (f"{n / 1000:.1f} {tr('ko')}" if n < 1_000_000
+                                              else f"{n / 1e6:.2f} {tr('Mo')}")
+
+
+def _mode_disp(mode):
+    """2.59 (Keith Woodley) : « DATAC1X aperçu » affiché dans la langue choisie (le mot reste en français
+    dans les données : il sert à reconnaître les aperçus)."""
+    return str(mode or "").replace(" aperçu", " " + tr("aperçu"))
 
 
 def _fmt_s(sec):
@@ -667,12 +675,15 @@ class App(tk.Tk):
         self.after(1600, self._layout_autosave)    # 1.97 : disposition gardée sans attendre la fermeture
         self.after(1700, lambda: self.dock.restore(self.conf.get("detached")))   # fenêtres séparées
         self.after(20000, self._auto_clean)        # anciennes images (puis toutes les 6 h)
-        self.protocol("WM_DELETE_WINDOW", self._quit)
+        self.protocol("WM_DELETE_WINDOW", self._close_request)
         # 1.97 : Windows qui s'éteint (ou redémarre) avec HFImage ouvert : disposition enregistrée
         self.protocol("WM_SAVE_YOURSELF", self._save_layout)
         self.bind_all("<Control-v>", self._ctrl_v, add="+")         # 1.67 : coller une image (onglet TX)
         self.bind_all("<Control-V>", self._ctrl_v, add="+")
         self._edit_menu_setup()            # 2.57 (VK6ATI) : clic droit Couper / Copier / Coller dans les cases de texte
+        self.bind_all("<Left>", lambda e: self._key_nav(e, -1), add="+")      # 2.59 (Keith Woodley)
+        self.bind_all("<Right>", lambda e: self._key_nav(e, 1), add="+")
+        self.bind_all("<Escape>", self._key_escape, add="+")
         self.journal_devices()
         self.log(f"{APP} {VERSION} prêt. Images reçues : {self.conf['folder']}")
 
@@ -1960,6 +1971,12 @@ class App(tk.Tk):
         self.lb_rx_info = tk.Label(bar, text="En attente d'image…", bg=GREEN, anchor="w",
                                    font=("TkDefaultFont", 9))
         self.lb_rx_info.pack(side="left", padx=6)
+        for txt, d, hint in (("◀", -1, "Image reçue précédente (flèche gauche)"),
+                             ("▶", 1, "Image reçue suivante (flèche droite) — Échap : onglet TX")):
+            b = tk.Button(bar, text=txt, font=("TkDefaultFont", 8, "bold"), bg="white", cursor="hand2", padx=3,
+                          pady=0, command=lambda d=d: self.rx_browse(d))
+            b.pack(side="left", padx=(0, 2), pady=1)
+            tip(b, hint)
         self.pb_rx = ttk.Progressbar(bar, mode="determinate", length=260)
         self.pb_rx.pack(side="right", padx=6, pady=3)
         tk.Label(bar, text="Double-clic : plein format", bg=GREEN, fg="#114411",
@@ -3519,7 +3536,7 @@ class App(tk.Tk):
         self._net_status()
         self._set_text(self.lb_rxok, tr(f"Rx Ok ({len(self.rxok)})"))
         if self.map_win is not None and self.map_win.alive() and self.map_win._drag is None:
-            self.map_win.redraw()
+            self.map_win.redraw_soon()            # 2.59 : au plus toutes les 2 s (deux serveurs de présence)
 
     @staticmethod
     def _no_xscroll(lb):
@@ -3970,6 +3987,14 @@ class App(tk.Tk):
             self._save_conf_file()
         ttk.Checkbutton(nf, text="Vérifier les mises à jour au démarrage (GitHub)", variable=self.v_updchk,
                         command=_upd_changed).grid(row=4, column=0, columnspan=5, sticky="w", pady=(6, 0))
+        self.v_confclose = tk.BooleanVar(value=bool(self.conf.get("confirm_close", True)))
+
+        def _cc_changed():
+            self.conf["confirm_close"] = bool(self.v_confclose.get())
+            self._save_conf_file()
+        ttk.Checkbutton(nf, text="Demander confirmation avant de fermer HFImage (croix de la fenêtre)",
+                        variable=self.v_confclose, command=_cc_changed).grid(row=5, column=0, columnspan=5,
+                                                                             sticky="w")
         ttk.Label(nf, text="Serveur").grid(row=1, column=0, sticky="w", pady=(4, 0))
         ttk.Entry(nf, textvariable=self.v_nethost, width=24).grid(row=1, column=1, sticky="w", padx=4, pady=(4, 0))
         ttk.Label(nf, text="Port").grid(row=1, column=2, sticky="w", pady=(4, 0))
@@ -8498,9 +8523,9 @@ class App(tk.Tk):
             mode = mode + " aperçu"
         if png:
             im, anim = self._show_rx(path, png)
-            self._rx_shown = {"png": png, "call": hdr.get("call"), "mode": mode, "kind": "rx"}
+            self._rx_shown = {"png": png, "file": path, "call": hdr.get("call"), "mode": mode, "kind": "rx"}
             self._panel_thumb(im, hdr.get("call"))
-            self._set_text(self.lb_rx_info, f"{os.path.basename(path)}   —   {hdr['call']}   —   {mode}   —   "
+            self._set_text(self.lb_rx_info, f"{os.path.basename(path)}   —   {hdr['call']}   —   {_mode_disp(mode)}   —   "
                                            f"{im.width}×{im.height}   —   {hdr['size'] / 1000:.1f} K" + anim)
             if not self.tx_busy:
                 self.show_tab("rx", focus=False)
@@ -8508,7 +8533,7 @@ class App(tk.Tk):
                 self._gallery_add("rx", hdr.get("call"), mode, path, png, hdr.get("size"), snr)
                 self._web_queue("rx", png, hdr.get("call"), mode, hdr.get("id"))
         self.hist.insert(0, (hdr, path, png, mode))
-        self.lst.insert(0, f"{time.strftime('%H:%M')}  {hdr['call']:8s} {mode}  {hdr['size']} o")
+        self.lst.insert(0, f"{time.strftime('%H:%M')}  {hdr['call']:8s} {_mode_disp(mode)}  {_fmt_size(hdr['size'])}")
 
     def _follow_mode(self, hdr, path, drm):
         """Image ou message reçu dans l'autre famille de modes (EasyPal / HFImage) :
@@ -8817,11 +8842,12 @@ class App(tk.Tk):
                     self.gal.refresh()
                 self.hist[i] = (info, path, png, mode)
                 self.lst.delete(i)
-                self.lst.insert(i, f"{time.strftime('%H:%M')}  {info['call']:8s} {mode}  {info['size']} o")
+                self.lst.insert(i, f"{time.strftime('%H:%M')}  {info['call']:8s} {_mode_disp(mode)}  "
+                                   f"{_fmt_size(info['size'])}")
                 if i == 0:
                     cur = self._orig.get(str(self.lb_rx_info), "")
                     self._set_text(self.lb_rx_info, cur.replace("   —   ?   —", f"   —   {info['call']}   —")
-                                   if "   —   ?   —" in cur else f"{info['call']} — {mode}")
+                                   if "   —   ?   —" in cur else f"{info['call']} — {_mode_disp(mode)}")
                 self.log(f"Identification : image envoyée par {info['call']}")
                 self.station_event(info["call"], "Identification de fin", mode.split()[0], None,
                                    f"{info['size']} octets")
@@ -8835,7 +8861,7 @@ class App(tk.Tk):
         if png and os.path.exists(png):
             im, anim = self._show_rx(path, png)
             self._rx_shown = {"png": png, "call": hdr.get("call"), "mode": mode, "kind": "rx"}
-            self._set_text(self.lb_rx_info, f"{hdr['call']} — {mode} — {im.width}×{im.height}" + anim)
+            self._set_text(self.lb_rx_info, f"{hdr['call']} — {_mode_disp(mode)} — {im.width}×{im.height}" + anim)
 
     def toggle_record(self):
         if self.rec_wav is not None:
@@ -9650,11 +9676,11 @@ class App(tk.Tk):
         except Exception as ex:
             self.log_exc("Galerie", ex)
             return
-        self._rx_shown = {"png": src, "call": e.get("call"), "mode": e.get("mode", ""),
+        self._rx_shown = {"png": src, "file": e.get("file"), "call": e.get("call"), "mode": e.get("mode", ""),
                           "kind": "tx" if e.get("dir") == "tx" else "rx"}
         who = e.get("call") if e.get("dir") == "rx" else tr("envoyée")
         self._set_text(self.lb_rx_info, f"{os.path.basename(e.get('file') or '')}   —   {who}   —   "
-                                       f"{e.get('mode', '')}   —   {im.width}×{im.height}" + anim)
+                                       f"{_mode_disp(e.get('mode', ''))}   —   {im.width}×{im.height}" + anim)
         self.show_tab("rx")
 
     def gallery_full(self, e):
@@ -9776,6 +9802,8 @@ class App(tk.Tk):
         img = v.frames[0] if v.frames else v.pil
         m.add_command(label=tr("Copier l'image"), command=lambda: self.copy_image(img),
                       state="normal" if img is not None else "disabled")
+        m.add_command(label=tr("Enregistrer l'image sous…"), command=lambda: self.save_rx_image(img),
+                      state="normal" if img is not None else "disabled")
         # 2.36 (F6BAZ) : remettre l'image affichée sur le site web (FTP), comme dans EasyPal
         sh = getattr(self, "_rx_shown", None)
         ok = bool(img is not None and sh and sh.get("png") and os.path.exists(sh["png"]))
@@ -9787,6 +9815,82 @@ class App(tk.Tk):
             m.tk_popup(ev.x_root, ev.y_root)
         finally:
             m.grab_release()
+
+    def save_rx_image(self, img=None):
+        """2.59 (Keith Woodley) : enregistre l'image affichée dans l'onglet RX (fichier d'origine, ou converti
+        si on choisit une autre extension)."""
+        sh = getattr(self, "_rx_shown", None) or {}
+        src = sh.get("file") or sh.get("png")
+        if img is None and not (src and os.path.exists(src)):
+            return
+        ext = os.path.splitext(src)[1].lower() if src else ".png"
+        if ext in (".avif", ".jp2", ".j2k", ".webp", ".svg"):
+            src, ext = (sh.get("png"), ".png") if sh.get("png") and os.path.exists(sh["png"]) else (None, ".png")
+        name = os.path.basename(src) if src else f"HFImage_{time.strftime('%Y%m%d_%H%M%S')}.png"
+        p = filedialog.asksaveasfilename(initialfile=name, defaultextension=ext, initialdir=self._img_dir(),
+                                         filetypes=[("PNG", "*.png"), ("JPEG", "*.jpg"), ("GIF", "*.gif"),
+                                                    (tr("Tous"), "*.*")])
+        if not p:
+            return
+        try:
+            if src and os.path.exists(src) and os.path.splitext(p)[1].lower() == ext:
+                shutil.copyfile(src, p)
+            else:
+                im = img if img is not None else Image.open(src)
+                if os.path.splitext(p)[1].lower() in (".jpg", ".jpeg"):
+                    im = im.convert("RGB")
+                im.save(p)
+            self.log(tr("Image enregistrée :") + f" {p}")
+        except Exception as e:
+            self.log_exc("Enregistrer l'image", e)
+            messagebox.showerror(APP, f"{e}")
+
+    # 2.59 (Keith Woodley) : ◀ ▶ (et flèches du clavier) : image reçue précédente / suivante (galerie)
+    def rx_browse(self, d):
+        if self.gal_store is None:
+            return
+        items = [e for e in self.gal_store.latest("rx", 500) if " aperçu" not in str(e.get("mode") or "")]
+        if not items:
+            return
+        cur = (getattr(self, "_rx_shown", None) or {}).get("png")
+        srcs = [self._gallery_src(e) for e in items]
+        i = srcs.index(cur) if cur in srcs else -1
+        j = 0 if i < 0 else i + (1 if d < 0 else -1)          # galerie : la plus récente d'abord
+        if 0 <= j < len(items):
+            self.gallery_show(items[j])
+
+    def _key_nav(self, e, d):
+        try:
+            cls = e.widget.winfo_class()
+            top = e.widget.winfo_toplevel()
+        except (AttributeError, tk.TclError):
+            return None
+        if cls in self.EDIT_CLASSES or cls in ("Listbox", "Treeview", "Scale", "TScale"):
+            return None
+        if top is not self and not (self.dock.detached("rx") and self._tab_shown_any("rx", top)):
+            return None
+        if not self._tab_shown("rx") and not self.dock.detached("rx"):
+            return None
+        self.rx_browse(d)
+        return "break"
+
+    def _tab_shown_any(self, name, top):
+        try:
+            return str(self.tab_frames[name].winfo_toplevel()) == str(top)
+        except (KeyError, tk.TclError):
+            return False
+
+    def _key_escape(self, e):
+        """2.59 (Keith Woodley) : Échap dans l'onglet RX : retour à l'onglet TX (l'image à émettre)."""
+        try:
+            if e.widget.winfo_toplevel() is not self or e.widget.winfo_class() in self.EDIT_CLASSES:
+                return None
+        except (AttributeError, tk.TclError):
+            return None
+        if self._tab_shown("rx"):
+            self.show_tab("tx")
+            return "break"
+        return None
 
     def gallery_folder(self, e):
         p = e.get("file")
@@ -10232,6 +10336,12 @@ class App(tk.Tk):
             subprocess.Popen(cmd)
         except Exception as e:
             self.log_exc("Redémarrage", e)
+        self._quit()
+
+    def _close_request(self):
+        """2.59 (Keith Woodley) : la croix de la fenêtre demande confirmation (réglable)."""
+        if self.conf.get("confirm_close", True) and not messagebox.askyesno(APP, tr("Fermer HFImage ?")):
+            return
         self._quit()
 
     def _quit(self):

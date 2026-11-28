@@ -377,7 +377,9 @@ s += B(["<b>Status panel</b> (top left): callsign of the station received, radio
         "<b>History</b> on the right: click to show again, double-click for full size (can be hidden, menu Windows).",
         "<b>Zoom</b>: mouse wheel on the picture to enlarge / reduce around the pointer (up to ×16), hold the left "
         "button to move the enlarged picture. <b>Right-click</b>: “<b>Copy image</b>” (paste it with Ctrl+V into Teams, "
-        "an e-mail, WhatsApp… for a station that did not decode it) and “Back to the whole image”.",
+        "an e-mail, WhatsApp… for a station that did not decode it), “<b>Save image as…</b>” and “Back to the whole image”.",
+        "<b>◀ ▶</b> (under the picture) or the <b>left / right arrow keys</b>: previous / next received picture (those of the "
+        "gallery). <b>Esc</b> goes back to the TX tab.",
         "<b>Automatic BSR / ACK</b> (HFImage modes): if pieces are missing at the end, HFImage asks for them (BSR); "
         "the sender sends only what is missing (FIX). Once the picture is complete, an acknowledgement (ACK) with "
         "your report goes back to the sender.",
@@ -670,7 +672,7 @@ s += B(["In the list, <b>*</b> marks a station transmitting (red) and <b>HYB</b>
         "+5 dB and more, light green, orange, red: below -10 dB; legend at the bottom left), and the report is written "
         "next to the callsign. Mouse over a station: name, locator, distance, report and time. “<b>Show all</b>” fits "
         "the map to all stations. “<b>Copy map</b>” puts it in the clipboard, to paste (Ctrl+V) into Teams, a forum, an "
-        "e-mail… City and country names that would fall under a station are not written, so callsigns stay readable "
+        "e-mail… <b>Find</b> box (top right): type a callsign (or its beginning) and Enter, the map centres on it. City and country names that would fall under a station are not written, so callsigns stay readable "
         "when stations are close together.",
         "Firewall or Internet provider blocking port 1883: HFImage tries the other accesses of the same server by itself "
         "(8883 encrypted, then 8884 and 8000 via the web); the log shows which one worked."])

@@ -369,7 +369,10 @@ s += B(["<b>Panneau d'état</b> (en haut à gauche) : indicatif de la station re
         "<b>Aperçu rapide</b> (modes HFImage) : une petite image arrive en ~20 s, puis l'image complète la remplace.",
         "<b>Zoom</b> : molette de la souris sur l'image pour l'agrandir / la réduire autour du pointeur (jusqu'à ×16), "
         "clic gauche maintenu pour la déplacer. <b>Clic droit</b> : « <b>Copier l'image</b> » (à coller avec Ctrl+V dans "
-        "Teams, un e-mail, WhatsApp… pour une station qui ne l'a pas décodée) et « Revenir à l'image entière ».",
+        "Teams, un e-mail, WhatsApp… pour une station qui ne l'a pas décodée), « <b>Enregistrer l'image sous…</b> » "
+        "et « Revenir à l'image entière ».",
+        "<b>◀ ▶</b> (sous l'image) ou les <b>flèches gauche / droite</b> du clavier : image reçue précédente / suivante "
+        "(celles de la galerie). <b>Échap</b> revient à l'onglet TX.",
         "<b>Historique</b> à droite : clic pour réafficher, double-clic pour le plein format (masquable par le menu Fenêtres).",
         "<b>BSR / ACK automatiques</b> : s'il manque des morceaux à la fin, HFImage les demande (BSR) ; "
         "l'émetteur ne renvoie que ce qui manque (FIX). Une fois l'image complète, un accusé (ACK) avec "
@@ -717,6 +720,7 @@ s += B(["<b>Rx Ok</b> : les stations qui ont bien reçu l'image, avec leur <b>re
         "légende en bas à gauche), et le report est écrit à côté de l'indicatif. Souris sur une station : prénom, "
         "locator, distance, report et heure. « <b>Tout voir</b> » cadre la carte sur toutes les stations. "
         "« <b>Copier la carte</b> » la met dans le presse-papiers, à coller (Ctrl+V) dans Teams, un forum, un e-mail… "
+        "Case <b>Chercher</b> (en haut à droite) : tapez un indicatif (ou son début) puis Entrée, la carte se centre dessus. "
         "Les noms de villes et de pays qui tomberaient sous une station ne sont pas écrits, pour que les indicatifs "
         "restent lisibles quand les stations sont serrées.",
         "Pare-feu ou fournisseur d'accès qui bloque le port 1883 : HFImage essaie tout seul les autres accès du même "
